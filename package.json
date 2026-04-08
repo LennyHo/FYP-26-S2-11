@@ -1,0 +1,22 @@
+{
+  "name": "fyp-26-s2-11-backend",
+  "version": "1.0.0",
+  "description": "Node.js backend for FYP-26-S2-11",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "keywords": [
+    "express",
+    "mongodb",
+    "dotenv"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "mongodb": "^6.17.0"
+  }
+}
