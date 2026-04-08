@@ -2,6 +2,8 @@
 
 FYP-26-S2-11 for AI Chatbot for Customer.
 
+## PLEASE CHECK ALL THAT IS WORKING ON YOUR LAPTOP
+
 ## Backend setup
 
 1. Install Node.js 20 or newer.
