@@ -2,7 +2,12 @@
 
 FYP-26-S2-11 for AI Chatbot for Customer.
 
-## PLEASE CHECK ALL THAT IS WORKING ON YOUR LAPTOP
+## PLEASE CHECK ALL PROGRAMMING LANGAUGES, ARE WORKING ON YOUR LAPTOP
+
+Frontend:  React, HTML, CSS, & JS
+AI Platform: Dialogflow CX
+Backend: Node.js
+Database:
 
 ## Backend setup
 
