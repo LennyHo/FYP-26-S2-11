@@ -2,15 +2,23 @@
 
 FYP-26-S2-11 for AI Chatbot for Customer.
 
-## PLEASE CHECK ALL PROGRAMMING LANGUAGES, ARE WORKING ON YOUR LAPTOP
+## PLEASE CHECK ALL SETUP ARE WORKING ON YOUR LAPTOP
 
+## 
 1. Frontend:  React, HTML, CSS, & JS
 2. AI Platform: Dialogflow CX
 3. Backend: Node.js
 4. Database:
 
-## Backend setup
+## To Run Frontend (React and Next.js):
+1. run `Npm install`
+2. cd Frontend
+3. run `npm run dev`
 
+## To Run BackEnd (Node.js):
+1. run "npm run dev"
+
+## Backend setup
 1. Install Node.js 20 or newer.
 2. Copy `.env.example` to `.env`.
 3. Run `npm install`.
