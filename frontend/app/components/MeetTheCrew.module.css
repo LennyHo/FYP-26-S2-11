@@ -1,0 +1,44 @@
+.meetSection {
+  padding: 36px 0;
+  background: var(--background);
+  width: 100%;
+  transition: background 0.4s;
+}
+.meetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  margin-left: 12px;
+  margin-right: 12px;
+}
+.meetTitle {
+  font-weight: 800;
+  font-size: 1.7rem;
+  color: var(--foreground);
+  letter-spacing: 1px;
+  transition: color 0.3s;
+}
+.meetButton {
+  background: var(--foreground);
+  color: var(--background);
+  border: none;
+  border-radius: 18px;
+  padding: 9px 22px;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 1px 4px #e5d6c2;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s, transform 0.3s;
+}
+.meetButton:hover {
+  background: var(--accent-yellow);
+  color: var(--foreground);
+  transform: translateY(-2px) scale(1.04);
+}
+.meetCards {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  width: 100%;
+}

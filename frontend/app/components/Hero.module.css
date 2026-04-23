@@ -1,0 +1,61 @@
+.heroSection {
+  padding: 48px 0 32px 0;
+  background: var(--background);
+  text-align: center;
+  position: relative;
+  width: 100%;
+  transition: background 0.4s;
+}
+.heroTitle {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 24px;
+  letter-spacing: 1.5px;
+  color: var(--foreground);
+  font-family: 'Quicksand', Arial Rounded MT Bold, Arial, sans-serif;
+  text-shadow: none;
+  transition: color 0.3s;
+}
+.heroButton {
+  background: var(--foreground);
+  color: var(--background);
+  border: none;
+  border-radius: 22px;
+  padding: 14px 40px;
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin: 24px 0 36px 0;
+  box-shadow: 0 2px 8px #e5d6c2;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s, transform 0.3s;
+}
+.heroButton:hover {
+  background: var(--accent-yellow);
+  color: var(--foreground);
+  transform: translateY(-2px) scale(1.04);
+}
+.heroCards {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin: 40px 0;
+  width: 100%;
+}
+.heroCard {
+  width: 140px;
+  height: 180px;
+  border-radius: 22px;
+  background: var(--card);
+  border: 3px solid var(--border);
+  box-shadow: 0 2px 8px #e5d6c2;
+  transition: box-shadow 0.3s, border-color 0.3s, transform 0.3s;
+}
+.heroCard:hover {
+  box-shadow: 0 8px 32px #e5d6c2;
+  border-color: var(--accent-yellow);
+  transform: translateY(-4px) scale(1.06);
+}
+
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
