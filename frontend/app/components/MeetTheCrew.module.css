@@ -1,44 +1,65 @@
 .meetSection {
-  padding: 36px 0;
-  background: var(--background);
+  padding: 12px 6px 0;
   width: 100%;
-  transition: background 0.4s;
 }
+
 .meetHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   margin-bottom: 18px;
-  margin-left: 12px;
-  margin-right: 12px;
+  padding: 0 6px;
 }
+
+.meetEyebrow {
+  margin-bottom: 6px;
+  color: var(--accent-brown);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
 .meetTitle {
   font-weight: 800;
-  font-size: 1.7rem;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
   color: var(--foreground);
-  letter-spacing: 1px;
-  transition: color 0.3s;
+  letter-spacing: -0.04em;
 }
+
 .meetButton {
-  background: var(--foreground);
-  color: var(--background);
-  border: none;
-  border-radius: 18px;
-  padding: 9px 22px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--foreground);
+  border: 1px solid rgba(220, 199, 180, 0.9);
+  border-radius: 999px;
+  padding: 10px 18px;
   font-weight: 700;
   font-size: 1rem;
-  box-shadow: 0 1px 4px #e5d6c2;
+  box-shadow: 0 10px 20px rgba(59, 39, 26, 0.07);
   cursor: pointer;
-  transition: background 0.3s, color 0.3s, transform 0.3s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
 .meetButton:hover {
-  background: var(--accent-yellow);
-  color: var(--foreground);
-  transform: translateY(-2px) scale(1.04);
+  transform: translateY(-1px);
 }
+
 .meetCards {
   display: flex;
-  gap: 28px;
-  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: space-between;
   width: 100%;
+}
+
+@media (max-width: 780px) {
+  .meetHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .meetCards {
+    justify-content: center;
+  }
 }

@@ -1,15 +1,16 @@
 import Header from './components/Header';
 import Hero from './components/Hero';
 import MeetTheCrew from './components/MeetTheCrew';
+import styles from './page.module.css';
 
 export default function Home() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--background)', color: 'var(--foreground)' }} className="smooth-scroll">
+    <div className={styles.page}>
       <Header />
-      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+      <main className={styles.main}>
         <Hero />
         <MeetTheCrew />
-      </div>
+      </main>
     </div>
   );
 }

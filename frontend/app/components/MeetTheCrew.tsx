@@ -7,7 +7,10 @@ export default function MeetTheCrew() {
   return (
     <section className={styles.meetSection}>
       <div className={styles.meetHeader}>
-        <h2 className={styles.meetTitle}>MEET THE CREW</h2>
+        <div>
+          <p className={styles.meetEyebrow}>Menu highlights</p>
+          <h2 className={styles.meetTitle}>MEET THE CREW</h2>
+        </div>
         <button className={styles.meetButton}>VIEW ALL DRIPS</button>
       </div>
       <div className={styles.meetCards}>
