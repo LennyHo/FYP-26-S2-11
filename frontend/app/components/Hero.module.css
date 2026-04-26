@@ -1,15 +1,15 @@
 .heroSection {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
-  gap: 32px;
+  grid-template-columns: minmax(0, 1.06fr) minmax(320px, 0.94fr);
+  gap: 30px;
   align-items: center;
+  width: 100%;
   padding: 24px;
   border: 1px solid rgba(220, 199, 180, 0.9);
   border-radius: 32px;
   background: linear-gradient(180deg, rgba(255, 250, 245, 0.9), rgba(255, 244, 233, 0.72));
   box-shadow: var(--shadow);
   position: relative;
-  width: 100%;
   overflow: hidden;
 }
 
@@ -80,14 +80,14 @@
   justify-content: center;
   min-height: 48px;
   padding: 0 20px;
-  border-radius: 999px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
   border: 0;
+  border-radius: 999px;
   background: linear-gradient(135deg, var(--foreground), #4a3020);
   color: #fff7ef;
-  cursor: pointer;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   box-shadow: 0 16px 30px rgba(59, 39, 26, 0.18);
+  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -99,8 +99,8 @@
   padding: 0 20px;
   border-radius: 999px;
   border: 1px solid rgba(220, 199, 180, 0.95);
-  color: var(--foreground);
   background: rgba(255, 255, 255, 0.5);
+  color: var(--foreground);
   font-weight: 800;
   letter-spacing: 0.04em;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -109,7 +109,7 @@
 .heroButton:hover,
 .heroLink:hover {
   transform: translateY(-1px);
-.heroButton:hover {
+}
 
 .heroPills {
   display: flex;
@@ -117,8 +117,7 @@
   gap: 10px;
 }
 
-.heroPills span,
-.panelLabel {
+.heroPills span {
   display: inline-flex;
   align-items: center;
   min-height: 34px;
@@ -135,65 +134,58 @@
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 18px;
-  background: var(--accent-yellow);
+  justify-items: end;
+}
 
-  color: var(--foreground);
-  transform: translateY(-2px) scale(1.04);
-  justify-content: flex-end;
-  gap: 18px;
-  justify-content: center;
-  gap: 40px;
-
-  margin: 40px 0;
-  width: 128px;
-  height: 176px;
+.imageFrame {
+  position: relative;
+  width: min(100%, 430px);
+  min-height: 360px;
+  overflow: hidden;
   border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 18px 28px rgba(59, 39, 26, 0.12);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  border: 3px solid var(--border);
-
-.cardRed {
-  background: linear-gradient(180deg, #fce4db 0%, #efb5a8 100%);
+  border: 1px solid rgba(220, 199, 180, 0.85);
+  background: linear-gradient(180deg, rgba(255, 250, 245, 0.86), rgba(255, 242, 228, 0.8));
+  box-shadow: 0 22px 34px rgba(34, 18, 10, 0.18);
 }
 
-.cardGold {
-  background: linear-gradient(180deg, #fff5d7 0%, #ebcf8a 100%);
-  transform: translateY(18px);
+.heroImage {
+  object-fit: cover;
+  object-position: center;
 }
 
-.cardGreen {
-  background: linear-gradient(180deg, #e5f1df 0%, #b7d7a8 100%);
+.imageOverlay {
+  position: absolute;
+  inset: auto 18px 18px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 250, 245, 0.82);
+  border: 1px solid rgba(220, 199, 180, 0.85);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
-  box-shadow: 0 2px 8px #e5d6c2;
-  transform: translateY(-4px);
-  box-shadow: 0 24px 36px rgba(59, 39, 26, 0.16);
+.imageTag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(59, 39, 26, 0.94);
+  color: #fff7ef;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.heroPanel {
-  max-width: 28rem;
-  justify-self: end;
-  padding: 18px 20px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(220, 199, 180, 0.9);
-  color: var(--foreground);
-  box-shadow: 0 12px 22px rgba(59, 39, 26, 0.08);
-  display: grid;
-  gap: 10px;
-}
-
-.heroPanel strong {
-  font-size: 1rem;
-  line-height: 1.5;
-}
-
-.panelLabel {
-  width: fit-content;
-  background: rgba(227, 100, 71, 0.1);
-  color: var(--accent-ink);
+.imageNote {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 @media (max-width: 900px) {
@@ -202,13 +194,12 @@
     padding: 22px;
   }
 
-  .heroCards {
-    justify-content: flex-start;
+  .heroVisual {
+    justify-items: stretch;
   }
 
-  .heroVisual,
-  .heroPanel {
-    justify-self: stretch;
+  .imageFrame {
+    width: 100%;
   }
 }
 
@@ -216,16 +207,4 @@
   .heroTitle {
     letter-spacing: -0.04em;
   }
-
-  .heroCards {
-    gap: 12px;
-  }
-
-  .heroCard {
-    width: 100px;
-    height: 148px;
-  }
-  box-shadow: 0 8px 32px #e5d6c2;
-.smooth-scroll {
-  scroll-behavior: smooth;
 }

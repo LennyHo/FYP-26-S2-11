@@ -1,5 +1,6 @@
 
 import React from 'react';
+import Image from 'next/image';
 import styles from './Hero.module.css';
 
 export default function Hero() {
@@ -24,14 +25,19 @@ export default function Hero() {
         </div>
       </div>
       <div className={styles.heroVisual}>
-        <div className={styles.heroCards}>
-          <div className={`${styles.heroCard} ${styles.cardRed}`} />
-          <div className={`${styles.heroCard} ${styles.cardGold}`} />
-          <div className={`${styles.heroCard} ${styles.cardGreen}`} />
-        </div>
-        <div className={styles.heroPanel}>
-          <span className={styles.panelLabel}>Limited pour</span>
-          <strong>Strawberry matcha, brown sugar milk, and citrus tea spritzes</strong>
+        <div className={styles.imageFrame}>
+          <Image
+            src="/driptea_drinks.jpg"
+            alt="A set of bubble tea drinks with milk pouring into a brown sugar milk tea cup"
+            fill
+            priority
+            className={styles.heroImage}
+            sizes="(max-width: 900px) 100vw, 430px"
+          />
+          <div className={styles.imageOverlay}>
+            <span className={styles.imageTag}>Signature pour</span>
+            <span className={styles.imageNote}>Brown sugar milk tea</span>
+          </div>
         </div>
       </div>
     </section>
