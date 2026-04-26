@@ -22,7 +22,6 @@ export default function Header() {
       </div>
       <div className={styles.actions}>
         <a href="/login" className={styles.loginLink}>Log in</a>
-        <a href="#">Store Locator</a>
         <span className={styles.cart}>🛒</span>
       </div>
     </header>
