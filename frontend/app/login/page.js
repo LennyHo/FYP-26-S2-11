@@ -9,7 +9,17 @@ export default function LoginPage() {
       <div className={styles.shell}>
         <aside className={styles.brandPanel}>
           <div className={styles.brandTop}>
-            <div className={styles.brandMark}>DRIPTEA</div>
+            <div className={styles.brandMark}>
+              <span className={styles.logoIcon} aria-hidden="true">
+                <span className={styles.dropCore} />
+                <span className={styles.dropMini} />
+                <span className={styles.dropShine} />
+                <span className={styles.rippleInner} />
+                <span className={styles.rippleMid} />
+                <span className={styles.rippleOuter} />
+              </span>
+              DRIPTEA
+            </div>
             <span className={styles.brandTag}>Handcrafted tea bar</span>
           </div>
           <div className={styles.brandStory}>
