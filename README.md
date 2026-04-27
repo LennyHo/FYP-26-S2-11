@@ -6,7 +6,7 @@ FYP-26-S2-11 for AI Chatbot for Customer.
 
 ## To Run Frontend (React and Next.js):
 1. run `Npm install`
-2. cd Frontend
+2. cd "Frontend" (if you did not cd this folder, you will not able to run)
 3. run `npm run dev`
 
 ## To Run BackEnd (Node.js):
