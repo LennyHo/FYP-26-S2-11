@@ -2,7 +2,7 @@
 
 FYP-26-S2-11 for AI Chatbot for Customer.
 
-## PLEASE CHECK YOUR FRONTEND, BACKEND, DATABASE AND API PLATFORMS ARE WORKING ON YOUR LAPTOP BEFORE YOU START CODING.
+## PLEASE CHECK YOUR FRONTEND, BACKEND, DATABASE, AND API PLATFORMS ARE WORKING ON YOUR LAPTOP BEFORE YOU START CODING.
 
 ## To Run Frontend (React and Next.js):
 1. run `Npm install`
@@ -19,4 +19,7 @@ FYP-26-S2-11 for AI Chatbot for Customer.
 3. cd DripTea_V1 folder
 4. Run `npm install`.
 6. Run `npm start`.
+
+## SETUP FOR GROQ API
+## SETUP FOR GEMINI API
 
