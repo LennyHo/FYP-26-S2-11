@@ -13,6 +13,33 @@
             <header>
                 <h1>DripTea Menu</h1>
             </header>
+
+            <section class="featured-drink" aria-label="Featured drink: Matcha Drip">
+                <div class="featured-visual">
+                    <div class="cup-shape">
+                        <div class="matcha-layer"></div>
+                        <div class="milk-layer"></div>
+                        <div class="pearls">
+                            <span></span><span></span><span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="featured-copy">
+                    <p class="tagline">Featured today</p>
+                    <h2>Matcha Drip</h2>
+                    <p>
+                        Fresh whisked matcha layered with silky milk and soft pearls.
+                        Earthy, smooth, and lightly sweet.
+                    </p>
+                    <div class="meta-row">
+                        <span>Price: $5.20</span>
+                        <span>Base sugar: 10g</span>
+                        <span>Calories: 180 kcal</span>
+                    </div>
+                    <button id="test-matcha-btn" class="cta-btn" type="button">Ask AI about Matcha Drip</button>
+                </div>
+            </section>
             
             <div class="menu-grid">
                 <div class="menu-card">Classic Milk Tea</div>
@@ -32,8 +59,7 @@
             
             <div class="chat-input-area">
                 <input type="text" id="user-input" placeholder="Order a drink or ask a question...">
-                <!--<button id="send-btn">Send</button>-->
-                <button onclick="sendMessage()">Send</button>
+                <button id="send-btn" type="button">Send</button>
 
             </div>
         </div>

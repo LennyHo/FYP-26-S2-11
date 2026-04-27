@@ -224,6 +224,11 @@ app.post("/chat", async (req, res) => {
     try {
         const { message, image } = req.body;
         let jsonResponse;
+        const safeMessage = typeof message === "string" ? message : "";
+
+        console.log(
+            `[CHAT] ${new Date().toISOString()} | message="${safeMessage.slice(0, 80)}" | hasImage=${Boolean(image)}`
+        );
 
         if (image) {
             const chatSession = model.startChat();
@@ -251,6 +256,7 @@ app.post("/chat", async (req, res) => {
         }
 
         res.json(jsonResponse);
+        console.log(`[CHAT] ${new Date().toISOString()} | response sent`);
 
     } catch (error) {
         console.error(error);

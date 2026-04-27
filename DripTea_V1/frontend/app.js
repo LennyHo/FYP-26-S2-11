@@ -1,6 +1,7 @@
 const chatWindow = document.getElementById('chat-window');
 const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
+const testMatchaBtn = document.getElementById('test-matcha-btn');
 
 function addMessageToChat(text, className) {
     const messageDiv = document.createElement('div');
@@ -54,6 +55,13 @@ async function sendMessage() {
 }
 
 sendBtn.addEventListener('click', sendMessage);
+
+if (testMatchaBtn) {
+    testMatchaBtn.addEventListener('click', () => {
+        userInput.value = 'I want Matcha Drip with 25% sugar';
+        userInput.focus();
+    });
+}
 
 userInput.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {

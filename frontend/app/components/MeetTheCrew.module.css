@@ -53,6 +53,44 @@
   width: 100%;
 }
 
+.cardTrigger {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.cardTrigger:focus-visible {
+  outline: 3px solid rgba(123, 168, 106, 0.75);
+  outline-offset: 6px;
+  border-radius: 24px;
+}
+
+.cardTrigger:disabled {
+  cursor: progress;
+}
+
+.connectStatus {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(220, 199, 180, 0.9);
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.ok {
+  border-color: rgba(123, 168, 106, 0.65);
+  color: #35613a;
+}
+
+.error {
+  border-color: rgba(222, 100, 71, 0.65);
+  color: #8d2f1e;
+}
+
 @media (max-width: 780px) {
   .meetHeader {
     align-items: flex-start;
