@@ -10,7 +10,8 @@ FYP-26-S2-11 for AI Chatbot for Customer.
 3. run `npm run dev`
 
 ## To Run BackEnd (Node.js):
-1. run "npm run dev"
+1. if you have not install the modules, run `npm install` to update.
+2. run `npm start`
 
 ## Backend setup
 1. Install Node.js 20 or newer.
