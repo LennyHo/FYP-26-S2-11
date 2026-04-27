@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import styles from './ChatbotSidebar.module.css';
 
 interface Message {
@@ -13,11 +13,49 @@ interface ChatbotSidebarProps {
   onClose?: () => void;
 }
 
+const GREETING_MESSAGE = "Hello, I am driptea Alisa. How may I help?";
+const STORAGE_KEY = "driptea_chatbot_messages";
+
 export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
+
+  // Load messages from localStorage on mount
+  useEffect(() => {
+    const savedMessages = localStorage.getItem(STORAGE_KEY);
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch {
+        // If localStorage is corrupted, start fresh with greeting
+        const greetingMsg: Message = {
+          id: Date.now().toString(),
+          text: GREETING_MESSAGE,
+          isUser: false,
+        };
+        setMessages([greetingMsg]);
+      }
+    } else {
+      // First time - show greeting
+      const greetingMsg: Message = {
+        id: Date.now().toString(),
+        text: GREETING_MESSAGE,
+        isUser: false,
+      };
+      setMessages([greetingMsg]);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    }
+  }, [messages, isInitialized]);
 
   const suggestions = [
     "What can I help you with?",
@@ -70,7 +108,8 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
     }
   }, [messages]);
 
-  const showSuggestions = messages.length === 0;
+  // Only show suggestions if there are no user messages yet
+  const showSuggestions = messages.length <= 1 && messages.every(msg => !msg.isUser);
 
   return (
     <aside className={styles.chatbotSidebar}>
@@ -92,7 +131,17 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
       </div>
 
       <div className={styles.chatWindow} ref={chatWindowRef}>
-        {showSuggestions ? (
+        {messages.map(msg => (
+          <div
+            key={msg.id}
+            className={`${styles.message} ${
+              msg.isUser ? styles.userMessage : styles.botMessage
+            }`}
+          >
+            {msg.text}
+          </div>
+        ))}
+        {showSuggestions && (
           <div className={styles.suggestionsContainer}>
             <div className={styles.suggestionsTitle}>Suggestions</div>
             <div className={styles.suggestionsList}>
@@ -108,19 +157,6 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
               ))}
             </div>
           </div>
-        ) : (
-          <>
-            {messages.map(msg => (
-              <div
-                key={msg.id}
-                className={`${styles.message} ${
-                  msg.isUser ? styles.userMessage : styles.botMessage
-                }`}
-              >
-                {msg.text}
-              </div>
-            ))}
-          </>
         )}
         {isLoading && (
           <div className={`${styles.message} ${styles.botMessage}`}>

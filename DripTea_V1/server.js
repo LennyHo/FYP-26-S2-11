@@ -6,9 +6,37 @@ const axios = require("axios");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 
+const PORT = Number(process.env.PORT || 3000);
+const CHAT_LANGUAGE_MODE = String(process.env.CHAT_LANGUAGE_MODE || "english").trim().toLowerCase();
+const USE_MATCHED_LANGUAGE = CHAT_LANGUAGE_MODE === "match" || CHAT_LANGUAGE_MODE === "same";
+const MAX_HISTORY_MESSAGES = 10;
+const MAX_CONVERSATIONS = 200;
+
+function hasConfiguredApiKey(value) {
+    if (!value) return false;
+    const normalized = String(value).trim().toLowerCase();
+    return !(
+        normalized === "" ||
+        normalized.includes("your_real") ||
+        normalized.includes("your_key_here") ||
+        normalized.includes("placeholder")
+    );
+}
+const hasGroqKey = hasConfiguredApiKey(process.env.GROQ_API_KEY);
+const hasGeminiKey = hasConfiguredApiKey(process.env.GEMINI_API_KEY);
+
+const groqClient = axios.create({
+    baseURL: "https://api.groq.com/openai/v1",
+    timeout: 15000,
+    headers: {
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY || ""}`,
+        "Content-Type": "application/json"
+    }
+});
+
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 // =========================
 // FRONTEND
@@ -77,21 +105,59 @@ function filterMenu(menu, userMessage) {
 // =========================
 // GEMINI (IMAGE BRAIN)
 // =========================
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    generationConfig: {
-        responseMimeType: "application/json",
-    }
-});
+let model = null;
+if (hasGeminiKey) {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        generationConfig: {
+            responseMimeType: "application/json",
+        }
+    });
+}
 
 // =========================
 // GROQ (TEXT BRAIN & MEMORY)
 // =========================
-let conversationHistory = []; 
+const conversationStore = new Map();
 
-async function callGroq(userMessage) {
+function getLanguageInstruction() {
+    if (USE_MATCHED_LANGUAGE) {
+        return "You MUST detect the language of the user's latest message. If the message is clearly English OR ambiguous Latin-alphabet text, reply in UK English. Only reply in another language when the user's language is clearly non-English.";
+    }
+
+    return "You MUST reply in UK English only, regardless of the user's language.";
+}
+
+function getConversationHistory(conversationId) {
+    if (!conversationStore.has(conversationId)) {
+        if (conversationStore.size >= MAX_CONVERSATIONS) {
+            const oldestId = conversationStore.keys().next().value;
+            conversationStore.delete(oldestId);
+        }
+
+        conversationStore.set(conversationId, []);
+    }
+
+    return conversationStore.get(conversationId);
+}
+
+function appendToConversation(history, message) {
+    history.push(message);
+
+    if (history.length > MAX_HISTORY_MESSAGES) {
+        history.splice(0, history.length - MAX_HISTORY_MESSAGES);
+    }
+}
+
+async function callGroq(userMessage, conversationId) {
+    if (!hasGroqKey) {
+        return {
+            reply: "Groq API key is missing or still a placeholder. Please set GROQ_API_KEY in DripTea_V1/.env and restart the backend.",
+            system_action: { ui_navigation: "none" }
+        };
+    }
+
     const filtered = filterMenu(menuData, userMessage);
 
     const structuredData = filtered.map(item => ({
@@ -105,13 +171,14 @@ async function callGroq(userMessage) {
         description: item.description
     }));
 
-    conversationHistory.push({ role: "user", content: userMessage });
+    const conversationHistory = getConversationHistory(conversationId);
+    appendToConversation(conversationHistory, { role: "user", content: userMessage });
 
     const systemPrompt = `
 You are the DripTea Health Advisor. Your tone is warm, friendly, and human. 
 
 MULTILINGUAL RULE (STRICT & CRITICAL):
-You MUST detect the language of the user's LATEST message and reply in that EXACT SAME language. If English, reply in English. 
+${getLanguageInstruction()}
 
 NUTRI-GRADE MATH (Official HPB Guidelines): (HIDDEN INTERNAL LOGIC - DO NOT SHOW MATH TO USER):
 Base Volume is 500ml.
@@ -178,30 +245,20 @@ If they say yes, respond with "Great! Redirecting you to the checkout page now!"
 `;
 
     try {
-        const response = await axios.post(
-            "https://api.groq.com/openai/v1/chat/completions",
+        const response = await groqClient.post(
+            "/chat/completions",
             {
                 model: "llama-3.1-8b-instant",
-                temperature: 0.1,
+                temperature: 0.7,
                 messages: [
                     { role: "system", content: systemPrompt },
-                    ...conversationHistory.slice(-10), 
-                    { 
-                        role: "system", 
-                        content: "CRITICAL OVERRIDE: Look at the user's latest message. You MUST reply in the exact same language they just used. If they spoke English, you must speak English. Also, NEVER invent stats. Read the Base Sugar exactly as it appears in the JSON." 
-                    }
+                    ...conversationHistory.slice(-10)
                 ]
-            },
-            {
-                headers: {
-                    "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-                    "Content-Type": "application/json"
-                }
             }
         );
 
         const textReply = response.data.choices[0].message.content;
-        conversationHistory.push({ role: "assistant", content: textReply });
+        appendToConversation(conversationHistory, { role: "assistant", content: textReply });
 
         return {
             reply: textReply,
@@ -209,28 +266,79 @@ If they say yes, respond with "Great! Redirecting you to the checkout page now!"
         };
 
     } catch (err) {
-        console.error("Groq Error:", err.message);
+        const status = err.response?.status;
+        const detail = err.response?.data?.error?.message || err.message;
+        console.error("Groq Error:", status || "unknown", detail);
         return {
-            reply: "I'm having a little trouble connecting to the kitchen. Give me a second!",
+            reply: `Groq connection failed (${status || "network"}): ${detail || "unknown error"}`,
             system_action: { ui_navigation: "none" }
         };
     }
 }
+
+app.get("/health/ai", async (_req, res) => {
+    const result = {
+        groq: {
+            configured: hasGroqKey,
+            reachable: false,
+            status: null,
+            detail: ""
+        },
+        gemini: {
+            configured: hasGeminiKey
+        },
+        language_mode: USE_MATCHED_LANGUAGE ? "match" : "english"
+    };
+
+    if (!hasGroqKey) {
+        result.groq.detail = "GROQ_API_KEY is missing or placeholder.";
+        return res.status(200).json(result);
+    }
+
+    try {
+        const response = await groqClient.get("/models");
+        result.groq.reachable = true;
+        result.groq.status = response.status;
+        result.groq.detail = "Groq API reachable.";
+        return res.status(200).json(result);
+    } catch (error) {
+        result.groq.status = error.response?.status || null;
+        result.groq.detail = error.response?.data?.error?.message || error.message;
+        return res.status(502).json(result);
+    }
+});
 
 // =========================
 // MAIN ROUTE
 // =========================
 app.post("/chat", async (req, res) => {
     try {
-        const { message, image } = req.body;
+        const { message, image, conversationId } = req.body || {};
         let jsonResponse;
-        const safeMessage = typeof message === "string" ? message : "";
+        const safeMessage = typeof message === "string" ? message.trim() : "";
+        const safeConversationId = typeof conversationId === "string" && conversationId.trim()
+            ? conversationId.trim().slice(0, 64)
+            : "default";
+
+        if (!image && !safeMessage) {
+            return res.status(400).json({
+                reply: "Please send a message.",
+                system_action: { ui_navigation: "none" }
+            });
+        }
 
         console.log(
             `[CHAT] ${new Date().toISOString()} | message="${safeMessage.slice(0, 80)}" | hasImage=${Boolean(image)}`
         );
 
         if (image) {
+            if (!model) {
+                return res.status(400).json({
+                    reply: "Image analysis is unavailable because GEMINI_API_KEY is not configured.",
+                    system_action: { ui_navigation: "none" }
+                });
+            }
+
             const chatSession = model.startChat();
             const result = await chatSession.sendMessage([
                 { text: message || "Describe this drink" },
@@ -252,7 +360,7 @@ app.post("/chat", async (req, res) => {
                 };
             }
         } else {
-            jsonResponse = await callGroq(message);
+            jsonResponse = await callGroq(safeMessage, safeConversationId);
         }
 
         res.json(jsonResponse);
@@ -268,6 +376,10 @@ app.post("/chat", async (req, res) => {
 });
 
 // =========================
-app.listen(3000, () => {
-    console.log("DripTea running on http://localhost:3000");
+app.listen(PORT, () => {
+    console.log(`DripTea running on http://localhost:${PORT}`);
+    console.log(`[Startup] Groq key configured: ${hasGroqKey}`);
+    console.log(`[Startup] Gemini key configured: ${hasGeminiKey}`);
+    console.log(`[Startup] Chat language mode: ${USE_MATCHED_LANGUAGE ? "match" : "english"}`);
+    console.log(`[Startup] AI health check: http://localhost:${PORT}/health/ai`);
 });
