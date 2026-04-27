@@ -14,7 +14,8 @@ FYP-26-S2-11 for AI Chatbot for Customer.
 
 ## Backend setup
 1. Install Node.js 20 or newer.
-2. Copy `.env.example` to `.env`.
-3. Run `npm install`.
-4. Run `npm start`.
+2. Copy `.env.example` to `.env`. (create a new file in your local laptop, copy from .env.example into .env)
+3. cd DripTea_V1 folder
+4. Run `npm install`.
+6. Run `npm start`.
 
