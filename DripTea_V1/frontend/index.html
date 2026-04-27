@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DripTea - Ordering System</title>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <div class="storefront">
+            <header>
+                <h1>DripTea Menu</h1>
+            </header>
+            
+            <div class="menu-grid">
+                <div class="menu-card">Classic Milk Tea</div>
+                <div class="menu-card">Matcha Latte</div>
+                <div class="menu-card">Taro Slush</div>
+            </div>
+        </div>
+
+        <div class="chatbot-sidebar">
+            <div class="chat-header">
+                <h3>AI Concierge</h3>
+            </div>
+            
+            <div class="chat-window" id="chat-window">
+                <div class="message bot-message">Hello! I'm your AI barista. What can I get started for you today?</div>
+            </div>
+            
+            <div class="chat-input-area">
+                <input type="text" id="user-input" placeholder="Order a drink or ask a question...">
+                <!--<button id="send-btn">Send</button>-->
+                <button onclick="sendMessage()">Send</button>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

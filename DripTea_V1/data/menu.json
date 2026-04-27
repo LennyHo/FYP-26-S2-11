@@ -1,0 +1,125 @@
+{
+  "store_info": {
+    "currency": "SGD",
+    "nutri_grade_thresholds_per_100ml": {
+      "A": 1,
+      "B": 5,
+      "C": 10
+    }
+  },
+
+  "sizes": {
+    "medium": {
+      "volume_ml": 500,
+      "price_modifier": 0,
+      "calorie_multiplier": 1,
+      "sugar_multiplier": 1
+    },
+    "large": {
+      "volume_ml": 700,
+      "price_modifier": 1.5,
+      "calorie_multiplier": 1.4,
+      "sugar_multiplier": 1.4
+    }
+  },
+
+  "beverages": [
+    {
+      "id": "b001",
+      "name": "Classic Milk Tea",
+      "category": "Milk Tea",
+      "tags": ["classic", "black tea", "creamy"],
+      "price": 4.50,
+      "base_volume_ml": 500,
+      "base_calories": 120,
+      "base_sugar_g": 5,
+      "description": "Our signature premium black tea blended with rich milk."
+    },
+    {
+      "id": "b002",
+      "name": "Matcha Latte",
+      "category": "Latte",
+      "tags": ["matcha", "green tea", "japanese", "premium"],
+      "price": 5.50,
+      "base_volume_ml": 500,
+      "base_calories": 140,
+      "base_sugar_g": 2,
+      "description": "Ceremonial grade Uji matcha layered with fresh milk."
+    },
+    {
+      "id": "b003",
+      "name": "Double Chocolate Frappe",
+      "category": "Ice Blended",
+      "tags": ["chocolate", "sweet", "frappe", "ice blended"],
+      "price": 6.50,
+      "base_volume_ml": 500,
+      "base_calories": 250,
+      "base_sugar_g": 15,
+      "description": "Rich dark chocolate blended with ice and milk."
+    },
+    {
+      "id": "b004",
+      "name": "Milo Dinosaur",
+      "category": "Local Favorites",
+      "tags": ["milo", "chocolate", "malt", "local"],
+      "price": 5.00,
+      "base_volume_ml": 500,
+      "base_calories": 220,
+      "base_sugar_g": 12,
+      "description": "Classic iced Milo topped with a mountain of Milo powder."
+    },
+    {
+      "id": "b005",
+      "name": "Taro Slush",
+      "category": "Ice Blended",
+      "tags": ["taro", "yam", "sweet", "slush"],
+      "price": 6.00,
+      "base_volume_ml": 500,
+      "base_calories": 200,
+      "base_sugar_g": 10,
+      "description": "Creamy, earthy taro blended into a refreshing slush."
+    }
+  ],
+
+  "modifiers": {
+    "sugar_levels": {
+      "0%": { "name": "No Sugar", "added_sugar_g": 0, "added_calories": 0 },
+      "25%": { "name": "Quarter Sugar", "added_sugar_g": 10, "added_calories": 40 },
+      "50%": { "name": "Half Sugar", "added_sugar_g": 20, "added_calories": 80 },
+      "100%": { "name": "Normal Sugar", "added_sugar_g": 40, "added_calories": 160 }
+    },
+
+    "ice_levels": {
+      "0%": { "name": "No Ice", "price_modifier": 0 },
+      "50%": { "name": "Less Ice", "price_modifier": 0 },
+      "100%": { "name": "Normal Ice", "price_modifier": 0 }
+    },
+
+    "toppings": {
+      "tapioca_pearls": {
+        "name": "Tapioca Pearls",
+        "price": 1.20,
+        "added_sugar_g": 15,
+        "added_calories": 150
+      },
+      "aloe_vera": {
+        "name": "Aloe Vera",
+        "price": 1.00,
+        "added_sugar_g": 5,
+        "added_calories": 30
+      },
+      "cheese_foam": {
+        "name": "Cheese Foam",
+        "price": 1.50,
+        "added_sugar_g": 8,
+        "added_calories": 120
+      },
+      "no_topping": {
+        "name": "No Topping",
+        "price": 0.00,
+        "added_sugar_g": 0,
+        "added_calories": 0
+      }
+    }
+  }
+}
