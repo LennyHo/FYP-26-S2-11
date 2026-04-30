@@ -6,7 +6,11 @@ const testMatchaBtn = document.getElementById('test-matcha-btn');
 function addMessageToChat(text, className) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${className}`;
-    messageDiv.innerText = text;
+    
+    // THE CRITICAL FIX: Changed from innerText to innerHTML
+    // This allows the <br> and <button> tags to render properly!
+    messageDiv.innerHTML = text; 
+    
     chatWindow.appendChild(messageDiv);
     chatWindow.scrollTop = chatWindow.scrollHeight;
 }
@@ -33,23 +37,16 @@ async function sendMessage() {
 
         const data = await response.json();
 
-        // 1. Display the AI's text reply in the chat
+        // Display the AI's reply in the chat
         addMessageToChat(data.reply, 'bot-message');
 
-        // 2. THE NEW MAGIC: Listen for UI commands from the AI
+        // Listen for UI commands from the AI (if you still use this hidden logic)
         if (data.system_action && data.system_action.ui_navigation === "checkout") {
-            
-            // For testing right now: Pop up an alert
             alert("🤖 AI COMMAND RECEIVED: Opening Checkout Page!");
-            
-            // FUTURE UI LOGIC: When you build your cart UI, replace the alert with your CSS changes.
-            // Example:
-            // document.getElementById("cart-panel").classList.add("slide-in-open");
-            // document.getElementById("menu-panel").style.display = "none";
         }
 
     } catch (error) {
-        console.error("Fetch error:", error); // Logs the exact error in your browser console
+        console.error("Fetch error:", error); 
         addMessageToChat("Error connecting to server. Is the Node.js server running?", 'bot-message');
     }
 }
@@ -69,3 +66,30 @@ userInput.addEventListener('keypress', function(e) {
         sendMessage();
     }
 });
+
+// Function triggered by the AI's chat button for the cart
+function openCart() {
+    const cartModal = document.getElementById("cartModal");
+    if (cartModal) {
+        cartModal.style.display = "flex";
+    } else {
+        alert("Cart Modal HTML is missing from this page!");
+    }
+}
+
+// Function to close the cart
+function closeCart() {
+    document.getElementById("cartModal").style.display = "none";
+}
+
+// THE NEW MAGIC: Dynamic Checkout without a database!
+// The AI will pass the total price directly into this function!
+function goToCheckoutPage(totalPrice) {
+    if (totalPrice) {
+        // Save the dynamic total price to the browser's local memory
+        localStorage.setItem("dripTeaCartTotal", totalPrice);
+    }
+    
+    // Redirect to the checkout page
+    window.location.href = "checkout.html"; 
+}

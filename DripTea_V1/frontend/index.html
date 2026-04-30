@@ -48,6 +48,19 @@
             </div>
         </div>
 
+        <!-- Hidden Cart UI (Add this anywhere in your body) -->
+        <div id="cartModal" class="cart-modal" style="display: none;">
+            <div class="cart-content">
+                <span class="close-btn" onclick="closeCart()">&times;</span>
+                <h2>Your DripTea Cart</h2>
+                <div id="cartItems">
+                    <!-- Items will be injected here -->
+                    <p>Your items will appear here...</p>
+                </div>
+                <button class="checkout-btn">Checkout Now</button>
+            </div>
+        </div>
+        
         <div class="chatbot-sidebar">
             <div class="chat-header">
                 <h3>AI Concierge</h3>
