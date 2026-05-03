@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart - DripTea</title>
+    <link rel="stylesheet" href="app.css">
+    <style>
+        .cart-page-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .cart-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 0;
+        }
+        .cart-item-details h3 { margin-bottom: 5px; color: var(--text-main); }
+        .cart-item-details p { font-size: 14px; color: #777; }
+        .cart-item-price { font-size: 20px; font-weight: bold; color: var(--primary); }
+        .cart-footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cart-total-text { font-size: 24px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="cart-page-container">
+        <button onclick="window.location.href='index.html'" class="cta-btn" style="background: #ccc; color: #333; margin-bottom: 20px;">← Back to Menu</button>
+        
+        <h1 style="border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">Your Shopping Cart</h1>
+        
+        <!-- Javascript will inject the drinks here -->
+        <div id="cart-page-items">
+            <p style="padding: 20px 0;">Loading cart...</p>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total-text" id="cart-page-total">Total: S$ 0.00</div>
+            <button onclick="goToCheckoutPageFromCart()" class="cta-btn" style="font-size: 18px; padding: 15px 30px;">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <!-- Include the exact same app.js file! -->
+    <script src="app.js"></script>
+</body>
+</html>
