@@ -45,7 +45,7 @@ Coming soon:
 3. MULTI-LANGUAGE TESTS
 Saya mahu minuman coklat kurang gula
 我要低糖巧克力饮料
-I want milo kurang gula
+I want milo kurang manis
 
 4. MULTI-DRINK TESTS
 I want 2 drinks: chocolate 0% sugar and matcha 25% sugar

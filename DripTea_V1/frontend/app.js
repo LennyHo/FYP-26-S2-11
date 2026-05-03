@@ -67,29 +67,83 @@ userInput.addEventListener('keypress', function(e) {
     }
 });
 
-// Function triggered by the AI's chat button for the cart
+// ==========================================
+// SINGLE PAGE APP (SPA) NAVIGATION LOGIC
+// ==========================================
+
 function openCart() {
-    const cartModal = document.getElementById("cartModal");
-    if (cartModal) {
-        cartModal.style.display = "flex";
+    const menuView = document.getElementById('menu-view');
+    const cartView = document.getElementById('cart-view');
+    const cartItemsContainer = document.getElementById('cart-page-items');
+    
+    // 1. Hide the Menu and Show the Cart
+    menuView.style.display = 'none';
+    cartView.style.display = 'block';
+
+    // 2. Parse the AI's hidden data
+    const hiddenDataBlocks = document.querySelectorAll('.hidden-cart-data');
+    
+    if (hiddenDataBlocks.length > 0) {
+        const latestCartData = hiddenDataBlocks[hiddenDataBlocks.length - 1].innerText.trim();
+        let calculatedTotal = 0;
+        
+        // Clear the cart UI
+        cartItemsContainer.innerHTML = ""; 
+        
+        const drinks = latestCartData.split('\n');
+        
+        drinks.forEach(drinkLine => {
+            const parts = drinkLine.split('|');
+            
+            if (parts.length === 3) {
+                const name = parts[0].trim();
+                const details = parts[1].trim();
+                const priceString = parts[2].replace(/[^0-9.]/g, '');
+                const price = parseFloat(priceString);
+                
+                if (!isNaN(price)) {
+                    calculatedTotal += price;
+                    
+                    // Inject the HTML for this drink
+                    cartItemsContainer.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #EFEAE6; padding: 20px 0;">
+                            <div>
+                                <h3 style="margin-bottom: 5px; color: #4A3B32;">${name}</h3>
+                                <p style="font-size: 14px; color: #777;">${details}</p>
+                            </div>
+                            <div style="font-size: 20px; font-weight: bold; color: #C87941;">S$ ${price.toFixed(2)}</div>
+                        </div>
+                    `;
+                }
+            }
+        });
+
+        // Update Total
+        document.getElementById("cart-page-total").innerText = `Total: S$ ${calculatedTotal.toFixed(2)}`;
+        
+        // Save total to localStorage just in case they go to checkout
+        localStorage.setItem("dripTeaCartTotal", calculatedTotal.toFixed(2));
     } else {
-        alert("Cart Modal HTML is missing from this page!");
+        cartItemsContainer.innerHTML = "<p style='padding: 20px 0;'>Your cart is currently empty.</p>";
+        document.getElementById("cart-page-total").innerText = `Total: S$ 0.00`;
     }
 }
 
-// Function to close the cart
 function closeCart() {
-    document.getElementById("cartModal").style.display = "none";
+    // Hide the Cart and Show the Menu
+    document.getElementById('cart-view').style.display = 'none';
+    document.getElementById('menu-view').style.display = 'block';
 }
 
-// THE NEW MAGIC: Dynamic Checkout without a database!
-// The AI will pass the total price directly into this function!
+function goToCheckoutPageFromCart() {
+    // This assumes you still have a separate checkout.html page for the final payment screen
+    window.location.href = "checkout.html";
+}
+
 function goToCheckoutPage(totalPrice) {
+    // Called directly by the AI chatbot button
     if (totalPrice) {
-        // Save the dynamic total price to the browser's local memory
         localStorage.setItem("dripTeaCartTotal", totalPrice);
     }
-    
-    // Redirect to the checkout page
     window.location.href = "checkout.html"; 
 }
