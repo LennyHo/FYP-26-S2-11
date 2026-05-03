@@ -109,19 +109,64 @@
 
     </div>
     <script>
-        // Run this code when the checkout page loads
         window.onload = function() {
-            // Retrieve the total price the chatbot saved
-            const savedTotal = localStorage.getItem("dripTeaCartTotal");
-            
-            if (savedTotal) {
-                // Find the Total Cost text and the Checkout Button
-                const totalCostDisplay = document.querySelector(".total-row span:last-child");
-                const checkoutBtn = document.querySelector(".btn-checkout");
+            const savedData = localStorage.getItem("dripTeaCartData");
+            const checkoutListContainer = document.querySelector(".cart-section"); // Update this selector to match where your items go
+            let calculatedTotal = 0;
+
+            if (savedData && checkoutListContainer) {
+                // Clear out the hardcoded static items
+                let newHtml = `
+                    <div class="cart-header">
+                        <h1>Shopping Cart</h1>
+                    </div>
+                    <div class="table-headers">
+                        <span class="col-details">PRODUCT DETAILS</span>
+                        <span class="col-price">PRICE</span>
+                    </div>
+                `;
+
+                const drinks = savedData.split('\n');
+                drinks.forEach(drinkLine => {
+                    const parts = drinkLine.split('|');
+                    if (parts.length === 4) {
+                        const name = parts[0].trim();
+                        const details = parts[1].trim();
+                        const priceString = parts[2].replace(/[^0-9.]/g, '');
+                        const price = parseFloat(priceString);
+                        const imageSrc = parts[3].trim();
+
+                        if (!isNaN(price)) {
+                            calculatedTotal += price;
+                            newHtml += `
+                                <div class="cart-item" style="display: flex; align-items: center; margin-bottom: 30px;">
+                                    <img src="${imageSrc}" style="width: 100px; height: 80px; object-fit: cover; border-radius: 8px; margin-right: 20px;">
+                                    <div class="item-info" style="flex: 2;">
+                                        <strong>${name}</strong><br>
+                                        <span style="font-size: 14px; color: #777;">${details}</span>
+                                    </div>
+                                    <div class="item-price" style="font-weight: bold;">S$ ${price.toFixed(2)}</div>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+
+                // Append the total
+                newHtml += `
+                    <div class="cart-summary" style="margin-top: 50px; border-top: 2px solid #eee; padding-top: 20px;">
+                        <div class="summary-row total-row" style="display:flex; justify-content:space-between; font-weight:bold; font-size:18px;">
+                            <span>TOTAL COST:</span>
+                            <span>S$ ${calculatedTotal.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
                 
-                // Update the HTML to show the dynamic AI price!
-                if (totalCostDisplay) totalCostDisplay.innerText = "S$ " + parseFloat(savedTotal).toFixed(2);
-                if (checkoutBtn) checkoutBtn.innerText = "Check Out · S$ " + parseFloat(savedTotal).toFixed(2);
+                checkoutListContainer.innerHTML = newHtml;
+                
+                // Update the actual checkout button price
+                const checkoutBtn = document.querySelector(".btn-checkout");
+                if (checkoutBtn) checkoutBtn.innerText = "Check Out · S$ " + calculatedTotal.toFixed(2);
             }
         };
     </script>

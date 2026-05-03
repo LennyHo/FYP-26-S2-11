@@ -95,21 +95,28 @@ function openCart() {
         drinks.forEach(drinkLine => {
             const parts = drinkLine.split('|');
             
-            if (parts.length === 3) {
+            // Notice this is now checking for 4 parts instead of 3!
+            if (parts.length === 4) { 
                 const name = parts[0].trim();
                 const details = parts[1].trim();
                 const priceString = parts[2].replace(/[^0-9.]/g, '');
                 const price = parseFloat(priceString);
+                const imageSrc = parts[3].trim(); // <--- GRAB THE IMAGE PATH
                 
                 if (!isNaN(price)) {
                     calculatedTotal += price;
                     
-                    // Inject the HTML for this drink
+                    // Inject the HTML for this drink, including the new <img> tag!
                     cartItemsContainer.innerHTML += `
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #EFEAE6; padding: 20px 0;">
-                            <div>
-                                <h3 style="margin-bottom: 5px; color: #4A3B32;">${name}</h3>
-                                <p style="font-size: 14px; color: #777;">${details}</p>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <!-- THE IMAGE IS RENDERED HERE -->
+                                <img src="${imageSrc}" alt="${name}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; background-color: #f1f1f1;">
+                                
+                                <div>
+                                    <h3 style="margin-bottom: 5px; color: #4A3B32;">${name}</h3>
+                                    <p style="font-size: 14px; color: #777;">${details}</p>
+                                </div>
                             </div>
                             <div style="font-size: 20px; font-weight: bold; color: #C87941;">S$ ${price.toFixed(2)}</div>
                         </div>

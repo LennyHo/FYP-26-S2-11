@@ -133,7 +133,7 @@ function buildSystemPrompt(userMessage) {
     const structuredData = filtered.map(item => ({
         id: item.id, name: item.name, price: item.price,
         calories: item.base_calories, sugar: item.base_sugar_g,
-        nutri_grade: item.nutri_grade, tags: item.tags, description: item.description
+        nutri_grade: item.nutri_grade, tags: item.tags, description: item.description, image: item.image
     }));
 
     return `You are the DripTea Health Advisor. You are a helpful, human-like AI.
@@ -191,8 +191,8 @@ Use this EXACT structure (Translate to their language, EXCEPT the HTML code):
 *(Repeat for all drinks in the cart)*
 
 <div class='hidden-cart-data' style='display:none;'>
-[Drink 1 Name] | [Size], [Sugar], [Toppings] | [Drink 1 Price]
-[Drink 2 Name] | [Size], [Sugar], [Toppings] | [Drink 2 Price]
+[Drink 1 Name] | [Size], [Sugar], [Toppings] | [Drink 1 Price] | [Image Path]
+[Drink 2 Name] | [Size], [Sugar], [Toppings] | [Drink 2 Price] | [Image Path]
 </div>
 
 Total price: S$ [Calculate Grand Total]<br>
