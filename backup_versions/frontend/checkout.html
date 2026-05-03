@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DripTea Checkout</title>
+    <link rel="stylesheet" href="checkout.css">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <span>BUY DRIPTEA</span>
+            <span>OUR STORY</span>
+            <span>DRINK MENU</span>
+        </div>
+        <div class="header-center">DRIPTEA LOGO</div>
+        <div class="header-right">
+            <span>LOGIN</span>
+            <span>🛒</span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        
+        <!-- LEFT: CART UI -->
+        <section class="cart-section" id="cartPage">
+            <div class="cart-header">
+                <h1>Shopping Cart</h1>
+                <h2>2 Items</h2>
+            </div>
+
+            <div class="table-headers">
+                <span class="col-details">PRODUCT DETAILS</span>
+                <span class="col-qty">QUANTITY</span>
+                <span class="col-price">PRICE</span>
+                <span class="col-total">TOTAL</span>
+            </div>
+
+            <!-- Item 1 -->
+            <div class="cart-item">
+                <div class="item-image">DripTea<br>Image</div>
+                <div class="item-info">
+                    <p>Oolong Milk Tea<br>M<br>25% Sugar</p>
+                </div>
+                <div class="item-qty">
+                    <span>-</span><span class="qty-box">1</span><span>+</span>
+                </div>
+                <div class="item-price">S$ 5.00</div>
+                <div class="item-total">S$ 5.00</div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="cart-item">
+                <div class="item-image">DripTea<br>Image</div>
+                <div class="item-info">
+                    <p>Classic Milk Tea<br>M<br>25% Sugar</p>
+                </div>
+                <div class="item-qty">
+                    <span>-</span><span class="qty-box">1</span><span>+</span>
+                </div>
+                <div class="item-price">S$ 3.50</div>
+                <div class="item-total">S$ 3.50</div>
+            </div>
+
+            <!-- Summary -->
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>VOUCHER APPLIED: FIRST TIMER 50% Discount</span>
+                    <span>-S$ 4.25</span>
+                </div>
+                <div class="summary-row total-row">
+                    <span>TOTAL COST:</span>
+                    <span>S$ 4.25</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn">Continue Shopping</button>
+                    <button class="btn btn-checkout">Check Out · S$ 4.25</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT: CHATBOT UI -->
+        <section class="chat-section">
+            <div class="chat-header">
+                <div>
+                    <h3>DripTea AI</h3>
+                    <span>Ask away!</span>
+                </div>
+                <div>🌐 ✖</div>
+            </div>
+            
+            <div class="chat-history" id="chatbox">
+                <!-- Example Conversation -->
+                <div class="bubble bot-bubble">Hello there! Welcome to DripTea.<br>How may I assist you?</div>
+                <div class="bubble user-bubble">Hello there, I would like to ask if there is any promotion for milk tea?</div>
+                <div class="bubble bot-bubble">Yes! for first timers, we do have 50% discount. Would you like to apply that into your current cart?</div>
+                <div class="bubble user-bubble">Yes! I would like to include that into my cart please! That would be grateful.</div>
+                <div class="bubble bot-bubble">Sure here is the updated purchase total amount that we have calculated. Please check before you make a payment.<br><br><s>$8.50</s><br><b>S$ 4.25</b></div>
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" placeholder="Type your message...">
+                <button class="send-btn">▶</button>
+            </div>
+        </section>
+
+    </div>
+    <script>
+        window.onload = function() {
+            const savedData = localStorage.getItem("dripTeaCartData");
+            const checkoutListContainer = document.querySelector(".cart-section"); // Update this selector to match where your items go
+            let calculatedTotal = 0;
+
+            if (savedData && checkoutListContainer) {
+                // Clear out the hardcoded static items
+                let newHtml = `
+                    <div class="cart-header">
+                        <h1>Shopping Cart</h1>
+                    </div>
+                    <div class="table-headers">
+                        <span class="col-details">PRODUCT DETAILS</span>
+                        <span class="col-price">PRICE</span>
+                    </div>
+                `;
+
+                const drinks = savedData.split('\n');
+                drinks.forEach(drinkLine => {
+                    const parts = drinkLine.split('|');
+                    if (parts.length === 4) {
+                        const name = parts[0].trim();
+                        const details = parts[1].trim();
+                        const priceString = parts[2].replace(/[^0-9.]/g, '');
+                        const price = parseFloat(priceString);
+                        const imageSrc = parts[3].trim();
+
+                        if (!isNaN(price)) {
+                            calculatedTotal += price;
+                            newHtml += `
+                                <div class="cart-item" style="display: flex; align-items: center; margin-bottom: 30px;">
+                                    <img src="${imageSrc}" style="width: 100px; height: 80px; object-fit: cover; border-radius: 8px; margin-right: 20px;">
+                                    <div class="item-info" style="flex: 2;">
+                                        <strong>${name}</strong><br>
+                                        <span style="font-size: 14px; color: #777;">${details}</span>
+                                    </div>
+                                    <div class="item-price" style="font-weight: bold;">S$ ${price.toFixed(2)}</div>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+
+                // Append the total
+                newHtml += `
+                    <div class="cart-summary" style="margin-top: 50px; border-top: 2px solid #eee; padding-top: 20px;">
+                        <div class="summary-row total-row" style="display:flex; justify-content:space-between; font-weight:bold; font-size:18px;">
+                            <span>TOTAL COST:</span>
+                            <span>S$ ${calculatedTotal.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                checkoutListContainer.innerHTML = newHtml;
+                
+                // Update the actual checkout button price
+                const checkoutBtn = document.querySelector(".btn-checkout");
+                if (checkoutBtn) checkoutBtn.innerText = "Check Out · S$ " + calculatedTotal.toFixed(2);
+            }
+        };
+    </script>
+</body>
+</html>

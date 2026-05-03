@@ -21,8 +21,19 @@ function hasConfiguredApiKey(value) {
         normalized.includes("placeholder")
     );
 }
+
+// =========================
+// MULTI-KEY SETUP
+// =========================
 const hasGroqKey = hasConfiguredApiKey(process.env.GROQ_API_KEY);
-const hasGeminiKey = hasConfiguredApiKey(process.env.GEMINI_API_KEY);
+
+// Split the comma-separated Gemini keys into an array, clean up spaces, and remove empty/fake ones
+const geminiKeys = process.env.GEMINI_API_KEY 
+    ? process.env.GEMINI_API_KEY.split(",").map(k => k.trim()).filter(hasConfiguredApiKey)
+    : [];
+
+// We start at index 0 (the first key)
+let currentGeminiKeyIndex = 0; 
 
 const groqClient = axios.create({
     baseURL: "https://api.groq.com/openai/v1",
@@ -38,13 +49,10 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
 // =========================
-// LOAD MENU
+// LOAD MENU & UTILS
 // =========================
 const menuData = JSON.parse(fs.readFileSync("./data/menu.json", "utf8"));
 
-// =========================
-// NUTRI-GRADE FUNCTION
-// =========================
 function getNutriGrade(sugarPer100ml) {
     if (sugarPer100ml <= 1) return "A";
     if (sugarPer100ml <= 5) return "B";
@@ -52,30 +60,21 @@ function getNutriGrade(sugarPer100ml) {
     return "D";
 }
 
-// =========================
-// SCORE-BASED FILTER (BULLETPROOF VERSION)
-// =========================
 function filterMenu(menu, userMessage) {
     const msg = userMessage.toLowerCase();
-
-    // 1. Detect if the user set a hard price limit
     const priceMatch = msg.match(/(?:below|under|less than)\s*\$?(\d+(\.\d+)?)/);
     const maxPrice = priceMatch ? parseFloat(priceMatch[1]) : null;
 
-    // 2. Filter BEFORE scoring
+    const isRecommendRequest = /recommend|signature|best|推荐|招牌|介绍|其他/.test(msg);
+
     let results = menu.beverages.filter(item => {
-        // STRICT JAVASCRIPT FILTER: "Under $5" means Less Than OR EXACTLY EQUAL To $5.
-        if (maxPrice !== null) {
-            return item.price <= maxPrice; 
-        }
+        if (maxPrice !== null) return item.price <= maxPrice;
         return true;
     }).map(item => {
         let score = 0;
-
         item.tags.forEach(tag => {
             if (msg.includes(tag.toLowerCase())) score += 3;
         });
-
         if (msg.includes(item.name.toLowerCase())) score += 5;
         if (msg.includes("low sugar") && item.base_sugar_g <= 5) score += 3;
 
@@ -86,41 +85,16 @@ function filterMenu(menu, userMessage) {
         };
     });
 
-    // 3. Only keep drinks that actually match the flavor/words asked
     const maxScore = Math.max(...results.map(r => r.score));
-    if (maxScore > 0) {
-        results = results.filter(r => r.score > 0);
-    }
+    if (maxScore > 0) results = results.filter(r => r.score > 0);
 
     return results.sort((a, b) => b.score - a.score).slice(0, 5);
 }
 
 // =========================
-// GEMINI (IMAGE BRAIN)
-// =========================
-let model = null;
-if (hasGeminiKey) {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        generationConfig: {
-            responseMimeType: "application/json",
-        }
-    });
-}
-
-// =========================
-// GROQ (TEXT BRAIN & MEMORY)
+// CONVERSATION MEMORY
 // =========================
 const conversationStore = new Map();
-
-function getLanguageInstruction() {
-    if (USE_MATCHED_LANGUAGE) {
-        return "You MUST detect the language of the user's latest message. If the message is clearly English OR ambiguous Latin-alphabet text, reply in UK English. Only reply in another language when the user's language is clearly non-English.";
-    }
-
-    return "You MUST reply in UK English only, regardless of the user's language.";
-}
 
 function getConversationHistory(conversationId) {
     if (!conversationStore.has(conversationId)) {
@@ -128,178 +102,159 @@ function getConversationHistory(conversationId) {
             const oldestId = conversationStore.keys().next().value;
             conversationStore.delete(oldestId);
         }
-
         conversationStore.set(conversationId, []);
     }
-
     return conversationStore.get(conversationId);
 }
 
 function appendToConversation(history, message) {
     history.push(message);
-
     if (history.length > MAX_HISTORY_MESSAGES) {
         history.splice(0, history.length - MAX_HISTORY_MESSAGES);
     }
 }
 
-async function callGroq(userMessage, conversationId) {
-    if (!hasGroqKey) {
-        return {
-            reply: "Groq API key is missing or still a placeholder. Please set GROQ_API_KEY in DripTea_V1/.env and restart the backend.",
-            system_action: { ui_navigation: "none" }
-        };
-    }
+// =========================
+// SYSTEM PROMPT BUILDER
+// =========================
+function buildSystemPrompt(userMessage) {
+    const langInstruction = USE_MATCHED_LANGUAGE 
+        ? "CRITICAL FINAL RULE: You MUST reply in the exact same language as the user's last message! If they spoke Chinese, reply in Chinese. If English, reply in English." 
+        : "CRITICAL FINAL RULE: You MUST reply in UK English only, regardless of the user's language.";
 
     const filtered = filterMenu(menuData, userMessage);
-
     const structuredData = filtered.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        calories: item.base_calories,
-        sugar: item.base_sugar_g,
-        nutri_grade: item.nutri_grade,
-        tags: item.tags,
-        description: item.description
+        id: item.id, name: item.name, price: item.price,
+        calories: item.base_calories, sugar: item.base_sugar_g,
+        nutri_grade: item.nutri_grade, tags: item.tags, description: item.description, image: item.image
     }));
 
-    const conversationHistory = getConversationHistory(conversationId);
-    appendToConversation(conversationHistory, { role: "user", content: userMessage });
-
-    const systemPrompt = `
-You are the DripTea Health Advisor. Your tone is warm, friendly, and human. 
-
-MULTILINGUAL RULE (STRICT & CRITICAL):
-${getLanguageInstruction()}
-
-NUTRI-GRADE MATH (Official HPB Guidelines): (HIDDEN INTERNAL LOGIC - DO NOT SHOW MATH TO USER):
-Base Volume is 500ml.
-Added Sugar: 0% = 0g | 25% = 10g | 50% = 20g | 100% = 40g.
-Formula: ((Base Sugar + Added Sugar) / 500) * 100 = Xg per 100ml.
-* Grade A: <= 1g
-* Grade B: > 1g to <= 5g
-* Grade C: > 5g to <= 10g
-* Grade D: > 10g
-
-STRICT FLAVOR & PRICE RULES (CRITICAL):
-1. NEVER recommend a drink that does not match the user's requested flavor. If they ask for chocolate, DO NOT suggest Milk Tea.
-2. PRICE OVERRIDE: If a user asks for drinks "under", "below", or "for" a certain price (e.g., $5), you MUST treat that as "LESS THAN OR EQUAL TO". You MUST include drinks that are exactly that price (e.g., $5.00).
-3. NEVER show the math formula or calculations to the user. Just show the final Grade and Calories.
-4. If no drink perfectly matches their request, apologize and offer the closest match.
-5. SMART GUESSING: If you showed MULTIPLE drinks and the user says "this one" or "yes", you MUST ask them to clarify which drink. However, if you only showed ONE single drink, and the user says "yes" or "this one", you MUST accept that as a confirmation for that specific drink and proceed to Phase 2.
-
-ORDERING RULES:
-Guide the user ONE STEP AT A TIME. DO NOT list the whole flow at once. Ask ONE question, then STOP.
+    return `You are the DripTea Health Advisor. You are a helpful, human-like AI.
 
 AVAILABLE DRINKS CONTEXT:
 ${JSON.stringify(structuredData, null, 2)}
 
-ORDERING PHASES (Determine the phase, do it, and WAIT):
+NUTRI-GRADE MATH (Official HPB Guidelines):
+Base Volume is 500ml. Added Sugar: 0%=0g | 25%=10g | 50%=20g | 100%=40g.
+Formula: ((Base Sugar + Added Sugar) / 500) * 100 = Xg per 100ml.
+Grade A: <=1g | Grade B: >1g to <=5g | Grade C: >5g to <=10g | Grade D: >10g
+
+STRICT BEHAVIOR RULES:
+1. NEVER recommend a drink that does not match the requested flavor.
+2. CART MEMORY: Keep track of all drinks the user has confirmed.
+3. HTML OVERRIDE: When generating buttons or new lines, you MUST use exact HTML brackets like <button> and <br>. 
+4. FAST-TRACK ORDERING: If user gives ALL details (Name, Size, Sugar, Toppings, Checkout intent), bypass all phases.
+5. PARTIAL FAST-TRACK: If user gives multiple details but forgets something, ask ONLY for the missing piece.
+
+ORDERING PHASES (Do exactly what the phase says, then STOP):
 
 STEP 1: MENU SELECTION
-Analyze the AVAILABLE DRINKS CONTEXT.
-SCENARIO A: There are 2 OR MORE drinks.
-1. List each drink: "- [Name] ($[Price]) | Grade: [Grade] | Sugar: [Sugar]g | Calories: [Calories] kcal"
-2. Ask: "Which one would you like?"
-(STOP AND WAIT).
-SCENARIO B: There is ONLY 1 drink.
-You MUST provide the drink stats and the size question in ONE SINGLE MESSAGE. Follow this exact template:
-- [Drink Name] ($[Price]) | Grade: [Grade] | Sugar: [Sugar]g | Calories: [Calories] kcal
-We have the [Drink Name]! Do you like this?
-(Example for Milo:
-- Milo Dinosaur ($5.00) | Grade: B | Sugar: 12g | Calories: 220 kcal
-We have the [Drink Name]! Do you like this? 
-(STOP AND WAIT).
+- If AVAILABLE DRINKS CONTEXT is empty: This means the user hasn't specified a drink. DO NOT list any drinks. Simply ask them what they are in the mood for (e.g., "What flavor or type of drink would you like today?").
+- If the user asks for recommendations: Introduce the drinks as: "Here are our highly recommended signature drinks:" (Translate to their language).
+- When listing drinks, format EACH drink EXACTLY like this with a line break at the end (Translate the labels to their language):
+"[Name] ($[Price]) | Nutri Grade: [Grade] | Sugar: [Sugar]g | Calories: [Calories] kcal<br><br>"
+- ONLY AFTER listing all the drinks completely, you MUST ask ONE final question at the very bottom:
+  * If there is exactly 1 drink: "Do you want to choose this?" (Translate to their language)
+  * If there are 2 or more drinks: "Which one would you like to choose?" (Translate to their language)
+- NEVER repeat previous search categories (like "chocolate drinks") if the user is asking for something new.
 
-PHASE 2: SIZE & SUGAR (WITH PROACTIVE HEALTH ADVICE)
-(CRITICAL RULE: If the user types the actual name of the drink, DO NOT ask them to confirm. Move straight to this phase!)
-Once the drink is confirmed, ask for the Size. 
-SIZE RULES: You ONLY have Medium (base price) and Large (base price + $1.50). YOU DO NOT HAVE A SMALL SIZE. NEVER OFFER SMALL.
-Calculate and show the EXACT final price for Medium and Large. (e.g., "Medium $5.00, Large $6.50"). (STOP HERE).
+PHASE 2: SIZE
+Once confirmed, calculate the exact prices and ask using this structure (Translate to their language): 
+"Alright, a [Name]! Would you like Medium ($[Base Price]) or Large ($[Base Price + 1.50])?"
 
-PHASE 3: SUGAR SELECTION (WITH PROACTIVE HEALTH ADVICE)
-Once size is picked, ask for their Sugar level (0%, 25%, 50%, 100%).
-CRITICAL ADVICE: You MUST actively recommend choosing lesser sugar (like 0% or 25%) for a healthier choice, explaining it can improve their Nutri-Grade! (STOP HERE).
+PHASE 3: SUGAR SELECTION
+Ask for Sugar (0%, 25%, 50%, 100%).
+Use this structure with the <br><br> break (Translate to their language):
+"Alright, a [Size] [Name]! Now, for the sugar level. Would you like 0%, 25%, 50%, or 100%?<br><br>Just so you know, 0% adds 0g of sugar, 25% adds 10g, 50% adds 20g, and 100% adds 40g. Choosing lower sugar helps keep your Nutri-Grade healthier!"
 
 PHASE 4: TOPPINGS & RECALCULATION
-Once sugar is picked, immediately congratulate them and proudly state their CURRENT Nutri-Grade, total Sugar, and total Calories based on their size and sugar choices.
-THEN, casually ask if they want Toppings. You MUST show the price AND the nutritional impact next to each topping option so they can decide safely.
-Use these exact stats for the toppings:
-- Pearls (+$1.20 | adds 150 kcal & 10g sugar)
-- Aloe Vera (+$1.00 | adds 40 kcal & 5g sugar)
-- Cheese Foam (+$1.50 | adds 200 kcal & 8g sugar)
-(STOP HERE).
+Announce the recalculated stats using this structure (Translate to their language):
+"With your chosen size and sugar level, your drink:<br>[Name] ($[Calculated Price]) | Nutri Grade: [New Grade] | Sugar: [New Sugar]g | Calories: [New Calories] kcal<br><br>You can now choose from the following toppings:<br>Pearls (+$1.20), Aloe Vera (+$1.00), Cheese Foam (+$1.50)."
 
-PHASE 5: CHECKOUT
-Summarize their complete custom order (Drink, Size, Sugar, Toppings, Final Price, Final Nutri-Grade, Final Calories). 
-DO NOT ask them to change their sugar level here. Simply ask if they are ready to check out.
-If they say yes, respond with "Great! Redirecting you to the checkout page now!".
-`;
+PHASE 5: CART SUMMARY & ACTIONS
+Once toppings are selected (or if the user fast-tracks multiple drinks), you MUST summarize the cart. 
+CRITICAL RULE: You MUST list the individual stats (Sugar, Calories, Grade) directly underneath EACH drink. Do NOT combine the stats at the bottom.
 
-    try {
-        const response = await groqClient.post(
-            "/chat/completions",
-            {
-                model: "llama-3.1-8b-instant",
-                temperature: 0.7,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    ...conversationHistory.slice(-10)
-                ]
-            }
-        );
+Use this EXACT structure (Translate to their language, EXCEPT the HTML code):
+"You currently have the following in your cart:<br><br>
+* **[Drink 1 Name]** ([Size], [Sugar], [Toppings])<br>
+  - Sugar: [Total]g | Calories: [Total] kcal | Nutri-Grade: [Grade]<br><br>
+* **[Drink 2 Name]** ([Size], [Sugar], [Toppings])<br>
+  - Sugar: [Total]g | Calories: [Total] kcal | Nutri-Grade: [Grade]<br><br>
+*(Repeat for all drinks in the cart)*
 
-        const textReply = response.data.choices[0].message.content;
-        appendToConversation(conversationHistory, { role: "assistant", content: textReply });
+<div class='hidden-cart-data' style='display:none;'>
+[Drink 1 Name] | [Size], [Sugar], [Toppings] | [Drink 1 Price] | [Image Path]
+[Drink 2 Name] | [Size], [Sugar], [Toppings] | [Drink 2 Price] | [Image Path]
+</div>
 
-        return {
-            reply: textReply,
-            system_action: { ui_navigation: "none" }
-        };
+Total price: S$ [Calculate Grand Total]<br>
+I will add this to your cart.<br><br><button class='chat-nav-btn' onclick='openCart()'>Check My Cart</button><br><br>
+Would you like to add another drink to your order, or are you ready to checkout?<br><br><button class='chat-nav-btn' onclick='goToCheckoutPage([Grand Total])'>Proceed to Checkout</button>"
 
-    } catch (err) {
-        const status = err.response?.status;
-        const detail = err.response?.data?.error?.message || err.message;
-        console.error("Groq Error:", status || "unknown", detail);
-        return {
-            reply: `Groq connection failed (${status || "network"}): ${detail || "unknown error"}`,
-            system_action: { ui_navigation: "none" }
-        };
-    }
+PHASE 6: FINAL CHECKOUT ACTION
+If the user asks for another drink: Start over at STEP 1 for their new drink request.
+If the user says check out, DO NOT ask them if they want another drink and reply EXACTLY with this string (Make sure to put the actual Grand Total number inside the parentheses) (translated to their language):
+"Great! Let's get that processed for you. <br><br><button class='chat-nav-btn' onclick='goToCheckoutPage([Insert Grand Total Number Here])'>Proceed to Checkout</button>"
+
+${langInstruction}`;
 }
 
-app.get("/health/ai", async (_req, res) => {
-    const result = {
-        groq: {
-            configured: hasGroqKey,
-            reachable: false,
-            status: null,
-            detail: ""
-        },
-        gemini: {
-            configured: hasGeminiKey
-        },
-        language_mode: USE_MATCHED_LANGUAGE ? "match" : "english"
-    };
+// =========================
+// AI APIS (GEMINI ROTATOR & GROQ)
+// =========================
 
-    if (!hasGroqKey) {
-        result.groq.detail = "GROQ_API_KEY is missing or placeholder.";
-        return res.status(200).json(result);
-    }
+// This function attempts to use Gemini, cycling through keys if one fails
+async function callGeminiTextWithRotation(userMessage, history, systemPrompt) {
+    if (geminiKeys.length === 0) throw new Error("No Gemini keys available.");
 
-    try {
-        const response = await groqClient.get("/models");
-        result.groq.reachable = true;
-        result.groq.status = response.status;
-        result.groq.detail = "Groq API reachable.";
-        return res.status(200).json(result);
-    } catch (error) {
-        result.groq.status = error.response?.status || null;
-        result.groq.detail = error.response?.data?.error?.message || error.message;
-        return res.status(502).json(result);
+    let lastError;
+    // Loop through however many keys you provided
+    for (let i = 0; i < geminiKeys.length; i++) {
+        // This ensures we start with the current working key, but will cycle to the next if it fails
+        let indexToTry = (currentGeminiKeyIndex + i) % geminiKeys.length;
+        
+        try {
+            const genAI = new GoogleGenerativeAI(geminiKeys[indexToTry]);
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash",
+                systemInstruction: systemPrompt
+            });
+
+            const geminiHistory = history.map(msg => ({
+                role: msg.role === "assistant" ? "model" : "user",
+                parts: [{ text: msg.content }]
+            }));
+
+            const chatSession = model.startChat({ history: geminiHistory });
+            const result = await chatSession.sendMessage(userMessage);
+            
+            // If it succeeds, set this as the new active key so we don't keep trying broken ones
+            currentGeminiKeyIndex = indexToTry;
+            return result.response.text();
+        } catch (err) {
+            console.warn(`[CHAT] Gemini Key ${indexToTry + 1} failed:`, err.message);
+            lastError = err;
+            // The loop will naturally continue to the next key...
+        }
     }
-});
+    
+    // If we break out of the loop, ALL Gemini keys have failed
+    throw new Error(`All ${geminiKeys.length} Gemini keys failed. Last error: ${lastError.message}`);
+}
+
+async function callGroqText(userMessage, history, systemPrompt) {
+    const response = await groqClient.post("/chat/completions", {
+        model: "llama-3.1-8b-instant",
+        temperature: 0.7,
+        messages: [
+            { role: "system", content: systemPrompt },
+            ...history,
+            { role: "user", content: userMessage }
+        ]
+    });
+    return response.data.choices[0].message.content;
+}
 
 // =========================
 // MAIN ROUTE
@@ -307,62 +262,75 @@ app.get("/health/ai", async (_req, res) => {
 app.post("/chat", async (req, res) => {
     try {
         const { message, image, conversationId } = req.body || {};
-        let jsonResponse;
         const safeMessage = typeof message === "string" ? message.trim() : "";
         const safeConversationId = typeof conversationId === "string" && conversationId.trim()
-            ? conversationId.trim().slice(0, 64)
-            : "default";
+            ? conversationId.trim().slice(0, 64) : "default";
 
         if (!image && !safeMessage) {
-            return res.status(400).json({
-                reply: "Please send a message.",
-                system_action: { ui_navigation: "none" }
-            });
+            return res.status(400).json({ reply: "Please send a message.", system_action: { ui_navigation: "none" } });
         }
 
-        console.log(
-            `[CHAT] ${new Date().toISOString()} | message="${safeMessage.slice(0, 80)}" | hasImage=${Boolean(image)}`
-        );
+        console.log(`[CHAT] ${new Date().toISOString()} | msg="${safeMessage.slice(0, 50)}" | img=${Boolean(image)}`);
 
+        // IMAGE HANDLING (Gemini Rotator)
         if (image) {
-            if (!model) {
-                return res.status(400).json({
-                    reply: "Image analysis is unavailable because GEMINI_API_KEY is not configured.",
-                    system_action: { ui_navigation: "none" }
-                });
-            }
-
-            const chatSession = model.startChat();
-            const result = await chatSession.sendMessage([
-                { text: message || "Describe this drink" },
-                {
-                    inlineData: {
-                        mimeType: "image/jpeg",
-                        data: image
-                    }
+            if (geminiKeys.length === 0) throw new Error("GEMINI_API_KEY is not configured for images.");
+            
+            let imageReply = null;
+            let lastErr = null;
+            
+            for (let i = 0; i < geminiKeys.length; i++) {
+                let indexToTry = (currentGeminiKeyIndex + i) % geminiKeys.length;
+                try {
+                    const genAI = new GoogleGenerativeAI(geminiKeys[indexToTry]);
+                    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+                    const result = await model.generateContent([
+                        { text: safeMessage || "Describe this drink" },
+                        { inlineData: { mimeType: "image/jpeg", data: image } }
+                    ]);
+                    imageReply = result.response.text();
+                    currentGeminiKeyIndex = indexToTry;
+                    break; // Success! Break out of the loop
+                } catch (err) {
+                    console.warn(`[CHAT] Image Gemini Key ${indexToTry + 1} failed:`, err.message);
+                    lastErr = err;
                 }
-            ]);
-
-            const text = result.response.text();
-            try {
-                jsonResponse = JSON.parse(text);
-            } catch {
-                jsonResponse = {
-                    reply: text,
-                    system_action: { ui_navigation: "none" }
-                };
             }
-        } else {
-            jsonResponse = await callGroq(safeMessage, safeConversationId);
+            
+            if (!imageReply) throw new Error("All Gemini keys failed for image request.");
+            return res.json({ reply: imageReply, system_action: { ui_navigation: "none" } });
         }
 
-        res.json(jsonResponse);
-        console.log(`[CHAT] ${new Date().toISOString()} | response sent`);
+        // TEXT HANDLING (Gemini Rotator -> Fallback to Groq)
+        const systemPrompt = buildSystemPrompt(safeMessage);
+        const history = getConversationHistory(safeConversationId);
+        let textReply = "";
+
+        try {
+            // 1. Try ALL Gemini keys via the rotator
+            textReply = await callGeminiTextWithRotation(safeMessage, history, systemPrompt);
+            console.log(`[CHAT] Handled successfully by Gemini (Using Key ${currentGeminiKeyIndex + 1})`);
+        } catch (geminiError) {
+            console.warn("[CHAT] ALL Gemini keys failed. Falling back to Groq...", geminiError.message);
+            // 2. Fallback to Groq
+            if (!hasGroqKey) throw new Error("Both AI systems (and all keys) failed.");
+            textReply = await callGroqText(safeMessage, history, systemPrompt);
+            console.log("[CHAT] Handled successfully by Groq (Fallback)");
+        }
+
+        // Append to shared memory only after a successful reply
+        appendToConversation(history, { role: "user", content: safeMessage });
+        appendToConversation(history, { role: "assistant", content: textReply });
+
+        res.json({
+            reply: textReply,
+            system_action: { ui_navigation: "none" }
+        });
 
     } catch (error) {
-        console.error(error);
+        console.error("Critical Chat Error:", error.message);
         res.status(500).json({
-            reply: "System busy, please try again.",
+            reply: "Kitchen is busy, please try again.",
             system_action: { ui_navigation: "none" }
         });
     }
@@ -371,8 +339,4 @@ app.post("/chat", async (req, res) => {
 // =========================
 app.listen(PORT, () => {
     console.log(`DripTea running on http://localhost:${PORT}`);
-    console.log(`[Startup] Groq key configured: ${hasGroqKey}`);
-    console.log(`[Startup] Gemini key configured: ${hasGeminiKey}`);
-    console.log(`[Startup] Chat language mode: ${USE_MATCHED_LANGUAGE ? "match" : "english"}`);
-    console.log(`[Startup] AI health check: http://localhost:${PORT}/health/ai`);
 });
