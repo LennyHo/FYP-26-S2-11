@@ -1,0 +1,96 @@
+.pageContainer {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.mainContent {
+  width: 100%;
+  overflow-y: auto;
+  padding-bottom: 48px;
+}
+
+.main {
+  position: relative;
+  z-index: 1;
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.chatToggleBtn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent-brown);
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(155, 109, 74, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 1200;
+  pointer-events: auto;
+}
+
+.chatToggleBtn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(155, 109, 74, 0.4);
+}
+
+.chatToggleBtn:active {
+  transform: scale(0.98);
+}
+
+.chatIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  z-index: 1190;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .main {
+    width: min(100% - 20px, 1120px);
+    padding-top: 20px;
+    gap: 20px;
+  }
+
+  .chatToggleBtn {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+  }
+}

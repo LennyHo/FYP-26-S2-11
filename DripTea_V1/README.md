@@ -26,9 +26,9 @@ Use real keys (not placeholders), then restart the backend.
 1. Start backend:
 npm start
 2. Check AI health:
-GET http://localhost:3000/health/ai
+GET http://localhost:5000/health/ai
 3. Test chat route:
-POST http://localhost:3000/chat
+POST http://localhost:5000/chat
 Body: {"message":"Hello"}
 
 ## Start the server:

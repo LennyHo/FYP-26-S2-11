@@ -2,10 +2,10 @@
   "name": "fyp-26-s2-11-backend",
   "version": "1.0.0",
   "description": "Node.js backend for FYP-26-S2-11",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node src/server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "keywords": [
     "express",
@@ -15,6 +15,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/dialogflow-cx": "^5.0.0",
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.16.0",
+    "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "mongodb": "^6.17.0"

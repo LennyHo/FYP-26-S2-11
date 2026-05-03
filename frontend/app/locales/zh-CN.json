@@ -1,0 +1,20 @@
+{
+  "greeting": "你好，我是 driptea 爱丽莎。我能帮你什么？",
+  "send": "发送",
+  "inputPlaceholder": "输入您的信息...",
+  "language": "语言",
+  "englishUK": "English (UK)",
+  "chineseSimplified": "中文 (简体)",
+  "chineseTraditional": "中文 (繁體)",
+  "korean": "한국어",
+  "spanish": "Español",
+  "italian": "Italiano",
+  "french": "Français",
+  "bahasa": "Bahasa Indonesia",
+  "restartConvo": "我们能重新开始对话吗",
+  "chatbotTitle": "AI 助手",
+  "chatbotSubtitle": "问我们的 AI 任何问题",
+  "suggestionsTitle": "建议",
+  "suggestion1": "你能帮我什么？",
+  "suggestion2": "告诉我关于你的菜单"
+}

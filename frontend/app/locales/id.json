@@ -1,0 +1,20 @@
+{
+  "greeting": "Halo, saya adalah driptea Alisa. Bagaimana saya bisa membantu Anda?",
+  "send": "Kirim",
+  "inputPlaceholder": "Ketik pesan Anda...",
+  "language": "Bahasa",
+  "englishUK": "English (UK)",
+  "chineseSimplified": "中文 (简体)",
+  "chineseTraditional": "中文 (繁體)",
+  "korean": "한국어",
+  "spanish": "Español",
+  "italian": "Italiano",
+  "french": "Français",
+  "bahasa": "Bahasa Indonesia",
+  "restartConvo": "Dapatkah kita memulai kembali percakapan kita",
+  "chatbotTitle": "Asisten AI",
+  "chatbotSubtitle": "Tanyakan apa saja kepada AI kami",
+  "suggestionsTitle": "Saran",
+  "suggestion1": "Apa yang bisa saya bantu?",
+  "suggestion2": "Ceritakan tentang menu Anda"
+}

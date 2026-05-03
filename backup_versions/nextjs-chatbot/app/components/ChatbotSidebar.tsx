@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 import styles from './ChatbotSidebar.module.css';
 
 interface Message {
@@ -25,6 +27,7 @@ function createConversationId(): string {
 }
 
 export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
+  const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -48,23 +51,25 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
       try {
         setMessages(JSON.parse(savedMessages));
       } catch {
+        // If localStorage is corrupted, start fresh with greeting
         const greetingMsg: Message = {
           id: Date.now().toString(),
-          text: 'Hello! How can I help you today?',
+          text: t('greeting'),
           isUser: false,
         };
         setMessages([greetingMsg]);
       }
     } else {
+      // First time - show greeting
       const greetingMsg: Message = {
         id: Date.now().toString(),
-        text: 'Hello! How can I help you today?',
+        text: t('greeting'),
         isUser: false,
       };
       setMessages([greetingMsg]);
     }
     setIsInitialized(true);
-  }, []);
+  }, [t]);
 
   // Save messages to localStorage whenever they change
   useEffect(() => {
@@ -74,12 +79,9 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
   }, [messages, isInitialized]);
 
   const suggestions = [
-    'What can I help you with?',
-    'Tell me about your menu',
+    t('suggestion1'),
+    t('suggestion2'),
   ];
-
-  const backendBase =
-    process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim() || 'http://localhost:5000';
 
   async function sendMessage(text?: string) {
     const messageText = text || input.trim();
@@ -96,31 +98,23 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendBase}/chat`, {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: messageText,
-          conversationId: conversationId,
+          language: i18n.language,
+          conversationId,
         }),
       });
 
       const data = await response.json();
-      const replyText =
-        typeof data?.reply === 'string'
-          ? data.reply
-          : 'Error connecting to backend';
-
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
-        text: replyText,
+        text: data?.reply || 'Error connecting to backend',
         isUser: false,
       };
       setMessages(prev => [...prev, botMsg]);
-
-      if (data?.system_action?.ui_navigation === 'checkout') {
-        window.alert('AI command received: opening checkout page.');
-      }
     } catch (error) {
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -137,7 +131,7 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
     const newConversationId = createConversationId();
     const greetingMsg: Message = {
       id: Date.now().toString(),
-      text: 'Hello! How can I help you today?',
+      text: t('greeting'),
       isUser: false,
     };
 
@@ -164,16 +158,17 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
     <aside className={styles.chatbotSidebar}>
       <div className={styles.chatHeader}>
         <div className={styles.headerContent}>
-          <h3>AI Assistant</h3>
-          <p className={styles.subtitle}>Ask our AI anything</p>
+          <h3>{t('chatbotTitle')}</h3>
+          <p className={styles.subtitle}>{t('chatbotSubtitle')}</p>
         </div>
         <div className={styles.headerControls}>
+          <LanguageSwitcher />
           <button
             type="button"
             className={styles.restartBtn}
             onClick={restartConversation}
-            aria-label="Restart conversation"
-            title="Restart conversation"
+            aria-label={t('restartConvo')}
+            title={t('restartConvo')}
           >
             ⟳
           </button>
@@ -203,7 +198,7 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
         ))}
         {showSuggestions && (
           <div className={styles.suggestionsContainer}>
-            <div className={styles.suggestionsTitle}>Suggestions</div>
+            <div className={styles.suggestionsTitle}>{t('suggestionsTitle')}</div>
             <div className={styles.suggestionsList}>
               {suggestions.map((suggestion, idx) => (
                 <button
@@ -233,7 +228,7 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
         <input
           type="text"
           className={styles.userInput}
-          placeholder="Type your message..."
+          placeholder={t('inputPlaceholder')}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyPress={e => {
@@ -248,7 +243,7 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
           className={styles.sendBtn}
           onClick={() => sendMessage()}
           disabled={isLoading || !input.trim()}
-          aria-label="Send"
+          aria-label={t('send')}
         >
           ➤
         </button>
