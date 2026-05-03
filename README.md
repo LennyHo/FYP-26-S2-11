@@ -2,7 +2,7 @@
 
 FYP-26-S2-11 for AI Chatbot for Customer.
 
-## PLEASE CHECK YOUR FRONTEND, BACKEND, DATABASE, AND API PLATFORMS ARE WORKING ON YOUR LAPTOP BEFORE YOU START CODING.
+## PLEASE CHECK YOUR FRONTEND, BACKEND, DATABASE, AND API PLATFORMS ARE WORKING ON YOUR LAPTOP BEFORE START CODING.
 
 ## To Run Frontend (React and Next.js):
 1. run `Npm install`
@@ -13,15 +13,8 @@ FYP-26-S2-11 for AI Chatbot for Customer.
 1. if you have not install the modules, run `npm install` to update.
 2. run `npm start` (TAKE NOTE FRONTEND RUNS ON PORT 5000)
 
-## Backend setup
-1. Install Node.js 20 or newer.
-2. Copy `.env.example` to `.env`. (create a new file in your local laptop, copy from .env.example into .env)
-3. cd DripTea_V1 folder
-4. Run `npm install`.
-6. Run `npm start`.
-
 Tech Stack
-Frontend: HTML5, CSS3, JavaScript (Vanilla)
+Frontend: React, Next.js
 Backend: Node.js, Express.js
 AI Brain for text input: Groq SDK (Llama 3.1 / 3.3 models)
 AI Brain for image input: Gemini API Key
@@ -29,7 +22,7 @@ APIs: Axios for high-speed LLM communication
 
 ==========================================
 
-## Prerequisites
+## Prerequisites for Groq API Account setup
 1. Node.js installed
 2. A Groq API Key:
 https://console.groq.com/keys
@@ -44,7 +37,7 @@ GEMINI_API_KEY=your_key_here
 
 Use real keys (not placeholders), then restart the backend.
 
-## Verify Groq connection
+## Verify Groq and Gemini Connection
 1. Start backend:
 npm start
 2. Check AI health:
@@ -59,23 +52,8 @@ npm start
 ============================================
 ## TEST PROMPT:
 1. BASIC RECOMMENDATION TESTS (filter + scoring)
-I want chocolate drinks under $5
-I want chocolate or milo drink
-2. Follow the flow
-
-Coming soon:
-3. MULTI-LANGUAGE TESTS
-Saya mahu minuman coklat kurang gula
-我要低糖巧克力饮料
-I want milo kurang gula
-
-4. MULTI-DRINK TESTS
-I want 2 drinks: chocolate 0% sugar and matcha 25% sugar
-SYSTEM BEHAVIOR TESTS
-I want to checkout
-I want another drink
-Start over
-
-5. EDGE CASE / ATTACK TESTS
-I want strawberry matcha unicorn drink
+2. I want chocolate drinks under $5.
+3. I want chocolate or milo drink.
+4. Follow the flow of the conversation.
+5. What is pearl or explain any toppings.
 
