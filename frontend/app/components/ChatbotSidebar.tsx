@@ -11,6 +11,8 @@ interface Message {
 
 interface ChatbotSidebarProps {
   onClose?: () => void;
+  onOpenCart?: () => void;
+  onCheckout?: () => void;
 }
 
 const STORAGE_KEY = "driptea_chatbot_messages";
@@ -20,11 +22,10 @@ function createConversationId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-
   return `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
 }
 
-export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
+export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: ChatbotSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +33,6 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
   const [conversationId, setConversationId] = useState('');
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
-  // Load messages from localStorage on mount
   useEffect(() => {
     const savedConversationId = localStorage.getItem(CONVERSATION_ID_KEY);
     if (savedConversationId) {
@@ -66,20 +66,13 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
     setIsInitialized(true);
   }, []);
 
-  // Save messages to localStorage whenever they change
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
   }, [messages, isInitialized]);
 
-  const suggestions = [
-    'What can I help you with?',
-    'Tell me about your menu',
-  ];
-
-  const backendBase =
-    process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim() || 'http://localhost:5000';
+  const backendBase = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim() || 'http://localhost:5000';
 
   async function sendMessage(text?: string) {
     const messageText = text || input.trim();
@@ -106,10 +99,7 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
       });
 
       const data = await response.json();
-      const replyText =
-        typeof data?.reply === 'string'
-          ? data.reply
-          : 'Error connecting to backend';
+      const replyText = typeof data?.reply === 'string' ? data.reply : 'Error connecting to backend';
 
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -118,13 +108,20 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
       };
       setMessages(prev => [...prev, botMsg]);
 
-      if (data?.system_action?.ui_navigation === 'checkout') {
-        window.alert('AI command received: opening checkout page.');
+      if (replyText.includes('hidden-cart-data')) {
+        setTimeout(() => {
+          const hiddenBlocks = document.querySelectorAll('.hidden-cart-data');
+          if (hiddenBlocks.length > 0) {
+            const latestCartData = hiddenBlocks[hiddenBlocks.length - 1].textContent || '';
+            localStorage.setItem("dripTeaCartData", latestCartData.trim());
+            window.dispatchEvent(new Event('cartUpdated')); 
+          }
+        }, 100);
       }
     } catch (error) {
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Error connecting to server. Is the backend running?',
+        text: 'Error connecting to server.',
         isUser: false,
       };
       setMessages(prev => [...prev, botMsg]);
@@ -137,28 +134,36 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
     const newConversationId = createConversationId();
     const greetingMsg: Message = {
       id: Date.now().toString(),
-      text: 'Hello! How can I help you today?',
+      text: 'Hello! I am your AI barista. How can I help you today?',
       isUser: false,
     };
-
     setConversationId(newConversationId);
     setMessages([greetingMsg]);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([greetingMsg]));
-      localStorage.setItem(CONVERSATION_ID_KEY, newConversationId);
-    } catch {
-      // ignore storage errors
-    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([greetingMsg]));
+    localStorage.setItem(CONVERSATION_ID_KEY, newConversationId);
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (chatWindowRef.current) {
       chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // Only show suggestions if there are no user messages yet
-  const showSuggestions = messages.length <= 1 && messages.every(msg => !msg.isUser);
+  const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'BUTTON' && target.classList.contains('chat-nav-btn')) {
+      const aiAction = target.getAttribute('onclick') || '';
+      if (aiAction.includes('openCart') && onOpenCart) {
+        onOpenCart();
+      } else if (aiAction.includes('goToCheckoutPage') && onCheckout) {
+        const priceMatch = aiAction.match(/[\d.]+/);
+        if (priceMatch) {
+          localStorage.setItem("dripTeaCartTotal", priceMatch[0]);
+        }
+        onCheckout();
+      }
+    }
+  };
 
   return (
     <aside className={styles.chatbotSidebar}>
@@ -168,62 +173,31 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
           <p className={styles.subtitle}>Ask our AI anything</p>
         </div>
         <div className={styles.headerControls}>
-          <button
-            type="button"
-            className={styles.restartBtn}
-            onClick={restartConversation}
-            aria-label="Restart conversation"
-            title="Restart conversation"
-          >
-            ⟳
-          </button>
-          {onClose && (
-            <button
-              type="button"
-              className={styles.closeBtn}
-              onClick={onClose}
-              aria-label="Close chat"
-            >
-              ✕
-            </button>
-          )}
+          <button type="button" className={styles.restartBtn} onClick={restartConversation}>⟳</button>
+          {onClose && <button type="button" className={styles.closeBtn} onClick={onClose}>✕</button>}
         </div>
       </div>
 
-      <div className={styles.chatWindow} ref={chatWindowRef}>
+      <div className={styles.chatWindow} ref={chatWindowRef} onClick={handleChatClick}>
         {messages.map(msg => (
-          <div
-            key={msg.id}
-            className={`${styles.message} ${
-              msg.isUser ? styles.userMessage : styles.botMessage
-            }`}
-          >
-            {msg.text}
+          <div key={msg.id} className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
+            <div 
+              className={styles.compactContent}
+              dangerouslySetInnerHTML={{ 
+                __html: msg.text
+                  .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>') // Turn double <br> into single <br>
+                  .replace(/\n\s*\n/g, '<br>') // Turn double newlines into single <br>
+                  .replace(/\n/g, '<br>') // Turn single newlines into <br>
+                  .trim() 
+              }}
+              onClick={handleChatClick}
+            />
           </div>
         ))}
-        {showSuggestions && (
-          <div className={styles.suggestionsContainer}>
-            <div className={styles.suggestionsTitle}>Suggestions</div>
-            <div className={styles.suggestionsList}>
-              {suggestions.map((suggestion, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className={styles.suggestionBtn}
-                  onClick={() => sendMessage(suggestion)}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         {isLoading && (
           <div className={`${styles.message} ${styles.botMessage}`}>
             <span className={styles.typingIndicator}>
-              <span></span>
-              <span></span>
-              <span></span>
+              <span></span><span></span><span></span>
             </span>
           </div>
         )}
@@ -236,11 +210,7 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
           placeholder="Type your message..."
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyPress={e => {
-            if (e.key === 'Enter' && !isLoading) {
-              sendMessage();
-            }
-          }}
+          onKeyPress={e => { if (e.key === 'Enter' && !isLoading) sendMessage(); }}
           disabled={isLoading}
         />
         <button
@@ -248,7 +218,6 @@ export default function ChatbotSidebar({ onClose }: ChatbotSidebarProps) {
           className={styles.sendBtn}
           onClick={() => sendMessage()}
           disabled={isLoading || !input.trim()}
-          aria-label="Send"
         >
           ➤
         </button>

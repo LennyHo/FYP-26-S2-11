@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import GlobalLayout from "./components/GlobalLayout"; // 1. Import our custom split-screen layout
 import "./globals.css";
 import styles from "./layout.module.css";
 
@@ -25,8 +26,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>
-        <div className={styles.pageContainer}>{children}</div>
+      {/* 2. Added margin: 0 and padding: 0 so the split-screen completely fills the browser */}
+      <body style={{ margin: 0, padding: 0 }}>
+        
+        {/* 3. Wrap everything in the GlobalLayout so the AI chatbot is available on EVERY page! */}
+        <GlobalLayout>
+          <div className={styles.pageContainer}>
+            {children}
+          </div>
+        </GlobalLayout>
+        
       </body>
     </html>
   );

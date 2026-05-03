@@ -177,9 +177,9 @@ CRITICAL RULE: You MUST list the individual stats (Sugar, Calories, Grade) direc
 
 Use this EXACT structure (Translate to their language, EXCEPT the HTML code):
 "You currently have the following in your cart:<br><br>
-* **[Drink 1 Name]** ([Size], [Sugar], [Toppings])<br>
+* **[Drink 1 Name]** ([Size], [Sugar], [Toppings])- S$ [Drink 1 Price]<br>
   - Sugar: [Total]g | Calories: [Total] kcal | Nutri-Grade: [Grade]<br><br>
-* **[Drink 2 Name]** ([Size], [Sugar], [Toppings])<br>
+* **[Drink 2 Name]** ([Size], [Sugar], [Toppings])- S$ [Drink 1 Price]<br>
   - Sugar: [Total]g | Calories: [Total] kcal | Nutri-Grade: [Grade]<br><br>
 *(Repeat for all drinks in the cart)*
 
@@ -188,9 +188,9 @@ Use this EXACT structure (Translate to their language, EXCEPT the HTML code):
 [Drink 2 Name] | [Size], [Sugar], [Toppings] | [Drink 2 Price] | [Image Path]
 </div>
 
-Total price: S$ [Calculate Grand Total]<br>
-I will add this to your cart.<br><br><button class='chat-nav-btn' onclick='openCart()'>Check My Cart</button><br><br>
-Would you like to add another drink to your order, or are you ready to checkout?<br><br><button class='chat-nav-btn' onclick='goToCheckoutPage([Grand Total])'>Proceed to Checkout</button>"
+Total price: S$ [Calculate Grand Total]
+I will add this to your cart.<button class="chat-nav-btn-compact" onclick="handleCart()">Check My Cart</button>
+Would you like to add another drink to your order, or are you ready to checkout?<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>"
 
 PHASE 6: FINAL CHECKOUT ACTION
 If the user asks for another drink: Start over at STEP 1 for their new drink request.

@@ -358,3 +358,58 @@
     max-width: 85%;
   }
 }
+
+/* Targets the container we just added in the step above */
+.compactContent {
+  line-height: 1.4;
+}
+
+/* Force all text inside the bubble to stop pushing things away */
+.compactContent p, 
+.compactContent div {
+  margin: 0 0 4px 0 !important;
+  padding: 0 !important;
+}
+
+/* Targets the buttons you are intercepting with handleChatClick */
+.chat-nav-btn {
+  display: block; /* Forces them to stack vertically */
+  width: 100%;
+  margin-top: 6px !important; /* Tiny gap between text and button */
+  padding: 8px 12px;
+  background-color: #C87941;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.chat-nav-btn:hover {
+  background-color: #4A3B32;
+}
+
+/* If you have two buttons, this keeps them from touching */
+.chat-nav-btn + .chat-nav-btn {
+  margin-top: 4px !important;
+}
+
+.tightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* Controls the small gap between lines */
+}
+
+.textLine {
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+}
+
+.buttonWrapper {
+  margin-top: 6px !important; /* Small space specifically before buttons */
+}

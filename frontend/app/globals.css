@@ -67,3 +67,37 @@ a {
     color-scheme: dark;
   }
 }
+
+/* Hide scrollbar completely but keep scrolling functionality */
+::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Styling for buttons inside the Chat Messages */
+.chat-nav-btn {
+  display: block; /* Stack them vertically */
+  width: 100%;
+  background-color: #C87941;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px; /* Tiny 4px gap instead of a full line skip */
+  margin-bottom: 0; 
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+/* Force the AI text to stop adding bottom padding */
+.chatbot-message-container p {
+  margin-bottom: 4px !important;
+  padding-bottom: 0 !important;
+}
