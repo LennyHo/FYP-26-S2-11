@@ -43,7 +43,7 @@ export default function Header() {
     <header className={styles.header}>
       <nav className={styles.nav}>
         <a href="#">BUY DRIPTEA</a>
-        <a href="#">OUR STORY</a>
+        <a href="/our-story">OUR STORY</a>
         <a href="#">SUSTAINABILITY</a>
       </nav>
       

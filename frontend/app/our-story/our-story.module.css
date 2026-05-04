@@ -1,0 +1,11 @@
+.main {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+}
+
+@media (max-width: 1200px) {
+  .main {
+    padding-right: 0;
+  }
+}
