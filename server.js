@@ -3,6 +3,7 @@ const cors = require("cors");
 const fs = require("fs");
 const axios = require("axios");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { createClient } = require("@supabase/supabase-js");
 require("dotenv").config();
 
 const PORT = Number(process.env.PORT || 5000);
@@ -10,6 +11,8 @@ const CHAT_LANGUAGE_MODE = String(process.env.CHAT_LANGUAGE_MODE || "english").t
 const USE_MATCHED_LANGUAGE = CHAT_LANGUAGE_MODE === "match" || CHAT_LANGUAGE_MODE === "same";
 const MAX_HISTORY_MESSAGES = 10;
 const MAX_CONVERSATIONS = 200;
+const SUPABASE_URL = String(process.env.SUPABASE_URL || "").trim();
+const SUPABASE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "").trim();
 
 function hasConfiguredApiKey(value) {
     if (!value) return false;
@@ -44,9 +47,35 @@ const groqClient = axios.create({
     }
 });
 
+const supabase = SUPABASE_URL && SUPABASE_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+    })
+    : null;
+
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
+
+app.get("/health/supabase", (_req, res) => {
+    if (!supabase) {
+        return res.status(503).json({
+            ok: false,
+            configured: false,
+            message: "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY) in your .env file.",
+        });
+    }
+
+    return res.json({
+        ok: true,
+        configured: true,
+        hasUrl: Boolean(SUPABASE_URL),
+        hasKey: Boolean(SUPABASE_KEY),
+    });
+});
 
 // =========================
 // LOAD MENU & UTILS

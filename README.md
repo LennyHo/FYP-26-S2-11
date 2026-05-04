@@ -34,8 +34,19 @@ npm install
 ## Create a .env file in the root directory and add your API key:
 GROQ_API_KEY=your_key_here
 GEMINI_API_KEY=your_key_here
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 Use real keys (not placeholders), then restart the backend.
+
+## Verify Supabase Connection
+1. Start backend:
+npm start
+2. Check Supabase health:
+GET http://localhost:5000/health/supabase
+
+If the response says `configured: false`, check the Supabase URL and keys in your `.env` file.
 
 ## Verify Groq and Gemini Connection
 1. Start backend:
