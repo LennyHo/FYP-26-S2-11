@@ -1,0 +1,163 @@
+.page {
+  min-height: 100vh;
+}
+
+.main {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.hero,
+.storyCard,
+.panelCard {
+  border: 1px solid rgba(220, 199, 180, 0.88);
+  border-radius: 28px;
+  background: rgba(255, 250, 245, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 18px;
+  padding: 26px;
+}
+
+.eyebrow {
+  color: var(--accent-brown);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.sectionHeading h2 {
+  color: var(--foreground);
+}
+
+.hero h1 {
+  margin-top: 8px;
+  font-size: clamp(2.5rem, 6vw, 4.4rem);
+  letter-spacing: -0.05em;
+}
+
+.hero p {
+  max-width: 52rem;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 1.02rem;
+}
+
+.heroPanel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(245, 232, 219, 0.95), rgba(255, 250, 245, 0.92));
+}
+
+.heroPanel > div,
+.storyCard,
+.panelCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.heroPanel > div {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.heroPanel span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.heroPanel strong {
+  margin-top: 4px;
+  color: var(--foreground);
+  font-size: 1.15rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.storyGrid,
+.splitGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.storyGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.storyCard {
+  gap: 12px;
+  padding: 18px;
+  min-height: 150px;
+}
+
+.storyId {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(123, 168, 106, 0.12);
+  color: var(--accent-ink);
+  font-weight: 800;
+}
+
+.storyCard p,
+.panelCard p,
+.panelCard li {
+  color: var(--muted);
+}
+
+.splitGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panelCard {
+  gap: 14px;
+  padding: 22px;
+}
+
+.panelCard h3 {
+  color: var(--foreground);
+  font-size: 1.2rem;
+}
+
+.panelCard ul {
+  display: grid;
+  gap: 10px;
+  padding-left: 18px;
+}
+
+@media (max-width: 960px) {
+  .hero,
+  .storyGrid,
+  .splitGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .main {
+    width: min(100% - 20px, 1120px);
+    padding-top: 20px;
+  }
+}

@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import DrinkCard from './DrinkCard';
 import styles from './MeetTheCrew.module.css';
 
 export default function MeetTheCrew() {
@@ -44,25 +43,46 @@ export default function MeetTheCrew() {
     <section className={styles.meetSection}>
       <div className={styles.meetHeader}>
         <div>
-          <p className={styles.meetEyebrow}>Menu highlights</p>
+          <p className={styles.meetEyebrow}>Drip highlights</p>
           <h2 className={styles.meetTitle}>MEET THE CREW</h2>
         </div>
-        <button className={styles.meetButton}>VIEW ALL DRIPS</button>
+        <a className={styles.meetButton} href="/buy-driptea">VIEW ALL DRIPS</a>
       </div>
-      <div className={styles.meetCards}>
+      <div className={styles.meetShowcase}>
         <button
           type="button"
-          className={styles.cardTrigger}
+          className={`${styles.featureCard} ${styles.featureCardLarge}`}
           onClick={connectMatchaCard}
-          aria-label="Connect Matcha Drip to backend"
+          aria-label="Connect Matcha Cloud to backend"
           disabled={connectState === 'loading'}
         >
-          <DrinkCard name="Matcha Drip" price="£4.50" active accent="green" />
+          <div className={styles.featureCopy}>
+            <p className={styles.cardLabel}>New drop</p>
+            <h3>Matcha Cloud</h3>
+            <p>Soft cream top, fresh matcha, and a clean finish.</p>
+          </div>
+          <div className={`${styles.featureVisual} ${styles.matchaTone}`} />
         </button>
-        <DrinkCard name="Brown Sugar Boba" price="£4.50" accent="brown" />
-        <DrinkCard name="Strawberry Drip" price="£5.00" accent="red" />
+
+        <article className={`${styles.featureCard} ${styles.featureCardSmall} ${styles.brownTone}`}>
+          <div className={styles.featureCopy}>
+            <p className={styles.cardLabel}>New drop</p>
+            <h3>Brown Sugar Drift</h3>
+            <p>Caramel ribbons with a deeper roasted tea base.</p>
+          </div>
+          <div className={`${styles.featureVisual} ${styles.brownVisual}`} />
+        </article>
+
+        <article className={`${styles.featureCard} ${styles.featureCardSmall} ${styles.redTone}`}>
+          <div className={styles.featureCopy}>
+            <p className={styles.cardLabel}>New drop</p>
+            <h3>Berry Rose Float</h3>
+            <p>Strawberry brightness with a floral, chilled finish.</p>
+          </div>
+          <div className={`${styles.featureVisual} ${styles.redVisual}`} />
+        </article>
       </div>
-      <p
+      <div
         className={`${styles.connectStatus} ${
           connectState === 'ok' ? styles.ok : connectState === 'error' ? styles.error : ''
         }`}
@@ -70,9 +90,9 @@ export default function MeetTheCrew() {
         aria-live="polite"
       >
         {connectState === 'idle'
-          ? 'Click the Matcha Drip card to connect this webpage to the backend.'
+          ? 'Tap Matcha Cloud to connect this showcase to the backend.'
           : connectMessage}
-      </p>
+      </div>
     </section>
   );
 }

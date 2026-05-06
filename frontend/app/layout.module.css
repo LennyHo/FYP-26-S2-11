@@ -3,3 +3,48 @@
   width: 100%;
   min-height: 100vh;
 }
+
+.globalShell {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.mainPane {
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  background-color: #F9F6F0;
+  transition: width 0.3s ease;
+}
+
+.mainPaneWithChat {
+  width: 80%;
+}
+
+.chatPane {
+  width: 30%;
+  height: 100vh;
+  border-left: 2px solid #EFEAE6;
+  background: white;
+}
+
+.chatToggleBtn {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  z-index: 99999;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background-color: #C87941;
+  color: white;
+  border: none;
+  font-size: 30px;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

@@ -29,6 +29,9 @@
 }
 
 .meetButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(255, 255, 255, 0.7);
   color: var(--foreground);
   border: 1px solid rgba(220, 199, 180, 0.9);
@@ -45,30 +48,147 @@
   transform: translateY(-1px);
 }
 
-.meetCards {
+.meetShowcase {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 0.9fr));
   gap: 18px;
   align-items: stretch;
   width: 100%;
 }
 
-.cardTrigger {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  text-align: inherit;
+.featureCard {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 350px;
+  padding: 22px;
+  border-radius: 30px;
+  border: 1px solid rgba(220, 199, 180, 0.9);
+  background: linear-gradient(180deg, rgba(255, 250, 245, 0.95), rgba(255, 244, 233, 0.78));
+  box-shadow: 0 16px 30px rgba(59, 39, 26, 0.08);
+  text-align: left;
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.cardTrigger:focus-visible {
+.featureCard::before {
+  content: '';
+  position: absolute;
+  inset: auto -18% -20% auto;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(123, 168, 106, 0.18), transparent 68%);
+  pointer-events: none;
+}
+
+.featureCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 34px rgba(59, 39, 26, 0.12);
+}
+
+.featureCard:focus-visible {
   outline: 3px solid rgba(123, 168, 106, 0.75);
   outline-offset: 6px;
   border-radius: 24px;
 }
 
-.cardTrigger:disabled {
+.featureCard:disabled {
   cursor: progress;
+}
+
+.featureCardLarge {
+  min-height: 380px;
+}
+
+.featureCardSmall {
+  cursor: default;
+}
+
+.featureCardSmall:hover {
+  transform: translateY(-2px);
+}
+
+.featureCopy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardLabel {
+  color: var(--accent-brown);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.featureCopy h3 {
+  color: var(--foreground);
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
+}
+
+.featureCopy p {
+  max-width: 24rem;
+  color: var(--muted);
+}
+
+.featureVisual {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 170px;
+}
+
+.featureVisual::before {
+  content: '';
+  width: min(100%, 240px);
+  height: 130px;
+  border-radius: 28px;
+  border: 1px solid rgba(220, 199, 180, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.matchaTone::before {
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.7), transparent 25%),
+    linear-gradient(180deg, rgba(233, 247, 224, 0.98), rgba(189, 219, 157, 0.96));
+}
+
+.brownVisual::before {
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.74), transparent 25%),
+    linear-gradient(180deg, rgba(255, 244, 232, 0.98), rgba(223, 188, 149, 0.96));
+}
+
+.redVisual::before {
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.74), transparent 25%),
+    linear-gradient(180deg, rgba(255, 235, 232, 0.98), rgba(238, 179, 166, 0.96));
+}
+
+.brownTone {
+  background: linear-gradient(180deg, rgba(255, 250, 245, 0.95), rgba(255, 242, 229, 0.88));
+}
+
+.brownTone::before {
+  background: radial-gradient(circle, rgba(183, 123, 87, 0.2), transparent 68%);
+}
+
+.redTone {
+  background: linear-gradient(180deg, rgba(255, 250, 245, 0.95), rgba(253, 233, 227, 0.88));
+}
+
+.redTone::before {
+  background: radial-gradient(circle, rgba(233, 79, 55, 0.18), transparent 68%);
 }
 
 .connectStatus {
@@ -97,8 +217,13 @@
     flex-direction: column;
   }
 
-  .meetCards {
+  .meetShowcase {
     grid-template-columns: 1fr;
     justify-items: center;
+  }
+
+  .featureCard {
+    width: 100%;
+    min-height: 320px;
   }
 }

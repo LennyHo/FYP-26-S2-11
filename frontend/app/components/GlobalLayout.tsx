@@ -1,33 +1,33 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // 1. IMPORT ROUTER
+import { usePathname, useRouter } from 'next/navigation'; // 1. IMPORT ROUTER
 import ChatbotSidebar from './ChatbotSidebar';
+import styles from '../layout.module.css';
 
 export default function GlobalLayout({ children }: { children: React.ReactNode }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const pathname = usePathname();
   const router = useRouter(); // 2. INITIALIZE ROUTER
+  const hideChatbot =
+    pathname.startsWith('/user-admin') ||
+    pathname.startsWith('/store-staff') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register');
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div className={styles.globalShell}>
       
       {/* LEFT SIDE: MAIN WEBSITE */}
       <div 
-        className="no-scrollbar"
-        style={{ 
-          width: isChatOpen ? '80%' : '100%', 
-          transition: 'width 0.3s ease',
-          height: '100vh',
-          overflowY: 'auto',
-          backgroundColor: '#F9F6F0'
-        }}
+        className={`${styles.mainPane} no-scrollbar ${isChatOpen ? styles.mainPaneWithChat : ''}`}
       >
         {children} 
       </div>
 
       {/* RIGHT SIDE: CHATBOT */}
-      {isChatOpen && (
-        <div style={{ width: '30%', height: '100vh', borderLeft: '2px solid #EFEAE6', background: 'white' }}>
+      {!hideChatbot && isChatOpen && (
+        <div className={styles.chatPane}>
           <ChatbotSidebar 
             onClose={() => setIsChatOpen(false)} 
             
@@ -39,16 +39,10 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
       )}
 
       {/* FLOATING CHAT TOGGLE BUTTON */}
-      {!isChatOpen && (
+      {!hideChatbot && !isChatOpen && (
         <button
+          className={styles.chatToggleBtn}
           onClick={() => setIsChatOpen(true)}
-          style={{
-            position: 'fixed', bottom: '40px', right: '40px', zIndex: 99999,
-            width: '65px', height: '65px', borderRadius: '50%',
-            backgroundColor: '#C87941', color: 'white', border: 'none',
-            fontSize: '30px', cursor: 'pointer', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-            display: 'flex', justifyContent: 'center', alignItems: 'center'
-          }}
         >
           💬
         </button>

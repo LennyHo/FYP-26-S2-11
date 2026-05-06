@@ -1,0 +1,339 @@
+.page {
+  min-height: 100vh;
+}
+
+.main {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.hero,
+.splitSection {
+  display: grid;
+  gap: 24px;
+}
+
+.hero {
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: center;
+  padding: 28px;
+  border: 1px solid rgba(220, 199, 180, 0.9);
+  border-radius: 30px;
+  background: linear-gradient(135deg, rgba(255, 250, 245, 0.92), rgba(245, 231, 217, 0.88));
+  box-shadow: var(--shadow);
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.eyebrow,
+.sectionEyebrow {
+  color: var(--accent-brown);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.title {
+  color: var(--foreground);
+  font-size: clamp(2.8rem, 8vw, 5.3rem);
+  line-height: 0.92;
+  letter-spacing: 0.06em;
+}
+
+.description {
+  max-width: 560px;
+  color: var(--muted);
+  font-size: 1.02rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.primaryAction,
+.secondaryAction,
+.offerAction,
+.cardLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 800;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.primaryAction,
+.offerAction,
+.cardLink {
+  background: var(--accent-brown);
+  color: #fff7ef;
+  box-shadow: 0 14px 26px rgba(59, 39, 26, 0.18);
+}
+
+.primaryAction,
+.secondaryAction,
+.offerAction {
+  padding: 14px 18px;
+}
+
+.secondaryAction {
+  border: 1px solid rgba(155, 109, 74, 0.24);
+  background: rgba(255, 250, 245, 0.82);
+  color: var(--accent-ink);
+}
+
+.cardLink {
+  width: fit-content;
+  padding: 12px 16px;
+}
+
+.primaryAction:hover,
+.secondaryAction:hover,
+.offerAction:hover,
+.cardLink:hover {
+  transform: translateY(-2px);
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding-top: 8px;
+}
+
+.metaRow > div {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(220, 199, 180, 0.72);
+}
+
+.metaLabel {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.metaValue {
+  color: var(--foreground);
+  font-size: 1rem;
+}
+
+.heroVisual {
+  display: flex;
+  justify-content: center;
+}
+
+.imageCard {
+  position: relative;
+  width: min(100%, 440px);
+  padding: 16px;
+  border-radius: 30px;
+  background: linear-gradient(180deg, rgba(59, 39, 26, 0.98), rgba(120, 76, 42, 0.92));
+  box-shadow: 0 26px 50px rgba(59, 39, 26, 0.22);
+}
+
+.imageBadge {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 247, 239, 0.18);
+  color: #fff7ef;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.heroImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  object-fit: cover;
+}
+
+.section,
+.splitSection {
+  gap: 18px;
+}
+
+.sectionHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionHeading h2,
+.bundlePanel h2,
+.offerPanel h2 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  color: var(--foreground);
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.productCard,
+.bundlePanel,
+.offerPanel {
+  padding: 22px;
+  border-radius: 26px;
+  border: 1px solid rgba(220, 199, 180, 0.85);
+  background: rgba(255, 250, 245, 0.88);
+  box-shadow: 0 14px 30px rgba(59, 39, 26, 0.08);
+}
+
+.productCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTag {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(155, 109, 74, 0.14);
+  color: var(--accent-ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.cardPrice {
+  color: var(--accent-ink);
+  font-weight: 800;
+}
+
+.cardVisual {
+  height: 164px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 242, 230, 0.9), rgba(244, 216, 190, 0.96));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.productCard h3 {
+  color: var(--foreground);
+  font-size: 1.15rem;
+}
+
+.productCard p,
+.offerPanel p {
+  color: var(--muted);
+}
+
+.brown .cardVisual {
+  background: linear-gradient(180deg, #fff7ef 0%, #f0d0ae 100%);
+}
+
+.red .cardVisual {
+  background: linear-gradient(180deg, #fff0ed 0%, #edb2a0 100%);
+}
+
+.green .cardVisual {
+  background: linear-gradient(180deg, #f3faea 0%, #c9dfb1 100%);
+}
+
+.splitSection {
+  grid-template-columns: 1fr 1fr;
+}
+
+.stepList {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(220, 199, 180, 0.72);
+  font-weight: 600;
+}
+
+.stepNumber {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent-brown);
+  color: #fff7ef;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.offerPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(155, 109, 74, 0.12), rgba(255, 250, 245, 0.92));
+}
+
+.offerAction {
+  width: fit-content;
+}
+
+@media (max-width: 960px) {
+  .hero,
+  .splitSection,
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .metaRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .main {
+    width: min(100% - 20px, 1120px);
+    padding-top: 20px;
+    gap: 20px;
+  }
+
+  .hero,
+  .productCard,
+  .bundlePanel,
+  .offerPanel {
+    padding: 18px;
+  }
+
+  .title {
+    letter-spacing: 0.03em;
+  }
+}

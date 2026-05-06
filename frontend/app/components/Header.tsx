@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
+  const isStaffDashboard = pathname.startsWith('/user-admin') || pathname.startsWith('/store-staff');
 
   // Read the AI's saved cart data from localStorage
   const updateCartDisplay = () => {
@@ -42,16 +44,14 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <nav className={styles.nav}>
-        <a href="#">BUY DRIPTEA</a>
+        <a href="/buy-driptea">BUY DRIPTEA</a>
         <a href="/our-story">OUR STORY</a>
-        <a href="#">SUSTAINABILITY</a>
       </nav>
       
       {/* Make the brand clickable to return to the home page */}
       <div 
         className={styles.brand} 
         onClick={() => router.push('/')}
-        style={{ cursor: 'pointer' }}
       >
         <span className={styles.logoIcon} aria-hidden="true">
           <span className={styles.dropCore} />
@@ -65,25 +65,22 @@ export default function Header() {
       </div>
       
       <div className={styles.actions}>
-        <a href="/login" className={styles.loginLink}>Log in</a>
+        {isStaffDashboard ? (
+          <button className={styles.loginLink} onClick={() => router.push('/login')}>
+            Log out
+          </button>
+        ) : (
+          <a href="/login" className={styles.loginLink}>Log in</a>
+        )}
         
         {/* Upgraded Cart to be a clickable button with dynamic data */}
         <button 
+          className={styles.cartButton}
           onClick={() => router.push('/cart')}
-          style={{ 
-            background: 'none', 
-            border: 'none', 
-            cursor: 'pointer', 
-            font: 'inherit', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px',
-            color: 'inherit'
-          }}
         >
           <span className={styles.cart}>🛒</span>
           {cartCount > 0 && (
-            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
+            <span className={styles.cartSummary}>
               {cartCount} Items (S$ {cartTotal.toFixed(2)})
             </span>
           )}
