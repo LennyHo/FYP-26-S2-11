@@ -31,6 +31,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [conversationId, setConversationId] = useState('');
+  const [logoHovered, setLogoHovered] = useState(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -134,7 +135,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     const newConversationId = createConversationId();
     const greetingMsg: Message = {
       id: Date.now().toString(),
-      text: 'Hello! I am your AI barista. How can I help you today?',
+      text: 'Hello! I\'m Avy, your DripTea companion. How can I help you today?',
       isUser: false,
     };
     setConversationId(newConversationId);
@@ -151,7 +152,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
 
   const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    if (target.tagName === 'BUTTON' && target.classList.contains('chat-nav-btn')) {
+    if (target.tagName === 'BUTTON' && (target.classList.contains('chat-nav-btn') || target.classList.contains('chat-nav-btn-compact'))) {
       const aiAction = target.getAttribute('onclick') || '';
       if (aiAction.includes('openCart') && onOpenCart) {
         onOpenCart();
@@ -169,8 +170,61 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     <aside className={styles.chatbotSidebar}>
       <div className={styles.chatHeader}>
         <div className={styles.headerContent}>
-          <h3>AI Assistant</h3>
-          <p className={styles.subtitle}>Ask our AI anything</p>
+          <div className={styles.headerTitle}>
+            <svg 
+              className={styles.avyLogo} 
+              viewBox="0 0 100 100" 
+              width="40" 
+              height="40"
+              onMouseEnter={() => setLogoHovered(true)}
+              onMouseLeave={() => setLogoHovered(false)}
+            >
+              <defs>
+                <radialGradient id="donutGradient" cx="40%" cy="40%">
+                  <stop offset="0%" stopColor="#e89b6f" />
+                  <stop offset="60%" stopColor="#c87941" />
+                  <stop offset="100%" stopColor="#b86a35" />
+                </radialGradient>
+              </defs>
+              {/* Main circle/donut */}
+              <circle cx="50" cy="50" r="42" fill="url(#donutGradient)" />
+              {/* Inner hole */}
+              <circle cx="50" cy="50" r="20" fill="white" />
+              {/* Left eye */}
+              <circle 
+                className={styles.eye} 
+                cx="38" 
+                cy="42" 
+                r="4" 
+                fill="#333" 
+                opacity={logoHovered ? "1" : "0"}
+                style={{ transition: 'opacity 0.3s ease' }}
+              />
+              {/* Right eye */}
+              <circle 
+                className={styles.eye} 
+                cx="62" 
+                cy="42" 
+                r="4" 
+                fill="#333" 
+                opacity={logoHovered ? "1" : "0"}
+                style={{ transition: 'opacity 0.3s ease' }}
+              />
+              {/* Smile */}
+              <path 
+                className={styles.smile} 
+                d="M 38 58 Q 50 68 62 58" 
+                stroke="#333" 
+                strokeWidth="3" 
+                fill="none" 
+                strokeLinecap="round" 
+                opacity={logoHovered ? "1" : "0"}
+                style={{ transition: 'opacity 0.3s ease' }}
+              />
+            </svg>
+            <h3>Avy</h3>
+          </div>
+          <p className={styles.subtitle}>Your DripTea Health Buddy</p>
         </div>
         <div className={styles.headerControls}>
           <button type="button" className={styles.restartBtn} onClick={restartConversation}>⟳</button>
@@ -185,6 +239,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
               className={styles.compactContent}
               dangerouslySetInnerHTML={{ 
                 __html: msg.text
+                  .replace(/<img[^>]*>/gi, '') // Remove all img tags
                   .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>') // Turn double <br> into single <br>
                   .replace(/\n\s*\n/g, '<br>') // Turn double newlines into single <br>
                   .replace(/\n/g, '<br>') // Turn single newlines into <br>

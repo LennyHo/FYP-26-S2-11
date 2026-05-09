@@ -47,4 +47,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.chatToggleBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 30px rgba(200, 121, 65, 0.6);
+}
+
+.chatToggleBtn:hover circle:not([cx="50"]),
+.chatToggleBtn:hover path {
+  opacity: 1 !important;
 }
