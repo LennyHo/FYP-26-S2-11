@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import styles from './ChatbotSidebar.module.css';
 import avyLogo from '../../../frontend/img/avy_logo/Group 2.svg';
+import { useRouter } from 'next/navigation';
 
 interface Message {
   id: string;
@@ -20,11 +21,45 @@ interface ChatbotSidebarProps {
 const STORAGE_KEY = "driptea_chatbot_messages";
 const CONVERSATION_ID_KEY = "driptea_chatbot_conversation_id";
 
+const drinkData: Record<string, { id: string; category: string }> = {
+  "Classic Milk Tea": { id: "b001", category: "milk-tea" },
+  "Jasmine Green Tea": { id: "b002", category: "milk-tea" },
+  "Oolong Milk Tea": { id: "b003", category: "milk-tea" },
+  "Osmanthus Milk Tea": { id: "b004", category: "milk-tea" },
+  "Da Hong Bao Milk Tea": { id: "b005", category: "milk-tea" },
+  "Matcha Latte": { id: "b006", category: "matcha-teas" },
+  "Strawberry Matcha Tea": { id: "b007", category: "matcha-teas" },
+  "Cranberry Matcha Tea": { id: "b008", category: "matcha-teas" },
+  "Jasmine Matcha Tea": { id: "b009", category: "matcha-teas" },
+  "Double Chocolate Frappe": { id: "b010", category: "ice-blended" },
+  "Taro Slush": { id: "b012", category: "ice-blended" },
+  "Milo Dinosaur": { id: "b011", category: "local-favourites" },
+};
+
 function createConversationId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+}
+
+function convertDrinkNamesToLinks(text: string): string {
+  let result = text;
+  
+  // Replace drink names with links (bold or asterisk format from server)
+  Object.entries(drinkData).forEach(([drinkName, { id, category }]) => {
+    const url = `/menu/${category}/${id}`;
+    
+    // Handle **Drink Name** format
+    const boldPattern = new RegExp(`\\*\\*${drinkName}\\*\\*`, 'g');
+    result = result.replace(boldPattern, `<a href="${url}" style="color: #2b7da3; text-decoration: none; border-bottom: 2px solid #2b7da3; font-weight: bold;"><strong>${drinkName}</strong></a>`);
+    
+    // Handle ***Drink Name*** format
+    const boldItalicPattern = new RegExp(`\\*\\*\\*${drinkName}\\*\\*\\*`, 'g');
+    result = result.replace(boldItalicPattern, `<a href="${url}" style="color: #2b7da3; text-decoration: none; border-bottom: 2px solid #2b7da3; font-weight: bold;"><strong>${drinkName}</strong></a>`);
+  });
+  
+  return result;
 }
 
 export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: ChatbotSidebarProps) {
@@ -153,11 +188,29 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
 
   const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    if (target.tagName === 'BUTTON' && (target.classList.contains('chat-nav-btn') || target.classList.contains('chat-nav-btn-compact'))) {
+    
+    // Check if it's a button and has your specific chat classes
+    if (target.tagName === 'BUTTON' && 
+      (target.classList.contains('chat-nav-btn') || target.classList.contains('chat-nav-btn-compact'))) {
+      
       const aiAction = target.getAttribute('onclick') || '';
-      if (aiAction.includes('openCart') && onOpenCart) {
+      
+      // Handle cart button
+      if (aiAction.includes('handleCart') && onOpenCart) {
+        e.preventDefault();
+        e.stopPropagation();
         onOpenCart();
-      } else if (aiAction.includes('goToCheckoutPage') && onCheckout) {
+      } 
+      // Handle checkout button
+      else if (aiAction.includes('handleCheckout') && onCheckout) {
+        e.preventDefault();
+        e.stopPropagation();
+        onCheckout();
+      }
+      // Handle goToCheckoutPage button
+      else if (aiAction.includes('goToCheckoutPage') && onCheckout) {
+        e.preventDefault();
+        e.stopPropagation();
         const priceMatch = aiAction.match(/[\d.]+/);
         if (priceMatch) {
           localStorage.setItem("dripTeaCartTotal", priceMatch[0]);
@@ -232,7 +285,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
               <div
                 className={styles.bubbleText}
                 dangerouslySetInnerHTML={{
-                  __html: msg.text
+                  __html: convertDrinkNamesToLinks(msg.text)
                     .replace(/<img[^>]*>/gi, '')
                     .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>')
                     .replace(/\n\s*\n/g, '<br>')

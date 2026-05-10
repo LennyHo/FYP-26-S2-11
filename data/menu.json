@@ -184,7 +184,8 @@
     "ice_levels": {
       "0%": { "name": "No Ice", "price_modifier": 0 },
       "50%": { "name": "Less Ice", "price_modifier": 0 },
-      "100%": { "name": "Normal Ice", "price_modifier": 0 }
+      "100%": { "name": "Normal Ice", "price_modifier": 0 }, 
+      "-0%": { "name": "Hot", "price_modifier": 0 }
     },
 
     "toppings": {

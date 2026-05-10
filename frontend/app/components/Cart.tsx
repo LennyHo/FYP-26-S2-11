@@ -12,6 +12,21 @@ interface CartItem {
   imageSrc?: string;
 }
 
+const drinkNameToId: Record<string, { id: string; category: string }> = {
+  "Classic Milk Tea": { id: "b001", category: "milk-tea" },
+  "Jasmine Green Tea": { id: "b002", category: "milk-tea" },
+  "Oolong Milk Tea": { id: "b003", category: "milk-tea" },
+  "Osmanthus Milk Tea": { id: "b004", category: "milk-tea" },
+  "Da Hong Bao Milk Tea": { id: "b005", category: "milk-tea" },
+  "Matcha Latte": { id: "b006", category: "matcha-teas" },
+  "Strawberry Matcha Tea": { id: "b007", category: "matcha-teas" },
+  "Cranberry Matcha Tea": { id: "b008", category: "matcha-teas" },
+  "Jasmine Matcha Tea": { id: "b009", category: "matcha-teas" },
+  "Double Chocolate Frappe": { id: "b010", category: "ice-blended" },
+  "Taro Slush": { id: "b012", category: "ice-blended" },
+  "Milo Dinosaur": { id: "b011", category: "local-favourites" },
+};
+
 export default function Cart() {
   const router = useRouter();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -28,7 +43,12 @@ export default function Cart() {
       drinks.forEach(drinkLine => {
         const parts = drinkLine.split('|');
         if (parts.length >= 3) {
-          const name = parts[0].trim();
+          let name = parts[0].trim();
+          // Extract just the drink name without customization details in parentheses
+          const nameMatch = name.match(/^([^(]+)/);
+          if (nameMatch) {
+            name = nameMatch[1].trim();
+          }
           const details = parts[1].trim();
           const priceString = parts[2].replace(/[^0-9.]/g, '');
           const price = parseFloat(priceString);
@@ -44,6 +64,24 @@ export default function Cart() {
       setTotal(calculatedTotal);
     }
     setIsLoading(false);
+  };
+
+  const removeItem = (index: number) => {
+    const updatedItems = cartItems.filter((_, i) => i !== index);
+    setCartItems(updatedItems);
+    
+    // Update localStorage and total
+    const newTotal = updatedItems.reduce((sum, item) => sum + item.price, 0);
+    setTotal(newTotal);
+    
+    // Save to localStorage
+    const updatedCartData = updatedItems
+      .map(item => `${item.name}|${item.details}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`)
+      .join('\n');
+    localStorage.setItem("dripTeaCartData", updatedCartData);
+    
+    // Trigger event for other components
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   useEffect(() => {
@@ -65,17 +103,31 @@ export default function Cart() {
         {cartItems.length === 0 ? (
           <p style={{ padding: '20px 0' }}>Your cart is empty.</p>
         ) : (
-          cartItems.map((item, index) => (
+          cartItems.map((item, index) => {
+            const drinkInfo = drinkNameToId[item.name];
+            return (
             <div key={index} className="cart-item-row">
               <div className="item-info">
                 <div className="cart-item-details">
-                  <h3>{item.name}</h3>
+                  {drinkInfo ? (
+                    <h3><a href={`/menu/${drinkInfo.category}/${drinkInfo.id}`} className="drink-link">{item.name}</a></h3>
+                  ) : (
+                    <h3>{item.name}</h3>
+                  )}
                   <p>{item.details}</p>
                 </div>
               </div>
               <div className="cart-item-price">S$ {item.price.toFixed(2)}</div>
+              <button 
+                onClick={() => removeItem(index)} 
+                className="remove-btn"
+                title="Remove from cart"
+              >
+                Remove
+              </button>
             </div>
-          ))
+          );
+          })
         )}
       </div>
 
