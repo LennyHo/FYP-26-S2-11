@@ -1,0 +1,124 @@
+.page {
+  min-height: 100vh;
+  background-color: #fffaf5;
+}
+
+.main {
+  width: min(1200px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 40px 0 80px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.backAction {
+  width: fit-content;
+  background: none;
+  border: none;
+  color: #9b6d4a;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1rem;
+}
+
+.sectionHeading h2 {
+  font-size: 2.5rem;
+  color: #1a1a1a;
+  margin-top: 8px;
+}
+
+.sectionEyebrow {
+  color: #9b6d4a;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.beverageCard {
+  background: #fffdfa;
+  border: 1px solid #f2e6d9;
+  border-radius: 32px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(59, 39, 26, 0.04);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: flex-end; /* Moves price to the right since badge is gone */
+}
+
+.priceTag {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #1a1a1a;
+}
+
+.imageWrapper {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(180deg, #fff2e6, #f4d8be);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.beverageImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.beverageInfo h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.beverageInfo p {
+  color: #7a6a5e;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.addButton {
+  background: #9b6d4a;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 800;
+  width: fit-content;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.addButton:hover {
+  transform: translateY(-2px);
+  background: #7d563a;
+}
+
+@media (max-width: 1024px) {
+  .cardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+}

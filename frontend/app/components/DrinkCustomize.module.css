@@ -1,0 +1,316 @@
+.page {
+  min-height: 100vh;
+  background: #f9f6f0;
+}
+
+.main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 20px 20px;
+}
+
+/* ── Top section: image left, info right ── */
+.topSection {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 24px 0 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+
+.imageWrapper {
+  flex: 0 0 200px;
+  height: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f0e8de, #e8d5c0);
+}
+
+.drinkImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #c87941;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  width: fit-content;
+}
+
+.backBtn:hover {
+  text-decoration: underline;
+}
+
+.drinkName {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.drinkDesc {
+  font-size: 0.88rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Nutri grade */
+.nutriRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nutriBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.95rem;
+}
+
+.nutriDetail {
+  font-size: 0.8rem;
+  color: #666;
+  background: rgba(0,0,0,0.06);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+/* ── Option sections ── */
+.section {
+  padding: 18px 0 0;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0 0 10px;
+}
+
+.optionGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.optionBtn {
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  color: #555;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.15s ease;
+  min-width: 80px;
+}
+
+.optionBtn:hover {
+  border-color: #c87941;
+  color: #c87941;
+}
+
+.optionBtn.selected {
+  background: #eaf0fb;
+  border-color: #1a1a2e;
+  color: #1a1a2e;
+  font-weight: 700;
+}
+
+.surcharge {
+  font-size: 0.72rem;
+  color: #999;
+}
+
+.optionBtn.selected .surcharge {
+  color: #555;
+}
+
+/* ── Updated Sticky footer ── */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 1px solid #eee;
+  padding: 12px 0;
+  z-index: 1000; /* High z-index to stay above chatbot button */
+  display: flex;
+  justify-content: center;
+  transition: padding-right 0.3s ease;
+}
+
+.footerTop {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 20px;
+  padding-bottom: 8px;
+}
+
+.quantityRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: sans-serif;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Create a container inside the footer to match the .main width */
+.footerContainer {
+  width: 95%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center; /* Force everything to the middle */
+  gap: 30px; /* Space between the groups */
+  flex-wrap: nowrap; /* Prevents them from jumping to new lines */
+}
+
+.footerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.totalPrice {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.quantityRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qtyBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1.5px solid #1a1a2e;
+  background: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1a2e;
+  transition: background 0.15s;
+}
+
+.qtyBtn:hover {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.qtyValue {
+  font-size: 0.95rem;
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+  color: #1a1a2e;
+}
+
+.actionRow {
+  display: flex;
+  gap: 10px;
+}
+
+.addToCartBtn {
+  background-color: #2b7da3; /* Deep Sky Blue */
+  color: #ffffff;
+  border: none;
+  border-radius: 50px; /* High value for the pill shape */
+  padding: 12px 30px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+
+.addToCartBtn:hover {
+  opacity: 0.9;
+}
+
+.placeOrderBtn {
+  background-color: #2b7da3; /* Deep Sky Blue */
+  color: #ffffff;
+  border: none;
+  border-radius: 50px; /* High value for the pill shape */
+  padding: 12px 30px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+
+.placeOrderBtn:hover {
+  opacity: 0.9;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .footer {
+    right: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .topSection {
+    flex-direction: column;
+  }
+
+  .imageWrapper {
+    flex: none;
+    width: 100%;
+    height: 220px;
+  }
+}
+
+/* If your body/wrapper has a 'chatbot-active' class */
+.chatbotActive .footer {
+  padding-right: 360px; /* Match your chatbot width */
+}
+
+.chatbot-active .footerContainer {
+  max-width: 600px;           /* Makes the box narrower so it doesn't touch the bot */
+}
