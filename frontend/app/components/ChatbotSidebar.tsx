@@ -182,7 +182,10 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
 
   useEffect(() => {
     if (chatWindowRef.current) {
-      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+      chatWindowRef.current.scrollTo({
+        top: chatWindowRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
     }
   }, [messages]);
 
