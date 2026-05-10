@@ -167,51 +167,101 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     }
   };
 
+  const formatMessageTime = (id: string) => {
+    const parsed = Number(id);
+    if (!Number.isFinite(parsed)) {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return new Date(parsed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <aside className={styles.chatbotSidebar}>
       <div className={styles.chatHeader}>
-        <div className={styles.headerContent}>
-          <div className={styles.headerTitle}>
-            <Image 
+        <div className={styles.headerTop}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => onClose?.()}
+            aria-label="Back"
+          >
+            ←
+          </button>
+          <div className={styles.titleWrap}>
+            <Image
               src={avyLogo}
               alt="Avy Logo"
-              width={40}
-              height={40}
+              width={32}
+              height={32}
               className={styles.avyLogoImage}
               priority
             />
-            <h3>Avy</h3>
+            <h3 className={styles.headerMainTitle}>Avy</h3>
           </div>
-          <p className={styles.subtitle}>Your DripTea Health Buddy</p>
+          <div className={styles.headerControls}>
+            <button type="button" className={styles.restartBtn} onClick={restartConversation}>⟳</button>
+          </div>
         </div>
-        <div className={styles.headerControls}>
-          <button type="button" className={styles.restartBtn} onClick={restartConversation}>⟳</button>
-          {onClose && <button type="button" className={styles.closeBtn} onClick={onClose}>✕</button>}
+
+        <div className={styles.headerContent}>
+          <p className={styles.subtitle}>Your DripTea Health Buddy</p>
         </div>
       </div>
 
       <div className={styles.chatWindow} ref={chatWindowRef} onClick={handleChatClick}>
         {messages.map(msg => (
           <div key={msg.id} className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
-            <div 
-              className={styles.compactContent}
-              dangerouslySetInnerHTML={{ 
-                __html: msg.text
-                  .replace(/<img[^>]*>/gi, '') // Remove all img tags
-                  .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>') // Turn double <br> into single <br>
-                  .replace(/\n\s*\n/g, '<br>') // Turn double newlines into single <br>
-                  .replace(/\n/g, '<br>') // Turn single newlines into <br>
-                  .trim() 
-              }}
+            {!msg.isUser && (
+              <div className={styles.botMeta}>
+                <Image
+                  src={avyLogo}
+                  alt="Avy"
+                  width={18}
+                  height={18}
+                  className={styles.messageAvatar}
+                />
+                <span className={styles.assistantLabel}>AI-Assistant</span>
+                <span className={styles.metaDivider}>•</span>
+                <time className={styles.messageTime}>{formatMessageTime(msg.id)}</time>
+              </div>
+            )}
+            <div
+              className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}
               onClick={handleChatClick}
-            />
+            >
+              <div
+                className={styles.bubbleText}
+                dangerouslySetInnerHTML={{
+                  __html: msg.text
+                    .replace(/<img[^>]*>/gi, '')
+                    .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>')
+                    .replace(/\n\s*\n/g, '<br>')
+                    .replace(/\n/g, '<br>')
+                    .trim()
+                }}
+              />
+            </div>
           </div>
         ))}
         {isLoading && (
           <div className={`${styles.message} ${styles.botMessage}`}>
-            <span className={styles.typingIndicator}>
-              <span></span><span></span><span></span>
-            </span>
+            <div className={styles.botMeta}>
+              <Image
+                src={avyLogo}
+                alt="Avy"
+                width={18}
+                height={18}
+                className={styles.messageAvatar}
+              />
+              <span className={styles.assistantLabel}>AI-Assistant</span>
+              <span className={styles.metaDivider}>•</span>
+              <span className={styles.messageTime}>typing...</span>
+            </div>
+            <div className={styles.botBubble}>
+              <span className={styles.typingIndicator}>
+                <span></span><span></span><span></span>
+              </span>
+            </div>
           </div>
         )}
       </div>
