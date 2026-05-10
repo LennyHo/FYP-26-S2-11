@@ -37,6 +37,66 @@
   gap: 8px;
 }
 
+.avyLogoAnimated {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  filter: drop-shadow(0 4px 10px rgba(160, 116, 77, 0.24));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transform-origin: center;
+}
+
+.avyLogoSvgWrap {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.avyLogoSvgWrap svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.avyEyeLeft,
+.avyEyeRight {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+  transform: translate(var(--avy-eye-x, 0px), var(--avy-eye-y, 0px));
+}
+
+.avyLogoAnimated:hover .avyLogoSvgWrap {
+  animation: avyHoverFloat 1.15s ease-in-out infinite, avyHoverTilt 0.9s ease-in-out infinite;
+}
+
+@keyframes avyHoverFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes avyHoverTilt {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  40% {
+    transform: rotate(-2deg) scale(1.01);
+  }
+  70% {
+    transform: rotate(2deg) scale(1.015);
+  }
+}
+
 .backBtn,
 .restartBtn {
   width: 34px;
@@ -231,10 +291,28 @@
   color: var(--foreground);
 }
 
+.typingBubble {
+  background: transparent;
+  box-shadow: none;
+  padding: 6px 0 2px;
+}
+
 .typingIndicator {
   display: flex;
   gap: 6px;
   align-items: center;
+  animation: typingFadeIn 220ms ease-out;
+}
+
+@keyframes typingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .typingIndicator span {

@@ -69,6 +69,9 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const [isInitialized, setIsInitialized] = useState(false);
   const [conversationId, setConversationId] = useState('');
   const chatWindowRef = useRef<HTMLDivElement>(null);
+  const avyLogoRef = useRef<HTMLDivElement>(null);
+  const avyEyeLeftRef = useRef<SVGPathElement>(null);
+  const avyEyeRightRef = useRef<SVGPathElement>(null);
 
   useEffect(() => {
     const savedConversationId = localStorage.getItem(CONVERSATION_ID_KEY);
@@ -110,6 +113,42 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   }, [messages, isInitialized]);
 
   const backendBase = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim() || 'http://localhost:5000';
+
+  const updateAvyEyes = (clientX: number, clientY: number) => {
+    const bounds = avyLogoRef.current?.getBoundingClientRect();
+    if (!bounds) return;
+
+    const centerX = bounds.left + bounds.width / 2;
+    const centerY = bounds.top + bounds.height / 2;
+    const deltaX = (clientX - centerX) / (bounds.width / 2);
+    const deltaY = (clientY - centerY) / (bounds.height / 2);
+
+    const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+    const x = clamp(deltaX * 5, -5, 5);
+    const y = clamp(deltaY * 4, -4, 4);
+
+    if (avyEyeLeftRef.current) {
+      avyEyeLeftRef.current.style.setProperty('--avy-eye-x', `${x * 0.6}px`);
+      avyEyeLeftRef.current.style.setProperty('--avy-eye-y', `${y * 0.6}px`);
+    }
+
+    if (avyEyeRightRef.current) {
+      avyEyeRightRef.current.style.setProperty('--avy-eye-x', `${x * 0.95}px`);
+      avyEyeRightRef.current.style.setProperty('--avy-eye-y', `${y * 0.95}px`);
+    }
+  };
+
+  const resetAvyEyes = () => {
+    if (avyEyeLeftRef.current) {
+      avyEyeLeftRef.current.style.removeProperty('--avy-eye-x');
+      avyEyeLeftRef.current.style.removeProperty('--avy-eye-y');
+    }
+
+    if (avyEyeRightRef.current) {
+      avyEyeRightRef.current.style.removeProperty('--avy-eye-x');
+      avyEyeRightRef.current.style.removeProperty('--avy-eye-y');
+    }
+  };
 
   async function sendMessage(text?: string) {
     const messageText = text || input.trim();
@@ -244,14 +283,73 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
             ←
           </button>
           <div className={styles.titleWrap}>
-            <Image
-              src={avyLogo}
-              alt="Avy Logo"
-              width={32}
-              height={32}
-              className={styles.avyLogoImage}
-              priority
-            />
+            <div
+              ref={avyLogoRef}
+              className={styles.avyLogoAnimated}
+              aria-hidden="true"
+              onPointerEnter={e => updateAvyEyes(e.clientX, e.clientY)}
+              onPointerMove={e => updateAvyEyes(e.clientX, e.clientY)}
+              onPointerLeave={resetAvyEyes}
+            >
+              <svg className={styles.avyLogoSvgWrap} width="273" height="273" viewBox="0 0 273 273" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                <g filter="url(#chatbotAvyFilter0)">
+                  <circle cx="136.5" cy="132.5" r="132.5" fill="url(#chatbotAvyGradient)" />
+                </g>
+                <g filter="url(#chatbotAvyFilter1)">
+                  <path
+                    ref={avyEyeLeftRef}
+                    className={styles.avyEyeLeft}
+                    d="M79.7874 71.3204C82.9663 64.229 93.0337 64.2291 96.2126 71.3204L115.606 114.582C119.178 122.552 110.448 130.427 102.887 126.055L92.5058 120.05C89.7183 118.438 86.2817 118.438 83.4942 120.05L73.1126 126.055C65.5524 130.427 56.8217 122.552 60.3942 114.582L79.7874 71.3204Z"
+                    fill="#F9FAFA"
+                  />
+                </g>
+                <g filter="url(#chatbotAvyFilter2)">
+                  <path
+                    ref={avyEyeRightRef}
+                    className={styles.avyEyeRight}
+                    d="M176.787 71.3204C179.966 64.229 190.034 64.2291 193.213 71.3204L212.606 114.582C216.178 122.552 207.448 130.427 199.887 126.055L189.506 120.05C186.718 118.438 183.282 118.438 180.494 120.05L170.113 126.055C162.552 130.427 153.822 122.552 157.394 114.582L176.787 71.3204Z"
+                    fill="#F9FAFA"
+                  />
+                </g>
+                <defs>
+                  <filter id="chatbotAvyFilter0" x="0" y="0" width="273" height="273" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                    <feOffset dy="4" />
+                    <feGaussianBlur stdDeviation="2" />
+                    <feComposite in2="hardAlpha" operator="out" />
+                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_33_1152" />
+                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_33_1152" result="shape" />
+                  </filter>
+                  <filter id="chatbotAvyFilter1" x="55.5691" y="66.002" width="64.8618" height="69.3037" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                    <feOffset dy="4" />
+                    <feGaussianBlur stdDeviation="2" />
+                    <feComposite in2="hardAlpha" operator="out" />
+                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_33_1152" />
+                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_33_1152" result="shape" />
+                  </filter>
+                  <filter id="chatbotAvyFilter2" x="152.569" y="66.002" width="64.8619" height="69.3037" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                    <feOffset dy="4" />
+                    <feGaussianBlur stdDeviation="2" />
+                    <feComposite in2="hardAlpha" operator="out" />
+                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_33_1152" />
+                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_33_1152" result="shape" />
+                  </filter>
+                  <linearGradient id="chatbotAvyGradient" x1="136.5" y1="0" x2="175" y2="235.5" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#AB1C6E" />
+                    <stop offset="0.504808" stopColor="#A55EA3" />
+                    <stop offset="0.774038" stopColor="#A17EBE" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
             <h3 className={styles.headerMainTitle}>Avy</h3>
           </div>
           <div className={styles.headerControls}>
@@ -313,7 +411,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
               <span className={styles.metaDivider}>•</span>
               <span className={styles.messageTime}>typing...</span>
             </div>
-            <div className={styles.botBubble}>
+            <div className={`${styles.botBubble} ${styles.typingBubble}`}>
               <span className={styles.typingIndicator}>
                 <span></span><span></span><span></span>
               </span>
