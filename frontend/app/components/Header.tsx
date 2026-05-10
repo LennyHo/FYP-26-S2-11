@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
+import Link from 'next/link';
 
 // Inline SVG for the brand logo to avoid bundler import issues and ensure consistent rendering
 const mainLogoSvg = `
@@ -86,7 +87,7 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <nav className={styles.nav}>
-        <a href="/buy-driptea">BUY DRIPTEA</a>
+        <Link href="/buy-driptea">BUY DRIPTEA</Link>
         <a href="/our-story">OUR STORY</a>
       </nav>
       

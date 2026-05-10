@@ -27,8 +27,8 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
       </div>
 
       {/* RIGHT SIDE: CHATBOT */}
-      {!hideChatbot && isChatOpen && (
-        <div className={styles.chatPane}>
+      {!hideChatbot && (
+          <div className={styles.chatPane} style={{ display: isChatOpen ? 'flex' : 'none' }}>
           <ChatbotSidebar 
             onClose={() => setIsChatOpen(false)} 
             
