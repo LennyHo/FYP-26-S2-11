@@ -65,13 +65,11 @@
   gap: 18px;
   min-height: 350px;
   padding: 22px;
-  border-radius: 30px;
-  border: 1px solid rgba(220, 199, 180, 0.9);
-  background: linear-gradient(180deg, rgba(255, 250, 245, 0.95), rgba(255, 244, 233, 0.78));
-  box-shadow: 0 16px 30px rgba(59, 39, 26, 0.08);
+  border: none;
+  background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .featureCard::before {
@@ -87,7 +85,6 @@
 
 .featureCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 34px rgba(59, 39, 26, 0.12);
 }
 
 .featureCard:focus-visible {
@@ -149,12 +146,7 @@
 }
 
 .featureVisual::before {
-  content: '';
-  width: min(100%, 240px);
-  height: 130px;
-  border-radius: 28px;
-  border: 1px solid rgba(220, 199, 180, 0.7);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  display: none;
 }
 
 .matchaTone::before {
@@ -176,7 +168,7 @@
 }
 
 .brownTone {
-  background: linear-gradient(180deg, rgba(255, 250, 245, 0.95), rgba(255, 242, 229, 0.88));
+  background: transparent;
 }
 
 .brownTone::before {
@@ -184,7 +176,7 @@
 }
 
 .redTone {
-  background: linear-gradient(180deg, rgba(255, 250, 245, 0.95), rgba(253, 233, 227, 0.88));
+  background: transparent;
 }
 
 .redTone::before {
@@ -195,8 +187,9 @@
   margin-top: 14px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(220, 199, 180, 0.9);
+  border: none;
   background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 4px 12px rgba(2, 23, 46, 0.06);
   color: var(--muted);
   font-size: 0.95rem;
 }

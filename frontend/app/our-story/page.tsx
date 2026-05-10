@@ -19,7 +19,7 @@ export default function OurStoryPage() {
           flex: isChatOpen ? '1 0 70%' : '1 0 100%',
           transition: 'flex 0.3s ease',
           overflowY: 'auto',
-          backgroundColor: '#F9F6F0'
+          backgroundColor: 'var(--background)'
         }}
       >
         <Header />
@@ -30,7 +30,7 @@ export default function OurStoryPage() {
 
       {/* Chatbot Sidebar */}
       {isChatOpen && (
-        <div style={{ flex: '1 0 30%', height: '100vh', borderLeft: '2px solid #EFEAE6', background: 'white' }}>
+        <div style={{ flex: '1 0 30%', height: '100vh', borderLeft: '2px solid var(--border)', background: 'white' }}>
           <ChatbotSidebar 
             onClose={() => setIsChatOpen(false)}
             onOpenCart={() => router.push('/cart')}
@@ -43,7 +43,7 @@ export default function OurStoryPage() {
       {!isChatOpen && (
         <button
           onClick={() => setIsChatOpen(true)}
-          style={{
+            style={{
             position: 'fixed',
             bottom: '40px',
             right: '40px',
@@ -51,7 +51,7 @@ export default function OurStoryPage() {
             width: '65px',
             height: '65px',
             borderRadius: '50%',
-            backgroundColor: '#C87941',
+            backgroundColor: 'var(--color-secondary)',
             color: 'white',
             border: 'none',
             fontSize: '30px',

@@ -9,12 +9,12 @@
   width: min(1120px, calc(100% - 32px));
   margin: 16px auto 0;
   padding: 14px 18px;
-  border: 1px solid rgba(220, 199, 180, 0.85);
+  border: none;
   border-radius: 22px;
   background: rgba(255, 250, 245, 0.78);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  box-shadow: 0 10px 36px rgba(74, 47, 23, 0.08);
+  box-shadow: 0 12px 28px rgba(2, 23, 46, 0.12);
 }
 
 .nav,
@@ -37,9 +37,13 @@
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
-.nav a:hover,
+.nav a:hover {
+  color: var(--color-secondary);
+  transform: translateY(-1px);
+}
+
 .actions a:hover {
-  color: var(--foreground);
+  color: var(--color-accent);
   transform: translateY(-1px);
 }
 
@@ -57,6 +61,24 @@
   letter-spacing: 0.28em;
   text-transform: uppercase;
   cursor: pointer;
+}
+
+.logoImage {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+/* When using the full logo SVG we remove the pill background */
+.brandImage {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.logoSvg svg {
+  height: 44px;
+  width: auto;
+  display: block;
 }
 
 .logoIcon {

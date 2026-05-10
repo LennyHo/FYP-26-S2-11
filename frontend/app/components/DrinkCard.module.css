@@ -6,13 +6,13 @@
   margin: 0 auto;
   padding: 18px;
   border-radius: 26px;
-  border: 1px solid rgba(220, 199, 180, 0.9);
+  border: none;
   background: rgba(255, 250, 245, 0.9);
   text-align: center;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  box-shadow: 0 16px 30px rgba(59, 39, 26, 0.08);
+  box-shadow: 0 12px 24px rgba(2, 23, 46, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
 }
@@ -26,8 +26,9 @@
   height: 112px;
   margin: 0 auto 14px;
   border-radius: 18px;
-  border: 1px solid rgba(59, 39, 26, 0.08);
+  border: none;
   background: var(--accent-bg);
+  box-shadow: 0 4px 12px rgba(2, 23, 46, 0.06);
   flex: 0 0 auto;
 }
 

@@ -2,6 +2,7 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
+  background: var(--background);
 }
 
 .mainContent {
@@ -29,22 +30,23 @@
   height: 56px;
   border-radius: 50%;
   border: none;
-  background: var(--accent-brown);
+  background: var(--color-secondary);
   color: white;
   font-size: 1.5rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(155, 109, 74, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 16px rgba(2, 87, 173, 0.24);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.25s ease;
   z-index: 1200;
   pointer-events: auto;
 }
 
 .chatToggleBtn:hover {
   transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(155, 109, 74, 0.4);
+  box-shadow: 0 6px 20px rgba(244, 59, 3, 0.22);
+  background: var(--color-accent);
 }
 
 .chatToggleBtn:active {

@@ -82,17 +82,6 @@ export default function MeetTheCrew() {
           <div className={`${styles.featureVisual} ${styles.redVisual}`} />
         </article>
       </div>
-      <div
-        className={`${styles.connectStatus} ${
-          connectState === 'ok' ? styles.ok : connectState === 'error' ? styles.error : ''
-        }`}
-        role="status"
-        aria-live="polite"
-      >
-        {connectState === 'idle'
-          ? 'Tap Matcha Cloud to connect this showcase to the backend.'
-          : connectMessage}
-      </div>
     </section>
   );
 }

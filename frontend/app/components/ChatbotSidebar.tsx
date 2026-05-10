@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from 'react';
+import Image from 'next/image';
 import styles from './ChatbotSidebar.module.css';
+import avyLogo from '../../../frontend/img/avy_logo/Group 2.svg';
 
 interface Message {
   id: string;
@@ -31,7 +33,6 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [conversationId, setConversationId] = useState('');
-  const [logoHovered, setLogoHovered] = useState(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -171,57 +172,14 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       <div className={styles.chatHeader}>
         <div className={styles.headerContent}>
           <div className={styles.headerTitle}>
-            <svg 
-              className={styles.avyLogo} 
-              viewBox="0 0 100 100" 
-              width="40" 
-              height="40"
-              onMouseEnter={() => setLogoHovered(true)}
-              onMouseLeave={() => setLogoHovered(false)}
-            >
-              <defs>
-                <radialGradient id="donutGradient" cx="40%" cy="40%">
-                  <stop offset="0%" stopColor="#e89b6f" />
-                  <stop offset="60%" stopColor="#c87941" />
-                  <stop offset="100%" stopColor="#b86a35" />
-                </radialGradient>
-              </defs>
-              {/* Main circle/donut */}
-              <circle cx="50" cy="50" r="42" fill="url(#donutGradient)" />
-              {/* Inner hole */}
-              <circle cx="50" cy="50" r="20" fill="white" />
-              {/* Left eye */}
-              <circle 
-                className={styles.eye} 
-                cx="38" 
-                cy="42" 
-                r="4" 
-                fill="#333" 
-                opacity={logoHovered ? "1" : "0"}
-                style={{ transition: 'opacity 0.3s ease' }}
-              />
-              {/* Right eye */}
-              <circle 
-                className={styles.eye} 
-                cx="62" 
-                cy="42" 
-                r="4" 
-                fill="#333" 
-                opacity={logoHovered ? "1" : "0"}
-                style={{ transition: 'opacity 0.3s ease' }}
-              />
-              {/* Smile */}
-              <path 
-                className={styles.smile} 
-                d="M 38 58 Q 50 68 62 58" 
-                stroke="#333" 
-                strokeWidth="3" 
-                fill="none" 
-                strokeLinecap="round" 
-                opacity={logoHovered ? "1" : "0"}
-                style={{ transition: 'opacity 0.3s ease' }}
-              />
-            </svg>
+            <Image 
+              src={avyLogo}
+              alt="Avy Logo"
+              width={40}
+              height={40}
+              className={styles.avyLogoImage}
+              priority
+            />
             <h3>Avy</h3>
           </div>
           <p className={styles.subtitle}>Your DripTea Health Buddy</p>

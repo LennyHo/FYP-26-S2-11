@@ -1,19 +1,26 @@
 
 :root {
-  --background: #f4ebe2;
-  --background-alt: #efe2d4;
+  /* Brand theme variables */
+  --color-primary: #FAF5CA; /* Beige */
+  --color-secondary: #0257AD; /* Blue */
+  --color-accent: #F43B03; /* Red */
+
+  /* Semantic colors derived from brand */
+  --background: var(--color-primary);
+  --background-alt: #f2efd1;
   --foreground: #1b130d;
-  --muted: #685245;
+  --muted: #6e6050;
   --surface: rgba(255, 249, 243, 0.82);
   --surface-strong: #fff8f1;
   --card: #fffaf5;
-  --border: #dcc7b4;
-  --accent-red: #de6447;
+  --border: rgba(0,0,0,0.08);
+  --accent-red: var(--color-accent);
+  --accent-blue: var(--color-secondary);
   --accent-green: #7ba86a;
   --accent-brown: #9b6d4a;
   --accent-yellow: #f2c86f;
   --accent-ink: #31231a;
-  --shadow: 0 24px 60px rgba(78, 44, 20, 0.12);
+  --shadow: 0 24px 60px rgba(2, 23, 46, 0.08);
 }
 
 html {
@@ -30,9 +37,9 @@ body {
 body {
   color: var(--foreground);
   background:
-    radial-gradient(circle at top left, rgba(227, 100, 71, 0.16), transparent 34%),
-    radial-gradient(circle at top right, rgba(123, 168, 106, 0.18), transparent 28%),
-    linear-gradient(180deg, #f8f1e8 0%, var(--background) 52%, var(--background-alt) 100%);
+    radial-gradient(circle at top left, rgba(2, 87, 173, 0.06), transparent 34%),
+    radial-gradient(circle at top right, rgba(244, 59, 3, 0.05), transparent 28%),
+    linear-gradient(180deg, var(--background) 0%, var(--background-alt) 60%);
   font-family: var(--font-geist-sans), 'Segoe UI', Arial, Helvetica, sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -82,7 +89,7 @@ body {
 .chat-nav-btn {
   display: block; /* Stack them vertically */
   width: 100%;
-  background-color: #C87941;
+  background-color: var(--color-secondary);
   color: white;
   border: none;
   padding: 8px 12px;

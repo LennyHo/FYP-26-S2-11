@@ -108,17 +108,17 @@ function openCart() {
                     
                     // Inject the HTML for this drink, including the new <img> tag!
                     cartItemsContainer.innerHTML += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #EFEAE6; padding: 20px 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding: 20px 0;">
                             <div style="display: flex; align-items: center; gap: 15px;">
                                 <!-- THE IMAGE IS RENDERED HERE -->
-                                <img src="${imageSrc}" alt="${name}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; background-color: #f1f1f1;">
+                                <img src="${imageSrc}" alt="${name}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; background-color: var(--card);">
                                 
                                 <div>
-                                    <h3 style="margin-bottom: 5px; color: #4A3B32;">${name}</h3>
-                                    <p style="font-size: 14px; color: #777;">${details}</p>
+                                    <h3 style="margin-bottom: 5px; color: var(--foreground);">${name}</h3>
+                                    <p style="font-size: 14px; color: var(--muted);">${details}</p>
                                 </div>
                             </div>
-                            <div style="font-size: 20px; font-weight: bold; color: #C87941;">S$ ${price.toFixed(2)}</div>
+                            <div style="font-size: 20px; font-weight: bold; color: var(--color-secondary);">S$ ${price.toFixed(2)}</div>
                         </div>
                     `;
                 }

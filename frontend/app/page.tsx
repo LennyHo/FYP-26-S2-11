@@ -3,6 +3,8 @@
 import Header from './components/Header';
 import Hero from './components/Hero';
 import MeetTheCrew from './components/MeetTheCrew';
+import FAQ from './components/FAQ';
+import Footer from './components/Footer';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -12,7 +14,9 @@ export default function Home() {
       <main className={styles.main}>
         <Hero />
         <MeetTheCrew />
+        <FAQ />
       </main>
+      <Footer />
     </div>
   );
 }

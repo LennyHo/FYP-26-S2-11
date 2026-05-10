@@ -267,14 +267,13 @@
   border-radius: 8px;
   text-align: center;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(169, 137, 80, 0.1);
+  box-shadow: 0 6px 16px rgba(2, 23, 46, 0.08);
+  border: none;
 }
 
 .valueCard:hover {
   transform: translateY(-8px);
-  box-shadow: 0 8px 24px rgba(169, 137, 80, 0.15);
-  border-color: rgba(169, 137, 80, 0.3);
+  box-shadow: 0 12px 32px rgba(2, 23, 46, 0.12);
 }
 
 .valueIcon {
