@@ -47,6 +47,122 @@
   transform: translateY(-1px);
 }
 
+/* Nav link visual styles */
+.navLink {
+  color: var(--muted);
+  padding: 8px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: 700;
+}
+
+.nav a + a,
+.navLink + .navLink {
+  margin-left: 12px;
+}
+
+/* Hamburger menu button (mobile) */
+.menuBtn {
+  display: none;
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.hamburger {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--muted);
+  border-radius: 2px;
+  position: relative;
+}
+
+.hamburger::before,
+.hamburger::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 22px;
+  height: 2px;
+  background: var(--muted);
+  border-radius: 2px;
+}
+
+.hamburger::before { top: -7px; }
+.hamburger::after { top: 7px; }
+
+/* Mobile nav open state */
+.navOpen {
+  display: none; /* default hidden on small screens, toggled in media query */
+}
+
+@media (max-width: 780px) {
+  .menuBtn {
+    display: block;
+  }
+
+  /* place hamburger on the right side for mobile */
+  .menuBtn {
+    position: absolute;
+    right: 18px;
+    top: 14px;
+    z-index: 60;
+  }
+
+  /* keep nav container present so the hamburger button can show */
+  .nav {
+    display: flex;
+    position: relative;
+    width: 100%;
+    align-items: center;
+    gap: 12px;
+    padding-right: 56px;
+    transition: background 0.28s ease, box-shadow 0.28s ease, border-radius 0.28s ease, padding 0.28s ease, transform 0.28s ease;
+  }
+
+  .nav .navLink {
+    display: block;
+    width: 100%;
+    max-height: 0;
+    padding: 0 14px;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition: max-height 0.3s ease, opacity 0.22s ease, transform 0.28s ease, padding 0.28s ease;
+  }
+
+  .navOpen {
+    display: flex;
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 72px;
+    background: rgba(255, 250, 245, 0.98);
+    padding: 12px 18px 14px;
+    border-radius: 12px;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    z-index: 40;
+    box-shadow: 0 10px 30px rgba(2,23,46,0.12);
+  }
+
+  .navOpen .navLink {
+    text-align: center;
+    padding: 10px 14px;
+    font-size: 1rem;
+    max-height: 72px;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+
 .brand {
   display: inline-flex;
   align-items: center;

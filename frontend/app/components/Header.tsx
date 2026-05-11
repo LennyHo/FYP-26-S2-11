@@ -52,6 +52,7 @@ export default function Header() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
   const isStaffDashboard = pathname.startsWith('/user-admin') || pathname.startsWith('/store-staff');
 
   // Read the AI's saved cart data from localStorage
@@ -86,9 +87,17 @@ export default function Header() {
 
   return (
     <header className={styles.header}>
-      <nav className={styles.nav}>
-        <Link href="/buy-driptea">BUY DRIPTEA</Link>
-        <a href="/our-story">OUR STORY</a>
+      <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`} role="navigation" aria-label="Primary">
+        <button
+          className={styles.menuBtn}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <span className={styles.hamburger} aria-hidden="true" />
+        </button>
+
+        <Link href="/buy-driptea" className={styles.navLink} onClick={() => setMenuOpen(false)}>BUY DRIPTEA</Link>
+        <Link href="/our-story" className={styles.navLink} onClick={() => setMenuOpen(false)}>OUR STORY</Link>
       </nav>
       
       {/* Make the brand clickable to return to the home page */}
