@@ -374,7 +374,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
         </div>
 
         <div className={styles.headerContent}>
-          <p className={styles.subtitle}>Your DripTea Health Buddy</p>
+          <p className={styles.subtitle}>AI DripTea Health Buddy</p>
         </div>
       </div>
 
@@ -391,7 +391,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
                   height={18}
                   className={styles.messageAvatar}
                 />
-                <span className={styles.assistantLabel}>AI-Assistant</span>
+                  <span className={styles.assistantLabel}>Avy</span>
                 <span className={styles.metaDivider}>•</span>
                 <time className={styles.messageTime}>{formatMessageTime(msg.id)}</time>
               </div>
@@ -435,7 +435,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
                 height={18}
                 className={styles.messageAvatar}
               />
-              <span className={styles.assistantLabel}>AI-Assistant</span>
+                <span className={styles.assistantLabel}>Avy</span>
               <span className={styles.metaDivider}>•</span>
               <span className={styles.messageTime}>typing...</span>
             </div>
