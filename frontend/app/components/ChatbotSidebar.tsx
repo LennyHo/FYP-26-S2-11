@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import styles from './ChatbotSidebar.module.css';
 import avyLogo from '../../../frontend/img/avy_logo/Group 2.svg';
+import avyIntroduction from '../../../frontend/img/avy_logo/avy_introduction.svg';
 import { useRouter } from 'next/navigation';
 
 interface Message {
@@ -270,6 +271,8 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     return new Date(parsed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const hasUserMessage = messages.some(msg => msg.isUser);
+
   return (
     <aside className={styles.chatbotSidebar}>
       <div className={styles.chatHeader}>
@@ -363,8 +366,9 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       </div>
 
       <div className={styles.chatWindow} ref={chatWindowRef} onClick={handleChatClick}>
-        {messages.map(msg => (
-          <div key={msg.id} className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
+        {messages.map((msg, index) => (
+          <React.Fragment key={msg.id}>
+            <div className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
             {!msg.isUser && (
               <div className={styles.botMeta}>
                 <Image
@@ -395,7 +399,18 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
                 }}
               />
             </div>
-          </div>
+            </div>
+
+            {isInitialized && !hasUserMessage && index === 0 && !msg.isUser && (
+              <div className={styles.welcomeIntroCard}>
+                <Image
+                  src={avyIntroduction}
+                  alt="A warm welcome from Avy"
+                  className={styles.welcomeIntroImage}
+                />
+              </div>
+            )}
+          </React.Fragment>
         ))}
         {isLoading && (
           <div className={`${styles.message} ${styles.botMessage}`}>

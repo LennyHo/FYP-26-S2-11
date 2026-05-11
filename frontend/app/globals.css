@@ -6,8 +6,8 @@
   --color-accent: #F43B03; /* Red */
 
   /* Semantic colors derived from brand */
-  --background: var(--color-primary);
-  --background-alt: #f2efd1;
+  --background: #F9F6F0;
+  --background-alt: #F9F6F0;
   --foreground: #1b130d;
   --muted: #6e6050;
   --surface: rgba(255, 249, 243, 0.82);
@@ -36,10 +36,7 @@ body {
 
 body {
   color: var(--foreground);
-  background:
-    radial-gradient(circle at top left, rgba(2, 87, 173, 0.06), transparent 34%),
-    radial-gradient(circle at top right, rgba(244, 59, 3, 0.05), transparent 28%),
-    linear-gradient(180deg, var(--background) 0%, var(--background-alt) 60%);
+  background: var(--background);
   font-family: var(--font-geist-sans), 'Segoe UI', Arial, Helvetica, sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

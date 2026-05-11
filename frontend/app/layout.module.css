@@ -16,26 +16,44 @@
   height: 100vh;
   overflow-y: auto;
   background-color: #F9F6F0;
-  transition: width 0.3s ease;
+  transition: width 0.36s cubic-bezier(.2,.9,.2,1), transform 0.35s cubic-bezier(.2,.9,.2,1);
 }
 
 .mainPaneWithChat {
-  width: 80%;
+  box-sizing: border-box;
+  width: calc(100% - var(--chat-width, 360px) - var(--chat-gap, 12px));
 }
 
 .chatPane {
-  width: 30%;
-  height: 100vh;
+  --chat-width: 360px;
+  position: fixed;
+  right: var(--chat-gap, 12px);
+  top: 18px;
+  bottom: 18px;
+  width: var(--chat-width);
+  max-width: 42vw;
+  height: auto;
   border-left: 2px solid #EFEAE6;
   background: white;
+  z-index: 9998;
+  transform: translateX(100%);
+  transition: transform 0.36s cubic-bezier(.2,.9,.2,1);
+  box-shadow: -8px 0 24px rgba(15, 15, 15, 0.06);
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .chatPaneOpen {
   display: flex;
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
 .chatPaneClosed {
-  display: none;
+  /* keep in layout but slid out so transitions are smooth */
+  display: block;
+  transform: translateX(100%);
+  pointer-events: none;
 }
 
 .chatToggleBtn {

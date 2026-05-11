@@ -1,17 +1,17 @@
 .chatbotSidebar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(420px, 100vw);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: min(420px, 100vw);
   background: #ffffff;
-  border-left: 1px solid rgba(160, 116, 77, 0.2);
   display: flex;
   flex-direction: column;
   box-shadow: -4px 0 16px rgba(2, 23, 46, 0.12);
   z-index: 1210;
   pointer-events: auto;
   font-family: "Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  border-radius: inherit;
+  box-sizing: border-box;
 }
 
 .chatHeader {
@@ -167,6 +167,23 @@
   gap: 14px;
   background: #f7f7f7;
   scroll-behavior: smooth;
+}
+
+.welcomeIntroCard {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.welcomeIntroImage {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  height: auto;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 14px;
 }
 
 .chatWindow::-webkit-scrollbar {
