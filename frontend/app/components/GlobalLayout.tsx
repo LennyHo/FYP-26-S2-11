@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation'; // 1. IMPORT ROUTER
 import ChatbotSidebar from './ChatbotSidebar';
+import Footer from './Footer';
 import styles from '../layout.module.css';
 
 export default function GlobalLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
         className={`${styles.mainPane} no-scrollbar ${isChatOpen ? styles.mainPaneWithChat : ''}`}
       >
         {children} 
+        <Footer />
       </div>
 
       {/* RIGHT SIDE: CHATBOT */}
