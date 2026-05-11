@@ -193,7 +193,8 @@
 }
 
 .welcomeIntroCard {
-  width: 100%;
+  width: min(100%, 340px);
+  align-self: center;
   border-radius: 14px;
   overflow: hidden;
   background: transparent;
@@ -202,9 +203,9 @@
 .welcomeIntroImage {
   display: block;
   width: 100%;
-  max-height: 240px;
   height: auto;
-  object-fit: cover;
+  max-height: clamp(180px, 34vw, 260px);
+  object-fit: contain;
   object-position: center;
   border-radius: 14px;
 }
@@ -551,6 +552,14 @@
   .message {
     max-width: 96%;
   }
+
+  .welcomeIntroCard {
+    width: min(100%, 300px);
+  }
+
+  .welcomeIntroImage {
+    max-height: clamp(160px, 44vw, 220px);
+  }
 }
 
 /* Tablet / iPad: ensure the chatbot fills the chatPane (full width when chat is overlayed) */
@@ -586,7 +595,7 @@
   }
 
   .welcomeIntroImage {
-    max-height: 320px;
-    object-fit: cover;
+    max-height: clamp(200px, 30vw, 320px);
+    object-fit: contain;
   }
 }
