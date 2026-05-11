@@ -374,7 +374,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
         </div>
 
         <div className={styles.headerContent}>
-          <p className={styles.subtitle}>AI DripTea Health Buddy</p>
+          <p className={styles.subtitle}>AI Assistant DripTea Health Buddy</p>
         </div>
       </div>
 
