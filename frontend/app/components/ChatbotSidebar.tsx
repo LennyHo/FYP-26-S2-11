@@ -283,7 +283,10 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
             onClick={() => onClose?.()}
             aria-label="Back"
           >
-            ←
+            <svg className={styles.headerBtnIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M14.5 5.5L8 12l6.5 6.5" />
+              <path d="M9 12h8" />
+            </svg>
           </button>
           <div className={styles.titleWrap}>
             <div
@@ -356,7 +359,17 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
             <h3 className={styles.headerMainTitle}>Avy</h3>
           </div>
           <div className={styles.headerControls}>
-            <button type="button" className={styles.restartBtn} onClick={restartConversation}>⟳</button>
+            <button
+              type="button"
+              className={styles.restartBtn}
+              onClick={restartConversation}
+              aria-label="Restart conversation"
+            >
+              <svg className={styles.headerBtnIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M19 8.5A8 8 0 1 0 21 14" />
+                <path d="M21 4.5V10h-5.5" />
+              </svg>
+            </button>
           </div>
         </div>
 
