@@ -3,7 +3,7 @@
   inset: 0;
   width: 100%;
   max-width: min(420px, 100vw);
-  background: #ffffff;
+  background: transparent;
   display: flex;
   flex-direction: column;
   box-shadow: -4px 0 16px rgba(2, 23, 46, 0.12);
@@ -16,12 +16,12 @@
 
 .chatHeader {
   padding: 14px 16px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid rgba(160, 116, 77, 0.14);
+  background: transparent !important;
+  border-bottom: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 10px 22px rgba(74, 59, 50, 0.16);
+  box-shadow: none;
 }
 
 .headerTop {

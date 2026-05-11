@@ -34,7 +34,7 @@
   max-width: 42vw;
   height: auto;
   border-left: 2px solid #EFEAE6;
-  background: white;
+  background: #f7f7f7;
   z-index: 9998;
   transform: translateX(100%);
   transition: transform 0.36s cubic-bezier(.2,.9,.2,1);
@@ -52,8 +52,9 @@
 .chatPaneClosed {
   /* keep in layout but slid out so transitions are smooth */
   display: block;
-  transform: translateX(100%);
+  transform: translateX(calc(100% + var(--chat-gap, 12px)));
   pointer-events: none;
+  box-shadow: none;
 }
 
 .chatToggleBtn {
