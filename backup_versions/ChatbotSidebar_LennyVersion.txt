@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import styles from './ChatbotSidebar.module.css';
 import avyLogo from '../../../frontend/img/avy_logo/Group 2.svg';
 import avyIntroduction from '../../../frontend/img/avy_logo/avy_introduction.svg';
+import menuData from '../../../data/menu.json';
 
 interface MessageSource {
   title: string;
@@ -278,99 +279,7 @@ function applyGlossaryTooltips(html: string): string {
     .join('');
 }
 
-function toSafeSourceList(value: unknown): MessageSource[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  const dedupe = new Set<string>();
-
-  return value
-    .map((item): MessageSource | null => {
-      if (!item || typeof item !== 'object') {
-        return null;
-      }
-
-      const record = item as Record<string, unknown>;
-      const title = typeof record.title === 'string' ? record.title.trim() : '';
-      const url = typeof record.url === 'string' ? record.url.trim() : '';
-      const snippet = typeof record.snippet === 'string' ? record.snippet.trim() : '';
-      const sourceName = typeof record.sourceName === 'string' ? record.sourceName.trim() : '';
-      const favicon = typeof record.favicon === 'string' ? record.favicon.trim() : '';
-
-      if (!title || !url || dedupe.has(url)) {
-        return null;
-      }
-
-      try {
-        const parsed = new URL(url);
-        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-          return null;
-        }
-
-        const isTrusted = TRUSTED_SOURCE_HOSTS.some(
-          trustedHost =>
-            parsed.hostname.toLowerCase() === trustedHost ||
-            parsed.hostname.toLowerCase().endsWith(`.${trustedHost}`)
-        );
-        if (!isTrusted) {
-          return null;
-        }
-      } catch {
-        return null;
-      }
-
-      dedupe.add(url);
-
-      return {
-        title,
-        url,
-        snippet: snippet || undefined,
-        sourceName: sourceName || undefined,
-        favicon: favicon || undefined,
-      };
-    })
-    .filter((source): source is MessageSource => Boolean(source));
-}
-
-function formatSourceHost(url: string): string {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname.replace(/^www\./, '');
-  } catch {
-    return 'web';
-  }
-}
-
-function extractSourcesFromReplyText(text: string): MessageSource[] {
-  const sources: MessageSource[] = [];
-  const seen = new Set<string>();
-
-  const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gi;
-  let markdownMatch: RegExpExecArray | null;
-  while ((markdownMatch = markdownLinkPattern.exec(text)) !== null) {
-    const title = markdownMatch[1]?.trim();
-    const url = markdownMatch[2]?.trim();
-    if (!title || !url || seen.has(url)) {
-      continue;
-    }
-    seen.add(url);
-    sources.push({ title, url, sourceName: formatSourceHost(url) });
-  }
-
-  const plainUrlPattern = /\bhttps?:\/\/[^\s<)]+/gi;
-  let plainMatch: RegExpExecArray | null;
-  while ((plainMatch = plainUrlPattern.exec(text)) !== null) {
-    const url = plainMatch[0]?.trim();
-    if (!url || seen.has(url)) {
-      continue;
-    }
-    seen.add(url);
-    sources.push({ title: formatSourceHost(url), url, sourceName: formatSourceHost(url) });
-  }
-
-  return toSafeSourceList(sources);
-}
+// Web source extraction and rendering removed — sources are no longer attached to bot messages
 
 interface DrinkRecommendation {
   id: string;
@@ -416,6 +325,14 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const [pendingImages, setPendingImages] = useState<Array<{ name: string; previewUrl: string; source: 'camera' | 'screenshot' | 'clipboard' }>>([]);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [flippedCard, setFlippedCard] = useState<string | null>(null);
+  const [pendingDrinkForCustomization, setPendingDrinkForCustomization] = useState<{
+    name: string;
+    id: string;
+    step: 'size' | 'ice' | 'sugar' | 'topping';
+    size?: string;
+    ice?: string;
+    sugar?: string;
+  } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -443,8 +360,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const avyLogoRef = useRef<HTMLDivElement>(null);
   const avyEyeLeftRef = useRef<SVGPathElement>(null);
   const avyEyeRightRef = useRef<SVGPathElement>(null);
-  const mobileCameraInputRef = useRef<HTMLInputElement>(null);
-  const desktopScreenshotInputRef = useRef<HTMLInputElement>(null);
+  
 
   useEffect(() => {
     const savedConversationId = localStorage.getItem(CONVERSATION_ID_KEY);
@@ -525,6 +441,274 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     const messageText = text || input.trim();
     if (!messageText || !conversationId) return;
 
+    // Local cart query handling: respond immediately from localStorage without calling backend
+    const normalizedQuery = messageText.toLowerCase().trim();
+    const cartQueryPatterns = [
+      "what's in my cart",
+      "what is in my cart",
+      "what's in the cart",
+      "what is in the cart",
+      'show cart',
+      'show my cart',
+      'cart contents',
+      'what are my cart items',
+    ];
+
+    if (cartQueryPatterns.includes(normalizedQuery)) {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        text: messageText,
+        isUser: true,
+      };
+
+      const raw = localStorage.getItem('dripTeaCartData') || '';
+      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const botText = lines.length > 0
+        ? `Your cart contains:\n- ${lines.join('\n- ')}`
+        : 'Your cart is empty.';
+
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        text: botText,
+        isUser: false,
+      };
+
+      setMessages(prev => [...prev, userMsg, botMsg]);
+      setInput('');
+      return;
+    }
+
+    // Intent: add <drink> to cart (local quick-add with customization)
+    try {
+      const addRegex = /(?:add|please add|put)\s+(?:a\s+)?(?:the\s+)?(?:[0-9]+\s+)?(.+?)\s*(?:to(?:\s+my)?\s+cart)?$/i;
+      const addMatch = messageText.match(addRegex);
+      if (addMatch && addMatch[1]) {
+        const candidate = addMatch[1].trim().toLowerCase();
+        const drinkNames = Object.keys(drinkData);
+        let matchedName: string | null = null;
+        let matchedId: string | null = null;
+
+        for (const name of drinkNames) {
+          const n = name.toLowerCase();
+          if (n === candidate || candidate.includes(n) || n.includes(candidate)) {
+            matchedName = name;
+            matchedId = drinkData[name].id;
+            break;
+          }
+        }
+
+        if (matchedName && matchedId) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+
+          // Start customization step-by-step: ask for size first
+          setPendingDrinkForCustomization({ name: matchedName, id: matchedId, step: 'size' });
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `Great! Let me customize ${matchedName} for you.\n\nWhat size? M (Medium) or L (Large)?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+    } catch (e) {
+      // ignore intent parse errors and proceed to backend
+    }
+
+    // If waiting for customization, handle step-by-step
+    if (pendingDrinkForCustomization) {
+      const customizationText = messageText.toLowerCase();
+
+      // Step 1: Collect size
+      if (pendingDrinkForCustomization.step === 'size') {
+        const sizeMatch = customizationText.match(/\b(m|l|medium|large)\b/i);
+        if (sizeMatch) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+          setIsLoading(true);
+
+          const size = sizeMatch[1].toUpperCase().charAt(0);
+          setPendingDrinkForCustomization(prev => ({ ...prev!, step: 'ice', size }));
+
+          setTimeout(() => {
+            const botMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              text: `Got it, size ${size}.\n\nNext, ice level? Normal, Less, or No?`,
+              isUser: false,
+            };
+            setMessages(prev => [...prev, botMsg]);
+            setIsLoading(false);
+          }, 600);
+          setInput('');
+          return;
+        } else {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `I didn't catch that. Please choose: M (Medium) or L (Large)?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, userMsg, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+
+      // Step 2: Collect ice level
+      if (pendingDrinkForCustomization.step === 'ice') {
+        const iceMatch = customizationText.match(/\b(normal|less|no)\b/i);
+        if (iceMatch) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+          setIsLoading(true);
+
+          const ice = iceMatch[1].charAt(0).toUpperCase() + iceMatch[1].slice(1).toLowerCase();
+          setPendingDrinkForCustomization(prev => ({ ...prev!, step: 'sugar', ice }));
+
+          setTimeout(() => {
+            const botMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              text: `Nice, ${ice} ice.\n\nNext, sugar level? Normal, Less, or Zero?`,
+              isUser: false,
+            };
+            setMessages(prev => [...prev, botMsg]);
+            setIsLoading(false);
+          }, 600);
+          setInput('');
+          return;
+        } else {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `I didn't catch that. Please choose: Normal, Less, or No ice?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, userMsg, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+
+      // Step 3: Collect sugar level and finalize
+      if (pendingDrinkForCustomization.step === 'sugar') {
+        const sugarMatch = customizationText.match(/\b(normal|less|zero)\b/i);
+        if (sugarMatch) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+          setIsLoading(true);
+
+          const sugar = sugarMatch[1].charAt(0).toUpperCase() + sugarMatch[1].slice(1).toLowerCase();
+          setPendingDrinkForCustomization(prev => ({ ...prev!, step: 'topping', sugar }));
+
+          setTimeout(() => {
+            const botMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              text: `Perfect, ${sugar} sugar.\n\nFinally, any toppings? Tapioca Pearls, Aloe Vera, Cheese Foam, or No Topping?`,
+              isUser: false,
+            };
+            setMessages(prev => [...prev, botMsg]);
+            setIsLoading(false);
+          }, 600);
+          setInput('');
+          return;
+        } else {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `I didn't catch that. Please choose: Normal, Less, or Zero sugar?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, userMsg, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+
+      // Step 4: Collect topping
+      if (pendingDrinkForCustomization.step === 'topping') {
+        const toppingMatch = customizationText.match(/\b(tapioca|pearls|aloe|cheese|foam|no\s*topping|none)\b/i);
+        if (toppingMatch) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+          setIsLoading(true);
+
+          const size = pendingDrinkForCustomization.size!;
+          const ice = pendingDrinkForCustomization.ice!;
+          const sugar = pendingDrinkForCustomization.sugar!;
+
+          // Look up actual price from menu data
+          const beverage = (menuData as any).beverages.find((b: any) => b.id === pendingDrinkForCustomization.id);
+          const basePrice = beverage?.price || 0;
+          const sizeModifier = size === 'L' ? 1.5 : 0; // Large adds $1.50
+          const finalPrice = basePrice + sizeModifier;
+
+          // Map topping name
+          let toppingName = 'No Topping';
+          if (toppingMatch[1].toLowerCase().includes('tapioca') || toppingMatch[1].toLowerCase().includes('pearls')) {
+            toppingName = 'Tapioca Pearls';
+          } else if (toppingMatch[1].toLowerCase().includes('aloe')) {
+            toppingName = 'Aloe Vera';
+          } else if (toppingMatch[1].toLowerCase().includes('cheese') || toppingMatch[1].toLowerCase().includes('foam')) {
+            toppingName = 'Cheese Foam';
+          }
+
+          // Add to cart
+          const details = `${size}, ${ice} Ice, ${sugar} Sugar, ${toppingName}`;
+          const newItem = `${pendingDrinkForCustomization.name} | ${details} | S$ ${finalPrice.toFixed(2)}`;
+          const existing = localStorage.getItem('dripTeaCartData') || '';
+          const updated = existing ? existing + '\n' + newItem : newItem;
+          localStorage.setItem('dripTeaCartData', updated);
+          window.dispatchEvent(new Event('cartUpdated'));
+          setAddedIds(prev => [...prev, pendingDrinkForCustomization.id]);
+          setTimeout(() => setAddedIds(prev => prev.filter(id => id !== pendingDrinkForCustomization.id)), 2500);
+
+          // Store customization data in sessionStorage for the customize page
+          const drinkDataEntry = drinkData[pendingDrinkForCustomization.name];
+          if (drinkDataEntry) {
+            sessionStorage.setItem('chatCustomization', JSON.stringify({
+              drinkId: pendingDrinkForCustomization.id,
+              drinkName: pendingDrinkForCustomization.name,
+              size: size === 'L' ? 'Large' : 'Regular',
+              ice: ice === 'Normal' ? 'Normal Ice' : ice === 'Less' ? 'Less Ice' : 'No Ice',
+              sugar: sugar === 'Normal' ? 'Normal Sweet' : sugar === 'Less' ? 'Less Sweet' : 'No Additional Sugar',
+              category: drinkDataEntry.category,
+            }));
+          }
+
+          setTimeout(() => {
+            const botMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              text: `Awesome! I've added ${pendingDrinkForCustomization.name} with ${toppingName} to your cart. (${size}, ${ice} Ice, ${sugar} Sugar) — S$ ${finalPrice.toFixed(2)}`,
+              isUser: false,
+              // @ts-ignore
+              showViewCart: true,
+              showCustomizeLink: true,
+              customizeDrinkId: pendingDrinkForCustomization.id,
+              customizeDrinkName: pendingDrinkForCustomization.name,
+              customizeCategory: drinkDataEntry?.category || 'milk-tea',
+            } as unknown as Message;
+            setMessages(prev => [...prev, botMsg]);
+            setIsLoading(false);
+            setPendingDrinkForCustomization(null);
+          }, 600);
+          setInput('');
+          return;
+        } else {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `I didn't catch that. Please choose: Tapioca Pearls, Aloe Vera, Cheese Foam, or No Topping?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, userMsg, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+    }
+
     const userMsg: Message = {
       id: Date.now().toString(),
       text: messageText,
@@ -549,21 +733,10 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       const data: unknown = await response.json();
       const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
       const replyText = typeof payload.reply === 'string' ? payload.reply : 'Error connecting to backend';
-      const payloadSources = toSafeSourceList(payload.sources);
-      const extractedSources = payloadSources.length === 0 ? extractSourcesFromReplyText(replyText) : [];
-      console.log('[ChatBot] Sources received:', { payloadSources, extractedSources, rawSources: payload.sources });
-
-      const sources = payloadSources.length > 0
-        ? payloadSources
-        : extractedSources.length > 0
-          ? extractedSources
-          : [];
-
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         text: replyText,
         isUser: false,
-        sources,
       };
       setMessages(prev => [...prev, botMsg]);
 
@@ -903,25 +1076,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
                             // Look up category from drinkData using drink name
                             const drinkInfo = Object.entries(drinkData).find(([name]) => name === drink.name);
                             const category = drinkInfo ? drinkInfo[1].category : 'milk-tea'; // fallback category
-                            const customizeUrl = `/menu/${category}/${drink.id}`;
                             
-                            const handleQuickAdd = (d: DrinkRecommendation) => {
-                              try {
-                                const name = d.name;
-                                const price = parseFloat(String(d.price)) || 0;
-                                const details = 'Medium · Normal Ice · [Sugar]';
-                                const newItem = `${name} | ${details} | S$ ${price.toFixed(2)}`;
-                                const existing = localStorage.getItem('dripTeaCartData') || '';
-                                const updated = existing ? existing + '\n' + newItem : newItem;
-                                localStorage.setItem('dripTeaCartData', updated);
-                                window.dispatchEvent(new Event('cartUpdated'));
-                                setAddedIds(prev => [...prev, d.id]);
-                                setTimeout(() => setAddedIds(prev => prev.filter(id => id !== d.id)), 1800);
-                              } catch (e) {
-                                console.error('quick add failed', e);
-                              }
-                            };
-
                             return (
                             <div key={`drink-${i}`}>
                               <div
@@ -966,24 +1121,16 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
                                   </div>
                                 </div>
                               </div>
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <a
-                                  href={customizeUrl}
-                                  className={styles.drinkViewLink}
-                                  onClick={(e) => { e.preventDefault(); router.push(customizeUrl); }}
-                                >
-                                  {`View details — $${drink.price}`}
-                                </a>
+                              {/* Add to Cart button removed — users add items by texting the chatbot */}
 
-                                <button
-                                  type="button"
-                                  className={styles.drinkAddToCartBtn}
-                                  onClick={() => handleQuickAdd(drink)}
-                                  aria-label={`Add ${drink.name} to cart`}
-                                >
-                                  {addedIds.includes(drink.id) ? 'Added' : 'Add to Cart'}
-                                </button>
-                              </div>
+                              {/* Customization link to navigate to customization page */}
+                              <a
+                                href={`/menu/${category}/${drink.id}`}
+                                className={styles.customizeLink}
+                                onClick={(e) => { e.preventDefault(); router.push(`/menu/${category}/${drink.id}`); }}
+                              >
+                                Customize
+                              </a>
                             </div>
                             );
                           })}
@@ -1005,44 +1152,30 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
                     }}
                   />
                 )}
-                {!msg.isUser && Array.isArray(msg.sources) && msg.sources.length > 0 && (
-                  <div className={styles.sourceSection}>
-                    <p className={styles.sourceHeading}>Web sources</p>
-                    <div className={styles.sourceList}>
-                      {msg.sources.slice(0, 3).map((source, sourceIndex) => (
-                        <a
-                          key={`${msg.id}-source-${sourceIndex}`}
-                          href={source.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.sourceCard}
-                        >
-                          <div className={styles.sourceCardContent}>
-                            <div className={styles.sourceCardText}>
-                              <span className={styles.sourceTitle}>{source.title}</span>
-                              {source.snippet && (
-                                <span className={styles.sourceSnippet}>{source.snippet}</span>
-                              )}
-                              <span className={styles.sourceMeta}>{source.sourceName || formatSourceHost(source.url)}</span>
-                            </div>
-                            {source.favicon && (
-                              <img
-                                src={source.favicon}
-                                alt=""
-                                className={styles.sourceIcon}
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            )}
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Web source cards removed per request */}
               </div>
             </div>
+              
+              {!msg.isUser && (msg as any).showViewCart && (
+                <div style={{ marginTop: '8px', display: 'flex', gap: '8px', paddingLeft: '26px' }}>
+                  <button
+                    type="button"
+                    style={{ backgroundColor: '#2b7da3', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.9rem' }}
+                    onClick={() => { if (onOpenCart) onOpenCart(); else router.push('/cart'); }}
+                  >
+                    View cart
+                  </button>
+                  {(msg as any).showCustomizeLink && (
+                    <button
+                      type="button"
+                      style={{ backgroundColor: '#7cb342', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.9rem' }}
+                      onClick={() => router.push(`/menu/${(msg as any).customizeCategory}/${(msg as any).customizeDrinkId}`)}
+                    >
+                      Customize in detail
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {isInitialized && !hasUserMessage && index === 0 && !msg.isUser && (
@@ -1106,45 +1239,9 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
         )}
 
         <div className={styles.chatInputRow}>
-          <div className={styles.attachmentsWrap}>
-            <button
-              type="button"
-              className={`${styles.attachmentBtn} ${styles.mobileOnly}`}
-              onClick={() => mobileCameraInputRef.current?.click()}
-              aria-label="Take a photo on mobile"
-              title="Take a photo"
-            >
-              <span className={styles.attachmentIcon}>📷</span>
-            </button>
-            <button
-              type="button"
-              className={`${styles.attachmentBtn} ${styles.desktopOnly}`}
-              onClick={() => desktopScreenshotInputRef.current?.click()}
-              aria-label="Upload a screenshot on desktop"
-              title="Upload screenshot"
-            >
-              <span className={styles.attachmentIcon}>🖼️</span>
-            </button>
-          </div>
+          {/* upload icons removed per request */}
 
-          <input
-            ref={mobileCameraInputRef}
-            type="file"
-            accept="image/*"
-            className={styles.hiddenFileInput}
-            aria-label="Take a photo"
-            title="Take a photo"
-            onChange={e => handleImageSelection(e.target.files, 'camera')}
-          />
-          <input
-            ref={desktopScreenshotInputRef}
-            type="file"
-            accept="image/*"
-            className={styles.hiddenFileInput}
-            aria-label="Upload a screenshot"
-            title="Upload a screenshot"
-            onChange={e => handleImageSelection(e.target.files, 'screenshot')}
-          />
+          {/* file inputs removed to disable click-to-upload UI */}
 
           <input
             type="text"

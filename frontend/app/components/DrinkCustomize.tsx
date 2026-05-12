@@ -81,6 +81,31 @@ export default function DrinkCustomize() {
     setImageSrc(drink?.image || '');
   }, [drink?.image]);
 
+  // Pre-fill form from chat customization
+  useEffect(() => {
+    const customizationData = sessionStorage.getItem('chatCustomization');
+    if (customizationData) {
+      try {
+        const data = JSON.parse(customizationData);
+        // Only pre-fill if it matches the current drink
+        if (data.drinkId === drinkId) {
+          // Find and set size
+          const sizeObj = sizes.find(s => s.label === data.size);
+          if (sizeObj) setSize(sizeObj);
+          // Set ice
+          setIce(data.ice);
+          // Find and set sweetness
+          const sweetnessObj = sweetnessOptions.find(s => s.label === data.sugar);
+          if (sweetnessObj) setSweetness(sweetnessObj);
+          // Clear the stored data after using it
+          sessionStorage.removeItem('chatCustomization');
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    }
+  }, [drinkId]);
+
   if (!drink) {
     return (
       <div className={styles.page}>

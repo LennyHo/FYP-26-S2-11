@@ -2,15 +2,26 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './ChatbotSidebar.module.css';
 import avyLogo from '../../../frontend/img/avy_logo/Group 2.svg';
 import avyIntroduction from '../../../frontend/img/avy_logo/avy_introduction.svg';
-import { useRouter } from 'next/navigation';
+import menuData from '../../../data/menu.json';
+
+interface MessageSource {
+  title: string;
+  url: string;
+  snippet?: string;
+  sourceName?: string;
+  favicon?: string;
+}
 
 interface Message {
   id: string;
   text: string;
   isUser: boolean;
+  sources?: MessageSource[];
 }
 
 interface ChatbotSidebarProps {
@@ -21,6 +32,16 @@ interface ChatbotSidebarProps {
 
 const STORAGE_KEY = "driptea_chatbot_messages";
 const CONVERSATION_ID_KEY = "driptea_chatbot_conversation_id";
+const TRUSTED_SOURCE_HOSTS = [
+  'hpb.gov.sg',
+  'moh.gov.sg',
+  'nus.edu.sg',
+  'ntu.edu.sg',
+  'sph.com.sg',
+  'channelnewsasia.com',
+  'todayonline.com',
+  'straitstimes.com',
+];
 
 const drinkData: Record<string, { id: string; category: string }> = {
   "Classic Milk Tea": { id: "b001", category: "milk-tea" },
@@ -35,6 +56,162 @@ const drinkData: Record<string, { id: string; category: string }> = {
   "Double Chocolate Frappe": { id: "b010", category: "ice-blended" },
   "Taro Slush": { id: "b012", category: "ice-blended" },
   "Milo Dinosaur": { id: "b011", category: "local-favourites" },
+};
+
+const GLOSSARY: Record<string, string> = {
+  "dietitian": "A health professional who specializes in nutrition and food planning for wellness.",
+  "diabetes": "A medical condition where the body cannot properly regulate blood sugar levels.",
+  "blood sugar": "The amount of glucose circulating in your bloodstream.",
+  "bloodsugar": "The amount of glucose circulating in your bloodstream.",
+  "glucose": "A type of sugar that is the body's main source of energy.",
+  "insulin": "A hormone that helps move glucose from the blood into the body's cells.",
+  "carbohydrate": "A nutrient that breaks down into glucose and can raise blood sugar.",
+  "carbohydrates": "A nutrient group that breaks down into glucose and can raise blood sugar.",
+  "carbs": "A shorter way to say carbohydrates, which can affect blood sugar levels.",
+  "sucrose": "A type of sugar made of glucose and fructose, commonly found in table sugar.",
+  "sugar": "A sweet carbohydrate that can raise blood glucose when consumed.",
+  "unsweetened": "A drink or food made without added sugar.",
+  "low sugar": "Containing less sugar than a regular version.",
+  "zero sugar": "Containing no added sugar.",
+  "sugarfree": "A product made without sugar or with no added sugar.",
+  "lowsugar": "A product with reduced sugar content.",
+  "added sugar": "Sugar added during preparation or processing.",
+  "glycemic index": "A measure of how quickly a food can raise blood sugar levels.",
+  "glycemic": "Related to how food affects blood sugar levels.",
+  "portion": "The amount of food or drink served in one sitting.",
+  "portion size": "The amount of food or drink served in one serving.",
+  "fiber": "A part of plant foods that slows digestion and may help steady blood sugar.",
+  "protein": "A nutrient that helps you feel full and supports muscles and body repair.",
+  "nutrition": "The study of how food and nutrients support health.",
+  "diet": "The usual foods and drinks a person consumes.",
+  "wellness": "A general state of good physical and mental health.",
+  "nutrients": "Substances in food that your body needs to function and stay healthy.",
+  "antioxidants": "Natural compounds that help protect cells from damage caused by harmful substances.",
+  "caffeine": "A stimulant found in tea and coffee that can increase alertness and energy.",
+  "calories": "Units that measure the energy content in food and drinks.",
+  "cholesterol": "A fatty substance in the blood that, in high amounts, can affect heart health.",
+  "hypertension": "High blood pressure, a condition that can increase the risk of heart disease.",
+  "minerals": "Natural substances like calcium and iron that your body needs for health.",
+  "vitamins": "Organic compounds that support various body functions and immune health.",
+  "inflammation": "Swelling or irritation in the body that can be caused by various factors.",
+  "hydration": "The process of providing your body with enough water and fluids.",
+  "vegan": "A dietary pattern that avoids animal products.",
+  "keto": "A low-carbohydrate, high-fat eating pattern.",
+  "diabetic": "Relating to diabetes or a person living with diabetes.",
+  "obesity": "A health condition involving excess body fat that can affect overall health.",
+  "organic": "Made or grown without most synthetic chemicals or additives.",
+  "health": "A state of physical and mental well-being.",
+  "lifestyle": "A person's way of living, including habits and daily choices.",
+  "fructose": "A natural sugar found in fruits that the body processes as energy.",
+  "osmanthus": "A fragrant flower commonly used in teas, known for its pleasant aroma.",
+  "herbal": "Relating to plants or herbs used in beverages for flavor or health benefits.",
+  "natural": "Made from naturally occurring substances without artificial chemicals or additives.",
+  "metabolism": "The way your body turns food and drink into energy.",
+  "energy": "The fuel your body uses to move, think, and function.",
+  "digestion": "The process of breaking food down so your body can use it.",
+  "macros": "Short for macronutrients: protein, carbs, and fats in food.",
+  "enzymes": "Proteins that help speed up chemical reactions in the body, including digestion.",
+  "spikes": "Sharp rises in blood sugar or other measurements.",
+  "endorphins": "Natural chemicals in the body that can improve mood and reduce discomfort.",
+  "crash": "A sudden drop in energy or blood sugar after a spike.",
+  "tapioca": "A starch from the cassava root that is commonly used in bubble tea pearls.",
+  "boba": "The chewy tapioca pearls often added to bubble tea.",
+  "cassava": "A starchy root vegetable used to make tapioca.",
+  "pearl": "A small chewy ball, usually made from tapioca, found in bubble tea.",
+  "matcha": "A finely ground green tea powder used in drinks and desserts.",
+  "oolong": "A tea type that is partially oxidized and sits between green and black tea.",
+  "taro": "A starchy root vegetable often used for a sweet, nutty drink flavor.",
+  "stevia": "A plant-derived sweetener used as a sugar alternative.",
+  "erythritol": "A low-calorie sugar alcohol used as a sweetener.",
+  "monkfruit": "A natural sweetener made from monk fruit.",
+  "dairy": "Milk and products made from milk.",
+  "oatmilk": "A plant-based milk made from oats.",
+  "soymilk": "A plant-based milk made from soybeans.",
+  "nutrigrade": "A front-of-pack nutrition label used in Singapore to show a drink's nutritional rating.",
+  "guidelines": "Recommended rules or advice to help people make healthier choices.",
+  "intake": "The amount of something consumed, such as sugar or calories.",
+  "limit": "The maximum amount recommended or allowed.",
+  "allowance": "The amount permitted within a guideline or recommendation.",
+  "serving": "A standard amount of food or drink.",
+  "siudai": "A Singapore-style way to say less sugar in drinks.",
+  "kosong": "A Singapore-style way to say no sugar in drinks.",
+  "hpb": "The Health Promotion Board, a Singapore government agency focused on health.",
+  "chatbot": "A computer program that can chat with users and answer questions.",
+  "ai": "Artificial intelligence, which lets machines perform tasks that usually need human intelligence.",
+  "nudge": "A small prompt or suggestion that encourages a choice or behavior.",
+  "habits": "Repeated actions or behaviors done regularly.",
+  "behavior": "The way a person acts or responds.",
+  "tracker": "A tool used to monitor something over time.",
+  "predict": "To estimate or forecast what may happen next.",
+  "algorithm": "A set of rules or steps a computer follows to solve a problem.",
+  "automation": "The use of technology to perform tasks with little human input.",
+};
+
+const GLOSSARY_TERMS = [
+  'blood sugar',
+  'bloodsugar',
+  'glucose',
+  'insulin',
+  'metabolism',
+  'glycemic',
+  'carbohydrates',
+  'carbohydrate',
+  'carbs',
+  'sugar',
+  'unsweetened',
+  'low sugar',
+  'zero sugar',
+  'added sugar',
+  'portion size',
+  'portion',
+  'fiber',
+  'protein',
+  'calories',
+  'digestion',
+  'energy',
+  'macros',
+  'enzymes',
+  'spikes',
+  'crash',
+  'endorphins',
+  'dietitian',
+  'diabetes',
+  'antioxidants',
+  'caffeine',
+  'cholesterol',
+  'hypertension',
+  'nutrients',
+  'minerals',
+  'vitamins',
+  'inflammation',
+  'hydration',
+  'fructose',
+  'osmanthus',
+  'herbal',
+  'natural',
+].sort((a, b) => b.length - a.length);
+
+const DRINK_INFO: Record<string, { ingredients: string[]; diabeticAdvice: string; insulinImpact: string }> = {
+  b001: {
+    ingredients: ['Black tea', 'Milk', 'Sugar syrup'],
+    diabeticAdvice: 'High in sugar. Choose 0-25% sugar level to reduce glucose spike.',
+    insulinImpact: 'With milk and sugar, may cause moderate insulin response. Pair with food to slow absorption.'
+  },
+  b002: {
+    ingredients: ['Green tea', 'Jasmine flowers', 'Milk'],
+    diabeticAdvice: 'Lower sugar option. Green tea supports stable blood sugar.',
+    insulinImpact: 'Minimal insulin impact. Green tea can improve insulin sensitivity.'
+  },
+  b003: {
+    ingredients: ['Oolong tea', 'Milk', 'Sugar syrup'],
+    diabeticAdvice: 'Moderate sugar. Oolong has antioxidants that may help blood sugar control.',
+    insulinImpact: 'Oolong supports gradual digestion; moderate insulin demand if you choose 25-50% sugar.'
+  },
+  b006: {
+    ingredients: ['Matcha powder', 'Milk', 'Minimal sugar'],
+    diabeticAdvice: 'Very low sugar. Matcha provides slow-release energy without sharp glucose spike.',
+    insulinImpact: 'Low insulin response. Matcha contains L-theanine which promotes stable blood sugar.'
+  }
 };
 
 function createConversationId(): string {
@@ -53,26 +230,137 @@ function convertDrinkNamesToLinks(text: string): string {
     
     // Handle **Drink Name** format
     const boldPattern = new RegExp(`\\*\\*${drinkName}\\*\\*`, 'g');
-    result = result.replace(boldPattern, `<a href="${url}" style="color: #2b7da3; text-decoration: none; border-bottom: 2px solid #2b7da3; font-weight: bold;"><strong>${drinkName}</strong></a>`);
+    result = result.replace(boldPattern, `<a href="${url}" class="chat-drink-link" style="color: #2b7da3; text-decoration: none; border-bottom: 2px solid #2b7da3; font-weight: bold;"><strong>${drinkName}</strong></a>`);
     
     // Handle ***Drink Name*** format
     const boldItalicPattern = new RegExp(`\\*\\*\\*${drinkName}\\*\\*\\*`, 'g');
-    result = result.replace(boldItalicPattern, `<a href="${url}" style="color: #2b7da3; text-decoration: none; border-bottom: 2px solid #2b7da3; font-weight: bold;"><strong>${drinkName}</strong></a>`);
+    result = result.replace(boldItalicPattern, `<a href="${url}" class="chat-drink-link" style="color: #2b7da3; text-decoration: none; border-bottom: 2px solid #2b7da3; font-weight: bold;"><strong>${drinkName}</strong></a>`);
   });
   
   return result;
 }
 
+function applyGlossaryTooltips(html: string): string {
+  const parts = html.split(/(<[^>]+>)/g);
+  let hasHighlightedTerm = false;
+
+  return parts
+    .map(part => {
+      if (part.startsWith('<')) {
+        return part;
+      }
+
+      if (hasHighlightedTerm) {
+        return part;
+      }
+
+      let text = part;
+      for (const term of GLOSSARY_TERMS) {
+        const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = new RegExp(`(^|[^\\w-])(${escapedTerm})(?=$|[^\\w-])`, 'i');
+        const match = text.match(pattern);
+        if (!match) {
+          continue;
+        }
+
+        const prefix = match[1] || '';
+        const matchText = match[2] || '';
+        text = text.replace(pattern, () => {
+          const explanation = GLOSSARY[term].replace(/"/g, '&quot;');
+          hasHighlightedTerm = true;
+          return `${prefix}<span class="${styles.glossaryTerm}" tabindex="0"><span class="${styles.glossaryTermText}">${matchText}</span><span class="${styles.glossaryTooltip}" role="tooltip"><span class="${styles.glossaryTooltipLabel}">Explanation:</span><span class="${styles.glossaryTooltipBody}">${explanation}</span></span></span>`;
+        });
+
+        break;
+      }
+
+      return text;
+    })
+    .join('');
+}
+
+// Web source extraction and rendering removed — sources are no longer attached to bot messages
+
+interface DrinkRecommendation {
+  id: string;
+  name: string;
+  image: string;
+  price: string;
+  sugar: string;
+  calories: string;
+  grade: string;
+}
+
+function parseDrinkFromHtml(html: string): DrinkRecommendation | null {
+  try {
+    const nameMatch = html.match(/\*\*([^\*]+)\*\*\s*\(\$([^)]+)\)/);
+    const statsMatch = html.match(/Nutri Grade:\s*([A-F])\s*\|\s*Sugar:\s*([^|]+)\s*\|\s*Calories:\s*([^<\n]+)/);
+    const idMatch = html.match(/startOrder\("([^"]+)"\)/);
+
+    if (!nameMatch || !statsMatch || !idMatch) {
+      return null;
+    }
+
+    return {
+      id: idMatch[1],
+      name: nameMatch[1],
+      image: '/testing.webp',
+      price: nameMatch[2],
+      grade: statsMatch[1],
+      sugar: statsMatch[2].trim(),
+      calories: statsMatch[3].trim(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: ChatbotSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [addedIds, setAddedIds] = useState<string[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [conversationId, setConversationId] = useState('');
+  const [pendingImages, setPendingImages] = useState<Array<{ name: string; previewUrl: string; source: 'camera' | 'screenshot' | 'clipboard' }>>([]);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [flippedCard, setFlippedCard] = useState<string | null>(null);
+  const [pendingDrinkForCustomization, setPendingDrinkForCustomization] = useState<{
+    name: string;
+    id: string;
+    step: 'size' | 'ice' | 'sugar' | 'topping';
+    size?: string;
+    ice?: string;
+    sugar?: string;
+  } | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (previewIndex === null) return;
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPreviewIndex(null);
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        setPreviewIndex(prev => (prev && prev > 0 ? prev - 1 : prev));
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        setPreviewIndex(prev => (typeof prev === 'number' && prev < pendingImages.length - 1 ? prev + 1 : prev));
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [previewIndex, pendingImages.length]);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const avyLogoRef = useRef<HTMLDivElement>(null);
   const avyEyeLeftRef = useRef<SVGPathElement>(null);
   const avyEyeRightRef = useRef<SVGPathElement>(null);
+  
 
   useEffect(() => {
     const savedConversationId = localStorage.getItem(CONVERSATION_ID_KEY);
@@ -112,8 +400,6 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
   }, [messages, isInitialized]);
-
-  const backendBase = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim() || 'http://localhost:5000';
 
   const updateAvyEyes = (clientX: number, clientY: number) => {
     const bounds = avyLogoRef.current?.getBoundingClientRect();
@@ -155,6 +441,274 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     const messageText = text || input.trim();
     if (!messageText || !conversationId) return;
 
+    // Local cart query handling: respond immediately from localStorage without calling backend
+    const normalizedQuery = messageText.toLowerCase().trim();
+    const cartQueryPatterns = [
+      "what's in my cart",
+      "what is in my cart",
+      "what's in the cart",
+      "what is in the cart",
+      'show cart',
+      'show my cart',
+      'cart contents',
+      'what are my cart items',
+    ];
+
+    if (cartQueryPatterns.includes(normalizedQuery)) {
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        text: messageText,
+        isUser: true,
+      };
+
+      const raw = localStorage.getItem('dripTeaCartData') || '';
+      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const botText = lines.length > 0
+        ? `Your cart contains:\n- ${lines.join('\n- ')}`
+        : 'Your cart is empty.';
+
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        text: botText,
+        isUser: false,
+      };
+
+      setMessages(prev => [...prev, userMsg, botMsg]);
+      setInput('');
+      return;
+    }
+
+    // Intent: add <drink> to cart (local quick-add with customization)
+    try {
+      const addRegex = /(?:add|please add|put)\s+(?:a\s+)?(?:the\s+)?(?:[0-9]+\s+)?(.+?)\s*(?:to(?:\s+my)?\s+cart)?$/i;
+      const addMatch = messageText.match(addRegex);
+      if (addMatch && addMatch[1]) {
+        const candidate = addMatch[1].trim().toLowerCase();
+        const drinkNames = Object.keys(drinkData);
+        let matchedName: string | null = null;
+        let matchedId: string | null = null;
+
+        for (const name of drinkNames) {
+          const n = name.toLowerCase();
+          if (n === candidate || candidate.includes(n) || n.includes(candidate)) {
+            matchedName = name;
+            matchedId = drinkData[name].id;
+            break;
+          }
+        }
+
+        if (matchedName && matchedId) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+
+          // Start customization step-by-step: ask for size first
+          setPendingDrinkForCustomization({ name: matchedName, id: matchedId, step: 'size' });
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `Great! Let me customize ${matchedName} for you.\n\nWhat size? M (Medium) or L (Large)?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+    } catch (e) {
+      // ignore intent parse errors and proceed to backend
+    }
+
+    // If waiting for customization, handle step-by-step
+    if (pendingDrinkForCustomization) {
+      const customizationText = messageText.toLowerCase();
+
+      // Step 1: Collect size
+      if (pendingDrinkForCustomization.step === 'size') {
+        const sizeMatch = customizationText.match(/\b(m|l|medium|large)\b/i);
+        if (sizeMatch) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+          setIsLoading(true);
+
+          const size = sizeMatch[1].toUpperCase().charAt(0);
+          setPendingDrinkForCustomization(prev => ({ ...prev!, step: 'ice', size }));
+
+          setTimeout(() => {
+            const botMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              text: `Got it, size ${size}.\n\nNext, ice level? Normal, Less, or No?`,
+              isUser: false,
+            };
+            setMessages(prev => [...prev, botMsg]);
+            setIsLoading(false);
+          }, 600);
+          setInput('');
+          return;
+        } else {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `I didn't catch that. Please choose: M (Medium) or L (Large)?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, userMsg, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+
+      // Step 2: Collect ice level
+      if (pendingDrinkForCustomization.step === 'ice') {
+        const iceMatch = customizationText.match(/\b(normal|less|no)\b/i);
+        if (iceMatch) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+          setIsLoading(true);
+
+          const ice = iceMatch[1].charAt(0).toUpperCase() + iceMatch[1].slice(1).toLowerCase();
+          setPendingDrinkForCustomization(prev => ({ ...prev!, step: 'sugar', ice }));
+
+          setTimeout(() => {
+            const botMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              text: `Nice, ${ice} ice.\n\nNext, sugar level? Normal, Less, or Zero?`,
+              isUser: false,
+            };
+            setMessages(prev => [...prev, botMsg]);
+            setIsLoading(false);
+          }, 600);
+          setInput('');
+          return;
+        } else {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `I didn't catch that. Please choose: Normal, Less, or No ice?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, userMsg, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+
+      // Step 3: Collect sugar level and finalize
+      if (pendingDrinkForCustomization.step === 'sugar') {
+        const sugarMatch = customizationText.match(/\b(normal|less|zero)\b/i);
+        if (sugarMatch) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+          setIsLoading(true);
+
+          const sugar = sugarMatch[1].charAt(0).toUpperCase() + sugarMatch[1].slice(1).toLowerCase();
+          setPendingDrinkForCustomization(prev => ({ ...prev!, step: 'topping', sugar }));
+
+          setTimeout(() => {
+            const botMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              text: `Perfect, ${sugar} sugar.\n\nFinally, any toppings? Tapioca Pearls, Aloe Vera, Cheese Foam, or No Topping?`,
+              isUser: false,
+            };
+            setMessages(prev => [...prev, botMsg]);
+            setIsLoading(false);
+          }, 600);
+          setInput('');
+          return;
+        } else {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `I didn't catch that. Please choose: Normal, Less, or Zero sugar?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, userMsg, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+
+      // Step 4: Collect topping
+      if (pendingDrinkForCustomization.step === 'topping') {
+        const toppingMatch = customizationText.match(/\b(tapioca|pearls|aloe|cheese|foam|no\s*topping|none)\b/i);
+        if (toppingMatch) {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          setMessages(prev => [...prev, userMsg]);
+          setIsLoading(true);
+
+          const size = pendingDrinkForCustomization.size!;
+          const ice = pendingDrinkForCustomization.ice!;
+          const sugar = pendingDrinkForCustomization.sugar!;
+
+          // Look up actual price from menu data
+          const beverage = (menuData as any).beverages.find((b: any) => b.id === pendingDrinkForCustomization.id);
+          const basePrice = beverage?.price || 0;
+          const sizeModifier = size === 'L' ? 1.5 : 0; // Large adds $1.50
+          const finalPrice = basePrice + sizeModifier;
+
+          // Map topping name
+          let toppingName = 'No Topping';
+          if (toppingMatch[1].toLowerCase().includes('tapioca') || toppingMatch[1].toLowerCase().includes('pearls')) {
+            toppingName = 'Tapioca Pearls';
+          } else if (toppingMatch[1].toLowerCase().includes('aloe')) {
+            toppingName = 'Aloe Vera';
+          } else if (toppingMatch[1].toLowerCase().includes('cheese') || toppingMatch[1].toLowerCase().includes('foam')) {
+            toppingName = 'Cheese Foam';
+          }
+
+          // Add to cart
+          const details = `${size}, ${ice} Ice, ${sugar} Sugar, ${toppingName}`;
+          const newItem = `${pendingDrinkForCustomization.name} | ${details} | S$ ${finalPrice.toFixed(2)}`;
+          const existing = localStorage.getItem('dripTeaCartData') || '';
+          const updated = existing ? existing + '\n' + newItem : newItem;
+          localStorage.setItem('dripTeaCartData', updated);
+          window.dispatchEvent(new Event('cartUpdated'));
+          setAddedIds(prev => [...prev, pendingDrinkForCustomization.id]);
+          setTimeout(() => setAddedIds(prev => prev.filter(id => id !== pendingDrinkForCustomization.id)), 2500);
+
+          // Store customization data in sessionStorage for the customize page
+          const drinkDataEntry = drinkData[pendingDrinkForCustomization.name];
+          if (drinkDataEntry) {
+            sessionStorage.setItem('chatCustomization', JSON.stringify({
+              drinkId: pendingDrinkForCustomization.id,
+              drinkName: pendingDrinkForCustomization.name,
+              size: size === 'L' ? 'Large' : 'Regular',
+              ice: ice === 'Normal' ? 'Normal Ice' : ice === 'Less' ? 'Less Ice' : 'No Ice',
+              sugar: sugar === 'Normal' ? 'Normal Sweet' : sugar === 'Less' ? 'Less Sweet' : 'No Additional Sugar',
+              category: drinkDataEntry.category,
+            }));
+          }
+
+          setTimeout(() => {
+            const botMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              text: `Awesome! I've added ${pendingDrinkForCustomization.name} with ${toppingName} to your cart. (${size}, ${ice} Ice, ${sugar} Sugar) — S$ ${finalPrice.toFixed(2)}`,
+              isUser: false,
+              // @ts-ignore
+              showViewCart: true,
+              showCustomizeLink: true,
+              customizeDrinkId: pendingDrinkForCustomization.id,
+              customizeDrinkName: pendingDrinkForCustomization.name,
+              customizeCategory: drinkDataEntry?.category || 'milk-tea',
+            } as unknown as Message;
+            setMessages(prev => [...prev, botMsg]);
+            setIsLoading(false);
+            setPendingDrinkForCustomization(null);
+          }, 600);
+          setInput('');
+          return;
+        } else {
+          const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
+          const botMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `I didn't catch that. Please choose: Tapioca Pearls, Aloe Vera, Cheese Foam, or No Topping?`,
+            isUser: false,
+          };
+          setMessages(prev => [...prev, userMsg, botMsg]);
+          setInput('');
+          return;
+        }
+      }
+    }
+
     const userMsg: Message = {
       id: Date.now().toString(),
       text: messageText,
@@ -166,7 +720,8 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${backendBase}/chat`, {
+      const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:5000';
+      const response = await fetch(`${apiBase}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -175,9 +730,9 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
         }),
       });
 
-      const data = await response.json();
-      const replyText = typeof data?.reply === 'string' ? data.reply : 'Error connecting to backend';
-
+      const data: unknown = await response.json();
+      const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+      const replyText = typeof payload.reply === 'string' ? payload.reply : 'Error connecting to backend';
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         text: replyText,
@@ -185,15 +740,58 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       };
       setMessages(prev => [...prev, botMsg]);
 
-      if (replyText.includes('hidden-cart-data')) {
+      // 1) Preferred: extract hidden cart block if present in reply HTML
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(replyText, 'text/html');
+        const hiddenEls = doc.querySelectorAll('.hidden-cart-data');
+        if (hiddenEls.length > 0) {
+          const latestCartData = hiddenEls[hiddenEls.length - 1].textContent || '';
+          localStorage.setItem('dripTeaCartData', latestCartData.trim());
+          window.dispatchEvent(new Event('cartUpdated'));
+        } else {
+          // 2) Fallback: parse visible textual bullets when hidden block is missing
+          // Normalize reply: treat <br> as newline and strip other tags
+          const normalized = replyText.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+          const lines = normalized.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          const items: string[] = [];
+
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            // Match patterns like: * **Name** - S$5.2  or * **Name** - S$ 5.20
+            const m = line.match(/^\*\s*\*\*([^*]+)\*\*\s*-\s*S\$?\s*([0-9]+(?:\.[0-9]+)?)/i);
+            if (m) {
+              const name = m[1].trim();
+              const price = parseFloat(m[2]) || 0;
+              const details: string[] = [];
+              let j = i + 1;
+              while (j < lines.length && /^[-*]/.test(lines[j])) {
+                details.push(lines[j].replace(/^[-*]\s*/, '').trim());
+                j++;
+              }
+              const detailsJoined = details.join(' · ');
+              items.push(`${name} | ${detailsJoined} | S$ ${price.toFixed(2)}`);
+              i = j - 1;
+            }
+          }
+
+          if (items.length > 0) {
+            const existing = localStorage.getItem('dripTeaCartData') || '';
+            const updated = existing ? existing + '\n' + items.join('\n') : items.join('\n');
+            localStorage.setItem('dripTeaCartData', updated.trim());
+            window.dispatchEvent(new Event('cartUpdated'));
+          }
+        }
+      } catch (err) {
+        // best-effort: try DOM lookup after render
         setTimeout(() => {
           const hiddenBlocks = document.querySelectorAll('.hidden-cart-data');
           if (hiddenBlocks.length > 0) {
             const latestCartData = hiddenBlocks[hiddenBlocks.length - 1].textContent || '';
-            localStorage.setItem("dripTeaCartData", latestCartData.trim());
-            window.dispatchEvent(new Event('cartUpdated')); 
+            localStorage.setItem('dripTeaCartData', latestCartData.trim());
+            window.dispatchEvent(new Event('cartUpdated'));
           }
-        }, 100);
+        }, 300);
       }
     } catch (error) {
       const botMsg: Message = {
@@ -206,6 +804,46 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       setIsLoading(false);
     }
   }
+
+  const handlePickedImage = (file: File | null, source: 'camera' | 'screenshot' | 'clipboard') => {
+    if (!file) {
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setPendingImages(prev => [...prev, { name: file.name, previewUrl, source }]);
+  };
+
+  const handleImageSelection = (files: FileList | null, source: 'camera' | 'screenshot') => {
+    const file = files?.[0];
+    handlePickedImage(file || null, source);
+  };
+
+  const handleInputPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = Array.from(event.clipboardData.items || []);
+    const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
+    if (!imageItem) {
+      return;
+    }
+
+    const file = imageItem.getAsFile();
+    if (!file) {
+      return;
+    }
+
+    event.preventDefault();
+    handlePickedImage(file, 'clipboard');
+  };
+
+  const removePendingImage = (index: number) => {
+    setPendingImages(prev => {
+      const item = prev[index];
+      if (item) {
+        try { URL.revokeObjectURL(item.previewUrl); } catch {}
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  };
 
   function restartConversation() {
     const newConversationId = createConversationId();
@@ -231,6 +869,17 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
 
   const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
+    
+    // Handle drink links
+    if (target.classList.contains('chat-drink-link') && target instanceof HTMLAnchorElement) {
+      e.preventDefault();
+      e.stopPropagation();
+      const href = target.getAttribute('href');
+      if (href) {
+        router.push(href);
+      }
+      return;
+    }
     
     // Check if it's a button and has your specific chat classes
     if (target.tagName === 'BUTTON' && 
@@ -400,18 +1049,133 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
               className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}
               onClick={handleChatClick}
             >
-              <div
-                className={styles.bubbleText}
-                dangerouslySetInnerHTML={{
-                  __html: convertDrinkNamesToLinks(msg.text)
-                    .replace(/<img[^>]*>/gi, '')
-                    .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>')
-                    .replace(/\n\s*\n/g, '<br>')
-                    .replace(/\n/g, '<br>')
-                    .trim()
-                }}
-              />
+              <div className={styles.bubbleText}>
+                {!msg.isUser && msg.text.includes('<img') && msg.text.includes('startOrder') ? (
+                  // Drink recommendation mode: extract and render flip cards
+                  (() => {
+                    const drinkHtmlBlocks = msg.text.split(/(<img[^>]*>[\s\S]*?<\/button>)/m).filter(Boolean);
+                    const drinks: DrinkRecommendation[] = [];
+                    const otherText: string[] = [];
+
+                    drinkHtmlBlocks.forEach(block => {
+                      if (block.includes('startOrder')) {
+                        const drink = parseDrinkFromHtml(block);
+                        if (drink) drinks.push(drink);
+                      } else {
+                        otherText.push(block);
+                      }
+                    });
+
+                    return (
+                      <div>
+                        {otherText.length > 0 && (
+                          <div className={styles.drinkRecOtherText} dangerouslySetInnerHTML={{ __html: otherText.join('').trim() }} />
+                        )}
+                        <div className={styles.drinkRecCardsWrap}>
+                          {drinks.map((drink, i) => {
+                            // Look up category from drinkData using drink name
+                            const drinkInfo = Object.entries(drinkData).find(([name]) => name === drink.name);
+                            const category = drinkInfo ? drinkInfo[1].category : 'milk-tea'; // fallback category
+                            
+                            return (
+                            <div key={`drink-${i}`}>
+                              <div
+                                className={flippedCard === drink.id ? `${styles.drinkFlipCard} ${styles.drinkFlipCardFlipped}` : styles.drinkFlipCard}
+                                onClick={() => setFlippedCard(flippedCard === drink.id ? null : drink.id)}
+                              >
+                                <div className={styles.drinkFlipCardInner}>
+                                  {/* Front */}
+                                  <div className={styles.drinkFlipCardFront}>
+                                    <img src={drink.image} alt={drink.name} className={styles.drinkFlipCardImg} />
+                                    <div className={styles.drinkFlipCardName}>{drink.name}</div>
+                                    <div className={styles.drinkFlipCardNutrition}>Grade: {drink.grade}</div>
+                                    <div className={styles.drinkFlipCardNutrition}>Sugar: {drink.sugar}</div>
+                                    <div className={styles.drinkFlipCardNutrition}>Cal: {drink.calories}</div>
+                                    <div className={styles.drinkFlipCardFlipHint}>Click to flip →</div>
+                                  </div>
+
+                                  {/* Back */}
+                                  <div className={styles.drinkFlipCardBack}>
+                                    {DRINK_INFO[drink.id] ? (
+                                      <>
+                                        <div className={styles.drinkFlipCardBackSection}>
+                                          <div className={styles.drinkFlipCardBackTitle}>Ingredients:</div>
+                                          <ul className={styles.drinkFlipCardBackList}>
+                                            {DRINK_INFO[drink.id].ingredients.map((ing, j) => (
+                                              <li key={j}>{ing}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                        <div className={styles.drinkFlipCardBackSection}>
+                                          <div className={styles.drinkFlipCardBackTitle}>For Diabetics:</div>
+                                          <div className={styles.drinkFlipCardBackText}>{DRINK_INFO[drink.id].diabeticAdvice}</div>
+                                        </div>
+                                        <div className={styles.drinkFlipCardBackSection}>
+                                          <div className={styles.drinkFlipCardBackTitle}>Insulin Impact:</div>
+                                          <div className={styles.drinkFlipCardBackText}>{DRINK_INFO[drink.id].insulinImpact}</div>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div className={styles.drinkFlipCardBackText}>No detailed info available. Click to flip back →</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              {/* Add to Cart button removed — users add items by texting the chatbot */}
+
+                              {/* Customization link to navigate to customization page */}
+                              <a
+                                href={`/menu/${category}/${drink.id}`}
+                                className={styles.customizeLink}
+                                onClick={(e) => { e.preventDefault(); router.push(`/menu/${category}/${drink.id}`); }}
+                              >
+                                Customize
+                              </a>
+                            </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: msg.isUser
+                        ? convertDrinkNamesToLinks(msg.text)
+                        : applyGlossaryTooltips(convertDrinkNamesToLinks(msg.text))
+                        .replace(/<img[^>]*>/gi, '')
+                        .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>')
+                        .replace(/\n\s*\n/g, '<br>')
+                        .replace(/\n/g, '<br>')
+                        .trim()
+                    }}
+                  />
+                )}
+                {/* Web source cards removed per request */}
+              </div>
             </div>
+              
+              {!msg.isUser && (msg as any).showViewCart && (
+                <div style={{ marginTop: '8px', display: 'flex', gap: '8px', paddingLeft: '26px' }}>
+                  <button
+                    type="button"
+                    style={{ backgroundColor: '#2b7da3', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.9rem' }}
+                    onClick={() => { if (onOpenCart) onOpenCart(); else router.push('/cart'); }}
+                  >
+                    View cart
+                  </button>
+                  {(msg as any).showCustomizeLink && (
+                    <button
+                      type="button"
+                      style={{ backgroundColor: '#7cb342', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.9rem' }}
+                      onClick={() => router.push(`/menu/${(msg as any).customizeCategory}/${(msg as any).customizeDrinkId}`)}
+                    >
+                      Customize in detail
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {isInitialized && !hasUserMessage && index === 0 && !msg.isUser && (
@@ -449,24 +1213,103 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       </div>
 
       <div className={styles.chatInputArea}>
-        <input
-          type="text"
-          className={styles.userInput}
-          placeholder="Type your message..."
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyPress={e => { if (e.key === 'Enter' && !isLoading) sendMessage(); }}
-          disabled={isLoading}
-        />
-        <button
-          type="button"
-          className={styles.sendBtn}
-          onClick={() => sendMessage()}
-          disabled={isLoading || !input.trim()}
-        >
-          ➤
-        </button>
+        {pendingImages.length > 0 && (
+          <div className={styles.pendingImagesMini} role="list" aria-label="Pasted images">
+            {pendingImages.map((img, i) => (
+              <div
+                key={`pending-mini-${i}`}
+                className={styles.pendingMiniItem}
+                role="listitem"
+                onClick={() => setPreviewIndex(i)}
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewIndex(i); }}
+              >
+                <img src={img.previewUrl} alt={img.name} className={styles.pendingMiniThumb} />
+                <button
+                  type="button"
+                  className={styles.pendingMiniClose}
+                  onClick={(e) => { e.stopPropagation(); removePendingImage(i); }}
+                  aria-label={`Remove ${img.name}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className={styles.chatInputRow}>
+          {/* upload icons removed per request */}
+
+          {/* file inputs removed to disable click-to-upload UI */}
+
+          <input
+            type="text"
+            className={styles.userInput}
+            placeholder="Type your message..."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onPaste={handleInputPaste}
+            onKeyPress={e => { if (e.key === 'Enter' && !isLoading) sendMessage(); }}
+            disabled={isLoading}
+          />
+          <button
+            type="button"
+            className={styles.sendBtn}
+            onClick={() => sendMessage()}
+            disabled={isLoading || !input.trim()}
+          >
+            ➤
+          </button>
+        </div>
       </div>
+      {previewIndex !== null && pendingImages[previewIndex] && (
+        <div
+          className={styles.imagePreviewOverlay}
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewIndex(null)}
+        >
+          <div className={styles.imagePreviewContent} onClick={(e) => e.stopPropagation()}>
+            {pendingImages.length > 1 && (
+              <button
+                type="button"
+                className={styles.imagePreviewNavButton + ' ' + styles.imagePreviewPrev}
+                onClick={() => setPreviewIndex(i => (i && i > 0 ? i - 1 : i))}
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+            )}
+
+            <img
+              src={pendingImages[previewIndex].previewUrl}
+              alt={pendingImages[previewIndex].name}
+              className={styles.imagePreviewImg}
+            />
+
+            {pendingImages.length > 1 && (
+              <button
+                type="button"
+                className={styles.imagePreviewNavButton + ' ' + styles.imagePreviewNext}
+                onClick={() => setPreviewIndex(i => (typeof i === 'number' && i < pendingImages.length - 1 ? i + 1 : i))}
+                aria-label="Next image"
+              >
+                ›
+              </button>
+            )}
+
+            <button
+              type="button"
+              className={styles.imagePreviewClose}
+              onClick={() => setPreviewIndex(null)}
+              aria-label="Close preview"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

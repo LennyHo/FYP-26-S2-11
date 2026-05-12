@@ -224,18 +224,21 @@
 }
 
 .message {
-  max-width: 94%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: 6px;
   line-height: 1.62;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  word-break: break-word;
   font-size: 1rem;
   animation-duration: 260ms;
   animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
   animation-fill-mode: both;
+}
+
+.botMessage {
+  max-width: 85%;
 }
 
 .botMessage {
@@ -311,9 +314,11 @@
 
 .bubbleText {
   flex: 1;
-  min-width: 0;
+  min-width: auto;
   display: flex;
   flex-direction: column;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .sourceSection {
@@ -1143,6 +1148,36 @@
 
 .buttonWrapper {
   margin-top: 6px !important;
+}
+
+.customizeLink {
+  display: block;
+  width: 220px;
+  padding: 10px 16px;
+  margin: 12px auto 0;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid #7cb342;
+  border-radius: 20px;
+  background: #f1f8e9;
+  color: #558b2f;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(124, 179, 66, 0.15);
+}
+
+.customizeLink:hover {
+  background: #c6ff00;
+  color: #33691e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(124, 179, 66, 0.25);
+}
+
+.customizeLink:active {
+  transform: translateY(0);
+  opacity: 0.95;
 }
 
 @media (max-width: 768px) {
