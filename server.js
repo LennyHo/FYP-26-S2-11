@@ -216,14 +216,13 @@ CONVERSATION RULES (CRITICAL):
 ORDERING PHASES (Only start these when user explicitly wants to order):
 
 PHASE 1: ITEM SELECTION & MENU DISPLAY
-- If AVAILABLE DRINKS CONTEXT is empty or user hasn't asked for menu: Ask them what flavor they are in the mood for conversationally.
-- If they ask for recommendations or show menu: Format EACH drink EXACTLY like this with a line break at the end:
-"<img src='[image]' alt='[Name]' style='width: 100px; border-radius: 8px;'><br>
+- If AVAILABLE DRINKS CONTEXT is empty: DO NOT list any drinks. Simply ask them what flavor they are in the mood for.
+- If they type a name or ask for recommendations: Introduce the drinks. Format EACH drink EXACTLY like this with a line break at the end:
+"<img src='[image]' alt='[Name]'><br>
 **[Name]** ($[Price])<br>
 Nutri Grade: [Grade] | Sugar: [Sugar]g | Calories: [Calories] kcal<br>
-<button class='chat-nav-btn-compact' onclick='startOrder(\"[id]\")'>Order This</button><br><br>"
-- ONLY AFTER listing all drinks, ask: "Which one would you like to choose?" (Translate to their language).
-- If they upload an image: Identify the drink, confirm if they want to order it, and if yes, move to Phase 2.
+<button onclick='startOrder(\"[id]\")'>Choose This Drink</button><br><br>"
+- ONLY AFTER listing all the drinks completely, ask ONE final question: "Which one would you like to choose?" (Translate to their language).
 
 PHASE 2: SIZE
 Once the drink is confirmed, ask the user if they want Medium ($[Base Price]) or Large ($[Base Price + 1.50]). 
@@ -396,6 +395,41 @@ app.post("/chat", async (req, res) => {
             if (!hasGroqKey) throw new Error("Both AI systems (and all keys) failed.");
             textReply = await callGroqText(safeMessage, history, systemPrompt);
             console.log("[CHAT] Handled successfully by Groq (Fallback)");
+        }
+
+        // If the assistant produced a visible cart summary but did not include the
+        // hidden-cart-data block, synthesize one here so clients can reliably parse it.
+        try {
+            const hasHidden = typeof textReply === 'string' && textReply.includes('hidden-cart-data');
+            if (!hasHidden && typeof textReply === 'string' && /You currently have the following in your cart:/i.test(textReply)) {
+                const lines = textReply.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                const hiddenLines = [];
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const m = line.match(/^\*\s*\*\*([^*]+)\*\*\s*-\s*S\$?\s*([0-9]+(?:\.[0-9]+)?)/i);
+                    if (m) {
+                        const name = m[1].trim();
+                        const price = m[2].trim();
+                        // collect following detail lines starting with '-' if any
+                        const details = [];
+                        let j = i + 1;
+                        while (j < lines.length && /^[-*]/.test(lines[j])) {
+                            details.push(lines[j].replace(/^[-*]\s*/, '').trim());
+                            j++;
+                        }
+                        hiddenLines.push(`${name} | ${details.join(' · ')} | S$ ${parseFloat(price).toFixed(2)} | `);
+                        i = j - 1;
+                    }
+                }
+
+                if (hiddenLines.length > 0) {
+                    const hiddenBlock = "\n<div class='hidden-cart-data' style='display:none;'>\n" + hiddenLines.join('\n') + "\n</div>\n";
+                    textReply = textReply + hiddenBlock + "\n";
+                    console.log('[CHAT] injected hidden-cart-data block with', hiddenLines.length, 'items');
+                }
+            }
+        } catch (e) {
+            console.warn('[CHAT] failed to synthesize hidden-cart-data:', e.message);
         }
 
         // Append to shared memory only after a successful reply

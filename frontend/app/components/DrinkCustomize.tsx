@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from './Header';
 import styles from './DrinkCustomize.module.css';
@@ -48,12 +48,26 @@ const nutriGradeColor: Record<string, string> = {
   D: '#b71c1c',
 };
 
+const nutriGradeClass: Record<string, string> = {
+  A: styles.gradeA,
+  B: styles.gradeB,
+  C: styles.gradeC,
+  D: styles.gradeD,
+};
+
+function toDrinkSlug(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export default function DrinkCustomize() {
   const params = useParams();
   const router = useRouter();
 
   const drinkId = params.drinkId as string;
-  const drink = menuData.find(d => d.id === drinkId);
+  const drink = menuData.find(d => d.id === drinkId || toDrinkSlug(d.name) === drinkId);
 
   const [size, setSize] = useState(sizes[0]);
   const [ice, setIce] = useState(iceOptions[0]);
@@ -61,28 +75,35 @@ export default function DrinkCustomize() {
   const [topping, setTopping] = useState(toppingOptions[0]);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [imageSrc, setImageSrc] = useState('');
+
+  useEffect(() => {
+    setImageSrc(drink?.image || '');
+  }, [drink?.image]);
 
   if (!drink) {
     return (
       <div className={styles.page}>
         <Header />
         <main className={styles.main}>
-          <p style={{ padding: 32 }}>Drink not found.</p>
+          <p className={styles.emptyState}>Drink not found.</p>
           <button onClick={() => router.back()} className={styles.backBtn}>← Go Back</button>
         </main>
       </div>
     );
   }
 
+  const selectedDrink = drink;
+
   // Live calculations
-  const totalSugarG = Math.round(drink.sugarG * sweetness.multiplier) + topping.sugarG;
-  const totalCalories = drink.calories + topping.calories;
-  const totalPrice = (drink.price + size.surcharge + topping.price) * quantity;
+  const totalSugarG = Math.round(selectedDrink.sugarG * sweetness.multiplier) + topping.sugarG;
+  const totalCalories = selectedDrink.calories + topping.calories;
+  const totalPrice = (selectedDrink.price + size.surcharge + topping.price) * quantity;
 
   function handleAddToCart() {
     const existingData = localStorage.getItem("dripTeaCartData") || "";
     const toppingLabel = topping.key === 'none' ? '' : `, ${topping.name}`;
-    const newItem = `${drink.name} (${size.label}, ${ice}, ${sweetness.label}${toppingLabel})|${size.label} · ${ice} · ${sweetness.label}${toppingLabel}|S$ ${totalPrice.toFixed(2)}`;
+    const newItem = `${selectedDrink.name} (${size.label}, ${ice}, ${sweetness.label}${toppingLabel})|${size.label} · ${ice} · ${sweetness.label}${toppingLabel}|S$ ${totalPrice.toFixed(2)}`;
     const updated = existingData ? `${existingData}\n${newItem}` : newItem;
     localStorage.setItem("dripTeaCartData", updated);
     window.dispatchEvent(new Event('cartUpdated'));
@@ -104,23 +125,31 @@ export default function DrinkCustomize() {
         {/* Top: image left, info right */}
         <div className={styles.topSection}>
           <div className={styles.imageWrapper}>
-            <img src={drink.image} alt={drink.name} className={styles.drinkImage} />
+            <img
+              src={imageSrc || '/driptea_drinks.jpg'}
+              alt={selectedDrink.name}
+              className={styles.drinkImage}
+              onError={() => {
+                if (imageSrc !== '/driptea_drinks.jpg') {
+                  setImageSrc('/driptea_drinks.jpg');
+                }
+              }}
+            />
           </div>
 
           <div className={styles.info}>
             <button className={styles.backBtn} onClick={() => router.back()}>
               ← Back to Category
             </button>
-            <h1 className={styles.drinkName}>{drink.name}</h1>
-            <p className={styles.drinkDesc}>{drink.description}</p>
+            <h1 className={styles.drinkName}>{selectedDrink.name}</h1>
+            <p className={styles.drinkDesc}>{selectedDrink.description}</p>
 
             {/* Live nutri info */}
             <div className={styles.nutriRow}>
               <span
-                className={styles.nutriBadge}
-                style={{ background: nutriGradeColor[drink.nutriGrade] ?? '#555' }}
+                className={`${styles.nutriBadge} ${nutriGradeClass[selectedDrink.nutriGrade] || ''}`}
               >
-                {drink.nutriGrade}
+                {selectedDrink.nutriGrade}
               </span>
               <span className={styles.nutriDetail}>Sugar: {totalSugarG}g</span>
               <span className={styles.nutriDetail}>{totalCalories} kcal</span>
@@ -195,7 +224,7 @@ export default function DrinkCustomize() {
           </div>
         </div>
 
-        <div style={{ height: 110 }} />
+        <div className={styles.bottomSpacer} />
       </main>
 
       {/* Sticky footer — constrained to same width as main content */}

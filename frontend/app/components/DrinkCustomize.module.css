@@ -70,6 +70,11 @@
   line-height: 1.5;
 }
 
+.emptyState {
+  padding: 32px;
+  color: #1a1a2e;
+}
+
 /* Nutri grade */
 .nutriRow {
   display: flex;
@@ -88,6 +93,22 @@
   color: #fff;
   font-weight: 900;
   font-size: 0.95rem;
+}
+
+.gradeA {
+  background: #2e7d32;
+}
+
+.gradeB {
+  background: #1565c0;
+}
+
+.gradeC {
+  background: #e65100;
+}
+
+.gradeD {
+  background: #b71c1c;
 }
 
 .nutriDetail {
@@ -154,17 +175,27 @@
 }
 
 /* ── Updated Sticky footer ── */
-.footer {
+.footerOuter {
   position: fixed;
-  bottom: 0;
   left: 0;
-  right: 0;
-  background: #fff;
-  border-top: 1px solid #eee;
-  padding: 12px 0;
+  right: var(--chat-reserve, 0px);
+  bottom: 0;
   z-index: 1000; /* High z-index to stay above chatbot button */
   display: flex;
   justify-content: center;
+  padding: 0 20px 12px;
+  box-sizing: border-box;
+}
+
+.footer {
+  width: min(780px, 100%);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  box-shadow: 0 14px 34px rgba(26, 26, 46, 0.12);
+  padding: 14px 16px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   transition: padding-right 0.3s ease;
 }
 
@@ -183,18 +214,6 @@
   font-family: sans-serif;
   font-weight: 700;
   color: #333;
-}
-
-/* Create a container inside the footer to match the .main width */
-.footerContainer {
-  width: 95%;
-  max-width: 800px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center; /* Force everything to the middle */
-  gap: 30px; /* Space between the groups */
-  flex-wrap: nowrap; /* Prevents them from jumping to new lines */
 }
 
 .footerTop {
@@ -245,8 +264,10 @@
 }
 
 .actionRow {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .addToCartBtn {
@@ -260,8 +281,10 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   transition: opacity 0.2s;
+  width: 100%;
 }
 
 .addToCartBtn:hover {
@@ -279,17 +302,28 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   transition: opacity 0.2s;
+  width: 100%;
+}
+
+.addedConfirm {
+  background-color: #1f6b8a;
 }
 
 .placeOrderBtn:hover {
   opacity: 0.9;
 }
 
+.bottomSpacer {
+  height: 110px;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .footer {
+  .footerOuter {
+    padding-inline: 12px;
     right: 0;
   }
 }
@@ -311,6 +345,6 @@
   padding-right: 360px; /* Match your chatbot width */
 }
 
-.chatbot-active .footerContainer {
+.chatbot-active .footer {
   max-width: 600px;           /* Makes the box narrower so it doesn't touch the bot */
 }

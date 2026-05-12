@@ -1,0 +1,1218 @@
+"use client";
+
+import React, { useRef, useState, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import styles from './ChatbotSidebar.module.css';
+import avyLogo from '../../../frontend/img/avy_logo/Group 2.svg';
+import avyIntroduction from '../../../frontend/img/avy_logo/avy_introduction.svg';
+
+interface MessageSource {
+  title: string;
+  url: string;
+  snippet?: string;
+  sourceName?: string;
+  favicon?: string;
+}
+
+interface Message {
+  id: string;
+  text: string;
+  isUser: boolean;
+  sources?: MessageSource[];
+}
+
+interface ChatbotSidebarProps {
+  onClose?: () => void;
+  onOpenCart?: () => void;
+  onCheckout?: () => void;
+}
+
+const STORAGE_KEY = "driptea_chatbot_messages";
+const CONVERSATION_ID_KEY = "driptea_chatbot_conversation_id";
+const TRUSTED_SOURCE_HOSTS = [
+  'hpb.gov.sg',
+  'moh.gov.sg',
+  'nus.edu.sg',
+  'ntu.edu.sg',
+  'sph.com.sg',
+  'channelnewsasia.com',
+  'todayonline.com',
+  'straitstimes.com',
+];
+
+const drinkData: Record<string, { id: string; category: string }> = {
+  "Classic Milk Tea": { id: "b001", category: "milk-tea" },
+  "Jasmine Green Tea": { id: "b002", category: "milk-tea" },
+  "Oolong Milk Tea": { id: "b003", category: "milk-tea" },
+  "Osmanthus Milk Tea": { id: "b004", category: "milk-tea" },
+  "Da Hong Bao Milk Tea": { id: "b005", category: "milk-tea" },
+  "Matcha Latte": { id: "b006", category: "matcha-teas" },
+  "Strawberry Matcha Tea": { id: "b007", category: "matcha-teas" },
+  "Cranberry Matcha Tea": { id: "b008", category: "matcha-teas" },
+  "Jasmine Matcha Tea": { id: "b009", category: "matcha-teas" },
+  "Double Chocolate Frappe": { id: "b010", category: "ice-blended" },
+  "Taro Slush": { id: "b012", category: "ice-blended" },
+  "Milo Dinosaur": { id: "b011", category: "local-favourites" },
+};
+
+const GLOSSARY: Record<string, string> = {
+  "dietitian": "A health professional who specializes in nutrition and food planning for wellness.",
+  "diabetes": "A medical condition where the body cannot properly regulate blood sugar levels.",
+  "blood sugar": "The amount of glucose circulating in your bloodstream.",
+  "bloodsugar": "The amount of glucose circulating in your bloodstream.",
+  "glucose": "A type of sugar that is the body's main source of energy.",
+  "insulin": "A hormone that helps move glucose from the blood into the body's cells.",
+  "carbohydrate": "A nutrient that breaks down into glucose and can raise blood sugar.",
+  "carbohydrates": "A nutrient group that breaks down into glucose and can raise blood sugar.",
+  "carbs": "A shorter way to say carbohydrates, which can affect blood sugar levels.",
+  "sucrose": "A type of sugar made of glucose and fructose, commonly found in table sugar.",
+  "sugar": "A sweet carbohydrate that can raise blood glucose when consumed.",
+  "unsweetened": "A drink or food made without added sugar.",
+  "low sugar": "Containing less sugar than a regular version.",
+  "zero sugar": "Containing no added sugar.",
+  "sugarfree": "A product made without sugar or with no added sugar.",
+  "lowsugar": "A product with reduced sugar content.",
+  "added sugar": "Sugar added during preparation or processing.",
+  "glycemic index": "A measure of how quickly a food can raise blood sugar levels.",
+  "glycemic": "Related to how food affects blood sugar levels.",
+  "portion": "The amount of food or drink served in one sitting.",
+  "portion size": "The amount of food or drink served in one serving.",
+  "fiber": "A part of plant foods that slows digestion and may help steady blood sugar.",
+  "protein": "A nutrient that helps you feel full and supports muscles and body repair.",
+  "nutrition": "The study of how food and nutrients support health.",
+  "diet": "The usual foods and drinks a person consumes.",
+  "wellness": "A general state of good physical and mental health.",
+  "nutrients": "Substances in food that your body needs to function and stay healthy.",
+  "antioxidants": "Natural compounds that help protect cells from damage caused by harmful substances.",
+  "caffeine": "A stimulant found in tea and coffee that can increase alertness and energy.",
+  "calories": "Units that measure the energy content in food and drinks.",
+  "cholesterol": "A fatty substance in the blood that, in high amounts, can affect heart health.",
+  "hypertension": "High blood pressure, a condition that can increase the risk of heart disease.",
+  "minerals": "Natural substances like calcium and iron that your body needs for health.",
+  "vitamins": "Organic compounds that support various body functions and immune health.",
+  "inflammation": "Swelling or irritation in the body that can be caused by various factors.",
+  "hydration": "The process of providing your body with enough water and fluids.",
+  "vegan": "A dietary pattern that avoids animal products.",
+  "keto": "A low-carbohydrate, high-fat eating pattern.",
+  "diabetic": "Relating to diabetes or a person living with diabetes.",
+  "obesity": "A health condition involving excess body fat that can affect overall health.",
+  "organic": "Made or grown without most synthetic chemicals or additives.",
+  "health": "A state of physical and mental well-being.",
+  "lifestyle": "A person's way of living, including habits and daily choices.",
+  "fructose": "A natural sugar found in fruits that the body processes as energy.",
+  "osmanthus": "A fragrant flower commonly used in teas, known for its pleasant aroma.",
+  "herbal": "Relating to plants or herbs used in beverages for flavor or health benefits.",
+  "natural": "Made from naturally occurring substances without artificial chemicals or additives.",
+  "metabolism": "The way your body turns food and drink into energy.",
+  "energy": "The fuel your body uses to move, think, and function.",
+  "digestion": "The process of breaking food down so your body can use it.",
+  "macros": "Short for macronutrients: protein, carbs, and fats in food.",
+  "enzymes": "Proteins that help speed up chemical reactions in the body, including digestion.",
+  "spikes": "Sharp rises in blood sugar or other measurements.",
+  "endorphins": "Natural chemicals in the body that can improve mood and reduce discomfort.",
+  "crash": "A sudden drop in energy or blood sugar after a spike.",
+  "tapioca": "A starch from the cassava root that is commonly used in bubble tea pearls.",
+  "boba": "The chewy tapioca pearls often added to bubble tea.",
+  "cassava": "A starchy root vegetable used to make tapioca.",
+  "pearl": "A small chewy ball, usually made from tapioca, found in bubble tea.",
+  "matcha": "A finely ground green tea powder used in drinks and desserts.",
+  "oolong": "A tea type that is partially oxidized and sits between green and black tea.",
+  "taro": "A starchy root vegetable often used for a sweet, nutty drink flavor.",
+  "stevia": "A plant-derived sweetener used as a sugar alternative.",
+  "erythritol": "A low-calorie sugar alcohol used as a sweetener.",
+  "monkfruit": "A natural sweetener made from monk fruit.",
+  "dairy": "Milk and products made from milk.",
+  "oatmilk": "A plant-based milk made from oats.",
+  "soymilk": "A plant-based milk made from soybeans.",
+  "nutrigrade": "A front-of-pack nutrition label used in Singapore to show a drink's nutritional rating.",
+  "guidelines": "Recommended rules or advice to help people make healthier choices.",
+  "intake": "The amount of something consumed, such as sugar or calories.",
+  "limit": "The maximum amount recommended or allowed.",
+  "allowance": "The amount permitted within a guideline or recommendation.",
+  "serving": "A standard amount of food or drink.",
+  "siudai": "A Singapore-style way to say less sugar in drinks.",
+  "kosong": "A Singapore-style way to say no sugar in drinks.",
+  "hpb": "The Health Promotion Board, a Singapore government agency focused on health.",
+  "chatbot": "A computer program that can chat with users and answer questions.",
+  "ai": "Artificial intelligence, which lets machines perform tasks that usually need human intelligence.",
+  "nudge": "A small prompt or suggestion that encourages a choice or behavior.",
+  "habits": "Repeated actions or behaviors done regularly.",
+  "behavior": "The way a person acts or responds.",
+  "tracker": "A tool used to monitor something over time.",
+  "predict": "To estimate or forecast what may happen next.",
+  "algorithm": "A set of rules or steps a computer follows to solve a problem.",
+  "automation": "The use of technology to perform tasks with little human input.",
+};
+
+const GLOSSARY_TERMS = [
+  'blood sugar',
+  'bloodsugar',
+  'glucose',
+  'insulin',
+  'metabolism',
+  'glycemic',
+  'carbohydrates',
+  'carbohydrate',
+  'carbs',
+  'sugar',
+  'unsweetened',
+  'low sugar',
+  'zero sugar',
+  'added sugar',
+  'portion size',
+  'portion',
+  'fiber',
+  'protein',
+  'calories',
+  'digestion',
+  'energy',
+  'macros',
+  'enzymes',
+  'spikes',
+  'crash',
+  'endorphins',
+  'dietitian',
+  'diabetes',
+  'antioxidants',
+  'caffeine',
+  'cholesterol',
+  'hypertension',
+  'nutrients',
+  'minerals',
+  'vitamins',
+  'inflammation',
+  'hydration',
+  'fructose',
+  'osmanthus',
+  'herbal',
+  'natural',
+].sort((a, b) => b.length - a.length);
+
+const DRINK_INFO: Record<string, { ingredients: string[]; diabeticAdvice: string; insulinImpact: string }> = {
+  b001: {
+    ingredients: ['Black tea', 'Milk', 'Sugar syrup'],
+    diabeticAdvice: 'High in sugar. Choose 0-25% sugar level to reduce glucose spike.',
+    insulinImpact: 'With milk and sugar, may cause moderate insulin response. Pair with food to slow absorption.'
+  },
+  b002: {
+    ingredients: ['Green tea', 'Jasmine flowers', 'Milk'],
+    diabeticAdvice: 'Lower sugar option. Green tea supports stable blood sugar.',
+    insulinImpact: 'Minimal insulin impact. Green tea can improve insulin sensitivity.'
+  },
+  b003: {
+    ingredients: ['Oolong tea', 'Milk', 'Sugar syrup'],
+    diabeticAdvice: 'Moderate sugar. Oolong has antioxidants that may help blood sugar control.',
+    insulinImpact: 'Oolong supports gradual digestion; moderate insulin demand if you choose 25-50% sugar.'
+  },
+  b006: {
+    ingredients: ['Matcha powder', 'Milk', 'Minimal sugar'],
+    diabeticAdvice: 'Very low sugar. Matcha provides slow-release energy without sharp glucose spike.',
+    insulinImpact: 'Low insulin response. Matcha contains L-theanine which promotes stable blood sugar.'
+  }
+};
+
+function createConversationId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+}
+
+function convertDrinkNamesToLinks(text: string): string {
+  let result = text;
+  
+  // Replace drink names with links (bold or asterisk format from server)
+  Object.entries(drinkData).forEach(([drinkName, { id, category }]) => {
+    const url = `/menu/${category}/${id}`;
+    
+    // Handle **Drink Name** format
+    const boldPattern = new RegExp(`\\*\\*${drinkName}\\*\\*`, 'g');
+    result = result.replace(boldPattern, `<a href="${url}" class="chat-drink-link" style="color: #2b7da3; text-decoration: none; border-bottom: 2px solid #2b7da3; font-weight: bold;"><strong>${drinkName}</strong></a>`);
+    
+    // Handle ***Drink Name*** format
+    const boldItalicPattern = new RegExp(`\\*\\*\\*${drinkName}\\*\\*\\*`, 'g');
+    result = result.replace(boldItalicPattern, `<a href="${url}" class="chat-drink-link" style="color: #2b7da3; text-decoration: none; border-bottom: 2px solid #2b7da3; font-weight: bold;"><strong>${drinkName}</strong></a>`);
+  });
+  
+  return result;
+}
+
+function applyGlossaryTooltips(html: string): string {
+  const parts = html.split(/(<[^>]+>)/g);
+  let hasHighlightedTerm = false;
+
+  return parts
+    .map(part => {
+      if (part.startsWith('<')) {
+        return part;
+      }
+
+      if (hasHighlightedTerm) {
+        return part;
+      }
+
+      let text = part;
+      for (const term of GLOSSARY_TERMS) {
+        const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = new RegExp(`(^|[^\\w-])(${escapedTerm})(?=$|[^\\w-])`, 'i');
+        const match = text.match(pattern);
+        if (!match) {
+          continue;
+        }
+
+        const prefix = match[1] || '';
+        const matchText = match[2] || '';
+        text = text.replace(pattern, () => {
+          const explanation = GLOSSARY[term].replace(/"/g, '&quot;');
+          hasHighlightedTerm = true;
+          return `${prefix}<span class="${styles.glossaryTerm}" tabindex="0"><span class="${styles.glossaryTermText}">${matchText}</span><span class="${styles.glossaryTooltip}" role="tooltip"><span class="${styles.glossaryTooltipLabel}">Explanation:</span><span class="${styles.glossaryTooltipBody}">${explanation}</span></span></span>`;
+        });
+
+        break;
+      }
+
+      return text;
+    })
+    .join('');
+}
+
+function toSafeSourceList(value: unknown): MessageSource[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const dedupe = new Set<string>();
+
+  return value
+    .map((item): MessageSource | null => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
+
+      const record = item as Record<string, unknown>;
+      const title = typeof record.title === 'string' ? record.title.trim() : '';
+      const url = typeof record.url === 'string' ? record.url.trim() : '';
+      const snippet = typeof record.snippet === 'string' ? record.snippet.trim() : '';
+      const sourceName = typeof record.sourceName === 'string' ? record.sourceName.trim() : '';
+      const favicon = typeof record.favicon === 'string' ? record.favicon.trim() : '';
+
+      if (!title || !url || dedupe.has(url)) {
+        return null;
+      }
+
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return null;
+        }
+
+        const isTrusted = TRUSTED_SOURCE_HOSTS.some(
+          trustedHost =>
+            parsed.hostname.toLowerCase() === trustedHost ||
+            parsed.hostname.toLowerCase().endsWith(`.${trustedHost}`)
+        );
+        if (!isTrusted) {
+          return null;
+        }
+      } catch {
+        return null;
+      }
+
+      dedupe.add(url);
+
+      return {
+        title,
+        url,
+        snippet: snippet || undefined,
+        sourceName: sourceName || undefined,
+        favicon: favicon || undefined,
+      };
+    })
+    .filter((source): source is MessageSource => Boolean(source));
+}
+
+function formatSourceHost(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.replace(/^www\./, '');
+  } catch {
+    return 'web';
+  }
+}
+
+function extractSourcesFromReplyText(text: string): MessageSource[] {
+  const sources: MessageSource[] = [];
+  const seen = new Set<string>();
+
+  const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gi;
+  let markdownMatch: RegExpExecArray | null;
+  while ((markdownMatch = markdownLinkPattern.exec(text)) !== null) {
+    const title = markdownMatch[1]?.trim();
+    const url = markdownMatch[2]?.trim();
+    if (!title || !url || seen.has(url)) {
+      continue;
+    }
+    seen.add(url);
+    sources.push({ title, url, sourceName: formatSourceHost(url) });
+  }
+
+  const plainUrlPattern = /\bhttps?:\/\/[^\s<)]+/gi;
+  let plainMatch: RegExpExecArray | null;
+  while ((plainMatch = plainUrlPattern.exec(text)) !== null) {
+    const url = plainMatch[0]?.trim();
+    if (!url || seen.has(url)) {
+      continue;
+    }
+    seen.add(url);
+    sources.push({ title: formatSourceHost(url), url, sourceName: formatSourceHost(url) });
+  }
+
+  return toSafeSourceList(sources);
+}
+
+interface DrinkRecommendation {
+  id: string;
+  name: string;
+  image: string;
+  price: string;
+  sugar: string;
+  calories: string;
+  grade: string;
+}
+
+function parseDrinkFromHtml(html: string): DrinkRecommendation | null {
+  try {
+    const nameMatch = html.match(/\*\*([^\*]+)\*\*\s*\(\$([^)]+)\)/);
+    const statsMatch = html.match(/Nutri Grade:\s*([A-F])\s*\|\s*Sugar:\s*([^|]+)\s*\|\s*Calories:\s*([^<\n]+)/);
+    const idMatch = html.match(/startOrder\("([^"]+)"\)/);
+
+    if (!nameMatch || !statsMatch || !idMatch) {
+      return null;
+    }
+
+    return {
+      id: idMatch[1],
+      name: nameMatch[1],
+      image: '/testing.webp',
+      price: nameMatch[2],
+      grade: statsMatch[1],
+      sugar: statsMatch[2].trim(),
+      calories: statsMatch[3].trim(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: ChatbotSidebarProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [addedIds, setAddedIds] = useState<string[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [conversationId, setConversationId] = useState('');
+  const [pendingImages, setPendingImages] = useState<Array<{ name: string; previewUrl: string; source: 'camera' | 'screenshot' | 'clipboard' }>>([]);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [flippedCard, setFlippedCard] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (previewIndex === null) return;
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPreviewIndex(null);
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        setPreviewIndex(prev => (prev && prev > 0 ? prev - 1 : prev));
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        setPreviewIndex(prev => (typeof prev === 'number' && prev < pendingImages.length - 1 ? prev + 1 : prev));
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [previewIndex, pendingImages.length]);
+  const chatWindowRef = useRef<HTMLDivElement>(null);
+  const avyLogoRef = useRef<HTMLDivElement>(null);
+  const avyEyeLeftRef = useRef<SVGPathElement>(null);
+  const avyEyeRightRef = useRef<SVGPathElement>(null);
+  const mobileCameraInputRef = useRef<HTMLInputElement>(null);
+  const desktopScreenshotInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const savedConversationId = localStorage.getItem(CONVERSATION_ID_KEY);
+    if (savedConversationId) {
+      setConversationId(savedConversationId);
+    } else {
+      const newConversationId = createConversationId();
+      localStorage.setItem(CONVERSATION_ID_KEY, newConversationId);
+      setConversationId(newConversationId);
+    }
+
+    const savedMessages = localStorage.getItem(STORAGE_KEY);
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch {
+        const greetingMsg: Message = {
+          id: Date.now().toString(),
+          text: 'Hello! How can I help you today?',
+          isUser: false,
+        };
+        setMessages([greetingMsg]);
+      }
+    } else {
+      const greetingMsg: Message = {
+        id: Date.now().toString(),
+        text: 'Hello! How can I help you today?',
+        isUser: false,
+      };
+      setMessages([greetingMsg]);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    }
+  }, [messages, isInitialized]);
+
+  const updateAvyEyes = (clientX: number, clientY: number) => {
+    const bounds = avyLogoRef.current?.getBoundingClientRect();
+    if (!bounds) return;
+
+    const centerX = bounds.left + bounds.width / 2;
+    const centerY = bounds.top + bounds.height / 2;
+    const deltaX = (clientX - centerX) / (bounds.width / 2);
+    const deltaY = (clientY - centerY) / (bounds.height / 2);
+
+    const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+    const x = clamp(deltaX * 5, -5, 5);
+    const y = clamp(deltaY * 4, -4, 4);
+
+    if (avyEyeLeftRef.current) {
+      avyEyeLeftRef.current.style.setProperty('--avy-eye-x', `${x * 0.6}px`);
+      avyEyeLeftRef.current.style.setProperty('--avy-eye-y', `${y * 0.6}px`);
+    }
+
+    if (avyEyeRightRef.current) {
+      avyEyeRightRef.current.style.setProperty('--avy-eye-x', `${x * 0.95}px`);
+      avyEyeRightRef.current.style.setProperty('--avy-eye-y', `${y * 0.95}px`);
+    }
+  };
+
+  const resetAvyEyes = () => {
+    if (avyEyeLeftRef.current) {
+      avyEyeLeftRef.current.style.removeProperty('--avy-eye-x');
+      avyEyeLeftRef.current.style.removeProperty('--avy-eye-y');
+    }
+
+    if (avyEyeRightRef.current) {
+      avyEyeRightRef.current.style.removeProperty('--avy-eye-x');
+      avyEyeRightRef.current.style.removeProperty('--avy-eye-y');
+    }
+  };
+
+  async function sendMessage(text?: string) {
+    const messageText = text || input.trim();
+    if (!messageText || !conversationId) return;
+
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      text: messageText,
+      isUser: true,
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:5000';
+      const response = await fetch(`${apiBase}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: messageText,
+          conversationId: conversationId,
+        }),
+      });
+
+      const data: unknown = await response.json();
+      const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+      const replyText = typeof payload.reply === 'string' ? payload.reply : 'Error connecting to backend';
+      const payloadSources = toSafeSourceList(payload.sources);
+      const extractedSources = payloadSources.length === 0 ? extractSourcesFromReplyText(replyText) : [];
+      console.log('[ChatBot] Sources received:', { payloadSources, extractedSources, rawSources: payload.sources });
+
+      const sources = payloadSources.length > 0
+        ? payloadSources
+        : extractedSources.length > 0
+          ? extractedSources
+          : [];
+
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        text: replyText,
+        isUser: false,
+        sources,
+      };
+      setMessages(prev => [...prev, botMsg]);
+
+      // 1) Preferred: extract hidden cart block if present in reply HTML
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(replyText, 'text/html');
+        const hiddenEls = doc.querySelectorAll('.hidden-cart-data');
+        if (hiddenEls.length > 0) {
+          const latestCartData = hiddenEls[hiddenEls.length - 1].textContent || '';
+          localStorage.setItem('dripTeaCartData', latestCartData.trim());
+          window.dispatchEvent(new Event('cartUpdated'));
+        } else {
+          // 2) Fallback: parse visible textual bullets when hidden block is missing
+          // Normalize reply: treat <br> as newline and strip other tags
+          const normalized = replyText.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+          const lines = normalized.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          const items: string[] = [];
+
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            // Match patterns like: * **Name** - S$5.2  or * **Name** - S$ 5.20
+            const m = line.match(/^\*\s*\*\*([^*]+)\*\*\s*-\s*S\$?\s*([0-9]+(?:\.[0-9]+)?)/i);
+            if (m) {
+              const name = m[1].trim();
+              const price = parseFloat(m[2]) || 0;
+              const details: string[] = [];
+              let j = i + 1;
+              while (j < lines.length && /^[-*]/.test(lines[j])) {
+                details.push(lines[j].replace(/^[-*]\s*/, '').trim());
+                j++;
+              }
+              const detailsJoined = details.join(' · ');
+              items.push(`${name} | ${detailsJoined} | S$ ${price.toFixed(2)}`);
+              i = j - 1;
+            }
+          }
+
+          if (items.length > 0) {
+            const existing = localStorage.getItem('dripTeaCartData') || '';
+            const updated = existing ? existing + '\n' + items.join('\n') : items.join('\n');
+            localStorage.setItem('dripTeaCartData', updated.trim());
+            window.dispatchEvent(new Event('cartUpdated'));
+          }
+        }
+      } catch (err) {
+        // best-effort: try DOM lookup after render
+        setTimeout(() => {
+          const hiddenBlocks = document.querySelectorAll('.hidden-cart-data');
+          if (hiddenBlocks.length > 0) {
+            const latestCartData = hiddenBlocks[hiddenBlocks.length - 1].textContent || '';
+            localStorage.setItem('dripTeaCartData', latestCartData.trim());
+            window.dispatchEvent(new Event('cartUpdated'));
+          }
+        }, 300);
+      }
+    } catch (error) {
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Error connecting to server.',
+        isUser: false,
+      };
+      setMessages(prev => [...prev, botMsg]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const handlePickedImage = (file: File | null, source: 'camera' | 'screenshot' | 'clipboard') => {
+    if (!file) {
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setPendingImages(prev => [...prev, { name: file.name, previewUrl, source }]);
+  };
+
+  const handleImageSelection = (files: FileList | null, source: 'camera' | 'screenshot') => {
+    const file = files?.[0];
+    handlePickedImage(file || null, source);
+  };
+
+  const handleInputPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = Array.from(event.clipboardData.items || []);
+    const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
+    if (!imageItem) {
+      return;
+    }
+
+    const file = imageItem.getAsFile();
+    if (!file) {
+      return;
+    }
+
+    event.preventDefault();
+    handlePickedImage(file, 'clipboard');
+  };
+
+  const removePendingImage = (index: number) => {
+    setPendingImages(prev => {
+      const item = prev[index];
+      if (item) {
+        try { URL.revokeObjectURL(item.previewUrl); } catch {}
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  function restartConversation() {
+    const newConversationId = createConversationId();
+    const greetingMsg: Message = {
+      id: Date.now().toString(),
+      text: 'Hello! I\'m Avy, your DripTea companion. How can I help you today?',
+      isUser: false,
+    };
+    setConversationId(newConversationId);
+    setMessages([greetingMsg]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([greetingMsg]));
+    localStorage.setItem(CONVERSATION_ID_KEY, newConversationId);
+  }
+
+  useEffect(() => {
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTo({
+        top: chatWindowRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [messages]);
+
+  const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    
+    // Handle drink links
+    if (target.classList.contains('chat-drink-link') && target instanceof HTMLAnchorElement) {
+      e.preventDefault();
+      e.stopPropagation();
+      const href = target.getAttribute('href');
+      if (href) {
+        router.push(href);
+      }
+      return;
+    }
+    
+    // Check if it's a button and has your specific chat classes
+    if (target.tagName === 'BUTTON' && 
+      (target.classList.contains('chat-nav-btn') || target.classList.contains('chat-nav-btn-compact'))) {
+      
+      const aiAction = target.getAttribute('onclick') || '';
+      
+      // Handle cart button
+      if (aiAction.includes('handleCart') && onOpenCart) {
+        e.preventDefault();
+        e.stopPropagation();
+        onOpenCart();
+      } 
+      // Handle checkout button
+      else if (aiAction.includes('handleCheckout') && onCheckout) {
+        e.preventDefault();
+        e.stopPropagation();
+        onCheckout();
+      }
+      // Handle goToCheckoutPage button
+      else if (aiAction.includes('goToCheckoutPage') && onCheckout) {
+        e.preventDefault();
+        e.stopPropagation();
+        const priceMatch = aiAction.match(/[\d.]+/);
+        if (priceMatch) {
+          localStorage.setItem("dripTeaCartTotal", priceMatch[0]);
+        }
+        onCheckout();
+      }
+    }
+  };
+
+  const formatMessageTime = (id: string) => {
+    const parsed = Number(id);
+    if (!Number.isFinite(parsed)) {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return new Date(parsed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const hasUserMessage = messages.some(msg => msg.isUser);
+
+  return (
+    <aside className={styles.chatbotSidebar}>
+      <div className={styles.chatHeader}>
+        <div className={styles.headerTop}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => onClose?.()}
+            aria-label="Back"
+          >
+            <svg className={styles.headerBtnIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M14.5 5.5L8 12l6.5 6.5" />
+              <path d="M9 12h8" />
+            </svg>
+          </button>
+          <div className={styles.titleWrap}>
+            <div
+              ref={avyLogoRef}
+              className={styles.avyLogoAnimated}
+              aria-hidden="true"
+              onPointerEnter={e => updateAvyEyes(e.clientX, e.clientY)}
+              onPointerMove={e => updateAvyEyes(e.clientX, e.clientY)}
+              onPointerLeave={resetAvyEyes}
+            >
+              <svg className={styles.avyLogoSvgWrap} width="273" height="273" viewBox="0 0 273 273" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                <g filter="url(#chatbotAvyFilter0)">
+                  <circle cx="136.5" cy="132.5" r="132.5" fill="url(#chatbotAvyGradient)" />
+                </g>
+                <g filter="url(#chatbotAvyFilter1)">
+                  <path
+                    ref={avyEyeLeftRef}
+                    className={styles.avyEyeLeft}
+                    d="M79.7874 71.3204C82.9663 64.229 93.0337 64.2291 96.2126 71.3204L115.606 114.582C119.178 122.552 110.448 130.427 102.887 126.055L92.5058 120.05C89.7183 118.438 86.2817 118.438 83.4942 120.05L73.1126 126.055C65.5524 130.427 56.8217 122.552 60.3942 114.582L79.7874 71.3204Z"
+                    fill="#F9FAFA"
+                  />
+                </g>
+                <g filter="url(#chatbotAvyFilter2)">
+                  <path
+                    ref={avyEyeRightRef}
+                    className={styles.avyEyeRight}
+                    d="M176.787 71.3204C179.966 64.229 190.034 64.2291 193.213 71.3204L212.606 114.582C216.178 122.552 207.448 130.427 199.887 126.055L189.506 120.05C186.718 118.438 183.282 118.438 180.494 120.05L170.113 126.055C162.552 130.427 153.822 122.552 157.394 114.582L176.787 71.3204Z"
+                    fill="#F9FAFA"
+                  />
+                </g>
+                <defs>
+                  <filter id="chatbotAvyFilter0" x="0" y="0" width="273" height="273" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                    <feOffset dy="4" />
+                    <feGaussianBlur stdDeviation="2" />
+                    <feComposite in2="hardAlpha" operator="out" />
+                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_33_1152" />
+                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_33_1152" result="shape" />
+                  </filter>
+                  <filter id="chatbotAvyFilter1" x="55.5691" y="66.002" width="64.8618" height="69.3037" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                    <feOffset dy="4" />
+                    <feGaussianBlur stdDeviation="2" />
+                    <feComposite in2="hardAlpha" operator="out" />
+                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_33_1152" />
+                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_33_1152" result="shape" />
+                  </filter>
+                  <filter id="chatbotAvyFilter2" x="152.569" y="66.002" width="64.8619" height="69.3037" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                    <feOffset dy="4" />
+                    <feGaussianBlur stdDeviation="2" />
+                    <feComposite in2="hardAlpha" operator="out" />
+                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_33_1152" />
+                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_33_1152" result="shape" />
+                  </filter>
+                  <linearGradient id="chatbotAvyGradient" x1="136.5" y1="0" x2="175" y2="235.5" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#AB1C6E" />
+                    <stop offset="0.504808" stopColor="#A55EA3" />
+                    <stop offset="0.774038" stopColor="#A17EBE" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <h3 className={styles.headerMainTitle}>Avy</h3>
+          </div>
+          <div className={styles.headerControls}>
+            <button
+              type="button"
+              className={styles.restartBtn}
+              onClick={restartConversation}
+              aria-label="Restart conversation"
+            >
+              <svg className={styles.headerBtnIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M19 8.5A8 8 0 1 0 21 14" />
+                <path d="M21 4.5V10h-5.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.headerContent}>
+          <p className={styles.subtitle}>AI Assistant DripTea Health Buddy</p>
+        </div>
+      </div>
+
+      <div className={styles.chatWindow} ref={chatWindowRef} onClick={handleChatClick}>
+        {messages.map((msg, index) => (
+          <React.Fragment key={msg.id}>
+            <div className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
+            {!msg.isUser && (
+              <div className={styles.botMeta}>
+                <Image
+                  src={avyLogo}
+                  alt="Avy"
+                  width={18}
+                  height={18}
+                  className={styles.messageAvatar}
+                />
+                  <span className={styles.assistantLabel}>Avy</span>
+                <span className={styles.metaDivider}>•</span>
+                <time className={styles.messageTime}>{formatMessageTime(msg.id)}</time>
+              </div>
+            )}
+            <div
+              className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}
+              onClick={handleChatClick}
+            >
+              <div className={styles.bubbleText}>
+                {!msg.isUser && msg.text.includes('<img') && msg.text.includes('startOrder') ? (
+                  // Drink recommendation mode: extract and render flip cards
+                  (() => {
+                    const drinkHtmlBlocks = msg.text.split(/(<img[^>]*>[\s\S]*?<\/button>)/m).filter(Boolean);
+                    const drinks: DrinkRecommendation[] = [];
+                    const otherText: string[] = [];
+
+                    drinkHtmlBlocks.forEach(block => {
+                      if (block.includes('startOrder')) {
+                        const drink = parseDrinkFromHtml(block);
+                        if (drink) drinks.push(drink);
+                      } else {
+                        otherText.push(block);
+                      }
+                    });
+
+                    return (
+                      <div>
+                        {otherText.length > 0 && (
+                          <div className={styles.drinkRecOtherText} dangerouslySetInnerHTML={{ __html: otherText.join('').trim() }} />
+                        )}
+                        <div className={styles.drinkRecCardsWrap}>
+                          {drinks.map((drink, i) => {
+                            // Look up category from drinkData using drink name
+                            const drinkInfo = Object.entries(drinkData).find(([name]) => name === drink.name);
+                            const category = drinkInfo ? drinkInfo[1].category : 'milk-tea'; // fallback category
+                            const customizeUrl = `/menu/${category}/${drink.id}`;
+                            
+                            const handleQuickAdd = (d: DrinkRecommendation) => {
+                              try {
+                                const name = d.name;
+                                const price = parseFloat(String(d.price)) || 0;
+                                const details = 'Medium · Normal Ice · [Sugar]';
+                                const newItem = `${name} | ${details} | S$ ${price.toFixed(2)}`;
+                                const existing = localStorage.getItem('dripTeaCartData') || '';
+                                const updated = existing ? existing + '\n' + newItem : newItem;
+                                localStorage.setItem('dripTeaCartData', updated);
+                                window.dispatchEvent(new Event('cartUpdated'));
+                                setAddedIds(prev => [...prev, d.id]);
+                                setTimeout(() => setAddedIds(prev => prev.filter(id => id !== d.id)), 1800);
+                              } catch (e) {
+                                console.error('quick add failed', e);
+                              }
+                            };
+
+                            return (
+                            <div key={`drink-${i}`}>
+                              <div
+                                className={flippedCard === drink.id ? `${styles.drinkFlipCard} ${styles.drinkFlipCardFlipped}` : styles.drinkFlipCard}
+                                onClick={() => setFlippedCard(flippedCard === drink.id ? null : drink.id)}
+                              >
+                                <div className={styles.drinkFlipCardInner}>
+                                  {/* Front */}
+                                  <div className={styles.drinkFlipCardFront}>
+                                    <img src={drink.image} alt={drink.name} className={styles.drinkFlipCardImg} />
+                                    <div className={styles.drinkFlipCardName}>{drink.name}</div>
+                                    <div className={styles.drinkFlipCardNutrition}>Grade: {drink.grade}</div>
+                                    <div className={styles.drinkFlipCardNutrition}>Sugar: {drink.sugar}</div>
+                                    <div className={styles.drinkFlipCardNutrition}>Cal: {drink.calories}</div>
+                                    <div className={styles.drinkFlipCardFlipHint}>Click to flip →</div>
+                                  </div>
+
+                                  {/* Back */}
+                                  <div className={styles.drinkFlipCardBack}>
+                                    {DRINK_INFO[drink.id] ? (
+                                      <>
+                                        <div className={styles.drinkFlipCardBackSection}>
+                                          <div className={styles.drinkFlipCardBackTitle}>Ingredients:</div>
+                                          <ul className={styles.drinkFlipCardBackList}>
+                                            {DRINK_INFO[drink.id].ingredients.map((ing, j) => (
+                                              <li key={j}>{ing}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                        <div className={styles.drinkFlipCardBackSection}>
+                                          <div className={styles.drinkFlipCardBackTitle}>For Diabetics:</div>
+                                          <div className={styles.drinkFlipCardBackText}>{DRINK_INFO[drink.id].diabeticAdvice}</div>
+                                        </div>
+                                        <div className={styles.drinkFlipCardBackSection}>
+                                          <div className={styles.drinkFlipCardBackTitle}>Insulin Impact:</div>
+                                          <div className={styles.drinkFlipCardBackText}>{DRINK_INFO[drink.id].insulinImpact}</div>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div className={styles.drinkFlipCardBackText}>No detailed info available. Click to flip back →</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <a
+                                  href={customizeUrl}
+                                  className={styles.drinkViewLink}
+                                  onClick={(e) => { e.preventDefault(); router.push(customizeUrl); }}
+                                >
+                                  {`View details — $${drink.price}`}
+                                </a>
+
+                                <button
+                                  type="button"
+                                  className={styles.drinkAddToCartBtn}
+                                  onClick={() => handleQuickAdd(drink)}
+                                  aria-label={`Add ${drink.name} to cart`}
+                                >
+                                  {addedIds.includes(drink.id) ? 'Added' : 'Add to Cart'}
+                                </button>
+                              </div>
+                            </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: msg.isUser
+                        ? convertDrinkNamesToLinks(msg.text)
+                        : applyGlossaryTooltips(convertDrinkNamesToLinks(msg.text))
+                        .replace(/<img[^>]*>/gi, '')
+                        .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>')
+                        .replace(/\n\s*\n/g, '<br>')
+                        .replace(/\n/g, '<br>')
+                        .trim()
+                    }}
+                  />
+                )}
+                {!msg.isUser && Array.isArray(msg.sources) && msg.sources.length > 0 && (
+                  <div className={styles.sourceSection}>
+                    <p className={styles.sourceHeading}>Web sources</p>
+                    <div className={styles.sourceList}>
+                      {msg.sources.slice(0, 3).map((source, sourceIndex) => (
+                        <a
+                          key={`${msg.id}-source-${sourceIndex}`}
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.sourceCard}
+                        >
+                          <div className={styles.sourceCardContent}>
+                            <div className={styles.sourceCardText}>
+                              <span className={styles.sourceTitle}>{source.title}</span>
+                              {source.snippet && (
+                                <span className={styles.sourceSnippet}>{source.snippet}</span>
+                              )}
+                              <span className={styles.sourceMeta}>{source.sourceName || formatSourceHost(source.url)}</span>
+                            </div>
+                            {source.favicon && (
+                              <img
+                                src={source.favicon}
+                                alt=""
+                                className={styles.sourceIcon}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            )}
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            </div>
+
+            {isInitialized && !hasUserMessage && index === 0 && !msg.isUser && (
+              <div className={styles.welcomeIntroCard}>
+                <Image
+                  src={avyIntroduction}
+                  alt="A warm welcome from Avy"
+                  className={styles.welcomeIntroImage}
+                />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+        {isLoading && (
+          <div className={`${styles.message} ${styles.botMessage}`}>
+            <div className={styles.botMeta}>
+              <Image
+                src={avyLogo}
+                alt="Avy"
+                width={18}
+                height={18}
+                className={styles.messageAvatar}
+              />
+                <span className={styles.assistantLabel}>Avy</span>
+              <span className={styles.metaDivider}>•</span>
+              <span className={styles.messageTime}>typing...</span>
+            </div>
+            <div className={`${styles.botBubble} ${styles.typingBubble}`}>
+              <span className={styles.typingIndicator}>
+                <span></span><span></span><span></span>
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className={styles.chatInputArea}>
+        {pendingImages.length > 0 && (
+          <div className={styles.pendingImagesMini} role="list" aria-label="Pasted images">
+            {pendingImages.map((img, i) => (
+              <div
+                key={`pending-mini-${i}`}
+                className={styles.pendingMiniItem}
+                role="listitem"
+                onClick={() => setPreviewIndex(i)}
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewIndex(i); }}
+              >
+                <img src={img.previewUrl} alt={img.name} className={styles.pendingMiniThumb} />
+                <button
+                  type="button"
+                  className={styles.pendingMiniClose}
+                  onClick={(e) => { e.stopPropagation(); removePendingImage(i); }}
+                  aria-label={`Remove ${img.name}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className={styles.chatInputRow}>
+          <div className={styles.attachmentsWrap}>
+            <button
+              type="button"
+              className={`${styles.attachmentBtn} ${styles.mobileOnly}`}
+              onClick={() => mobileCameraInputRef.current?.click()}
+              aria-label="Take a photo on mobile"
+              title="Take a photo"
+            >
+              <span className={styles.attachmentIcon}>📷</span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.attachmentBtn} ${styles.desktopOnly}`}
+              onClick={() => desktopScreenshotInputRef.current?.click()}
+              aria-label="Upload a screenshot on desktop"
+              title="Upload screenshot"
+            >
+              <span className={styles.attachmentIcon}>🖼️</span>
+            </button>
+          </div>
+
+          <input
+            ref={mobileCameraInputRef}
+            type="file"
+            accept="image/*"
+            className={styles.hiddenFileInput}
+            aria-label="Take a photo"
+            title="Take a photo"
+            onChange={e => handleImageSelection(e.target.files, 'camera')}
+          />
+          <input
+            ref={desktopScreenshotInputRef}
+            type="file"
+            accept="image/*"
+            className={styles.hiddenFileInput}
+            aria-label="Upload a screenshot"
+            title="Upload a screenshot"
+            onChange={e => handleImageSelection(e.target.files, 'screenshot')}
+          />
+
+          <input
+            type="text"
+            className={styles.userInput}
+            placeholder="Type your message..."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onPaste={handleInputPaste}
+            onKeyPress={e => { if (e.key === 'Enter' && !isLoading) sendMessage(); }}
+            disabled={isLoading}
+          />
+          <button
+            type="button"
+            className={styles.sendBtn}
+            onClick={() => sendMessage()}
+            disabled={isLoading || !input.trim()}
+          >
+            ➤
+          </button>
+        </div>
+      </div>
+      {previewIndex !== null && pendingImages[previewIndex] && (
+        <div
+          className={styles.imagePreviewOverlay}
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewIndex(null)}
+        >
+          <div className={styles.imagePreviewContent} onClick={(e) => e.stopPropagation()}>
+            {pendingImages.length > 1 && (
+              <button
+                type="button"
+                className={styles.imagePreviewNavButton + ' ' + styles.imagePreviewPrev}
+                onClick={() => setPreviewIndex(i => (i && i > 0 ? i - 1 : i))}
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+            )}
+
+            <img
+              src={pendingImages[previewIndex].previewUrl}
+              alt={pendingImages[previewIndex].name}
+              className={styles.imagePreviewImg}
+            />
+
+            {pendingImages.length > 1 && (
+              <button
+                type="button"
+                className={styles.imagePreviewNavButton + ' ' + styles.imagePreviewNext}
+                onClick={() => setPreviewIndex(i => (typeof i === 'number' && i < pendingImages.length - 1 ? i + 1 : i))}
+                aria-label="Next image"
+              >
+                ›
+              </button>
+            )}
+
+            <button
+              type="button"
+              className={styles.imagePreviewClose}
+              onClick={() => setPreviewIndex(null)}
+              aria-label="Close preview"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+    </aside>
+  );
+}

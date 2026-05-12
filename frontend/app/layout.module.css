@@ -22,6 +22,7 @@
 .mainPaneWithChat {
   box-sizing: border-box;
   width: calc(100% - var(--chat-width, 360px) - var(--chat-gap, 12px));
+  --chat-reserve: calc(var(--chat-width, 360px) + var(--chat-gap, 12px));
 }
 
 .chatPane {
