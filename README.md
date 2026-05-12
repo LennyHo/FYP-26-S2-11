@@ -11,7 +11,7 @@ FYP-26-S2-11 for AI Chatbot for Customer.
 
 ## To Run BackEnd (Node.js):
 1. if you have not install the modules, run `npm install` to update.
-2. run `npm start` (TAKE NOTE FRONTEND RUNS ON PORT 5000)
+2. run `npm run dev` (TAKE NOTE FRONTEND RUNS ON PORT 5000)
 
 Tech Stack
 Frontend: React, Next.js
