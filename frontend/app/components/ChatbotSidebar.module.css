@@ -1070,6 +1070,38 @@
   cursor: not-allowed;
 }
 
+.sendBtn.listening {
+  animation: pulse 1.5s infinite;
+  box-shadow: 0 0 0 4px rgba(160, 116, 77, 0.2);
+  background: #d9824f;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(160, 116, 77, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(160, 116, 77, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(160, 116, 77, 0);
+  }
+}
+
+.micStatus {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(160, 116, 77, 0.1);
+  color: #a0744d;
+  pointer-events: none;
+}
+
 .bubbleText > * {
   margin: 0 0 4px 0 !important;
   padding: 0 !important;

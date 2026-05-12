@@ -325,6 +325,9 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const [pendingImages, setPendingImages] = useState<Array<{ name: string; previewUrl: string; source: 'camera' | 'screenshot' | 'clipboard' }>>([]);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [flippedCard, setFlippedCard] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const recognitionRef = useRef<any>(null);
   const [pendingDrinkForCustomization, setPendingDrinkForCustomization] = useState<{
     name: string;
     id: string;
@@ -399,7 +402,107 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     if (isInitialized) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
+    
+    // Log system info for debugging
+    const SpeechRecognition = 
+      (window as any).SpeechRecognition || 
+      (window as any).webkitSpeechRecognition || 
+      (window as any).mozSpeechRecognition ||
+      (window as any).msSpeechRecognition;
+    
+    console.log('🎤 Speech Recognition Available:', !!SpeechRecognition);
+    if (!SpeechRecognition) {
+      console.warn('⚠️ This browser does not support Speech Recognition. Use Chrome, Edge, or Safari.');
+    }
   }, [messages, isInitialized]);
+
+  // Initialize Web Speech API
+  useEffect(() => {
+    const SpeechRecognition = 
+      (window as any).SpeechRecognition || 
+      (window as any).webkitSpeechRecognition || 
+      (window as any).mozSpeechRecognition ||
+      (window as any).msSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      console.warn('Speech Recognition API not supported');
+      alert('Speech Recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+
+    if (recognitionRef.current) return;
+
+    try {
+      const recognition = new SpeechRecognition();
+      
+      // Set recognition properties
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        console.log('✓ Speech recognition started');
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        console.log('✓ Speech recognition ended');
+      };
+
+      recognition.onresult = (event: any) => {
+        let interim = '';
+        let final = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript.trim();
+          
+          if (event.results[i].isFinal) {
+            final += transcript + ' ';
+            console.log('Final:', transcript);
+          } else {
+            interim += transcript;
+            console.log('Interim:', transcript);
+          }
+        }
+
+        if (interim) {
+          setInterimTranscript(interim);
+        }
+
+        if (final) {
+          setInput((prev) => {
+            const newInput = prev ? prev + ' ' + final.trim() : final.trim();
+            console.log('Updated input:', newInput);
+            return newInput;
+          });
+          setInterimTranscript('');
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('✗ Speech recognition error:', event.error);
+        setIsListening(false);
+        
+        // Show user-friendly error messages
+        const errorMessages: Record<string, string> = {
+          'no-speech': 'No speech detected. Please speak louder and try again.',
+          'audio-capture': 'No microphone found. Please check your device.',
+          'network': 'Network error. Please check your connection.',
+          'permission-denied': 'Microphone permission denied. Please allow access.',
+        };
+        
+        const message = errorMessages[event.error] || `Error: ${event.error}`;
+        console.log('Error message:', message);
+      };
+
+      recognitionRef.current = recognition;
+      console.log('✓ Speech Recognition initialized successfully');
+    } catch (error) {
+      console.error('✗ Error initializing Speech Recognition:', error);
+    }
+  }, []);
 
   const updateAvyEyes = (clientX: number, clientY: number) => {
     const bounds = avyLogoRef.current?.getBoundingClientRect();
@@ -434,6 +537,36 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     if (avyEyeRightRef.current) {
       avyEyeRightRef.current.style.removeProperty('--avy-eye-x');
       avyEyeRightRef.current.style.removeProperty('--avy-eye-y');
+    }
+  };
+
+  const handleMicrophoneClick = () => {
+    if (!recognitionRef.current) {
+      console.error('✗ Speech recognition not initialized');
+      alert('Speech recognition is not available. This feature requires Chrome, Edge, or Safari.');
+      return;
+    }
+
+    try {
+      if (isListening) {
+        recognitionRef.current.stop();
+        setIsListening(false);
+        console.log('Stopped listening');
+      } else {
+        recognitionRef.current.start();
+        console.log('Started listening - please speak now...');
+
+        // Auto-stop after 15 seconds
+        setTimeout(() => {
+          if (recognitionRef.current && isListening) {
+            recognitionRef.current.stop();
+            console.log('Auto-stopped after 15 seconds');
+          }
+        }, 15000);
+      }
+    } catch (error) {
+      console.error('✗ Error with microphone:', error);
+      setIsListening(false);
     }
   };
 
@@ -1246,7 +1379,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
           <input
             type="text"
             className={styles.userInput}
-            placeholder="Type your message..."
+            placeholder={isListening && interimTranscript ? `${interimTranscript}...` : 'Type your message here...'}
             value={input}
             onChange={e => setInput(e.target.value)}
             onPaste={handleInputPaste}
@@ -1255,11 +1388,38 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
           />
           <button
             type="button"
-            className={styles.sendBtn}
-            onClick={() => sendMessage()}
-            disabled={isLoading || !input.trim()}
+            className={`${styles.sendBtn} ${isListening ? styles.listening : ''}`}
+            onClick={() => (input.trim() ? sendMessage() : handleMicrophoneClick())}
+            disabled={isLoading}
+            title={isListening ? 'Listening... Click to stop' : 'Click to start voice input'}
+            aria-label={input.trim() ? 'Send message' : 'Start voice input'}
           >
-            ➤
+            {input.trim() ? (
+              // Send arrow icon
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            ) : (
+              // Microphone icon
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                <path d="M17 16.91c-1.48 1.46-3.51 2.36-5.7 2.36-2.2 0-4.23-.9-5.7-2.36M9 18.9v2.04c0 .42.35.77.77.77h4.46c.42 0 .77-.34.77-.77v-2.04" />
+              </svg>
+            )}
           </button>
         </div>
       </div>

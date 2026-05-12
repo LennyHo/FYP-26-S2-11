@@ -188,7 +188,10 @@
 /* When using the full logo SVG we remove the pill background */
 .brandImage {
   background: transparent !important;
+  background-color: transparent !important;
   padding: 0 !important;
+  border: none !important;
+  gap: 0 !important;
 }
 
 .logoSvg svg {
