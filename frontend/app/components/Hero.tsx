@@ -52,7 +52,7 @@ export default function Hero() {
           className={styles.logoContainer}
           dangerouslySetInnerHTML={{ __html: mainLogoSvg }}
         />
-        <h1 className={styles.heroTitle}>DripTea</h1>
+        <h1 className={styles.heroTitle}>DRIPTEA</h1>
         <p className={styles.heroSubtitle}>Freshly brewed. Brightly layered.</p>
       </div>
     </section>

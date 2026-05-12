@@ -34,7 +34,7 @@ export default function RegisterPage() {
 
         <div className={styles.container}>
           <div className={styles.heading}>
-            <span className={styles.kicker}>Welcome to DripTea</span>
+            <span className={styles.kicker}>Welcome to DRIPTEA</span>
             <h1 className={styles.title}>Create your free account</h1>
             <p className={styles.subtitle}>This is a UI-only registration page for now. Form submission can be connected to backend later.</p>
           </div>
@@ -56,7 +56,7 @@ export default function RegisterPage() {
               <label htmlFor="confirmPassword" className={styles.label}>Confirm password</label>
               <input type="password" id="confirmPassword" name="confirmPassword" required className={styles.input} placeholder="Confirm password" />
             </div>
-            <button type="submit" className={styles.button}>get started with DripTea</button>
+            <button type="submit" className={styles.button}>get started with DRIPTEA</button>
           </form>
 
           <div className={styles.register}>

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DripTea",
+  title: "DRIPTEA",
   description: "A premium bubble tea ordering experience",
 };
 
