@@ -214,6 +214,13 @@ const DRINK_INFO: Record<string, { ingredients: string[]; diabeticAdvice: string
   }
 };
 
+const QUICK_PROMPTS = [
+  'What should I try today?',
+  'Show me low sugar options',
+  'Which drink has the least calories?',
+  'Recommend a healthier drink',
+];
+
 function createConversationId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -326,8 +333,16 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [flippedCard, setFlippedCard] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [interimTranscript, setInterimTranscript] = useState('');
+  const [isSpeakMode, setIsSpeakMode] = useState(false);
+  const [hideQuickPrompts, setHideQuickPrompts] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const speakModeRef = useRef(false);
+  const voiceConversationRef = useRef(false);
+  const isListeningRef = useRef(false);
+  const isRecognitionStartingRef = useRef(false);
+  const narrationVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const inputRef = useRef('');
+  const lastSentRef = useRef('');
   const [pendingDrinkForCustomization, setPendingDrinkForCustomization] = useState<{
     name: string;
     id: string;
@@ -337,6 +352,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     sugar?: string;
   } | null>(null);
   const router = useRouter();
+  const hasTypedInput = input.trim().length > 0;
 
   useEffect(() => {
     if (previewIndex === null) return;
@@ -416,6 +432,25 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     }
   }, [messages, isInitialized]);
 
+  // Sync isSpeakMode with ref so handlers can access it
+  useEffect(() => {
+    speakModeRef.current = isSpeakMode;
+  }, [isSpeakMode]);
+
+  // Sync input with ref
+  useEffect(() => {
+    inputRef.current = input;
+  }, [input]);
+
+  // Auto-send in speak mode when input has changed
+  useEffect(() => {
+    if (isSpeakMode && input.trim() && input !== lastSentRef.current && !isLoading) {
+      console.log('Auto-sending in speak mode:', input);
+      lastSentRef.current = input;
+      sendMessage(input, true);
+    }
+  }, [input, isSpeakMode, isLoading]);
+
   // Initialize Web Speech API
   useEffect(() => {
     const SpeechRecognition = 
@@ -442,12 +477,16 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
+        isRecognitionStartingRef.current = false;
         setIsListening(true);
+        isListeningRef.current = true;
         console.log('✓ Speech recognition started');
       };
 
       recognition.onend = () => {
+        isRecognitionStartingRef.current = false;
         setIsListening(false);
+        isListeningRef.current = false;
         console.log('✓ Speech recognition ended');
       };
 
@@ -467,23 +506,20 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
           }
         }
 
-        if (interim) {
-          setInterimTranscript(interim);
-        }
-
         if (final) {
           setInput((prev) => {
             const newInput = prev ? prev + ' ' + final.trim() : final.trim();
             console.log('Updated input:', newInput);
             return newInput;
           });
-          setInterimTranscript('');
         }
       };
 
       recognition.onerror = (event: any) => {
         console.error('✗ Speech recognition error:', event.error);
+        isRecognitionStartingRef.current = false;
         setIsListening(false);
+        isListeningRef.current = false;
         
         // Show user-friendly error messages
         const errorMessages: Record<string, string> = {
@@ -551,18 +587,15 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       if (isListening) {
         recognitionRef.current.stop();
         setIsListening(false);
+        isListeningRef.current = false;
+        isRecognitionStartingRef.current = false;
+        speakModeRef.current = false;
+        voiceConversationRef.current = false;
+        setIsSpeakMode(false);
+        setHideQuickPrompts(false);
         console.log('Stopped listening');
       } else {
-        recognitionRef.current.start();
-        console.log('Started listening - please speak now...');
-
-        // Auto-stop after 15 seconds
-        setTimeout(() => {
-          if (recognitionRef.current && isListening) {
-            recognitionRef.current.stop();
-            console.log('Auto-stopped after 15 seconds');
-          }
-        }, 15000);
+        requestRecognitionStart();
       }
     } catch (error) {
       console.error('✗ Error with microphone:', error);
@@ -570,9 +603,145 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     }
   };
 
-  async function sendMessage(text?: string) {
+  const requestRecognitionStart = () => {
+    if (!recognitionRef.current || isListeningRef.current || isRecognitionStartingRef.current) {
+      return;
+    }
+
+    isRecognitionStartingRef.current = true;
+
+    try {
+      recognitionRef.current.start();
+      console.log('Started listening - please speak now...');
+
+      // Auto-stop after 15 seconds
+      setTimeout(() => {
+        if (recognitionRef.current && isListeningRef.current) {
+          recognitionRef.current.stop();
+          console.log('Auto-stopped after 15 seconds');
+        }
+      }, 15000);
+    } catch (error) {
+      isRecognitionStartingRef.current = false;
+      console.error('✗ Error starting speech recognition:', error);
+    }
+  };
+
+  const resumeSpeakModeListening = () => {
+    if (!voiceConversationRef.current || !recognitionRef.current) {
+      return;
+    }
+
+    setIsSpeakMode(true);
+    speakModeRef.current = true;
+
+    if (isListeningRef.current) return;
+
+    setTimeout(() => {
+      if (!voiceConversationRef.current || !recognitionRef.current || isListeningRef.current || isRecognitionStartingRef.current) {
+        return;
+      }
+
+      requestRecognitionStart();
+    }, 120);
+  };
+
+  const stopNarrationAndListen = () => {
+    const synth = window.speechSynthesis;
+    if (synth.speaking || synth.pending) {
+      synth.cancel();
+    }
+
+    if (isListeningRef.current || isRecognitionStartingRef.current || !recognitionRef.current) {
+      return;
+    }
+
+    setTimeout(() => {
+      if (!voiceConversationRef.current || !recognitionRef.current || isListeningRef.current || isRecognitionStartingRef.current) {
+        return;
+      }
+
+      requestRecognitionStart();
+    }, 120);
+  };
+
+  const pickNarrationVoice = () => {
+    if (narrationVoiceRef.current) {
+      return narrationVoiceRef.current;
+    }
+
+    const synth = window.speechSynthesis;
+    const voices = synth.getVoices();
+    if (!voices.length) {
+      return null;
+    }
+
+    const preferredVoiceMatchers = [
+      /microsoft .*online/i,
+      /google .*male|google .*female/i,
+      /natural/i,
+      /premium/i,
+      /neural/i,
+      /samantha/i,
+      /karen/i,
+    ];
+
+    const preferredLangVoices = voices.filter(voice => voice.lang?.toLowerCase().startsWith('en'));
+    const candidateVoices = preferredLangVoices.length > 0 ? preferredLangVoices : voices;
+
+    const matchedVoice = candidateVoices.find(voice =>
+      preferredVoiceMatchers.some(pattern => pattern.test(voice.name))
+    );
+
+    narrationVoiceRef.current = matchedVoice || candidateVoices[0] || voices[0] || null;
+    return narrationVoiceRef.current;
+  };
+
+  const speakText = (text: string, onDone?: () => void) => {
+    const synth = window.speechSynthesis;
+    synth.cancel(); // Cancel any ongoing speech
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    const preferredVoice = pickNarrationVoice();
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+      utterance.lang = preferredVoice.lang;
+    }
+    utterance.rate = 0.96;
+    utterance.pitch = 0.92;
+    utterance.volume = 1;
+    utterance.onend = () => {
+      onDone?.();
+    };
+    utterance.onerror = () => {
+      onDone?.();
+    };
+
+    synth.speak(utterance);
+  };
+
+  const handleSpeakClick = async () => {
+    speakModeRef.current = true;
+    voiceConversationRef.current = true;
+    setIsSpeakMode(true);
+    setHideQuickPrompts(true);
+
+    stopNarrationAndListen();
+  };
+
+  async function sendMessage(text?: string, shouldSpeak: boolean = isSpeakMode) {
     const messageText = text || input.trim();
     if (!messageText || !conversationId) return;
+
+    if (shouldSpeak && recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      isListeningRef.current = false;
+      setIsSpeakMode(false);
+      speakModeRef.current = false;
+        setHideQuickPrompts(true);
+      console.log('Stopped listening while Avy is typing');
+    }
 
     // Local cart query handling: respond immediately from localStorage without calling backend
     const normalizedQuery = messageText.toLowerCase().trim();
@@ -873,6 +1042,19 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       };
       setMessages(prev => [...prev, botMsg]);
 
+      // Read response aloud if in speak mode
+      if (shouldSpeak) {
+        // Strip HTML tags for text-to-speech
+        const plainText = replyText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+        const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i)
+          ? plainText
+          : `Sure — ${plainText}`;
+
+        speakText(humaneIntro, () => {
+          resumeSpeakModeListening();
+        });
+      }
+
       // 1) Preferred: extract hidden cart block if present in reply HTML
       try {
         const parser = new DOMParser();
@@ -1054,6 +1236,11 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   };
 
   const hasUserMessage = messages.some(msg => msg.isUser);
+
+  const handleQuickPromptClick = (prompt: string) => {
+    if (isLoading) return;
+    sendMessage(prompt, false);
+  };
 
   return (
     <aside className={styles.chatbotSidebar}>
@@ -1290,10 +1477,10 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
             </div>
               
               {!msg.isUser && (msg as any).showViewCart && (
-                <div style={{ marginTop: '8px', display: 'flex', gap: '8px', paddingLeft: '26px' }}>
+                <div className={styles.messageActionRow}>
                   <button
                     type="button"
-                    style={{ backgroundColor: '#2b7da3', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.9rem' }}
+                    className={styles.messageActionBtn}
                     onClick={() => { if (onOpenCart) onOpenCart(); else router.push('/cart'); }}
                   >
                     View cart
@@ -1301,7 +1488,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
                   {(msg as any).showCustomizeLink && (
                     <button
                       type="button"
-                      style={{ backgroundColor: '#7cb342', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.9rem' }}
+                      className={`${styles.messageActionBtn} ${styles.messageActionBtnSecondary}`}
                       onClick={() => router.push(`/menu/${(msg as any).customizeCategory}/${(msg as any).customizeDrinkId}`)}
                     >
                       Customize in detail
@@ -1312,7 +1499,9 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
             </div>
 
             {isInitialized && !hasUserMessage && index === 0 && !msg.isUser && (
-              <div className={styles.welcomeIntroCard}>
+              <div
+                className={`${styles.welcomeIntroCard} ${hasTypedInput ? styles.welcomeIntroHidden : ''}`}
+              >
                 <Image
                   src={avyIntroduction}
                   alt="A warm welcome from Avy"
@@ -1371,31 +1560,43 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
           </div>
         )}
 
-        <div className={styles.chatInputRow}>
-          {/* upload icons removed per request */}
+        <div
+          className={`${styles.quickPromptsRow} ${hasTypedInput || hideQuickPrompts ? styles.quickPromptsHidden : ''}`}
+          aria-label="Suggested prompts"
+        >
+          {QUICK_PROMPTS.map(prompt => (
+            <button
+              key={prompt}
+              type="button"
+              className={styles.quickPromptBtn}
+              onClick={() => handleQuickPromptClick(prompt)}
+              disabled={isLoading || hasTypedInput || hideQuickPrompts}
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
 
-          {/* file inputs removed to disable click-to-upload UI */}
-
-          <input
-            type="text"
-            className={styles.userInput}
-            placeholder={isListening && interimTranscript ? `${interimTranscript}...` : 'Type your message here...'}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onPaste={handleInputPaste}
-            onKeyPress={e => { if (e.key === 'Enter' && !isLoading) sendMessage(); }}
-            disabled={isLoading}
-          />
-          <button
-            type="button"
-            className={`${styles.sendBtn} ${isListening ? styles.listening : ''}`}
-            onClick={() => (input.trim() ? sendMessage() : handleMicrophoneClick())}
-            disabled={isLoading}
-            title={isListening ? 'Listening... Click to stop' : 'Click to start voice input'}
-            aria-label={input.trim() ? 'Send message' : 'Start voice input'}
-          >
-            {input.trim() ? (
-              // Send arrow icon
+        <div className={styles.composerContainer}>
+          <div className={styles.chatInputRow}>
+            <input
+              type="text"
+              className={styles.userInput}
+              placeholder="Type your message here..."
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onPaste={handleInputPaste}
+              onKeyPress={e => { if (e.key === 'Enter' && !isLoading) sendMessage(); }}
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              className={styles.sendBtn}
+              onClick={() => sendMessage()}
+              disabled={isLoading || !input.trim()}
+              title="Send message"
+              aria-label="Send message"
+            >
               <svg
                 width="20"
                 height="20"
@@ -1406,23 +1607,57 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M5 12h14M12 5l7 7-7 7" />
+                <path d="M12 19V5" />
+                <path d="M5 12l7-7 7 7" />
               </svg>
-            ) : (
-              // Microphone icon
+            </button>
+          </div>
+
+          <div className={styles.chatActionRow}>
+            <button
+              type="button"
+              className={`${styles.micBtn} ${isListening ? styles.listening : ''}`}
+              onClick={handleMicrophoneClick}
+              disabled={isLoading}
+              title={isListening ? 'Listening... Click to stop' : 'Click to start voice input'}
+              aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+            >
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
-                fill="currentColor"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-                <path d="M17 16.91c-1.48 1.46-3.51 2.36-5.7 2.36-2.2 0-4.23-.9-5.7-2.36M9 18.9v2.04c0 .42.35.77.77.77h4.46c.42 0 .77-.34.77-.77v-2.04" />
+                <path d="M17 11a5 5 0 0 1-10 0" />
+                <path d="M12 16v4" />
               </svg>
-            )}
-          </button>
+            </button>
+            <button
+              type="button"
+              className={`${styles.speakBtn} ${isListening ? styles.speakBtnListening : ''}`}
+              onClick={handleSpeakClick}
+              disabled={isLoading}
+              title="Speak to Avy"
+              aria-label="Speak to Avy"
+            >
+              <span className={styles.speakWave} aria-hidden="true">
+                <span className={styles.speakWaveBar}></span>
+                <span className={styles.speakWaveBar}></span>
+                <span className={styles.speakWaveBar}></span>
+                <span className={styles.speakWaveBar}></span>
+                <span className={styles.speakWaveBar}></span>
+              </span>
+              <span className={styles.speakBtnText}>Speak</span>
+            </button>
+          </div>
         </div>
       </div>
+
       {previewIndex !== null && pendingImages[previewIndex] && (
         <div
           className={styles.imagePreviewOverlay}
@@ -1472,4 +1707,21 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       )}
     </aside>
   );
+
+        <div
+          className={`${styles.quickPromptsRow} ${hasTypedInput || hideQuickPrompts ? styles.quickPromptsHidden : ''}`}
+          aria-label="Suggested prompts"
+        >
+          {QUICK_PROMPTS.map(prompt => (
+            <button
+              key={prompt}
+              type="button"
+              className={styles.quickPromptBtn}
+              onClick={() => handleQuickPromptClick(prompt)}
+              disabled={isLoading || hasTypedInput || hideQuickPrompts}
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
 }
