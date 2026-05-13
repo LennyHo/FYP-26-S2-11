@@ -1,0 +1,155 @@
+.header {
+  background: linear-gradient(135deg, #3d2817 0%, #2a1f14 100%);
+  border-bottom: 2px solid #8d633f;
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.logoSvg {
+  width: 50px;
+  height: auto;
+  display: flex;
+  align-items: center;
+}
+
+.logoSvg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.brandText {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f5d491;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+}
+
+.navLink {
+  color: #e8d5c4;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  position: relative;
+  padding-bottom: 4px;
+  border-bottom: 2px solid transparent;
+}
+
+.navLink:hover {
+  color: #f5d491;
+  border-bottom-color: #8d633f;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.logoutBtn {
+  padding: 8px 16px;
+  border: 1px solid #8d633f;
+  background: transparent;
+  color: #f5d491;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logoutBtn:hover {
+  background: rgba(141, 99, 63, 0.2);
+  border-color: #f5d491;
+}
+
+@media (max-width: 720px) {
+  .container {
+    gap: 16px;
+    padding: 0 14px;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .logoSvg {
+    width: 40px;
+  }
+
+  .brandText {
+    font-size: 0.9rem;
+  }
+
+  .nav {
+    gap: 12px;
+    flex: none;
+  }
+
+  .navLink {
+    font-size: 0.85rem;
+    padding: 0;
+  }
+
+  .logoutBtn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .brand {
+    gap: 6px;
+  }
+
+  .logoSvg {
+    width: 35px;
+  }
+
+  .brandText {
+    display: none;
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .logoutBtn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+}

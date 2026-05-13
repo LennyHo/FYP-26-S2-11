@@ -6,6 +6,18 @@
   place-items: center;
   overflow: hidden;
   background: linear-gradient(135deg, #f7efe4 0%, #ead7c2 100%);
+  animation: pageEnter 0.5s ease-out;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .shell {

@@ -118,7 +118,7 @@ export default function Header() {
             Log out
           </button>
         ) : (
-          <a href="/login" className={styles.loginLink}>Log in</a>
+          <Link href="/login" className={styles.loginLink}>Log in</Link>
         )}
         
         {/* Upgraded Cart to be a clickable button with dynamic data */}

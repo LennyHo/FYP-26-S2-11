@@ -1,4 +1,4 @@
-import Header from '../components/Header';
+import StaffHeader from '../components/StaffHeader';
 import styles from './page.module.css';
 
 const menuStories = [
@@ -13,7 +13,7 @@ const sessionStories = ['Log in to start a staff session.', 'Log out to end the 
 export default function StoreStaffPage() {
   return (
     <div className={styles.page}>
-      <Header />
+      <StaffHeader />
 
       <main className={styles.main}>
         <section className={styles.hero}>

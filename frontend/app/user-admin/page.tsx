@@ -1,4 +1,4 @@
-import Header from '../components/Header';
+import AdminHeader from '../components/AdminHeader';
 import styles from './page.module.css';
 
 const profileStories = [
@@ -21,7 +21,7 @@ const accountStories = [
 export default function UserAdminPage() {
   return (
     <div className={styles.page}>
-      <Header />
+      <AdminHeader />
 
       <main className={styles.main}>
         <section className={styles.hero}>
