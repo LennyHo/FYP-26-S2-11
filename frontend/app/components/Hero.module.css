@@ -23,7 +23,7 @@
 
 .logoContainer {
   width: 100%;
-  max-width: 400px;
+  max-width: 340px;
   height: auto;
   animation: fadeInScale 0.8s ease-out;
   transition: filter 0.3s ease-out;
@@ -121,7 +121,7 @@
   }
 
   .logoContainer {
-    max-width: 350px;
+    max-width: 300px;
   }
 
   .heroTitle {
@@ -145,7 +145,7 @@
   }
 
   .logoContainer {
-    max-width: 280px;
+    max-width: 240px;
   }
 
   .heroTitle {
@@ -169,7 +169,7 @@
   }
 
   .logoContainer {
-    max-width: 240px;
+    max-width: 210px;
   }
 
   .heroTitle {
