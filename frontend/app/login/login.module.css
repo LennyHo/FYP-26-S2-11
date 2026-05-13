@@ -172,6 +172,50 @@
   font-weight: 800;
 }
 
+.testButtons {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(220, 199, 180, 0.5);
+}
+
+.testLabel {
+  font-size: 0.75rem;
+  color: #9d948d;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.testButtonsGroup {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.testButton {
+  padding: 8px 10px;
+  border: 1px solid rgba(160, 116, 77, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 248, 242, 0.6);
+  color: #8d633f;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.testButton:hover {
+  background: rgba(160, 116, 77, 0.08);
+  border-color: rgba(160, 116, 77, 0.7);
+  transform: translateY(-1px);
+}
+
+.testButton:active {
+  transform: translateY(0);
+  background: rgba(160, 116, 77, 0.12);
+}
+
 .visualPanel {
   padding: 10px 10px 10px 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(248, 220, 198, 0.24));
@@ -297,6 +341,25 @@
     gap: 4px;
   }
 
+  .testButtons {
+    margin-top: 6px;
+    padding-top: 10px;
+  }
+
+  .testLabel {
+    font-size: 0.72rem;
+    margin-bottom: 6px;
+  }
+
+  .testButtonsGroup {
+    gap: 6px;
+  }
+
+  .testButton {
+    padding: 7px 8px;
+    font-size: 0.75rem;
+  }
+
   .visualPanel {
     padding: 0 10px 10px;
   }
@@ -367,6 +430,26 @@
 
   .footerRow {
     font-size: 0.75rem;
+  }
+
+  .testButtons {
+    margin-top: 5px;
+    padding-top: 8px;
+  }
+
+  .testLabel {
+    font-size: 0.7rem;
+    margin-bottom: 5px;
+  }
+
+  .testButtonsGroup {
+    gap: 5px;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .testButton {
+    padding: 6px 6px;
+    font-size: 0.7rem;
   }
 
   .visualFrame {

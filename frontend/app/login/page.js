@@ -1,5 +1,8 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRef } from 'react';
 import styles from './login.module.css';
 import BackgroundShapes from './BackgroundShapes';
 
@@ -27,6 +30,23 @@ const mainLogoSvg = `
 `;
 
 export default function LoginPage() {
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+
+  const testCredentials = {
+    admin: { email: 'admin@driptea.com', password: 'Admin@123' },
+    staff: { email: 'staff@driptea.com', password: 'Staff@123' },
+    customer: { email: 'customer@driptea.com', password: 'Customer@123' },
+  };
+
+  const fillTestCredentials = (role) => {
+    const creds = testCredentials[role];
+    if (emailRef.current && passwordRef.current) {
+      emailRef.current.value = creds.email;
+      passwordRef.current.value = creds.password;
+    }
+  };
+
   return (
     <div className={styles.page}>
       <BackgroundShapes />
@@ -50,6 +70,7 @@ export default function LoginPage() {
               <div className={styles.field}>
                 <label htmlFor="email" className={styles.label}>Email</label>
                 <input
+                  ref={emailRef}
                   type="email"
                   id="email"
                   name="email"
@@ -62,6 +83,7 @@ export default function LoginPage() {
               <div className={styles.field}>
                 <label htmlFor="password" className={styles.label}>Password</label>
                 <input
+                  ref={passwordRef}
                   type="password"
                   id="password"
                   name="password"
@@ -77,6 +99,33 @@ export default function LoginPage() {
 
               <button type="submit" className={styles.button}>Sign in</button>
             </form>
+
+            <div className={styles.testButtons}>
+              <p className={styles.testLabel}>Test Credentials:</p>
+              <div className={styles.testButtonsGroup}>
+                <button
+                  type="button"
+                  className={styles.testButton}
+                  onClick={() => fillTestCredentials('admin')}
+                >
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  className={styles.testButton}
+                  onClick={() => fillTestCredentials('staff')}
+                >
+                  Store Staff
+                </button>
+                <button
+                  type="button"
+                  className={styles.testButton}
+                  onClick={() => fillTestCredentials('customer')}
+                >
+                  Customer
+                </button>
+              </div>
+            </div>
 
             <div className={styles.footerRow}>
               <span>Don&apos;t have an account?</span>
