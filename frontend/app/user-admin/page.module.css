@@ -13,8 +13,7 @@
 
 .hero,
 .storyCard,
-.panelCard,
-.footerNote {
+.panelCard {
   border: 1px solid rgba(220, 199, 180, 0.88);
   border-radius: 28px;
   background: rgba(255, 250, 245, 0.92);
@@ -123,8 +122,7 @@
 }
 
 .storyCard p,
-.panelCard li,
-.footerNote {
+.panelCard li {
   color: var(--muted);
 }
 
@@ -148,10 +146,7 @@
   padding-left: 18px;
 }
 
-.footerNote {
-  padding: 18px 22px;
-  font-weight: 600;
-}
+/* footerNote removed for private admin pages */
 
 @media (max-width: 960px) {
   .hero,

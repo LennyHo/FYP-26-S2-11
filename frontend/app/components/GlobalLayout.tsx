@@ -16,6 +16,14 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/login') ||
     pathname.startsWith('/register');
 
+  const hideFooter =
+    pathname.startsWith('/user-admin') ||
+    pathname.startsWith('/store-staff') ||
+    pathname.startsWith('/user-admin-dashboard') ||
+    pathname.startsWith('/store-staff-dashboard') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register');
+
   return (
     <div className={styles.globalShell}>
       
@@ -23,8 +31,8 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
       <div 
         className={`${styles.mainPane} no-scrollbar ${isChatOpen ? styles.mainPaneWithChat : ''}`}
       >
-        {children} 
-        <Footer />
+        {children}
+        {!hideFooter && <Footer />}
       </div>
 
       {/* RIGHT SIDE: CHATBOT */}

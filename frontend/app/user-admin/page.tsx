@@ -89,9 +89,7 @@ export default function UserAdminPage() {
           </div>
         </section>
 
-        <section className={styles.footerNote}>
-          This page is intentionally static and can be connected to CRUD actions later.
-        </section>
+        {/* footer note removed for private admin pages */}
       </main>
     </div>
   );
