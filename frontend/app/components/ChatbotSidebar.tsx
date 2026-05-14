@@ -1245,6 +1245,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
           </div>
         )}
 
+        {/*
         <QuickPrompts
           prompts={QUICK_PROMPTS}
           onPromptClick={handleQuickPromptClick}
@@ -1252,6 +1253,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
           hasTypedInput={hasTypedInput}
           hideQuickPrompts={hideQuickPrompts}
         />
+        */}
 
         <div className={styles.composerContainer}>
           <div className={styles.chatInputRow}>
@@ -1289,12 +1291,14 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
             </button>
           </div>
 
+          {/*
           <SpeechControls
             isListening={isListening}
             isLoading={isLoading}
             onMicClick={handleMicrophoneClick}
             onSpeakClick={handleSpeakClick}
           />
+          */}
         </div>
       </div>
 
