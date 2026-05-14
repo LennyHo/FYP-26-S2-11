@@ -1,6 +1,6 @@
 .faqSection {
   width: 100%;
-  padding: 60px 24px;
+  padding: 72px 24px;
 }
 
 .container {
@@ -10,15 +10,32 @@
 
 .header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 34px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent-brown);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
 }
 
 .title {
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(2.1rem, 4.4vw, 3.25rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--foreground);
-  margin: 0 0 12px 0;
+  letter-spacing: -0.05em;
+  color: #17110f;
+  margin: 0;
+}
+
+.subtitle {
+  margin: 12px auto 0;
+  max-width: 680px;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.65;
 }
 
 .subtitle {
@@ -33,32 +50,47 @@
 .faqList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   max-width: 800px;
   margin: 0 auto;
 }
 
 .faqItem {
-  border: none;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 250, 245, 0.95), rgba(255, 244, 233, 0.88));
-  box-shadow: 0 8px 20px rgba(2, 23, 46, 0.06);
+  position: relative;
+  border: 1px solid rgba(220, 199, 180, 0.78);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(249, 241, 232, 0.94));
+  box-shadow:
+    0 10px 24px rgba(59, 39, 26, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
   overflow: hidden;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.28s ease,
+    transform 0.28s ease,
+    border-color 0.28s ease,
+    background-color 0.28s ease;
 }
 
 .faqItem:hover {
-  box-shadow: 0 12px 28px rgba(2, 23, 46, 0.1);
-  transform: translateY(-2px);
+  box-shadow:
+    0 16px 34px rgba(59, 39, 26, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateY(-3px);
+  border-color: rgba(187, 160, 136, 0.92);
 }
 
 .faqItem.expanded {
-  box-shadow: 0 12px 32px rgba(2, 23, 46, 0.12);
+  box-shadow:
+    0 18px 40px rgba(59, 39, 26, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-color: rgba(187, 160, 136, 0.96);
 }
 
 .questionButton {
   width: 100%;
-  padding: 20px 24px;
+  min-height: 96px;
+  padding: 22px 28px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -67,23 +99,23 @@
   justify-content: space-between;
   gap: 16px;
   text-align: left;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.25s ease, padding 0.25s ease;
 }
 
 .questionButton:hover {
-  background-color: rgba(250, 245, 202, 0.3);
+  background-color: rgba(250, 245, 202, 0.22);
 }
 
 .questionButton:active {
-  background-color: rgba(250, 245, 202, 0.5);
+  background-color: rgba(250, 245, 202, 0.34);
 }
 
 .questionText {
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 700;
-  color: var(--foreground);
-  letter-spacing: -0.01em;
-  line-height: 1.4;
+  color: #1f1814;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
   flex: 1;
 }
 
@@ -91,29 +123,43 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-secondary), #0257AD);
+  background: linear-gradient(135deg, var(--color-secondary), #0257AD 55%, #054a96);
   color: #ffffff;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 600;
   flex-shrink: 0;
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+  box-shadow: 0 8px 16px rgba(2, 87, 173, 0.16);
 }
 
 .faqItem.expanded .toggleIcon {
-  transform: scale(1.1);
+  transform: rotate(180deg) scale(1.05);
 }
 
 .faqItem:hover .toggleIcon {
   background: linear-gradient(135deg, var(--color-accent), #F64A18);
+  box-shadow: 0 10px 18px rgba(244, 59, 3, 0.16);
 }
 
 .answerContent {
-  padding: 0 24px 20px 24px;
+  position: relative;
+  padding: 18px 28px 26px;
   border-top: 1px solid rgba(2, 87, 173, 0.08);
-  animation: slideDown 0.3s ease-out;
+  animation: slideDown 0.34s cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+.answerAccent {
+  width: 48px;
+  height: 3px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+  background: linear-gradient(90deg, var(--color-secondary), var(--color-accent));
 }
 
 @keyframes slideDown {
@@ -129,34 +175,60 @@
 
 .answerText {
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--muted);
+  max-width: 64ch;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: #6f635a;
   letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faqItem,
+  .questionButton,
+  .toggleIcon,
+  .answerContent {
+    transition: none;
+    animation: none;
+  }
+
+  .faqItem:hover {
+    transform: none;
+  }
 }
 
 @media (max-width: 640px) {
   .faqSection {
-    padding: 48px 16px;
+    padding: 54px 16px;
   }
 
   .title {
-    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-size: clamp(1.7rem, 5vw, 2.4rem);
+  }
+
+  .subtitle {
+    font-size: 0.96rem;
+    margin-top: 10px;
   }
 
   .questionButton {
-    padding: 16px 20px;
+    min-height: 84px;
+    padding: 18px 20px;
   }
 
   .questionText {
-    font-size: 1rem;
+    font-size: 0.98rem;
   }
 
   .answerContent {
-    padding: 0 20px 16px 20px;
+    padding: 16px 20px 20px;
+  }
+
+  .answerAccent {
+    width: 38px;
+    margin-bottom: 12px;
   }
 
   .answerText {
-    font-size: 0.95rem;
+    font-size: 0.94rem;
   }
 }

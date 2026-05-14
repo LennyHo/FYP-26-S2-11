@@ -53,7 +53,11 @@ export default function FAQ() {
     <section className={styles.faqSection}>
       <div className={styles.container}>
         <div className={styles.header}>
+          <p className={styles.eyebrow}>Need help?</p>
           <h2 className={styles.title}>Frequently Asked Questions</h2>
+          <p className={styles.subtitle}>
+            Quick answers about ingredients, customization, allergens, and ordering.
+          </p>
         </div>
 
         <div className={styles.faqList}>
@@ -63,9 +67,9 @@ export default function FAQ() {
               className={`${styles.faqItem} ${expandedId === item.id ? styles.expanded : ''}`}
             >
               <button
+                type="button"
                 className={styles.questionButton}
                 onClick={() => toggleExpand(item.id)}
-                aria-expanded={expandedId === item.id}
               >
                 <span className={styles.questionText}>{item.question}</span>
                 <span className={styles.toggleIcon}>
@@ -74,6 +78,7 @@ export default function FAQ() {
               </button>
               {expandedId === item.id && (
                 <div className={styles.answerContent}>
+                  <div className={styles.answerAccent} aria-hidden="true" />
                   <p className={styles.answerText}>{item.answer}</p>
                 </div>
               )}
