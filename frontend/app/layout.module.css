@@ -166,12 +166,12 @@
 }
 
 .chatToggleBtn:hover .logoEyeLeft {
-  animation: avyHumanEyePathLeft 3.2s cubic-bezier(0.34, 0, 0.2, 1) infinite;
+  /* animation: avyHumanEyePathLeft 3.2s cubic-bezier(0.34, 0, 0.2, 1) infinite; */
 }
 
 .chatToggleBtn:hover .logoEyeRight {
-  animation: avyHumanEyePathRight 3.2s cubic-bezier(0.34, 0, 0.2, 1) infinite;
-  animation-delay: 0.18s;
+  /* animation: avyHumanEyePathRight 3.2s cubic-bezier(0.34, 0, 0.2, 1) infinite; */
+  /* animation-delay: 0.18s; */
 }
 
 @keyframes chatTogglePulse {

@@ -48,7 +48,7 @@ const mainLogoSvg = `
 export default function Hero() {
   return (
     <section className={styles.heroSection}>
-      <InteractiveBubbles />
+      {/* <InteractiveBubbles /> */}
       <div className={styles.heroContent}>
         <div
           className={styles.logoContainer}

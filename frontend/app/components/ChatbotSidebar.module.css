@@ -72,7 +72,7 @@
 }
 
 .avyLogoAnimated:hover .avyLogoSvgWrap {
-  animation: avyHoverFloat 1.15s ease-in-out infinite, avyHoverTilt 0.9s ease-in-out infinite;
+  /* animation: avyHoverFloat 1.15s ease-in-out infinite, avyHoverTilt 0.9s ease-in-out infinite; */
 }
 
 @keyframes avyHoverFloat {
