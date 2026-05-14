@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 import Link from 'next/link';
+// done by "HDC" - reads backend-auth user stored by login so the header can show Log out.
+import { clearStoredUser, getStoredUser, type DripTeaUser } from '../utils/dripteaApi';
+// end done by "HDC"
 
 // Inline SVG for the brand logo to avoid bundler import issues and ensure consistent rendering
 const mainLogoSvg = `
@@ -53,6 +56,9 @@ export default function Header() {
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  // done by "HDC" - customer/admin/staff login state from backend auth.
+  const [currentUser, setCurrentUser] = useState<DripTeaUser | null>(null);
+  // end done by "HDC"
   const isStaffDashboard = pathname.startsWith('/user-admin') || pathname.startsWith('/store-staff');
 
   // Read the AI's saved cart data from localStorage
@@ -85,6 +91,29 @@ export default function Header() {
     return () => window.removeEventListener('cartUpdated', updateCartDisplay);
   }, []);
 
+  // done by "HDC" - update Login/Log out button after login, logout, or browser storage changes.
+  useEffect(() => {
+    const updateAuthDisplay = () => setCurrentUser(getStoredUser());
+
+    updateAuthDisplay();
+    window.addEventListener('authUpdated', updateAuthDisplay);
+    window.addEventListener('storage', updateAuthDisplay);
+
+    return () => {
+      window.removeEventListener('authUpdated', updateAuthDisplay);
+      window.removeEventListener('storage', updateAuthDisplay);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    clearStoredUser();
+    localStorage.removeItem("dripTeaCartData");
+    window.dispatchEvent(new Event('cartUpdated'));
+    setCurrentUser(null);
+    router.push('/login');
+  };
+  // end done by "HDC"
+
   return (
     <header className={styles.header}>
       <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`} role="navigation" aria-label="Primary">
@@ -113,8 +142,8 @@ export default function Header() {
       </div>
       
       <div className={styles.actions}>
-        {isStaffDashboard ? (
-          <button className={styles.loginLink} onClick={() => router.push('/login')}>
+        {currentUser || isStaffDashboard ? (
+          <button className={styles.loginLink} onClick={handleLogout}>
             Log out
           </button>
         ) : (

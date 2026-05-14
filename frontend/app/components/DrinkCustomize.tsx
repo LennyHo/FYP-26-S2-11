@@ -4,6 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from './Header';
 import styles from './DrinkCustomize.module.css';
+// done by "HDC" - sends Add to Cart actions to backend cart_items for logged-in users.
+import { addCartItem, getStoredUser } from '../utils/dripteaApi';
+// end done by "HDC"
 
 const menuData = [
   { id: "b001", name: "Classic Milk Tea", image: "/images/b001.jpeg", category: "Milk Tea", price: 4.50, description: "Our signature premium black tea blended with rich milk.", nutriGrade: "B", sugarG: 8, calories: 150 },
@@ -125,22 +128,62 @@ export default function DrinkCustomize() {
   const totalCalories = selectedDrink.calories + topping.calories;
   const totalPrice = (selectedDrink.price + size.surcharge + topping.price) * quantity;
 
-  function handleAddToCart() {
+  // done by "HDC" - keep the old local cart for UI display, and sync to backend for MongoDB testing.
+  async function handleAddToCart() {
     const existingData = localStorage.getItem("dripTeaCartData") || "";
     const toppingLabel = topping.key === 'none' ? '' : `, ${topping.name}`;
     const newItem = `${selectedDrink.name} (${size.label}, ${ice}, ${sweetness.label}${toppingLabel})|${size.label} · ${ice} · ${sweetness.label}${toppingLabel}|S$ ${totalPrice.toFixed(2)}`;
-    const updated = existingData ? `${existingData}\n${newItem}` : newItem;
+    // done by "HDC" - include quantity and image for backend-backed cart/payment display.
+    const details = `Qty ${quantity} | ${size.label} | ${ice} | ${sweetness.label}${toppingLabel}`;
+    const backendCartItem = `${selectedDrink.name} (${details})|${details}|S$ ${totalPrice.toFixed(2)}|${selectedDrink.image}`;
+    const updated = existingData ? `${existingData}\n${backendCartItem}` : backendCartItem;
+    // end done by "HDC"
     localStorage.setItem("dripTeaCartData", updated);
     window.dispatchEvent(new Event('cartUpdated'));
+
+    // done by "HDC" - write logged-in customer cart items to MongoDB cart_items.
+    const currentUser = getStoredUser();
+    if (currentUser) {
+      try {
+        await addCartItem({
+          userId: currentUser.id,
+          menuItemId: selectedDrink.id,
+          name: selectedDrink.name,
+          image: selectedDrink.image,
+          category: selectedDrink.category,
+          quantity,
+          unitPrice: selectedDrink.price + size.surcharge + topping.price,
+          lineTotal: totalPrice,
+          customization: {
+            size: size.label,
+            ice,
+            sugar: sweetness.label,
+            sugarPercent: sweetness.pct,
+            toppings: topping.key === 'none' ? [] : [topping.name],
+            nutritionInfo: {
+              sugarG: totalSugarG,
+              calories: totalCalories,
+              nutriGrade: selectedDrink.nutriGrade,
+            },
+          },
+        });
+      } catch (error) {
+        console.error('[DripTea cart sync]', error);
+      }
+    }
+    // end done by "HDC"
+
     // Show confirmation without navigating away
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   }
 
-  function handlePlaceOrder() {
-    handleAddToCart();
+  // done by "HDC" - wait for backend cart insert before moving to payment page.
+  async function handlePlaceOrder() {
+    await handleAddToCart();
     router.push('/checkout');
   }
+  // end done by "HDC"
 
   return (
     <div className={styles.page}>

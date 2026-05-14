@@ -14,7 +14,10 @@ async function connectMongo() {
     return database;
   }
 
-  client = new MongoClient(env.mongodbUri);
+  // done by "HDC" - fail faster when MongoDB is not reachable so UI requests do not hang.
+  // client = new MongoClient(env.mongodbUri);
+  client = new MongoClient(env.mongodbUri, { serverSelectionTimeoutMS: 5000 });
+  // end done by "HDC"
   await client.connect();
   database = client.db(env.mongodbDbName);
 

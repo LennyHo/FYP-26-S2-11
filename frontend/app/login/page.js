@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { useRef } from 'react';
 import styles from './login.module.css';
 import BackgroundShapes from './BackgroundShapes';
+// done by "HDC" - minimal backend login bridge for testing MongoDB auth routes.
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+// end done by "HDC"
 
 const mainLogoSvg = `
 <svg width="708" height="400" viewBox="0 0 708 400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -30,6 +34,11 @@ const mainLogoSvg = `
 `;
 
 export default function LoginPage() {
+  // done by "HDC" - stores backend auth result so test credentials can be used.
+  const router = useRouter();
+  const [statusMessage, setStatusMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // end done by "HDC"
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
 
@@ -46,6 +55,49 @@ export default function LoginPage() {
       passwordRef.current.value = creds.password;
     }
   };
+
+  // done by "HDC" - submit existing login form to backend without changing page design.
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    setStatusMessage('');
+    setIsSubmitting(true);
+
+    try {
+      // done by "HDC" - login bridge follows backend port 4000.
+      // const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('http://localhost:4000/api/auth/login', {
+      // end done by "HDC"
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailRef.current?.value || '',
+          password: passwordRef.current?.value || '',
+        }),
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.message || 'Login failed.');
+      }
+
+      localStorage.setItem('dripTeaCurrentUser', JSON.stringify(payload.user));
+      localStorage.setItem('dripTeaAuthToken', payload.token);
+      window.dispatchEvent(new Event('authUpdated'));
+
+      if (payload.user.role === 'user_admin') {
+        router.push('/user-admin-dashboard');
+      } else if (payload.user.role === 'store_staff') {
+        router.push('/store-staff-dashboard');
+      } else {
+        router.push('/buy-driptea');
+      }
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : 'Login failed.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  // end done by "HDC"
 
   return (
     <div className={styles.page}>
@@ -66,7 +118,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form className={styles.form} autoComplete="off">
+            <form className={styles.form} autoComplete="off" onSubmit={handleLogin}>
               <div className={styles.field}>
                 <label htmlFor="email" className={styles.label}>Email</label>
                 <input
@@ -97,7 +149,16 @@ export default function LoginPage() {
                 <button type="button" className={styles.forgot}>Forgot password?</button>
               </div>
 
-              <button type="submit" className={styles.button}>Sign in</button>
+              <button type="submit" className={styles.button} disabled={isSubmitting}>
+                {isSubmitting ? 'Signing in...' : 'Sign in'}
+              </button>
+              {/* done by "HDC" - backend auth error display. */}
+              {statusMessage && (
+                <p role="alert" style={{ margin: 0, color: '#b42318', fontWeight: 600 }}>
+                  {statusMessage}
+                </p>
+              )}
+              {/* end done by "HDC" */}
             </form>
 
             <div className={styles.testButtons}>

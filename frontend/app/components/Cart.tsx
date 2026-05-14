@@ -4,12 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 // Use ./ because the CSS is in the same folder as this file
 import './Cart.css'; 
+// done by "HDC" - cart page reads/removes backend cart_items for logged-in customers.
+import { deleteCartItem, getCartItems, getStoredUser, type DripTeaCartItem } from '../utils/dripteaApi';
+// end done by "HDC"
 
 interface CartItem {
+  backendId?: string;
   name: string;
   details: string;
   price: number;
   imageSrc?: string;
+  quantity?: number;
 }
 
 const drinkNameToId: Record<string, { id: string; category: string }> = {
@@ -33,7 +38,58 @@ export default function Cart() {
   const [total, setTotal] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchCartData = () => {
+  // done by "HDC" - prefer backend cart_items when a customer is logged in, with local cart fallback.
+  const fetchCartData = async () => {
+    const currentUser = getStoredUser();
+
+    if (currentUser) {
+      try {
+        const response = await getCartItems(currentUser.id);
+        const backendItems = response.data || [];
+        const parsedBackendItems: CartItem[] = backendItems.map((item: DripTeaCartItem) => {
+          const toppings = Array.isArray(item.customization?.toppings)
+            ? (item.customization.toppings as string[]).join(', ')
+            : '';
+          const details = [
+            item.quantity ? `Qty ${item.quantity}` : '',
+            typeof item.customization?.size === 'string' ? item.customization.size : '',
+            typeof item.customization?.ice === 'string' ? item.customization.ice : '',
+            typeof item.customization?.sugar === 'string' ? item.customization.sugar : '',
+            toppings,
+          ].filter(Boolean).join(' | ');
+
+          return {
+            backendId: item.id,
+            name: item.name,
+            details,
+            price: Number(item.lineTotal || 0),
+            imageSrc: item.image,
+            quantity: item.quantity,
+          };
+        });
+
+        // done by "HDC" - backend is the source of truth for logged-in carts, including empty carts.
+        const calculatedBackendTotal = parsedBackendItems.reduce((sum, item) => sum + item.price, 0);
+        setCartItems(parsedBackendItems);
+        setTotal(calculatedBackendTotal);
+        if (parsedBackendItems.length > 0) {
+          localStorage.setItem(
+            "dripTeaCartData",
+            parsedBackendItems
+              .map(item => `${item.name}|${item.details}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`)
+              .join('\n')
+          );
+        } else {
+          localStorage.removeItem("dripTeaCartData");
+        }
+        setIsLoading(false);
+        return;
+        // end done by "HDC"
+      } catch (error) {
+        console.error('[DripTea cart fetch]', error);
+      }
+    }
+
     const savedData = localStorage.getItem("dripTeaCartData");
     if (savedData) {
       const drinks = savedData.split('\n');
@@ -62,11 +118,29 @@ export default function Cart() {
       });
       setCartItems(parsedItems);
       setTotal(calculatedTotal);
+    } else {
+      setCartItems([]);
+      setTotal(0);
     }
     setIsLoading(false);
   };
+  // end done by "HDC"
 
-  const removeItem = (index: number) => {
+  // done by "HDC" - remove persisted backend cart item when available.
+  const removeItem = async (index: number) => {
+    const itemToRemove = cartItems[index];
+
+    if (itemToRemove?.backendId) {
+      try {
+        await deleteCartItem(itemToRemove.backendId);
+        await fetchCartData();
+        window.dispatchEvent(new Event('cartUpdated'));
+        return;
+      } catch (error) {
+        console.error('[DripTea cart remove]', error);
+      }
+    }
+
     const updatedItems = cartItems.filter((_, i) => i !== index);
     setCartItems(updatedItems);
     
@@ -83,11 +157,17 @@ export default function Cart() {
     // Trigger event for other components
     window.dispatchEvent(new Event('cartUpdated'));
   };
+  // end done by "HDC"
 
   useEffect(() => {
-    fetchCartData();
-    window.addEventListener('cartUpdated', fetchCartData);
-    return () => window.removeEventListener('cartUpdated', fetchCartData);
+    void fetchCartData();
+    // done by "HDC" - event listener wrapper for async backend cart reload.
+    const handleCartUpdated = () => {
+      void fetchCartData();
+    };
+    window.addEventListener('cartUpdated', handleCartUpdated);
+    return () => window.removeEventListener('cartUpdated', handleCartUpdated);
+    // end done by "HDC"
   }, []);
 
   return (

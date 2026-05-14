@@ -8,18 +8,30 @@ const products = [
     price: 'S$ 4.80',
     note: 'Thick milk tea, caramel depth, chewy pearls.',
     tone: 'brown',
+    // done by "HDC" - featured cards now lead to actual add-to-cart flow.
+    categorySlug: 'milk-tea',
+    drinkId: 'b001',
+    // end done by "HDC"
   },
   {
     name: 'Ruby Strawberry Tea',
     price: 'S$ 4.50',
     note: 'Bright fruit tea with a soft lychee finish.',
     tone: 'red',
+    // done by "HDC" - featured cards now lead to actual add-to-cart flow.
+    categorySlug: 'matcha-teas',
+    drinkId: 'b007',
+    // end done by "HDC"
   },
   {
     name: 'Matcha Cloud Cream',
     price: 'S$ 5.20',
     note: 'Earthy matcha layered with a smooth cream top.',
     tone: 'green',
+    // done by "HDC" - featured cards now lead to actual add-to-cart flow.
+    categorySlug: 'matcha-teas',
+    drinkId: 'b006',
+    // end done by "HDC"
   },
 ];
 
@@ -100,9 +112,11 @@ export default function BuyDripTeaPage() {
                 <div className={styles.cardVisual} />
                 <h3>{product.name}</h3>
                 <p>{product.note}</p>
-                <Link href="/cart" className={styles.cardLink}>
-                  Add to cart
+                {/* done by "HDC" - do not send users to an empty cart; send them to the real add page. */}
+                <Link href={`/menu/${product.categorySlug}/${product.drinkId}`} className={styles.cardLink}>
+                  Customize & add
                 </Link>
+                {/* end done by "HDC" */}
               </article>
             ))}
           </div>

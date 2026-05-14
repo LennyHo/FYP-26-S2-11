@@ -30,17 +30,19 @@ export default function UserAdminDashboardPage() {
     account.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSuspendProfile = (id) => {
+  // done by "HDC" - explicit number type required by strict TypeScript build.
+  const handleSuspendProfile = (id: number) => {
     setUserProfiles(userProfiles.map(p =>
       p.id === id ? { ...p, status: p.status === 'Active' ? 'Suspended' : 'Active' } : p
     ));
   };
 
-  const handleSuspendAccount = (id) => {
+  const handleSuspendAccount = (id: number) => {
     setUserAccounts(userAccounts.map(a =>
       a.id === id ? { ...a, accountStatus: a.accountStatus === 'Active' ? 'Suspended' : 'Active' } : a
     ));
   };
+  // end done by "HDC"
 
   return (
     <div className={styles.page}>
@@ -161,7 +163,9 @@ export default function UserAdminDashboardPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className={styles.noResults}>No profiles found</td>
+                      {/* done by "HDC" - React TypeScript expects numeric colSpan. */}
+                      <td colSpan={5} className={styles.noResults}>No profiles found</td>
+                      {/* end done by "HDC" */}
                     </tr>
                   )}
                 </tbody>
@@ -229,7 +233,9 @@ export default function UserAdminDashboardPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className={styles.noResults}>No accounts found</td>
+                      {/* done by "HDC" - React TypeScript expects numeric colSpan. */}
+                      <td colSpan={5} className={styles.noResults}>No accounts found</td>
+                      {/* end done by "HDC" */}
                     </tr>
                   )}
                 </tbody>
