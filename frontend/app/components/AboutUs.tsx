@@ -1,142 +1,144 @@
 "use client";
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './AboutUs.module.css';
 
-const points = [
+const stats = [
   {
-    tone: 'blue',
-    title: 'Rooted in Singapore, inspired by Shenzhen',
-    text: 'DripTea began as a Singapore-born idea shaped by China arts and culture, with a foundation that reflects the creative energy of Shenzhen.',
+    target: 12,
+    label: 'signature drinks',
+    text: 'Crafted options across milk tea, matcha, blended, and local favorites.',
   },
   {
-    tone: 'brown',
-    title: 'Simple, light, and competitive',
-    text: 'We keep the experience clean and approachable, while constantly refining our drinks and presentation so we can stand out alongside the competition.',
+    target: 8,
+    label: 'outlets',
+    text: 'Serving tea lovers through a growing network of neighborhood stores.',
   },
   {
-    tone: 'red',
-    title: 'Warmth, culture, and welcome',
-    text: 'Every store and every cup is designed to feel inviting, giving customers a place where cultural expression and comfort come together naturally.',
+    target: 95,
+    label: '% customer satisfaction',
+    text: 'Driven by feedback across in-store visits, online reviews, and repeat orders.',
+  },
+  {
+    target: 82,
+    label: '% returning customers',
+    text: 'A strong share of guests come back for our tea quality and consistent experience.',
   },
 ];
 
 export default function AboutUs() {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [animateNumbers, setAnimateNumbers] = useState(false);
+  const [displayValues, setDisplayValues] = useState<number[]>(() => stats.map(() => 0));
 
-  const cardCount = points.length;
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
 
-  const getToneClass = (tone: string) => {
-    if (tone === 'blue') return styles.toneBlue;
-    if (tone === 'brown') return styles.toneBrown;
-    return styles.toneRed;
-  };
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setAnimateNumbers(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
 
-  const goToIndex = (index: number) => {
-    const track = trackRef.current;
-    if (!track) return;
+    observer.observe(section);
 
-    const cards = Array.from(track.children) as HTMLElement[];
-    const nextIndex = Math.max(0, Math.min(index, cards.length - 1));
-    const target = cards[nextIndex];
+    return () => observer.disconnect();
+  }, []);
 
-    if (target) {
-      track.scrollTo({ left: target.offsetLeft - track.offsetLeft, behavior: 'smooth' });
-      setActiveIndex(nextIndex);
+  useEffect(() => {
+    if (!animateNumbers) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      setDisplayValues(stats.map(stat => stat.target));
+      return;
     }
-  };
 
-  const handleScroll = () => {
-    const track = trackRef.current;
-    if (!track) return;
+    const frameIds: number[] = [];
+    const timeoutIds: number[] = [];
 
-    const cards = Array.from(track.children) as HTMLElement[];
-    const scrollLeft = track.scrollLeft;
-    let closestIndex = 0;
-    let closestDistance = Number.POSITIVE_INFINITY;
+    stats.forEach((item, index) => {
+      const timeoutId = window.setTimeout(() => {
+        const duration = 1600;
+        const startValue = Math.floor(item.target * (0.22 + Math.random() * 0.22));
+        const startTime = performance.now();
 
-    cards.forEach((card, index) => {
-      const distance = Math.abs(card.offsetLeft - track.offsetLeft - scrollLeft);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = index;
-      }
+        setDisplayValues(previous => {
+          if (previous[index] === startValue) return previous;
+          const next = [...previous];
+          next[index] = startValue;
+          return next;
+        });
+
+        const tick = (now: number) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 4);
+          const nextValue = Math.round(startValue + (item.target - startValue) * eased);
+
+          setDisplayValues(previous => {
+            const clampedValue = Math.min(item.target, Math.max(previous[index], nextValue));
+            if (previous[index] === clampedValue) return previous;
+            const next = [...previous];
+            next[index] = clampedValue;
+            return next;
+          });
+
+          if (progress < 1) {
+            frameIds[index] = window.requestAnimationFrame(tick);
+          } else {
+            setDisplayValues(previous => {
+              if (previous[index] === item.target) return previous;
+              const next = [...previous];
+              next[index] = item.target;
+              return next;
+            });
+          }
+        };
+
+        frameIds[index] = window.requestAnimationFrame(tick);
+      }, index * 120);
+
+      timeoutIds.push(timeoutId);
     });
 
-    setActiveIndex(closestIndex);
-  };
-
-  const dots = useMemo(() => Array.from({ length: cardCount }, (_, index) => index), [cardCount]);
+    return () => {
+      timeoutIds.forEach(id => window.clearTimeout(id));
+      frameIds.forEach(id => window.cancelAnimationFrame(id));
+    };
+  }, [animateNumbers]);
 
   return (
-    <section className={styles.aboutSection} aria-labelledby="about-us-heading">
-      <div className={styles.headerRow}>
-        <div className={styles.header}>
-          <p className={styles.eyebrow}>About Us</p>
-          <h2 id="about-us-heading" className={styles.title}>
-            A brand built to feel familiar, cultured, and alive.
-          </h2>
-          <p className={styles.subtitle}>
-            DripTea blends heritage, simplicity, and warmth into a space that feels both modern and welcoming.
-          </p>
-        </div>
+    <section ref={sectionRef} className={styles.aboutSection} aria-label="About us statistics">
+      <div className={styles.statsGrid}>
+        {stats.map((item, index) => {
+          const isLeft = index % 2 === 0;
+          const directionClass = isLeft ? styles.leftNumber : styles.rightNumber;
+          const delayClass =
+            index === 0
+              ? styles.delay0
+              : index === 1
+                ? styles.delay1
+                : index === 2
+                  ? styles.delay2
+                  : styles.delay3;
 
-        <div className={styles.controls}>
-          <button
-            type="button"
-            className={styles.controlButton}
-            onClick={() => goToIndex(activeIndex - 1)}
-            aria-label="Previous about us card"
-            disabled={activeIndex === 0}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            className={styles.controlButton}
-            onClick={() => goToIndex(activeIndex + 1)}
-            aria-label="Next about us card"
-            disabled={activeIndex === cardCount - 1}
-          >
-            ›
-          </button>
-        </div>
-      </div>
-
-      <div className={styles.carouselWrap}>
-        <div className={styles.track} ref={trackRef} onScroll={handleScroll}>
-          {points.map(point => (
-            <article key={point.title} className={styles.card}>
-              <div className={`${styles.cardVisual} ${getToneClass(point.tone)}`}>
-                <div className={styles.visualWash} />
-                <div className={styles.visualFrame}>
-                  <div className={styles.visualShapeOne} />
-                  <div className={styles.visualShapeTwo} />
-                  <div className={styles.visualShapeThree} />
-                </div>
-              </div>
-              <div className={styles.cardBody}>
-                <span className={styles.cardKicker}>Our story</span>
-                <h3 className={styles.cardTitle}>{point.title}</h3>
-                <p className={styles.cardText}>{point.text}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <div className={styles.dots} aria-label="About us carousel pagination">
-          {dots.map(index => (
-            <button
-              key={index}
-              type="button"
-              className={`${styles.dot} ${index === activeIndex ? styles.dotActive : ''}`}
-              onClick={() => goToIndex(index)}
-              aria-label={`Go to about us card ${index + 1}`}
-              aria-current={index === activeIndex ? 'true' : undefined}
-            />
-          ))}
-        </div>
+          return (
+          <article key={item.target} className={styles.statCard}>
+            <h3
+              className={`${styles.cups} ${directionClass} ${delayClass} ${animateNumbers ? styles.numberVisible : ''}`}
+            >
+              {displayValues[index]} {item.label}
+            </h3>
+            <p className={styles.cardText}>{item.text}</p>
+          </article>
+          );
+        })}
       </div>
     </section>
   );
