@@ -27,11 +27,11 @@ export default function StoreStaffDashboardPage() {
     i.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const markOrderCompleted = (id) => {
+  const markOrderCompleted = (id: number) => {
     setOrders(orders.map(o => (o.id === id ? { ...o, status: 'Completed' } : o)));
   };
 
-  const adjustQty = (id, delta) => {
+  const adjustQty = (id: number, delta: number) => {
     setInventory(inventory.map(it => (it.id === id ? { ...it, qty: Math.max(0, it.qty + delta) } : it)));
   };
 
