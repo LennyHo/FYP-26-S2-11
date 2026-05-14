@@ -40,7 +40,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 Use real keys (not placeholders), then restart the backend.
 
-## Verify Supabase Connection
+## Supabase
 1. Start backend:
 npm start
 2. Check Supabase health:
@@ -58,7 +58,7 @@ POST http://localhost:5000/chat
 Body: {"message":"Hello"}
 
 ## Start the server:
-npm start
+npm start or num run dev
 
 ============================================
 ## TEST PROMPT:
