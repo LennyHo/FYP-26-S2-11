@@ -787,7 +787,20 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     setIsLoading(true);
 
     try {
-      // Use backend API from env or localhost fallback
+      // Proxy-first behavior: prefer server-side Next.js API route; allow override via NEXT_PUBLIC_DRIPTEA_API_BASE
+      const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
+      const apiEndpoint = configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat';
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: messageText,
+          conversationId: conversationId,
+        }),
+      });
+
+      // Original client-side fallback (commented out):
+      /*
       const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:5000';
       const response = await fetch(`${apiBase}/chat`, {
         method: 'POST',
@@ -797,6 +810,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
           conversationId: conversationId,
         }),
       });
+      */
 
       const data: unknown = await response.json();
       const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
