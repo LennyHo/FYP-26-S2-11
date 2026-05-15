@@ -216,6 +216,31 @@ function toPublicCartItem(item) {
   };
 }
 
+// done by "HDC" - public staff order shape for order queue display.
+function toPublicOrder(order, user, items, payment) {
+  return {
+    id: String(order._id),
+    orderNo: order.orderNo,
+    userId: String(order.userId),
+    customer: user?.fullName || user?.email || "Customer",
+    status: order.status,
+    orderType: order.orderType,
+    totalAmount: Number(order.totalAmount || 0),
+    currency: order.currency || "SGD",
+    paymentStatus: payment?.status || "unpaid",
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    items: items.map((item) => ({
+      id: String(item._id),
+      name: item.name,
+      quantity: item.quantity,
+      lineTotal: Number(item.lineTotal || 0),
+      customization: item.customization || {},
+    })),
+  };
+}
+// end done by "HDC"
+
 router.get("/health/mongo", async (_req, res, next) => {
   try {
     const db = await getPreparedDb();
@@ -443,6 +468,79 @@ router.delete("/cart-items/:id", async (req, res, next) => {
     next(error);
   }
 });
+
+// done by "HDC" - staff dashboard order queue reads real orders from MongoDB.
+router.get("/orders", async (req, res, next) => {
+  try {
+    const db = await getPreparedDb();
+    const status = String(req.query.status || "all").trim().toLowerCase();
+    const query = status === "all" ? {} : { status };
+    const orders = await db.collection("orders").find(query).sort({ createdAt: -1 }).limit(100).toArray();
+    const orderIds = orders.map((order) => order._id);
+    const userIds = [...new Set(orders.map((order) => String(order.userId)))].map((id) => new ObjectId(id));
+    const [users, orderItems, payments] = await Promise.all([
+      userIds.length > 0 ? db.collection("users").find({ _id: { $in: userIds } }).toArray() : [],
+      orderIds.length > 0 ? db.collection("order_items").find({ orderId: { $in: orderIds } }).toArray() : [],
+      orderIds.length > 0 ? db.collection("payments").find({ orderId: { $in: orderIds } }).toArray() : [],
+    ]);
+    const usersById = new Map(users.map((user) => [String(user._id), user]));
+    const paymentsByOrderId = new Map(payments.map((payment) => [String(payment.orderId), payment]));
+    const itemsByOrderId = new Map();
+
+    for (const item of orderItems) {
+      const key = String(item.orderId);
+      const existing = itemsByOrderId.get(key) || [];
+      existing.push(item);
+      itemsByOrderId.set(key, existing);
+    }
+
+    return res.json({
+      ok: true,
+      data: orders.map((order) => toPublicOrder(
+        order,
+        usersById.get(String(order.userId)),
+        itemsByOrderId.get(String(order._id)) || [],
+        paymentsByOrderId.get(String(order._id))
+      )),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/orders/:id/status", async (req, res, next) => {
+  try {
+    const db = await getPreparedDb();
+    const orderId = toObjectId(req.params.id);
+    const status = String(req.body?.status || "").trim().toLowerCase();
+    const allowedStatuses = new Set(["pending", "preparing", "ready", "completed"]);
+
+    if (!orderId || !allowedStatuses.has(status)) {
+      return res.status(400).json({
+        ok: false,
+        message: "A valid order id and status are required.",
+      });
+    }
+
+    await db.collection("orders").updateOne(
+      { _id: orderId },
+      { $set: { status, updatedAt: new Date() } }
+    );
+
+    const updatedOrder = await db.collection("orders").findOne({ _id: orderId });
+
+    return res.json({
+      ok: true,
+      data: {
+        id: String(updatedOrder._id),
+        status: updatedOrder.status,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+// end done by "HDC"
 
 router.post("/checkout", async (req, res, next) => {
   try {

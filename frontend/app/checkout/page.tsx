@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
-import { checkoutCart, getCartItems, getStoredUser, type DripTeaCartItem } from '../utils/dripteaApi';
+import { checkoutCart, getCartItems, getStoredUser, parseLocalCartLine, type DripTeaCartItem } from '../utils/dripteaApi';
 
 type CheckoutItem = {
   name: string;
@@ -27,6 +27,16 @@ function parseLocalCart(): CheckoutItem[] {
   return savedData
     .split('\n')
     .map((line) => {
+      // done by "HDC" - parse local cart rows even when details contain pipe characters.
+      const parsedCartLine = parseLocalCartLine(line);
+      if (parsedCartLine) {
+        return {
+          name: parsedCartLine.name,
+          details: parsedCartLine.details,
+          price: parsedCartLine.price,
+        };
+      }
+      // end done by "HDC"
       const parts = line.split('|');
       if (parts.length < 3) return null;
 

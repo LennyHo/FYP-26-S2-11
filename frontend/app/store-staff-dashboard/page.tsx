@@ -1,35 +1,110 @@
- 'use client';
+'use client';
 
 import StaffHeader from '../components/StaffHeader';
 import styles from './page.module.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+// done by "HDC" - staff order queue is backed by real MongoDB orders.
+import { getOrders, updateOrderStatus, type DripTeaOrder } from '../utils/dripteaApi';
+// end done by "HDC"
+
+// done by "HDC" - local display shape for the staff order queue table.
+type StaffOrderRow = {
+  id: string;
+  orderNo: string;
+  customer: string;
+  status: string;
+  total: string;
+  itemSummary: string;
+};
+
+const fallbackOrders: StaffOrderRow[] = [
+  { id: 'mock-1', orderNo: 'ORD-1001', customer: 'Alice', status: 'preparing', total: '$8.50', itemSummary: 'Sample order' },
+  { id: 'mock-2', orderNo: 'ORD-1002', customer: 'Bob', status: 'ready', total: '$5.00', itemSummary: 'Sample order' },
+];
+
+function formatStatus(status: string) {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function toStaffOrderRow(order: DripTeaOrder): StaffOrderRow {
+  const itemSummary = order.items
+    .map(item => `${item.quantity} x ${item.name}`)
+    .join(', ');
+
+  return {
+    id: order.id,
+    orderNo: order.orderNo,
+    customer: order.customer,
+    status: order.status,
+    total: `S$ ${Number(order.totalAmount || 0).toFixed(2)}`,
+    itemSummary: itemSummary || 'No items recorded',
+  };
+}
+// end done by "HDC"
 
 export default function StoreStaffDashboardPage() {
   const [activeTab, setActiveTab] = useState('orders');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [orders, setOrders] = useState([
-    { id: 1, orderNo: 'ORD-1001', customer: 'Alice', status: 'Preparing', total: '$8.50' },
-    { id: 2, orderNo: 'ORD-1002', customer: 'Bob', status: 'Ready', total: '$5.00' },
-  ]);
+  // done by "HDC" - keep sample rows only as a fallback when backend orders cannot be loaded.
+  const [orders, setOrders] = useState<StaffOrderRow[]>(fallbackOrders);
+  const [ordersError, setOrdersError] = useState('');
+  // end done by "HDC"
 
   const [inventory, setInventory] = useState([
     { id: 1, name: 'Oolong Tea', qty: 12, unit: 'bags' },
     { id: 2, name: 'Tapioca Pearls', qty: 6, unit: 'kg' },
   ]);
 
+  // done by "HDC" - poll backend orders so customer fake payments appear in the staff queue.
+  async function refreshOrders() {
+    try {
+      const response = await getOrders('all');
+      setOrders(response.data.map(toStaffOrderRow));
+      setOrdersError('');
+    } catch (error) {
+      console.error('[DripTea staff orders]', error);
+      setOrdersError('Unable to load live orders. Showing fallback rows.');
+    }
+  }
+
+  useEffect(() => {
+    void refreshOrders();
+    const refreshTimer = window.setInterval(() => {
+      void refreshOrders();
+    }, 5000);
+
+    return () => window.clearInterval(refreshTimer);
+  }, []);
+  // end done by "HDC"
+
   const filteredOrders = orders.filter(o =>
     o.orderNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    o.customer.toLowerCase().includes(searchQuery.toLowerCase())
+    o.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    o.itemSummary.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredInventory = inventory.filter(i =>
     i.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const markOrderCompleted = (id: number) => {
-    setOrders(orders.map(o => (o.id === id ? { ...o, status: 'Completed' } : o)));
+  // done by "HDC" - mark real MongoDB orders complete from the staff queue.
+  const markOrderCompleted = async (id: string) => {
+    if (id.startsWith('mock-')) {
+      setOrders(orders.map(o => (o.id === id ? { ...o, status: 'completed' } : o)));
+      return;
+    }
+
+    try {
+      await updateOrderStatus(id, 'completed');
+      setOrders(orders.map(o => (o.id === id ? { ...o, status: 'completed' } : o)));
+      void refreshOrders();
+    } catch (error) {
+      console.error('[DripTea complete order]', error);
+      setOrdersError('Unable to update this order. Please try again.');
+    }
   };
+  // end done by "HDC"
 
   const adjustQty = (id: number, delta: number) => {
     setInventory(inventory.map(it => (it.id === id ? { ...it, qty: Math.max(0, it.qty + delta) } : it)));
@@ -49,7 +124,7 @@ export default function StoreStaffDashboardPage() {
           <div className={styles.heroPanel}>
             <div>
               <span>Open Orders</span>
-              <strong>{orders.filter(o => o.status !== 'Completed').length}</strong>
+              <strong>{orders.filter(o => o.status.toLowerCase() !== 'completed').length}</strong>
             </div>
             <div>
               <span>Inventory Items</span>
@@ -94,6 +169,9 @@ export default function StoreStaffDashboardPage() {
             <div className={styles.sectionHeader}>
               <h2>Order Queue</h2>
             </div>
+            {/* done by "HDC" - show live-order load/update issues without hiding the queue. */}
+            {ordersError && <p className={styles.sessionSubtext}>{ordersError}</p>}
+            {/* end done by "HDC" */}
 
             <div className={styles.tableContainer}>
               <table className={styles.table}>
@@ -111,11 +189,21 @@ export default function StoreStaffDashboardPage() {
                     filteredOrders.map(ord => (
                       <tr key={ord.id}>
                         <td>{ord.orderNo}</td>
-                        <td>{ord.customer}</td>
-                        <td><span className={`${styles.status} ${styles[ord.status.toLowerCase()]}`}>{ord.status}</span></td>
+                        <td>
+                          <strong>{ord.customer}</strong>
+                          <br />
+                          <span className={styles.sessionSubtext}>{ord.itemSummary}</span>
+                        </td>
+                        <td><span className={`${styles.status} ${styles[ord.status.toLowerCase()]}`}>{formatStatus(ord.status)}</span></td>
                         <td>{ord.total}</td>
                         <td className={styles.actions}>
-                          <button className={styles.btnSmall} onClick={() => markOrderCompleted(ord.id)}>Complete</button>
+                          <button
+                            className={styles.btnSmall}
+                            onClick={() => void markOrderCompleted(ord.id)}
+                            disabled={ord.status.toLowerCase() === 'completed'}
+                          >
+                            Complete
+                          </button>
                         </td>
                       </tr>
                     ))

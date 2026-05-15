@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 import Link from 'next/link';
 // done by "HDC" - reads backend-auth user stored by login so the header can show Log out.
-import { clearStoredUser, getStoredUser, type DripTeaUser } from '../utils/dripteaApi';
+import { clearStoredUser, getStoredUser, parseLocalCartLine, type DripTeaUser } from '../utils/dripteaApi';
 // end done by "HDC"
 
 // Inline SVG for the brand logo to avoid bundler import issues and ensure consistent rendering
@@ -69,6 +69,13 @@ export default function Header() {
       let total = 0;
       
       drinks.forEach(drink => {
+        // done by "HDC" - use shared parser so cart header total updates when details contain pipe characters.
+        const parsedCartLine = parseLocalCartLine(drink);
+        if (parsedCartLine) {
+          total += parsedCartLine.price;
+          return;
+        }
+        // end done by "HDC"
         const parts = drink.split('|');
         if (parts.length >= 3) {
           const price = parseFloat(parts[2].replace(/[^0-9.]/g, ''));

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from './Header';
 import styles from './DrinkCustomize.module.css';
 // done by "HDC" - sends Add to Cart actions to backend cart_items for logged-in users.
-import { addCartItem, getStoredUser } from '../utils/dripteaApi';
+import { addCartItem, formatLocalCartLine, getStoredUser } from '../utils/dripteaApi';
 // end done by "HDC"
 
 const menuData = [
@@ -135,7 +135,8 @@ export default function DrinkCustomize() {
     const newItem = `${selectedDrink.name} (${size.label}, ${ice}, ${sweetness.label}${toppingLabel})|${size.label} · ${ice} · ${sweetness.label}${toppingLabel}|S$ ${totalPrice.toFixed(2)}`;
     // done by "HDC" - include quantity and image for backend-backed cart/payment display.
     const details = `Qty ${quantity} | ${size.label} | ${ice} | ${sweetness.label}${toppingLabel}`;
-    const backendCartItem = `${selectedDrink.name} (${details})|${details}|S$ ${totalPrice.toFixed(2)}|${selectedDrink.image}`;
+    // const backendCartItem = `${selectedDrink.name} (${details})|${details}|S$ ${totalPrice.toFixed(2)}|${selectedDrink.image}`;
+    const backendCartItem = formatLocalCartLine({ name: selectedDrink.name, details, price: totalPrice, imageSrc: selectedDrink.image });
     const updated = existingData ? `${existingData}\n${backendCartItem}` : backendCartItem;
     // end done by "HDC"
     localStorage.setItem("dripTeaCartData", updated);
@@ -182,6 +183,69 @@ export default function DrinkCustomize() {
   async function handlePlaceOrder() {
     await handleAddToCart();
     router.push('/checkout');
+  }
+  // end done by "HDC"
+
+  // done by "HDC" - shared save flow so Add to Cart can return to menu while Place Order still goes to payment.
+  async function saveCartItemForSelectedDrink() {
+    const toppingLabel = topping.key === 'none' ? '' : `, ${topping.name}`;
+    const details = `Qty ${quantity} | ${size.label} | ${ice} | ${sweetness.label}${toppingLabel}`;
+    // const backendCartItem = `${selectedDrink.name} (${details})|${details}|S$ ${totalPrice.toFixed(2)}|${selectedDrink.image}`;
+    const backendCartItem = formatLocalCartLine({ name: selectedDrink.name, details, price: totalPrice, imageSrc: selectedDrink.image });
+    const currentUser = getStoredUser();
+
+    if (currentUser) {
+      await addCartItem({
+        userId: currentUser.id,
+        menuItemId: selectedDrink.id,
+        name: selectedDrink.name,
+        image: selectedDrink.image,
+        category: selectedDrink.category,
+        quantity,
+        unitPrice: selectedDrink.price + size.surcharge + topping.price,
+        lineTotal: totalPrice,
+        customization: {
+          size: size.label,
+          ice,
+          sugar: sweetness.label,
+          sugarPercent: sweetness.pct,
+          toppings: topping.key === 'none' ? [] : [topping.name],
+          nutritionInfo: {
+            sugarG: totalSugarG,
+            calories: totalCalories,
+            nutriGrade: selectedDrink.nutriGrade,
+          },
+        },
+      });
+    }
+
+    const existingData = localStorage.getItem("dripTeaCartData") || "";
+    const updated = existingData ? `${existingData}\n${backendCartItem}` : backendCartItem;
+    localStorage.setItem("dripTeaCartData", updated);
+    window.dispatchEvent(new Event('cartUpdated'));
+  }
+
+  async function handleAddToCartAndReturnToMenu() {
+    try {
+      await saveCartItemForSelectedDrink();
+      setAddedToCart(true);
+      const categoryParam = params.category;
+      const categorySlug = typeof categoryParam === 'string' ? categoryParam : toDrinkSlug(selectedDrink.category);
+      router.push(`/menu/${categorySlug}`);
+    } catch (error) {
+      console.error('[DripTea cart add]', error);
+      alert('Unable to add this drink to cart. Please try again.');
+    }
+  }
+
+  async function handlePlaceOrderWithCartSave() {
+    try {
+      await saveCartItemForSelectedDrink();
+      router.push('/checkout');
+    } catch (error) {
+      console.error('[DripTea place order]', error);
+      alert('Unable to prepare checkout. Please try again.');
+    }
   }
   // end done by "HDC"
 
@@ -309,11 +373,11 @@ export default function DrinkCustomize() {
           <div className={styles.actionRow}>
             <button
               className={`${styles.addToCartBtn} ${addedToCart ? styles.addedConfirm : ''}`}
-              onClick={handleAddToCart}
+              onClick={handleAddToCartAndReturnToMenu}
             >
               {addedToCart ? '✓ ADDED!' : 'ADD TO CART'}
             </button>
-            <button className={styles.placeOrderBtn} onClick={handlePlaceOrder}>
+            <button className={styles.placeOrderBtn} onClick={handlePlaceOrderWithCartSave}>
               PLACE THE ORDER
             </button>
           </div>

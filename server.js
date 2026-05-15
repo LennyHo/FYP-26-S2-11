@@ -11,8 +11,8 @@ const { connectMongo } = require("./src/config/mongo");
 const { env } = require("./src/config/env");
 // end done by "HDC"
 
-// done by "HDC" - default backend port is 4000.
-// const PORT = Number(process.env.PORT || 5000);
+// done by "HDC" - default backend port follows teammates' port 5000.
+// const PORT = Number(process.env.PORT || 4000);
 const PORT = Number(process.env.PORT || 5000);
 // end done by "HDC"
 const CHAT_LANGUAGE_MODE = String(process.env.CHAT_LANGUAGE_MODE || "english").trim().toLowerCase();

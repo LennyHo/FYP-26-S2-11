@@ -788,7 +788,10 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
 
     try {
       // Use backend API from env or localhost fallback
+      // done by "HDC" - backend fallback follows teammates' active Express port 5000.
+      // const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:4000';
       const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:5000';
+      // end done by "HDC"
       const response = await fetch(`${apiBase}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

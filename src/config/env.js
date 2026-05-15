@@ -11,7 +11,10 @@ function parseBoolean(value, defaultValue = false) {
 }
 
 const env = {
-  port: Number(process.env.PORT) || 4000,
+  // done by "HDC" - config fallback follows teammates' backend port 5000.
+  // port: Number(process.env.PORT) || 4000,
+  port: Number(process.env.PORT) || 5000,
+  // end done by "HDC"
   nodeEnv: process.env.NODE_ENV || "development",
   appName: process.env.APP_NAME || "FYP-26-S2-11 Backend",
   mongodbUri: process.env.MONGODB_URI || "",

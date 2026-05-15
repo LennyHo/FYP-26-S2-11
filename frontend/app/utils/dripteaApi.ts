@@ -21,9 +21,72 @@ export type DripTeaCartItem = {
   customization: Record<string, unknown>;
 };
 
-// done by "HDC" - frontend bridge follows backend port 4000.
-// const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:5000';
-const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:4000';
+// done by "HDC" - shared local cart parser handles item details that contain pipe characters.
+export type DripTeaLocalCartItem = {
+  name: string;
+  details: string;
+  price: number;
+  imageSrc?: string;
+};
+
+export function parseLocalCartLine(line: string): DripTeaLocalCartItem | null {
+  const parts = String(line || '').split('|').map(part => part.trim());
+  if (parts.length < 3) return null;
+
+  const priceIndex = parts.findIndex(part => /S?\$\s*\d+(?:\.\d+)?/i.test(part));
+  if (priceIndex < 1) return null;
+
+  const priceMatch = parts[priceIndex].match(/(\d+(?:\.\d+)?)/);
+  const price = priceMatch ? Number(priceMatch[1]) : Number.NaN;
+  if (!Number.isFinite(price)) return null;
+
+  const imagePart = parts.slice(priceIndex + 1).find(part =>
+    part.startsWith('/') || /^https?:\/\//i.test(part) || /\.(png|jpe?g|webp|gif|svg)$/i.test(part)
+  );
+  const rawName = parts[0].replace(/\s*\([^)]*\)\s*$/, '').trim();
+  const nameMatch = rawName.match(/^([^(]+)/);
+  const name = (nameMatch ? nameMatch[1] : rawName).trim();
+  const details = parts.slice(1, priceIndex).join(' | ').replace(/\s+/g, ' ').trim();
+
+  return {
+    name,
+    details,
+    price,
+    imageSrc: imagePart,
+  };
+}
+
+export function formatLocalCartLine(item: DripTeaLocalCartItem) {
+  const safeDetails = item.details.replace(/\s*\|\s*/g, ' / ');
+  return `${item.name}|${safeDetails}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`;
+}
+// end done by "HDC"
+
+// done by "HDC" - staff panel order queue type from backend orders collection.
+export type DripTeaOrder = {
+  id: string;
+  orderNo: string;
+  customer: string;
+  status: string;
+  orderType: string;
+  totalAmount: number;
+  currency: string;
+  paymentStatus: string;
+  createdAt?: string;
+  updatedAt?: string;
+  items: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    lineTotal: number;
+    customization: Record<string, unknown>;
+  }>;
+};
+// end done by "HDC"
+
+// done by "HDC" - frontend bridge follows teammates' backend port 5000.
+// const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:4000';
+const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:5000';
 // end done by "HDC"
 const USER_STORAGE_KEY = 'dripTeaCurrentUser';
 const TOKEN_STORAGE_KEY = 'dripTeaAuthToken';
@@ -90,4 +153,17 @@ export function checkoutCart(userId: string, paymentMethod: string) {
     body: JSON.stringify({ userId, paymentMethod }),
   });
 }
+
+// done by "HDC" - staff order queue reads and updates real MongoDB orders.
+export function getOrders(status: string = 'all') {
+  return requestJson<{ ok: boolean; data: DripTeaOrder[] }>(`/api/orders?status=${encodeURIComponent(status)}`);
+}
+
+export function updateOrderStatus(orderId: string, status: string) {
+  return requestJson<{ ok: boolean; data: { id: string; status: string } }>(`/api/orders/${encodeURIComponent(orderId)}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+// end done by "HDC"
 // end done by "HDC"

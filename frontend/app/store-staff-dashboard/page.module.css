@@ -59,9 +59,16 @@
 .noResults { text-align:center; padding:20px; color:#6aa86b; }
 
 .status { padding:6px 8px; border-radius:8px; font-weight:700; }
+/* done by "HDC" - backend-created checkout orders start as pending in staff queue. */
+.pending { background:#eef5ff; color:#185a9d; }
+/* end done by "HDC" */
 .preparing { background: #fff6e6; color:#b46b00; }
 .ready { background:#e8fff1; color:#1f5f2b; }
 .completed { background:#f0f0f0; color:#6b6b6b; }
+
+/* done by "HDC" - completed orders cannot be completed twice. */
+.btnSmall:disabled { opacity:0.55; cursor:not-allowed; }
+/* end done by "HDC" */
 
 .sessionSection { margin-top:24px; }
 .sessionSubtext { color:#4b6f52; }

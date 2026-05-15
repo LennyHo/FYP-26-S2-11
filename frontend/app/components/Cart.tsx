@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 // Use ./ because the CSS is in the same folder as this file
 import './Cart.css'; 
 // done by "HDC" - cart page reads/removes backend cart_items for logged-in customers.
-import { deleteCartItem, getCartItems, getStoredUser, type DripTeaCartItem } from '../utils/dripteaApi';
+import { deleteCartItem, formatLocalCartLine, getCartItems, getStoredUser, parseLocalCartLine, type DripTeaCartItem } from '../utils/dripteaApi';
 // end done by "HDC"
 
 interface CartItem {
@@ -76,7 +76,10 @@ export default function Cart() {
           localStorage.setItem(
             "dripTeaCartData",
             parsedBackendItems
-              .map(item => `${item.name}|${item.details}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`)
+              // done by "HDC" - avoid pipe delimiters inside saved details so totals parse correctly.
+              // .map(item => `${item.name}|${item.details}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`)
+              .map(item => formatLocalCartLine({ name: item.name, details: item.details, price: item.price, imageSrc: item.imageSrc }))
+              // end done by "HDC"
               .join('\n')
           );
         } else {
@@ -97,6 +100,14 @@ export default function Cart() {
       const parsedItems: CartItem[] = [];
 
       drinks.forEach(drinkLine => {
+        // done by "HDC" - parse from the price segment, not the third pipe segment.
+        const parsedCartLine = parseLocalCartLine(drinkLine);
+        if (parsedCartLine) {
+          calculatedTotal += parsedCartLine.price;
+          parsedItems.push(parsedCartLine);
+          return;
+        }
+        // end done by "HDC"
         const parts = drinkLine.split('|');
         if (parts.length >= 3) {
           let name = parts[0].trim();
@@ -150,7 +161,10 @@ export default function Cart() {
     
     // Save to localStorage
     const updatedCartData = updatedItems
-      .map(item => `${item.name}|${item.details}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`)
+      // done by "HDC" - keep saved local cart lines parseable after remove.
+      // .map(item => `${item.name}|${item.details}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`)
+      .map(item => formatLocalCartLine({ name: item.name, details: item.details, price: item.price, imageSrc: item.imageSrc }))
+      // end done by "HDC"
       .join('\n');
     localStorage.setItem("dripTeaCartData", updatedCartData);
     
@@ -166,7 +180,17 @@ export default function Cart() {
       void fetchCartData();
     };
     window.addEventListener('cartUpdated', handleCartUpdated);
-    return () => window.removeEventListener('cartUpdated', handleCartUpdated);
+    // done by "HDC" - keep totals current while the cart is open, including backend changes after checkout/cart edits.
+    window.addEventListener('focus', handleCartUpdated);
+    window.addEventListener('storage', handleCartUpdated);
+    const refreshTimer = window.setInterval(handleCartUpdated, 2500);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdated);
+      window.removeEventListener('focus', handleCartUpdated);
+      window.removeEventListener('storage', handleCartUpdated);
+      window.clearInterval(refreshTimer);
+    };
+    // end done by "HDC"
     // end done by "HDC"
   }, []);
 
