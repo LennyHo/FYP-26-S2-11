@@ -202,11 +202,13 @@ export async function POST(request: Request) {
     const configuredBase = process.env.DRIPTEA_API_BASE?.trim();
     const backendBases = [
       configuredBase,
-      // done by "HDC" - backend route fallbacks follow teammates' active Express port 5000.
+      // done by "HDC" - deployed frontend chat proxy falls back to Render backend instead of localhost.
+      'https://fyp-26-s2-11.onrender.com',
+      // Local development fallbacks, commented out for deployment safety:
       // 'http://127.0.0.1:4000',
       // 'http://localhost:4000',
-      'http://127.0.0.1:5000',
-      'http://localhost:5000',
+      // 'http://127.0.0.1:5000',
+      // 'http://localhost:5000',
       // end done by "HDC"
     ].filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index);
 

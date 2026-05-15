@@ -84,9 +84,10 @@ export type DripTeaOrder = {
 };
 // end done by "HDC"
 
-// done by "HDC" - frontend bridge follows teammates' backend port 5000.
+// done by "HDC" - frontend bridge calls deployed Render backend unless Vercel env overrides it.
 // const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:4000';
-const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:5000';
+// const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:5000';
+const API_BASE = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'https://fyp-26-s2-11.onrender.com').replace(/\/$/, '');
 // end done by "HDC"
 const USER_STORAGE_KEY = 'dripTeaCurrentUser';
 const TOKEN_STORAGE_KEY = 'dripTeaAuthToken';
