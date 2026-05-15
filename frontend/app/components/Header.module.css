@@ -116,7 +116,7 @@
     display: block;
     position: static;
     justify-self: end;
-    z-index: 60;
+    z-index: 140;
   }
 
   .nav {
@@ -145,27 +145,57 @@
   .navOpen {
     display: flex;
     position: absolute;
-    left: 12px;
-    right: 12px;
-    top: 76px;
+    /* center the menu under the header/hamburger to avoid overlapping the logo */
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(360px, 92vw);
+    top: calc(100% + 8px);
     background: rgba(255, 250, 245, 0.98);
-    padding: 12px 18px 14px;
+    padding: 8px 12px;
     border-radius: 12px;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
     align-items: stretch;
-    z-index: 40;
-    box-shadow: 0 10px 30px rgba(2,23,46,0.12);
+    z-index: 220;
+    box-shadow: 0 16px 44px rgba(2,23,46,0.16);
   }
 
   .navOpen .navLink {
-    text-align: center;
+    text-align: left;
     padding: 10px 14px;
     font-size: 1rem;
-    max-height: 72px;
+    max-height: 88px;
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
+    white-space: normal;
+    width: 100%;
+    box-sizing: border-box;
+    color: var(--muted);
+  }
+
+  /* Reduce font size and spacing on narrow devices to avoid truncation */
+  @media (max-width: 420px) {
+    .navOpen .navLink {
+      font-size: 0.92rem;
+      padding: 10px 12px;
+      letter-spacing: 0.02em;
+      white-space: normal;
+      line-height: 1.15;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .navOpen .navLink {
+      font-size: 0.84rem;
+      padding: 8px 10px;
+      letter-spacing: 0.01em;
+    }
+    .navOpen {
+      width: calc(100% - 24px);
+      left: 12px;
+      transform: none;
+    }
   }
 
   .brand {

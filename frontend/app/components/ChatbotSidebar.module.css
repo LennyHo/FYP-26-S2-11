@@ -1199,6 +1199,80 @@
   box-shadow: 0 12px 24px rgba(43,125,163,0.4);
 }
 
+/* Responsive mobile adjustments */
+@media (max-width: 640px) {
+  .chatbotSidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100vw;
+    max-width: 100vw;
+    height: calc(100vh - env(safe-area-inset-top) - 12px);
+    border-radius: 16px 16px 0 0;
+    zoom: 1;
+    box-shadow: 0 -8px 24px rgba(2, 23, 46, 0.12);
+    background: #ffffff;
+  }
+
+  .chatHeader {
+    padding: 10px 12px;
+  }
+
+  .chatWindow {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .welcomeIntroCard {
+    width: 100%;
+    max-width: 92%;
+    margin: 0 auto;
+  }
+
+  .headerMainTitle {
+    font-size: 1.05rem;
+  }
+
+  .subtitle {
+    font-size: 0.88rem;
+  }
+
+  .userInput {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .chatInputArea {
+    padding-bottom: calc(12px + var(--safe-area-inset-bottom, 0px));
+  }
+
+  .sendBtn, .micBtn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .quickPromptsRow {
+    max-height: 64px;
+  }
+
+  .imagePreviewContent {
+    padding: 12px;
+    width: 100%;
+    max-width: 96vw;
+  }
+}
+
+/* Extra small / narrow devices */
+@media (max-width: 380px) {
+  .headerMainTitle { font-size: 1rem; }
+  .subtitle { font-size: 0.82rem; }
+  .chatHeader { padding: 8px 10px; }
+  .chatWindow { padding: 8px 10px; }
+  .userInput { padding: 8px 10px; font-size: 0.92rem; }
+}
+
 .drinkAddToCartBtn:active {
   transform: translateY(-1px);
   opacity: 0.95;

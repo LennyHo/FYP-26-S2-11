@@ -60,8 +60,8 @@
 
 .chatToggleBtn {
   position: fixed;
-  bottom: 40px;
-  right: 40px;
+  bottom: calc(40px + var(--safe-area-inset-bottom, 0px));
+  right: calc(24px + var(--safe-area-inset-right, 0px));
   z-index: 99999;
   width: 65px;
   height: 65px;
@@ -125,7 +125,7 @@
 
 .chatToggleLabel {
   position: absolute;
-  right: 76px;
+  right: calc(76px + var(--safe-area-inset-right, 0px));
   top: 50%;
   transform: translateY(-50%) translateX(6px);
   padding: 8px 12px;
