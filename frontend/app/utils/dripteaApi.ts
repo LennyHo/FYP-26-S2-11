@@ -21,9 +21,9 @@ export type DripTeaCartItem = {
   customization: Record<string, unknown>;
 };
 
-// done by "HDC" - frontend bridge follows backend port 4000.
+// done by "HDC" - frontend bridge follows backend port 5000.
 // const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:5000';
-const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:4000';
+const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:5000';
 // end done by "HDC"
 const USER_STORAGE_KEY = 'dripTeaCurrentUser';
 const TOKEN_STORAGE_KEY = 'dripTeaAuthToken';

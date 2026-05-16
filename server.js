@@ -11,7 +11,7 @@ const { connectMongo } = require("./src/config/mongo");
 const { env } = require("./src/config/env");
 // end done by "HDC"
 
-// done by "HDC" - default backend port is 4000.
+// done by "HDC" - default backend port is 5000.
 // const PORT = Number(process.env.PORT || 5000);
 const PORT = Number(process.env.PORT || 5000);
 // end done by "HDC"
