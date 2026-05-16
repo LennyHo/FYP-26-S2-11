@@ -191,6 +191,7 @@
   gap: 14px;
   background: #f7f7f7;
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 .welcomeIntroCard {
@@ -244,7 +245,8 @@
   line-height: 1.62;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  font-size: 1rem;
+  white-space: pre-line;
+  font-size: 1.08rem;
   animation-duration: 260ms;
   animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
   animation-fill-mode: both;
@@ -330,8 +332,14 @@
   min-width: auto;
   display: flex;
   flex-direction: column;
-  word-break: normal;
+  word-break: break-word;
   overflow-wrap: break-word;
+  white-space: pre-line;
+  font-size: 1.08rem;
+  line-height: 1.6;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-line;
 }
 
 .sourceSection {
@@ -1520,40 +1528,17 @@
 
   .chatWindow {
     padding: 14px;
+    gap: 10px;
   }
 
   .chatInputArea {
     padding: 12px 14px 14px;
-  }
-
-  .quickPromptsRow {
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .quickPromptBtn {
-    padding: 7px 12px;
-    font-size: 0.78rem;
-  }
-
-  .mobileOnly {
-    display: inline-flex;
-  }
-
-  .desktopOnly {
-    display: none;
-  }
-
-  .pendingImageBar {
-    margin: 0 14px 12px;
-  }
-
-  .message {
-    max-width: 96%;
-  }
-
-  .welcomeIntroCard {
-    width: min(100%, 300px);
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid rgba(0,0,0,0.04);
   }
 
   .welcomeIntroImage {
