@@ -1270,16 +1270,22 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
         */}
 
         <div className={styles.composerContainer}>
-          <div className={styles.chatInputRow}>
-            <input
-              type="text"
+          <div className={styles.messageInputOuter}>
+            <textarea
               className={styles.userInput}
               placeholder="Type your message here..."
               value={input}
               onChange={e => setInput(e.target.value)}
               onPaste={handleInputPaste}
-              onKeyPress={e => { if (e.key === 'Enter' && !isLoading) sendMessage(); }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
               disabled={isLoading}
+              rows={1}
+              style={{resize: 'none', overflow: 'hidden'}}
             />
             <button
               type="button"
@@ -1304,16 +1310,15 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
               </svg>
             </button>
           </div>
-
-          {/*
-          <SpeechControls
-            isListening={isListening}
-            isLoading={isLoading}
-            onMicClick={handleMicrophoneClick}
-            onSpeakClick={handleSpeakClick}
-          />
-          */}
         </div>
+        {/**
+        <SpeechControls
+          isListening={isListening}
+          isLoading={isLoading}
+          onMicClick={handleMicrophoneClick}
+          onSpeakClick={handleSpeakClick}
+        />
+        */}
       </div>
 
       {/* Full-screen image preview modal with arrow navigation */}
