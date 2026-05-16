@@ -909,21 +909,21 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     setPendingImages(prev => [...prev, { name: file.name, previewUrl, source }]);
   };
 
-  const handleInputPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-    const items = Array.from(event.clipboardData.items || []);
-    const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
-    if (!imageItem) {
-      return;
-    }
+const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  const items = Array.from(event.clipboardData.items || []);
+  const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
+  if (!imageItem) {
+    return;
+  }
 
-    const file = imageItem.getAsFile();
-    if (!file) {
-      return;
-    }
+  const file = imageItem.getAsFile();
+  if (!file) {
+    return;
+  }
 
-    event.preventDefault();
-    handlePickedImage(file, 'clipboard');
-  };
+  event.preventDefault();
+  handlePickedImage(file, 'clipboard');
+};
 
   const removePendingImage = (index: number) => {
     setPendingImages(prev => {
