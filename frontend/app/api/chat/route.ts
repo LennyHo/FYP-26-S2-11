@@ -232,6 +232,8 @@ export async function POST(request: Request) {
     }
 
     const text = await backendResponse.text();
+    // Debug log: print backend's raw response
+    console.log('[API] Raw backend response:', text);
 
     let payload: unknown;
     try {
