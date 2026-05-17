@@ -814,10 +814,15 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
 
       const data: unknown = await response.json();
       const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-      const replyText = typeof payload.reply === 'string' ? payload.reply : 'Error connecting to backend';
+      const rawReply = typeof payload.reply === 'string' ? payload.reply : 'Error connecting to backend';
+
+      // Clean up excessive line breaks:
+      // Replaces 3 or more consecutive <br> tags with just two for a standard paragraph gap.
+      const sanitizedReply = rawReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
+
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
-        text: replyText,
+        text: sanitizedReply,
         isUser: false,
       };
       setMessages(prev => [...prev, botMsg]);
@@ -1014,9 +1019,19 @@ const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
   const hasUserMessage = messages.some(msg => msg.isUser);
 
   /** Send quick prompt as message when user clicks suggested prompt button */
-  const handleQuickPromptClick = (prompt: string) => {
-    if (isLoading) return;
-    sendMessage(prompt, false);
+  // const handleQuickPromptClick = (prompt: string) => {
+  //   if (isLoading) return;
+  //   sendMessage(prompt, false);
+  // };
+
+  // Add this right above the `return (` statement
+const sanitizeExcessiveBreaks = (htmlString: string) => {
+    if (!htmlString) return '';
+    // 1. Convert all raw newlines/returns into standard <br> tags first
+    let cleaned = htmlString.replace(/\r?\n/g, '<br>');
+    // 2. Nuke 3 or more consecutive <br> tags (even if the AI put spaces or &nbsp; between them)
+    cleaned = cleaned.replace(/(?:<br\s*\/?>[\s]*(?:&nbsp;)*[\s]*){3,}/gi, '<br><br>');
+    return cleaned;
   };
 
   // ===== RENDER =====
@@ -1150,23 +1165,20 @@ const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
               onClick={handleChatClick}
             >
               <div className={styles.bubbleText}>
-                {!msg.isUser && msg.text.includes('<img') && msg.text.includes('startOrder') ? (
-                <DrinkRecCards
-                  msgText={msg.text}
-                  flippedCard={flippedCard}
-                  setFlippedCard={setFlippedCard}
-                />
+              {!msg.isUser && msg.text.includes('<img') && msg.text.includes('startOrder') ? (
+                  <DrinkRecCards
+                    // Wrap msg.text here!
+                    msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, '')}
+                    flippedCard={flippedCard}
+                    setFlippedCard={setFlippedCard}
+                  />
                 ) : (
                   <div
                     dangerouslySetInnerHTML={{
                       __html: msg.isUser
                         ? convertDrinkNamesToLinks(msg.text)
-                        : applyGlossaryTooltips(convertDrinkNamesToLinks(msg.text))
-                        .replace(/<img[^>]*>/gi, '')
-                        .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>')
-                        .replace(/\n\s*\n/g, '<br>')
-                        .replace(/\n/g, '<br>')
-                        .trim()
+                        // Wrap the final output here!
+                        : sanitizeExcessiveBreaks(applyGlossaryTooltips(convertDrinkNamesToLinks(msg.text)).trim())
                     }}
                   />
                 )}
