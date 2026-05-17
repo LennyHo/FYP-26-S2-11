@@ -828,17 +828,17 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       setMessages(prev => [...prev, botMsg]);
 
       // If in voice conversation mode, speak the response using TTS
-      if (shouldSpeak) {
-        // Strip HTML tags for text-to-speech
-        const plainText = replyText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
-        const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i)
-          ? plainText
-          : `Sure — ${plainText}`;
+      // if (shouldSpeak) {
+      //   // Strip HTML tags for text-to-speech
+      //   const plainText = replyText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+      //   const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i)
+      //     ? plainText
+      //     : `Sure — ${plainText}`;
 
-        speakText(humaneIntro, () => {
-          resumeSpeakModeListening();
-        });
-      }
+      //   speakText(humaneIntro, () => {
+      //     resumeSpeakModeListening();
+      //   });
+      // }
 
       // Extract cart data: look for hidden HTML block with order info
       try {
