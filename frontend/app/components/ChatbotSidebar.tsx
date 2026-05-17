@@ -828,22 +828,21 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       setMessages(prev => [...prev, botMsg]);
 
       // If in voice conversation mode, speak the response using TTS
-      // if (shouldSpeak) {
-      //   // Strip HTML tags for text-to-speech
-      //   const plainText = replyText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
-      //   const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i)
-      //     ? plainText
-      //     : `Sure — ${plainText}`;
+      if (shouldSpeak) {
+        // Strip HTML tags for text-to-speech
+          const plainText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();        const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i)
+          ? plainText
+          : `Sure — ${plainText}`;
 
-      //   speakText(humaneIntro, () => {
-      //     resumeSpeakModeListening();
-      //   });
-      // }
+        speakText(humaneIntro, () => {
+          resumeSpeakModeListening();
+        });
+      }
 
       // Extract cart data: look for hidden HTML block with order info
       try {
         const parser = new DOMParser();
-        const doc = parser.parseFromString(replyText, 'text/html');
+        const doc = parser.parseFromString(botMsg.text, 'text/html');
         const hiddenEls = doc.querySelectorAll('.hidden-cart-data');
         if (hiddenEls.length > 0) {
           const latestCartData = hiddenEls[hiddenEls.length - 1].textContent || '';
@@ -852,7 +851,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
         } else {
           // 2) Fallback: parse visible textual bullets when hidden block is missing
           // Normalize reply: treat <br> as newline and strip other tags
-          const normalized = replyText.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+          const normalized = botMsg.text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
           const lines = normalized.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
           const items: string[] = [];
 
