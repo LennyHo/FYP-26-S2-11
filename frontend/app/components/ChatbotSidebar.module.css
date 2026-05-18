@@ -1381,3 +1381,222 @@
     margin-bottom: 10px;
   }
 }
+
+/* Speak overlay styles */
+.speakOverlay {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1400;
+  opacity: 0;
+  animation: speakFadeIn 300ms ease forwards;
+}
+.speakOverlayInner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.speakOverlayText {
+  color: #666666;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.speakOverlayControls {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.speakStopBtn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: #111111;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.16);
+  cursor: pointer;
+}
+.speakStopBtn svg {
+  width: 20px;
+  height: 20px;
+  stroke: #fff;
+}
+.speakStopPill {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  cursor: pointer;
+}
+
+/* 1. Container structure */
+.speakTranscript {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 120px;
+  max-width: 640px;
+  width: 92%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align left by default for AI text */
+  text-align: left;
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+/* 2. User Bubble (Right-aligned, gray bubble) */
+.speakUserMsg {
+  align-self: flex-end;
+  background: #f0f0f0; 
+  color: #333;
+  padding: 10px 16px;
+  border-radius: 20px 20px 4px 20px; /* Chat bubble tail effect */
+  max-width: 85%;
+  font-weight: 500;
+  font-size: 1.05rem;
+  text-align: left;
+}
+
+/* Make Avy's text large, bold, and bubble-free just like Claude */
+.speakBotMsg {
+  align-self: flex-start;
+  background: transparent;
+  color: #111111;
+  padding: 10px 0;
+  max-width: 95%;
+  font-weight: 500;
+  font-size: 1.4rem; /* Large typography */
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  animation: voiceFadeIn 0.5s ease forwards;
+}
+
+/* User Bubble (Sleek, pill-like look) */
+.speakUserMsg {
+  align-self: flex-end;
+  background: #f4f4f4;
+  color: #333333;
+  padding: 12px 18px;
+  border-radius: 24px 24px 4px 24px;
+  max-width: 85%;
+  font-weight: 500;
+  font-size: 1.05rem;
+  opacity: 0;
+  animation: voiceFadeIn 0.3s ease forwards;
+}
+
+/* Make Avy's text large, bold, and bubble-free just like Claude */
+.speakBotMsg {
+  align-self: flex-start;
+  background: transparent;
+  color: #111111;
+  padding: 10px 0;
+  max-width: 95%;
+  font-weight: 500;
+  font-size: 1.4rem; 
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  animation: voiceFadeIn 0.5s ease forwards;
+}
+
+/* Smooth fade-in animation for new messages */
+@keyframes voiceFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 4. Active Listening Text (Right-aligned) */
+.speakLineContainer {
+  width: 100%;
+  text-align: right;
+  padding-right: 8px;
+}
+
+.speakLine {
+  display: inline-block;
+  color: #888;
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+/* 5. Position the dynamic status label at the top */
+.speakOverlayText {
+  position: absolute;
+  top: 40px;
+  color: #888;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.speakLine {
+  display: inline-block;
+  color: #777;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.15rem;
+}
+
+.speakBotMsg {
+  align-self: flex-start;
+  background: #f3f3f3;
+  color: #222;
+  padding: 10px 14px;
+  border-radius: 14px;
+  max-width: 85%;
+}
+
+.speakWordsContainer {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 110px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 14px;
+  pointer-events: none;
+  max-width: 92%;
+}
+
+.speakWord {
+  display: inline-block;
+  color: #888;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.05rem;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: speakWordIn 360ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+@keyframes speakWordIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes speakFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

@@ -7,9 +7,10 @@ interface Props {
   isLoading: boolean;
   onMicClick: () => void;
   onSpeakClick: () => void;
+  isSpeakMode?: boolean;
 }
 
-export default function SpeechControls({ isListening, isLoading, onMicClick, onSpeakClick }: Props) {
+export default function SpeechControls({ isListening, isLoading, onMicClick, onSpeakClick, isSpeakMode }: Props) {
   return (
     <div className={styles.chatActionRow}>
       <button
@@ -38,11 +39,11 @@ export default function SpeechControls({ isListening, isLoading, onMicClick, onS
 
       <button
         type="button"
-        className={`${styles.speakBtn} ${isListening ? styles.speakBtnListening : ''}`}
+        className={`${styles.speakBtn} ${(isSpeakMode || isListening) ? styles.speakBtnListening : ''}`}
         onClick={onSpeakClick}
         disabled={isLoading}
-        title="Speak to Avy"
-        aria-label="Speak to Avy"
+        title={(isSpeakMode || isListening) ? 'Stop' : 'Speak to Avy'}
+        aria-label={(isSpeakMode || isListening) ? 'Stop' : 'Speak to Avy'}
       >
         <span className={styles.speakWave} aria-hidden="true">
           <span className={styles.speakWaveBar}></span>
@@ -51,7 +52,7 @@ export default function SpeechControls({ isListening, isLoading, onMicClick, onS
           <span className={styles.speakWaveBar}></span>
           <span className={styles.speakWaveBar}></span>
         </span>
-        <span className={styles.speakBtnText}>Speak</span>
+        <span className={styles.speakBtnText}>{(isSpeakMode || isListening) ? 'Stop' : 'Speak'}</span>
       </button>
     </div>
   );

@@ -74,6 +74,9 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const [isListening, setIsListening] = useState(false);
   const [isSpeakMode, setIsSpeakMode] = useState(false);
   const [hideQuickPrompts, setHideQuickPrompts] = useState(false);
+  const [overlayTranscript, setOverlayTranscript] = useState('');
+  const [overlayMessages, setOverlayMessages] = useState<Message[]>([]);
+  const [overlayLoading, setOverlayLoading] = useState(false);
   // ===== REFS (NON-STATE VALUES) =====
   // Speech API references
   const recognitionRef = useRef<any>(null);
@@ -254,13 +257,43 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
           }
         }
 
-        if (final) {
-          setInput((prev) => {
-            const newInput = prev ? prev + ' ' + final.trim() : final.trim();
-            console.log('Updated input:', newInput);
-            return newInput;
-          });
+        if (interim) {
+          if (speakModeRef.current || isSpeakMode) {
+            setOverlayTranscript(interim);
+          } else {
+            // show interim in the normal input while not in speak overlay
+            setInput((prev) => {
+              const newInput = prev ? prev + ' ' + interim.trim() : interim.trim();
+              return newInput;
+            });
+          }
         }
+
+          if (final) {
+                    const text = final.trim();
+                    if (speakModeRef.current || isSpeakMode) {
+                      setOverlayTranscript('');
+                      
+                      // CRITICAL FIX: Stop listening immediately!
+                      // This prevents the bot from hearing itself speak and enables the clean turn-based loop.
+                      if (recognitionRef.current && isListeningRef.current) {
+                        try { recognitionRef.current.stop(); } catch (e) {}
+                        setIsListening(false);
+                        isListeningRef.current = false;
+                      }
+
+                      const userMsg: Message = { id: Date.now().toString(), text, isUser: true };
+                      setOverlayMessages(prev => [...prev, userMsg]);
+                      
+                      // Send the phrase to the backend
+                      sendOverlayMessage(text, true);
+                    } else {
+                      setInput((prev) => {
+                        const newInput = prev ? prev + ' ' + text : text;
+                        return newInput;
+                      });
+                    }
+                  }
       };
 
       recognition.onerror = (event: any) => {
@@ -417,6 +450,20 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     }, 120);
   };
 
+  // When speak mode is activated, start recognition after a short delay
+  useEffect(() => {
+    if (!isSpeakMode) return;
+
+    const t = setTimeout(() => {
+      if (!recognitionRef.current) return;
+      if (!isListeningRef.current && !isRecognitionStartingRef.current) {
+        requestRecognitionStart();
+      }
+    }, 220); // allow overlay transition to begin
+
+    return () => clearTimeout(t);
+  }, [isSpeakMode]);
+
   /** Select best available TTS voice with preference for natural/neural voices */
   const pickNarrationVoice = () => {
     if (narrationVoiceRef.current) {
@@ -451,27 +498,46 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   };
 
   /** Text-to-speech using Web Speech API with selected voice, rate, pitch, and volume */
-  const speakText = (text: string, onDone?: () => void) => {
-    const synth = window.speechSynthesis;
-    synth.cancel(); // Cancel any ongoing speech
+// --- NARRATIVE AUDIO HELPER ---
+  // This reads text out loud and then triggers a callback when finished
+  const speakText = (text: string, onEndCallback?: () => void) => {
+    if ('speechSynthesis' in window) {
+      // 1. Stop any currently playing audio
+      window.speechSynthesis.cancel(); 
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    const preferredVoice = pickNarrationVoice();
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-      utterance.lang = preferredVoice.lang;
+      // 2. Clean the text (remove markdown so she doesn't say "asterisk")
+      const cleanText = text.replace(/[*#]/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      
+      // 3. Try to find a friendly female voice
+      const voices = window.speechSynthesis.getVoices();
+      const friendlyVoice = voices.find(v => 
+        v.name.includes('Female') || 
+        v.name.includes('Samantha') || 
+        v.name.includes('Google UK English Female')
+      );
+      if (friendlyVoice) utterance.voice = friendlyVoice;
+      
+      utterance.pitch = 1.1; 
+      utterance.rate = 1.0;  
+
+      // 4. THE CRITICAL PART: When she finishes speaking, run the callback!
+      utterance.onend = () => {
+        if (onEndCallback) onEndCallback();
+      };
+
+      // 5. If the audio engine fails, don't freeze the app—just run the callback anyway
+      utterance.onerror = () => {
+        console.error("Speech synthesis failed.");
+        if (onEndCallback) onEndCallback();
+      };
+
+      // 6. Speak!
+      window.speechSynthesis.speak(utterance);
+    } else {
+      // If the browser doesn't support text-to-speech, just run the callback immediately
+      if (onEndCallback) onEndCallback();
     }
-    utterance.rate = 0.93;
-    utterance.pitch = 0.81;
-    utterance.volume = 0.60;
-    utterance.onend = () => {
-      onDone?.();
-    };
-    utterance.onerror = () => {
-      onDone?.();
-    };
-
-    synth.speak(utterance);
   };
 
   /** Activate speak mode: enters voice conversation where bot responses are read aloud */
@@ -495,7 +561,16 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
    */
   async function sendMessage(text?: string, shouldSpeak: boolean = isSpeakMode) {
     const messageText = text || input.trim();
-    if (!messageText || !conversationId) return;
+    if (!messageText) return;
+
+    // Ensure a conversationId exists; create one as a fallback (prevents silent early return)
+    let convId = conversationId;
+    if (!convId) {
+      convId = createConversationId();
+      try { localStorage.setItem(CONVERSATION_ID_KEY, convId); } catch (e) {}
+      setConversationId(convId);
+      console.warn('[Chat] No conversationId present — created fallback:', convId);
+    }
 
     if (shouldSpeak && recognitionRef.current && isListening) {
       recognitionRef.current.stop();
@@ -790,14 +865,16 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       // Proxy-first behavior: prefer server-side Next.js API route; allow override via NEXT_PUBLIC_DRIPTEA_API_BASE
       const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
       const apiEndpoint = configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat';
+      console.log('[Chat] POST', apiEndpoint, { message: messageText, conversationId: convId });
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: messageText,
-          conversationId: conversationId,
+          conversationId: convId,
         }),
       });
+      console.log('[Chat] Response status', response.status);
 
       // Original client-side fallback (commented out):
       /*
@@ -901,6 +978,69 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       setMessages(prev => [...prev, botMsg]);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  
+
+  // Send a message and render the response inside the speak overlay
+// Send a message and render the response inside the speak overlay
+  async function sendOverlayMessage(text: string, shouldSpeak: boolean = true) {
+    if (!text) return;
+    setOverlayLoading(true);
+
+    // Ensure conversationId exists for overlay messages as well
+    let convId = conversationId;
+    if (!convId) {
+      convId = createConversationId();
+      try { localStorage.setItem(CONVERSATION_ID_KEY, convId); } catch (e) {}
+      setConversationId(convId);
+      console.warn('[Chat][Overlay] No conversationId present — created fallback:', convId);
+    }
+
+    try {
+      const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
+      const apiEndpoint = configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat';
+
+      // SECRET HACK: Tell Gemini to act like a Voice Assistant
+      const voiceModePrompt = `${text}\n\n[SYSTEM NOTE: The user is speaking to you via Voice Mode. Reply in 1 to 2 short, natural, conversational sentences. Do NOT use markdown, bold text, bullet points, or HTML.]`;
+
+      console.log('[Chat][Overlay] POST', apiEndpoint, { message: voiceModePrompt, conversationId: convId });
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: voiceModePrompt, conversationId: convId }),
+      });
+      console.log('[Chat][Overlay] Response status', response.status);
+
+      const data: unknown = await response.json();
+      const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+      const rawReply = typeof payload.reply === 'string' ? payload.reply : 'I am having trouble connecting right now.';
+      const sanitizedReply = rawReply.replace(/(<br\s*\/?>(\s|&nbsp;)*){3,}/gi, '<br><br>');
+
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false };
+      setOverlayMessages(prev => [...prev, botMsg]);
+
+      if (shouldSpeak) {
+        const plainText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+        speakText(plainText, () => {
+          // after speaking, resume listening for continued conversation
+          resumeSpeakModeListening();
+        });
+      }
+    } catch (err) {
+      // CRITICAL FIX: Handle the backend error and speak it out loud to prevent freezing!
+      const errorText = "I'm having trouble connecting to the server. Please check your connection.";
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: errorText, isUser: false };
+      setOverlayMessages(prev => [...prev, botMsg]);
+      
+      if (shouldSpeak) {
+        speakText(errorText, () => {
+          resumeSpeakModeListening();
+        });
+      }
+    } finally {
+      setOverlayLoading(false);
     }
   }
 
@@ -1322,15 +1462,104 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
             </button>
           </div>
         </div>
-        {/**
+        {/*
         <SpeechControls
           isListening={isListening}
           isLoading={isLoading}
           onMicClick={handleMicrophoneClick}
           onSpeakClick={handleSpeakClick}
+          isSpeakMode={isSpeakMode}
         />
         */}
       </div>
+
+
+        {/* Speak mode full-screen overlay */}
+              {isSpeakMode && (
+                <div className={styles.speakOverlay} role="dialog" aria-modal="true">
+                  <div className={styles.speakOverlayInner}>
+                    <div className={styles.speakOverlayText}>
+                        {overlayLoading ? "Avy is thinking..." : isListening ? "Listening..." : "Avy is speaking..."}
+                    </div>
+                  <div className={styles.speakTranscript}>
+                    {overlayMessages.map(msg => (
+                      <div key={msg.id} className={msg.isUser ? styles.speakUserMsg : styles.speakBotMsg}>
+                        <div dangerouslySetInnerHTML={{ __html: msg.isUser ? msg.text : msg.text }} />
+                      </div>
+                    ))}
+
+                    {overlayTranscript && !overlayLoading && (
+                      <div className={styles.speakLineContainer} aria-live="polite">
+                          <span className={styles.speakLine}>{overlayTranscript}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* FIX 2: Only ONE controls wrapper at the bottom */}
+                    <div className={styles.speakOverlayControls}>
+                      <button
+                        type="button"
+                        className={styles.speakStopBtn}
+                        onClick={() => {
+                          if (recognitionRef.current && isListeningRef.current) {
+                            try { recognitionRef.current.stop(); } catch {}
+                          }
+                          setIsSpeakMode(false);
+                          speakModeRef.current = false;
+                          voiceConversationRef.current = false;
+                          setHideQuickPrompts(false);
+
+                          if (overlayMessages.length > 0) {
+                            setMessages(prev => {
+                              const updated = [...prev, ...overlayMessages];
+                              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
+                              return updated;
+                            });
+                          }
+
+                          setOverlayMessages([]);
+                          setOverlayTranscript('');
+                          setOverlayLoading(false);
+                        }}
+                aria-label="Stop"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 19V5" />
+                  <path d="M5 12l7-7 7 7" />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                className={styles.speakStopPill}
+                onClick={() => {
+                  if (recognitionRef.current && isListeningRef.current) {
+                    try { recognitionRef.current.stop(); } catch {}
+                  }
+                  setIsSpeakMode(false);
+                  speakModeRef.current = false;
+                  voiceConversationRef.current = false;
+                  setHideQuickPrompts(false);
+
+                  if (overlayMessages.length > 0) {
+                    setMessages(prev => {
+                      const updated = [...prev, ...overlayMessages];
+                      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
+                      return updated;
+                    });
+                  }
+
+                  setOverlayMessages([]);
+                  setOverlayTranscript('');
+                  setOverlayLoading(false);
+                }}
+              >
+                Stop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Full-screen image preview modal with arrow navigation */}
       {previewIndex !== null && pendingImages[previewIndex] && (
