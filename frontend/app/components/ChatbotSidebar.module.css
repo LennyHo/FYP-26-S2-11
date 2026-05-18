@@ -920,7 +920,7 @@
   border: none;
   border-radius: 22px;
   outline: none;
-  font-size: 1.08rem;
+  font-size: 0.95rem;
   font-family: inherit;
   color: var(--foreground);
   background: transparent;
@@ -932,6 +932,10 @@
   box-sizing: border-box;
 }
 
+.userInput::placeholder {
+  font-size: 0.95rem;
+  color: rgba(31, 43, 51, 0.44);
+}
 .sendBtn {
   width: 44px;
   height: 44px;
