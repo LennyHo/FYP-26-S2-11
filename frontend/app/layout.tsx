@@ -3,6 +3,14 @@ import { Geist, Geist_Mono } from "next/font/google";
 import GlobalLayout from "./components/GlobalLayout"; // 1. Import our custom split-screen layout
 import "./globals.css";
 import styles from "./layout.module.css";
+import type { Viewport } from 'next'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1, // Prevents iOS from zooming in when you tap the input box
+  viewportFit: 'cover', // Required for safe-area insets
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

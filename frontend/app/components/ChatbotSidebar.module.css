@@ -40,6 +40,36 @@
   overflow-x: hidden;
 }
 
+.chatbotWrapper {
+  display: flex;
+  flex-direction: column;
+  /* dvh automatically shrinks when the iOS keyboard opens! */
+  height: 100dvh; 
+  width: 100%;
+  overflow: hidden; 
+  background-color: white;
+}
+
+.chatMessagesArea {
+  /* This forces the message area to take up all remaining space */
+  flex: 1;
+  overflow-y: auto;
+  /* Enables smooth momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+}
+
+.chatInputArea {
+  /* Prevents the input box from being crushed */
+  flex-shrink: 0;
+  padding: 12px 16px;
+  background-color: white;
+  border-top: 1px solid #eaeaea;
+  
+  /* CRITICAL FOR IPHONE: Adds extra padding for the bottom home bar */
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
 .chatHeader {
   padding: 14px 16px 16px;
   background: transparent !important;
