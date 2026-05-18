@@ -18,7 +18,7 @@ import avyLogo from '../../img/avy_logo/Group 2.svg';
 import avyIntroduction from '../../img/avy_logo/avy_introduction.png';
 import menuData from '../../data/menu.json';
 
-// ===== TYPE DEFINITIONS =====
+// ==== TYPE DEFINITIONS ====
 
 /** Metadata for sources cited in bot responses */
 interface MessageSource {
