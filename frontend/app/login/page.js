@@ -63,9 +63,11 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      // done by "HDC" - login bridge follows backend port 5000.
+      // done by "HDC" - login bridge calls deployed Render backend unless Vercel env overrides it.
+      // const response = await fetch('http://localhost:4000/api/auth/login', {
       // const response = await fetch('http://localhost:5000/api/auth/login', {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'https://fyp-26-s2-11.onrender.com').replace(/\/$/, '');
+      const response = await fetch(`${apiBase}/api/auth/login`, {
       // end done by "HDC"
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

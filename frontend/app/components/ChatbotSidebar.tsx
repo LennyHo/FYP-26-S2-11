@@ -862,7 +862,8 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     setIsLoading(true);
 
     try {
-      // Proxy-first behavior: prefer server-side Next.js API route; allow override via NEXT_PUBLIC_DRIPTEA_API_BASE
+      // done by "HDC" - resolved merge by keeping teammate proxy-first chat route and retaining direct 5000 fallback as commented reference.
+      // Proxy-first behavior: prefer server-side Next.js API route; allow override via NEXT_PUBLIC_DRIPTEA_API_BASE.
       const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
       const apiEndpoint = configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat';
       console.log('[Chat] POST', apiEndpoint, { message: messageText, conversationId: convId });
@@ -876,9 +877,10 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       });
       console.log('[Chat] Response status', response.status);
 
-      // Original client-side fallback (commented out):
+      // Original client-side fallback, commented out:
       /*
-      const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:5000';
+      const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'https://fyp-26-s2-11.onrender.com';
+      // const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:5000';
       const response = await fetch(`${apiBase}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -888,6 +890,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
         }),
       });
       */
+      // end done by "HDC"
 
       const data: unknown = await response.json();
       const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
