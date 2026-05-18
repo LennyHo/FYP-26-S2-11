@@ -1354,14 +1354,14 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               <div
                 className={`${styles.welcomeIntroCard} ${hasTypedInput ? styles.welcomeIntroHidden : ''}`}
               >
-                <Image
+                {/* <Image
                   src={avyIntroduction}
                   alt="A warm welcome from Avy"
                   className={styles.welcomeIntroImage}
                   width={273}
                   height={273}
                   priority
-                />
+                /> */}
               </div>
             )}
           </React.Fragment>
