@@ -14,7 +14,7 @@ import {
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
-import avyLogo from '../../img/Avy_logo/Group 2.svg';
+import avyLogo from '../../img/avy_logo/Group 2.svg';
 import avyIntroduction from '../../img/avy_logo/avy_introduction.png';
 import menuData from '../../data/menu.json';
 
