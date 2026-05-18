@@ -1374,6 +1374,7 @@
   }
 }
 
+
 /* Tablet / iPad: ensure the chatbot fills the chatPane (full width when chat is overlayed) */
 @media (min-width: 641px) and (max-width: 1024px) {
   .chatbotSidebar {
