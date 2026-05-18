@@ -14,11 +14,11 @@ import {
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
-import avyLogo from '../../img/Avy_logo/Group 2.svg';
-import avyIntroduction from '../../img/Avy_logo/avy_introduction.svg';
+import avyLogo from '../../img/avy_logo/Group 2.svg';
+import avyIntroduction from '../../img/avy_logo/avy_introduction.png';
 import menuData from '../../data/menu.json';
 
-// ===== TYPE DEFINITIONS =====
+// ==== TYPE DEFINITIONS ====
 
 /** Metadata for sources cited in bot responses */
 interface MessageSource {
@@ -74,6 +74,9 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const [isListening, setIsListening] = useState(false);
   const [isSpeakMode, setIsSpeakMode] = useState(false);
   const [hideQuickPrompts, setHideQuickPrompts] = useState(false);
+  const [overlayTranscript, setOverlayTranscript] = useState('');
+  const [overlayMessages, setOverlayMessages] = useState<Message[]>([]);
+  const [overlayLoading, setOverlayLoading] = useState(false);
   // ===== REFS (NON-STATE VALUES) =====
   // Speech API references
   const recognitionRef = useRef<any>(null);
@@ -254,13 +257,43 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
           }
         }
 
-        if (final) {
-          setInput((prev) => {
-            const newInput = prev ? prev + ' ' + final.trim() : final.trim();
-            console.log('Updated input:', newInput);
-            return newInput;
-          });
+        if (interim) {
+          if (speakModeRef.current || isSpeakMode) {
+            setOverlayTranscript(interim);
+          } else {
+            // show interim in the normal input while not in speak overlay
+            setInput((prev) => {
+              const newInput = prev ? prev + ' ' + interim.trim() : interim.trim();
+              return newInput;
+            });
+          }
         }
+
+          if (final) {
+                    const text = final.trim();
+                    if (speakModeRef.current || isSpeakMode) {
+                      setOverlayTranscript('');
+                      
+                      // CRITICAL FIX: Stop listening immediately!
+                      // This prevents the bot from hearing itself speak and enables the clean turn-based loop.
+                      if (recognitionRef.current && isListeningRef.current) {
+                        try { recognitionRef.current.stop(); } catch (e) {}
+                        setIsListening(false);
+                        isListeningRef.current = false;
+                      }
+
+                      const userMsg: Message = { id: Date.now().toString(), text, isUser: true };
+                      setOverlayMessages(prev => [...prev, userMsg]);
+                      
+                      // Send the phrase to the backend
+                      sendOverlayMessage(text, true);
+                    } else {
+                      setInput((prev) => {
+                        const newInput = prev ? prev + ' ' + text : text;
+                        return newInput;
+                      });
+                    }
+                  }
       };
 
       recognition.onerror = (event: any) => {
@@ -417,6 +450,20 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     }, 120);
   };
 
+  // When speak mode is activated, start recognition after a short delay
+  useEffect(() => {
+    if (!isSpeakMode) return;
+
+    const t = setTimeout(() => {
+      if (!recognitionRef.current) return;
+      if (!isListeningRef.current && !isRecognitionStartingRef.current) {
+        requestRecognitionStart();
+      }
+    }, 220); // allow overlay transition to begin
+
+    return () => clearTimeout(t);
+  }, [isSpeakMode]);
+
   /** Select best available TTS voice with preference for natural/neural voices */
   const pickNarrationVoice = () => {
     if (narrationVoiceRef.current) {
@@ -451,27 +498,46 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   };
 
   /** Text-to-speech using Web Speech API with selected voice, rate, pitch, and volume */
-  const speakText = (text: string, onDone?: () => void) => {
-    const synth = window.speechSynthesis;
-    synth.cancel(); // Cancel any ongoing speech
+// --- NARRATIVE AUDIO HELPER ---
+  // This reads text out loud and then triggers a callback when finished
+  const speakText = (text: string, onEndCallback?: () => void) => {
+    if ('speechSynthesis' in window) {
+      // 1. Stop any currently playing audio
+      window.speechSynthesis.cancel(); 
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    const preferredVoice = pickNarrationVoice();
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-      utterance.lang = preferredVoice.lang;
+      // 2. Clean the text (remove markdown so she doesn't say "asterisk")
+      const cleanText = text.replace(/[*#]/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      
+      // 3. Try to find a friendly female voice
+      const voices = window.speechSynthesis.getVoices();
+      const friendlyVoice = voices.find(v => 
+        v.name.includes('Female') || 
+        v.name.includes('Samantha') || 
+        v.name.includes('Google UK English Female')
+      );
+      if (friendlyVoice) utterance.voice = friendlyVoice;
+      
+      utterance.pitch = 1.1; 
+      utterance.rate = 1.0;  
+
+      // 4. THE CRITICAL PART: When she finishes speaking, run the callback!
+      utterance.onend = () => {
+        if (onEndCallback) onEndCallback();
+      };
+
+      // 5. If the audio engine fails, don't freeze the app—just run the callback anyway
+      utterance.onerror = () => {
+        console.error("Speech synthesis failed.");
+        if (onEndCallback) onEndCallback();
+      };
+
+      // 6. Speak!
+      window.speechSynthesis.speak(utterance);
+    } else {
+      // If the browser doesn't support text-to-speech, just run the callback immediately
+      if (onEndCallback) onEndCallback();
     }
-    utterance.rate = 0.93;
-    utterance.pitch = 0.81;
-    utterance.volume = 0.60;
-    utterance.onend = () => {
-      onDone?.();
-    };
-    utterance.onerror = () => {
-      onDone?.();
-    };
-
-    synth.speak(utterance);
   };
 
   /** Activate speak mode: enters voice conversation where bot responses are read aloud */
@@ -495,7 +561,16 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
    */
   async function sendMessage(text?: string, shouldSpeak: boolean = isSpeakMode) {
     const messageText = text || input.trim();
-    if (!messageText || !conversationId) return;
+    if (!messageText) return;
+
+    // Ensure a conversationId exists; create one as a fallback (prevents silent early return)
+    let convId = conversationId;
+    if (!convId) {
+      convId = createConversationId();
+      try { localStorage.setItem(CONVERSATION_ID_KEY, convId); } catch (e) {}
+      setConversationId(convId);
+      console.warn('[Chat] No conversationId present — created fallback:', convId);
+    }
 
     if (shouldSpeak && recognitionRef.current && isListening) {
       recognitionRef.current.stop();
@@ -791,14 +866,16 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       // Proxy-first behavior: prefer server-side Next.js API route; allow override via NEXT_PUBLIC_DRIPTEA_API_BASE.
       const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
       const apiEndpoint = configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat';
+      console.log('[Chat] POST', apiEndpoint, { message: messageText, conversationId: convId });
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: messageText,
-          conversationId: conversationId,
+          conversationId: convId,
         }),
       });
+      console.log('[Chat] Response status', response.status);
 
       // Original client-side fallback, commented out:
       /*
@@ -817,10 +894,15 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
 
       const data: unknown = await response.json();
       const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-      const replyText = typeof payload.reply === 'string' ? payload.reply : 'Error connecting to backend';
+      const rawReply = typeof payload.reply === 'string' ? payload.reply : 'Error connecting to backend';
+
+      // Clean up excessive line breaks:
+      // Replaces 3 or more consecutive <br> tags with just two for a standard paragraph gap.
+      const sanitizedReply = rawReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
+
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
-        text: replyText,
+        text: sanitizedReply,
         isUser: false,
       };
       setMessages(prev => [...prev, botMsg]);
@@ -828,8 +910,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       // If in voice conversation mode, speak the response using TTS
       if (shouldSpeak) {
         // Strip HTML tags for text-to-speech
-        const plainText = replyText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
-        const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i)
+          const plainText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();        const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i)
           ? plainText
           : `Sure — ${plainText}`;
 
@@ -841,7 +922,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
       // Extract cart data: look for hidden HTML block with order info
       try {
         const parser = new DOMParser();
-        const doc = parser.parseFromString(replyText, 'text/html');
+        const doc = parser.parseFromString(botMsg.text, 'text/html');
         const hiddenEls = doc.querySelectorAll('.hidden-cart-data');
         if (hiddenEls.length > 0) {
           const latestCartData = hiddenEls[hiddenEls.length - 1].textContent || '';
@@ -850,7 +931,7 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
         } else {
           // 2) Fallback: parse visible textual bullets when hidden block is missing
           // Normalize reply: treat <br> as newline and strip other tags
-          const normalized = replyText.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+          const normalized = botMsg.text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
           const lines = normalized.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
           const items: string[] = [];
 
@@ -903,6 +984,69 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     }
   }
 
+  
+
+  // Send a message and render the response inside the speak overlay
+// Send a message and render the response inside the speak overlay
+  async function sendOverlayMessage(text: string, shouldSpeak: boolean = true) {
+    if (!text) return;
+    setOverlayLoading(true);
+
+    // Ensure conversationId exists for overlay messages as well
+    let convId = conversationId;
+    if (!convId) {
+      convId = createConversationId();
+      try { localStorage.setItem(CONVERSATION_ID_KEY, convId); } catch (e) {}
+      setConversationId(convId);
+      console.warn('[Chat][Overlay] No conversationId present — created fallback:', convId);
+    }
+
+    try {
+      const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
+      const apiEndpoint = configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat';
+
+      // SECRET HACK: Tell Gemini to act like a Voice Assistant
+      const voiceModePrompt = `${text}\n\n[SYSTEM NOTE: The user is speaking to you via Voice Mode. Reply in 1 to 2 short, natural, conversational sentences. Do NOT use markdown, bold text, bullet points, or HTML.]`;
+
+      console.log('[Chat][Overlay] POST', apiEndpoint, { message: voiceModePrompt, conversationId: convId });
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: voiceModePrompt, conversationId: convId }),
+      });
+      console.log('[Chat][Overlay] Response status', response.status);
+
+      const data: unknown = await response.json();
+      const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+      const rawReply = typeof payload.reply === 'string' ? payload.reply : 'I am having trouble connecting right now.';
+      const sanitizedReply = rawReply.replace(/(<br\s*\/?>(\s|&nbsp;)*){3,}/gi, '<br><br>');
+
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false };
+      setOverlayMessages(prev => [...prev, botMsg]);
+
+      if (shouldSpeak) {
+        const plainText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+        speakText(plainText, () => {
+          // after speaking, resume listening for continued conversation
+          resumeSpeakModeListening();
+        });
+      }
+    } catch (err) {
+      // CRITICAL FIX: Handle the backend error and speak it out loud to prevent freezing!
+      const errorText = "I'm having trouble connecting to the server. Please check your connection.";
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: errorText, isUser: false };
+      setOverlayMessages(prev => [...prev, botMsg]);
+      
+      if (shouldSpeak) {
+        speakText(errorText, () => {
+          resumeSpeakModeListening();
+        });
+      }
+    } finally {
+      setOverlayLoading(false);
+    }
+  }
+
   const handlePickedImage = (file: File | null, source: 'camera' | 'screenshot' | 'clipboard') => {
     if (!file) {
       return;
@@ -912,21 +1056,21 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     setPendingImages(prev => [...prev, { name: file.name, previewUrl, source }]);
   };
 
-  const handleInputPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
-    const items = Array.from(event.clipboardData.items || []);
-    const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
-    if (!imageItem) {
-      return;
-    }
+const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  const items = Array.from(event.clipboardData.items || []);
+  const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
+  if (!imageItem) {
+    return;
+  }
 
-    const file = imageItem.getAsFile();
-    if (!file) {
-      return;
-    }
+  const file = imageItem.getAsFile();
+  if (!file) {
+    return;
+  }
 
-    event.preventDefault();
-    handlePickedImage(file, 'clipboard');
-  };
+  event.preventDefault();
+  handlePickedImage(file, 'clipboard');
+};
 
   const removePendingImage = (index: number) => {
     setPendingImages(prev => {
@@ -1017,9 +1161,19 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const hasUserMessage = messages.some(msg => msg.isUser);
 
   /** Send quick prompt as message when user clicks suggested prompt button */
-  const handleQuickPromptClick = (prompt: string) => {
-    if (isLoading) return;
-    sendMessage(prompt, false);
+  // const handleQuickPromptClick = (prompt: string) => {
+  //   if (isLoading) return;
+  //   sendMessage(prompt, false);
+  // };
+
+  // Add this right above the `return (` statement
+const sanitizeExcessiveBreaks = (htmlString: string) => {
+    if (!htmlString) return '';
+    // 1. Convert all raw newlines/returns into standard <br> tags first
+    let cleaned = htmlString.replace(/\r?\n/g, '<br>');
+    // 2. Nuke 3 or more consecutive <br> tags (even if the AI put spaces or &nbsp; between them)
+    cleaned = cleaned.replace(/(?:<br\s*\/?>[\s]*(?:&nbsp;)*[\s]*){3,}/gi, '<br><br>');
+    return cleaned;
   };
 
   // ===== RENDER =====
@@ -1153,23 +1307,20 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
               onClick={handleChatClick}
             >
               <div className={styles.bubbleText}>
-                {!msg.isUser && msg.text.includes('<img') && msg.text.includes('startOrder') ? (
-                <DrinkRecCards
-                  msgText={msg.text}
-                  flippedCard={flippedCard}
-                  setFlippedCard={setFlippedCard}
-                />
+              {!msg.isUser && msg.text.includes('<img') && msg.text.includes('startOrder') ? (
+                  <DrinkRecCards
+                    // Wrap msg.text here!
+                    msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, '')}
+                    flippedCard={flippedCard}
+                    setFlippedCard={setFlippedCard}
+                  />
                 ) : (
                   <div
                     dangerouslySetInnerHTML={{
                       __html: msg.isUser
                         ? convertDrinkNamesToLinks(msg.text)
-                        : applyGlossaryTooltips(convertDrinkNamesToLinks(msg.text))
-                        .replace(/<img[^>]*>/gi, '')
-                        .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '<br>')
-                        .replace(/\n\s*\n/g, '<br>')
-                        .replace(/\n/g, '<br>')
-                        .trim()
+                        // Wrap the final output here!
+                        : sanitizeExcessiveBreaks(applyGlossaryTooltips(convertDrinkNamesToLinks(msg.text)).trim())
                     }}
                   />
                 )}
@@ -1207,6 +1358,9 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
                   src={avyIntroduction}
                   alt="A warm welcome from Avy"
                   className={styles.welcomeIntroImage}
+                  width={273}
+                  height={273}
+                  priority
                 />
               </div>
             )}
@@ -1261,7 +1415,6 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
             ))}
           </div>
         )}
-
         {/*
         <QuickPrompts
           prompts={QUICK_PROMPTS}
@@ -1272,52 +1425,150 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
         />
         */}
 
-        <div className={styles.composerContainer}>
-          <div className={styles.chatInputRow}>
-            <input
-              type="text"
+<div className={styles.composerContainer}>
+          <div className={styles.messageInputOuter}>
+            <textarea
               className={styles.userInput}
-              placeholder="Type your message here..."
+              placeholder="Text Avy..."
               value={input}
               onChange={e => setInput(e.target.value)}
               onPaste={handleInputPaste}
-              onKeyPress={e => { if (e.key === 'Enter' && !isLoading) sendMessage(); }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
               disabled={isLoading}
+              rows={1}
+              style={{resize: 'none', overflow: 'hidden'}}
             />
-            <button
-              type="button"
-              className={styles.sendBtn}
-              onClick={() => sendMessage()}
-              disabled={isLoading || !input.trim()}
-              title="Send message"
-              aria-label="Send message"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 19V5" />
-                <path d="M5 12l7-7 7 7" />
-              </svg>
-            </button>
+            
+            {/* Conditional Rendering: Show Send if typing, else show Mic/Speak */}
+            <div className={styles.chatActionRow}>
+              {input.trim() ? (
+                <button
+                  type="button"
+                  className={styles.sendBtn}
+                  onClick={() => sendMessage()}
+                  disabled={isLoading}
+                  title="Send message"
+                  aria-label="Send message"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 19V5" />
+                    <path d="M5 12l7-7 7 7" />
+                  </svg>
+                </button>
+              ) : (
+                <SpeechControls
+                  isListening={isListening}
+                  isLoading={isLoading}
+                  onMicClick={handleMicrophoneClick}
+                  onSpeakClick={handleSpeakClick}
+                  isSpeakMode={isSpeakMode}
+                />
+              )}
+            </div>
           </div>
-
-          {/*
-          <SpeechControls
-            isListening={isListening}
-            isLoading={isLoading}
-            onMicClick={handleMicrophoneClick}
-            onSpeakClick={handleSpeakClick}
-          />
-          */}
         </div>
+        {/*
+        <SpeechControls
+          isListening={isListening}
+          isLoading={isLoading}
+          onMicClick={handleMicrophoneClick}
+          onSpeakClick={handleSpeakClick}
+          isSpeakMode={isSpeakMode}
+        />
+        */}
       </div>
+
+
+        {/* Speak mode full-screen overlay */}
+              {isSpeakMode && (
+                <div className={styles.speakOverlay} role="dialog" aria-modal="true">
+                  <div className={styles.speakOverlayInner}>
+                    <div className={styles.speakOverlayText}>
+                        {overlayLoading ? "Avy is thinking..." : isListening ? "Listening..." : "Avy is speaking..."}
+                    </div>
+                  <div className={styles.speakTranscript}>
+                    {overlayMessages.map(msg => (
+                      <div key={msg.id} className={msg.isUser ? styles.speakUserMsg : styles.speakBotMsg}>
+                        <div dangerouslySetInnerHTML={{ __html: msg.isUser ? msg.text : msg.text }} />
+                      </div>
+                    ))}
+
+                    {overlayTranscript && !overlayLoading && (
+                      <div className={styles.speakLineContainer} aria-live="polite">
+                          <span className={styles.speakLine}>{overlayTranscript}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* FIX 2: Only ONE controls wrapper at the bottom */}
+                    <div className={styles.speakOverlayControls}>
+                      <button
+                      type="button"
+                      className={styles.speakStopPill}
+                      onClick={() => {
+                        if (recognitionRef.current && isListeningRef.current) {
+                          try { recognitionRef.current.stop(); } catch {}
+                        }
+                        setIsSpeakMode(false);
+                        speakModeRef.current = false;
+                        voiceConversationRef.current = false;
+                        setHideQuickPrompts(false);
+
+                          if (overlayMessages.length > 0) {
+                            setMessages(prev => {
+                              const updated = [...prev, ...overlayMessages];
+                              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
+                              return updated;
+                            });
+                          }
+
+                          setOverlayMessages([]);
+                          setOverlayTranscript('');
+                          setOverlayLoading(false);
+                        }}
+                aria-label="Stop"
+              >
+                {/* A classic "Stop" square icon */}
+                <span className={styles.stopSquare}></span>
+                Stop
+              </button>
+
+              <button
+                type="button"
+                className={styles.speakStopPill}
+                onClick={() => {
+                  if (recognitionRef.current && isListeningRef.current) {
+                    try { recognitionRef.current.stop(); } catch {}
+                  }
+                  setIsSpeakMode(false);
+                  speakModeRef.current = false;
+                  voiceConversationRef.current = false;
+                  setHideQuickPrompts(false);
+
+                  if (overlayMessages.length > 0) {
+                    setMessages(prev => {
+                      const updated = [...prev, ...overlayMessages];
+                      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
+                      return updated;
+                    });
+                  }
+
+                  setOverlayMessages([]);
+                  setOverlayTranscript('');
+                  setOverlayLoading(false);
+                }}
+              >
+                Stop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Full-screen image preview modal with arrow navigation */}
       {previewIndex !== null && pendingImages[previewIndex] && (

@@ -204,9 +204,15 @@ export function convertDrinkNamesToLinks(text: string): string {
 
 export function parseDrinkFromHtml(html: string) {
   try {
-    const nameMatch = html.match(/\*\*([^\*]+)\*\*\s*\(\$([^)]+)\)/);
-    const statsMatch = html.match(/Nutri Grade:\s*([A-F])\s*\|\s*Sugar:\s*([^|]+)\s*\|\s*Calories:\s*([^<\n]+)/);
-    const idMatch = html.match(/startOrder\("([^"]+)"\)/);
+    const imageMatch = html.match(/<img[^>]+src=['"]([^'"]+)['"][^>]*>/i);
+    const altMatch = html.match(/<img[^>]+alt=['"]([^'"]+)['"][^>]*>/i);
+    const nameMatch =
+      html.match(/\*\*([^*]+)\*\*\s*\(\$?([^)]+)\)/) ||
+      html.match(/<strong>([^<]+)<\/strong>\s*\(\$?([^)]+)\)/i);
+    const statsMatch = html.match(/Nutri\s*Grade:\s*([A-F])\s*\|\s*Sugar:\s*([^|<\n]+?)g?\s*\|\s*Calories:\s*([^<\n]+?)(?:\s*kcal)?(?:<|$)/i);
+    const idMatch =
+      html.match(/startOrder\((?:\\?["'])([^"')\\]+)(?:\\?["'])\)/i) ||
+      html.match(/data-drink-id=['"]([^'"]+)['"]/i);
 
     if (!nameMatch || !statsMatch || !idMatch) {
       return null;
@@ -214,8 +220,8 @@ export function parseDrinkFromHtml(html: string) {
 
     return {
       id: idMatch[1],
-      name: nameMatch[1].trim(),
-      image: '/testing.webp',
+      name: nameMatch[1]?.trim() || altMatch?.[1]?.trim() || 'Recommended drink',
+      image: imageMatch?.[1] || '/img/bubble_teas/test.jpg',
       price: nameMatch[2].trim(),
       grade: statsMatch[1].trim(),
       sugar: statsMatch[2].trim(),

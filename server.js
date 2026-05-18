@@ -434,11 +434,18 @@ app.post("/chat", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Critical Chat Error:", error.message);
-        res.status(500).json({
+        // Log full error for debugging (stack when available)
+        console.error("Critical Chat Error:", error && error.stack ? error.stack : error);
+
+        // In non-production, return a small debug hint (message only) to help during development.
+        const debugInfo = (typeof env !== 'undefined' && env.nodeEnv !== 'production')
+            ? { debug: String(error && (error.message || error)) }
+            : {};
+
+        res.status(500).json(Object.assign({
             reply: "Kitchen is busy, please try again.",
             system_action: { ui_navigation: "none" }
-        });
+        }, debugInfo));
     }
 });
 
