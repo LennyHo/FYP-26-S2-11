@@ -24,12 +24,15 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/login') ||
     pathname.startsWith('/register');
 
+  // Add a special class to the root for login page to enable full-width CSS
+  // Add a special class to the root for login page or when chatbot is hidden
+  const rootClass = `${styles.globalShell} ${(pathname === '/login' || hideChatbot) ? 'loginPage' : ''}`;
   return (
-    <div className={styles.globalShell}>
-      
+    <div className={rootClass}>
+
       {/* LEFT SIDE: MAIN WEBSITE */}
-      <div 
-        className={`${styles.mainPane} no-scrollbar ${isChatOpen ? styles.mainPaneWithChat : ''}`}
+      <div
+        className={`${styles.mainPane} no-scrollbar ${!hideChatbot && isChatOpen ? styles.mainPaneWithChat : ''} ${hideChatbot ? 'fullWidth' : ''}`}
       >
         {children}
         {!hideFooter && <Footer />}
@@ -37,11 +40,9 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
 
       {/* RIGHT SIDE: CHATBOT */}
       {!hideChatbot && (
-          <div className={`${styles.chatPane} ${isChatOpen ? styles.chatPaneOpen : styles.chatPaneClosed}`}>
-          <ChatbotSidebar 
-            onClose={() => setIsChatOpen(false)} 
-            
-            // 3. WIRE UP THE AI BUTTONS TO YOUR ROUTES!
+        <div className={`${styles.chatPane} ${isChatOpen ? styles.chatPaneOpen : styles.chatPaneClosed}`}>
+          <ChatbotSidebar
+            onClose={() => setIsChatOpen(false)}
             onOpenCart={() => router.push('/cart')}
             onCheckout={() => router.push('/checkout')}
           />
