@@ -15,7 +15,7 @@ import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
 import avyLogo from '../../img/avy_logo/Group 2.svg';
-import avyIntroduction from '../../img/avy_logo/avy_introduction.png';
+import avyIntroduction from '../../img/Avy_logo/avy_introduction.png';
 import menuData from '../../data/menu.json';
 
 // ==== TYPE DEFINITIONS ====
@@ -1354,14 +1354,14 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               <div
                 className={`${styles.welcomeIntroCard} ${hasTypedInput ? styles.welcomeIntroHidden : ''}`}
               >
-                {/* <Image
+                <Image
                   src={avyIntroduction}
                   alt="A warm welcome from Avy"
                   className={styles.welcomeIntroImage}
                   width={273}
                   height={273}
                   priority
-                /> */}
+                />
               </div>
             )}
           </React.Fragment>
