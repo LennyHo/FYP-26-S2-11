@@ -1140,9 +1140,12 @@
 }
 
 .speakBtn {
-  width: 44px;
+  width: auto;
+  min-width: 70px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 22px;
+  padding: 0 16px;
+  
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -1150,10 +1153,7 @@
   background: linear-gradient(135deg, #AB1C6E 0%, #A55EA3 100%);
   border: none;
   cursor: pointer;
-  padding: 0;
   margin: 0;
-  min-width: 44px;
-  min-height: 44px;
   box-shadow: 0 2px 8px rgba(171, 28, 110, 0.12);
   transition: background 0.2s;
 }
@@ -1504,8 +1504,9 @@
   padding: 10px 16px;
   border-radius: 20px 20px 4px 20px; /* Chat bubble tail effect */
   max-width: 85%;
+  font-size: 1rem;
   font-weight: 500;
-  font-size: 1.05rem;
+  font-family: inherit;
   text-align: left;
 }
 
@@ -1516,8 +1517,9 @@
   color: #111111;
   padding: 10px 0;
   max-width: 95%;
+  font-size: 1.1rem; /* Large typography */
   font-weight: 500;
-  font-size: 1.4rem; /* Large typography */
+  font-family: inherit;
   line-height: 1.4;
   letter-spacing: -0.01em;
   opacity: 0;
@@ -1546,7 +1548,7 @@
   padding: 10px 0;
   max-width: 95%;
   font-weight: 500;
-  font-size: 1.4rem; 
+  font-size: 1rem; 
   line-height: 1.4;
   letter-spacing: -0.01em;
   opacity: 0;
@@ -1633,4 +1635,167 @@
 @keyframes speakFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Ensure the action row flows properly inside the pill */
+.chatActionRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: 4px;
+}
+
+/* ======= CLAUDE-STYLE MOBILE & TABLET REDESIGN ======= */
+@media (max-width: 1024px) {
+  /* 1. Hide the center header elements */
+  .titleWrap,
+  .headerContent {
+    display: none !important;
+  }
+
+  /* 2. Make the header float transparently */
+  .chatHeader {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 16px;
+    z-index: 100;
+    pointer-events: none; /* Lets you tap the chat behind the empty space */
+  }
+
+  .headerTop {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  /* 3. Re-enable clicks for the top buttons and make them clean circles */
+  .backBtn,
+  .restartBtn {
+    pointer-events: auto;
+    background: #ffffff !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+    color: #333 !important;
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  /* Push messages down so they don't hide under the floating top buttons */
+  .chatWindow {
+    padding-top: 70px !important; 
+  }
+
+  /* 4. Float the bottom input area and remove the solid white background */
+  .chatInputArea {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: transparent !important; 
+    border-top: none !important;
+    padding: 10px 16px calc(16px + env(safe-area-inset-bottom)) !important;
+    pointer-events: none;
+  }
+
+  .composerContainer {
+    pointer-events: auto;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 5. Style the input wrapper into the Claude "Pill" */
+  .messageInputOuter {
+    background: #f4f4f4 !important; 
+    border-radius: 30px !important;
+    padding: 6px 6px 6px 18px !important;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.1) !important;
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .userInput {
+    padding: 10px 0 !important;
+    font-size: 1.05rem !important;
+  }
+
+  /* 6. Match the circular Voice/Mic buttons inside the pill */
+  .micBtn, .speakBtn, .sendBtn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    background: #ffffff !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+    margin: 0 !important;
+  }
+
+  /* Use dark icons to match the Claude aesthetic */
+  .micBtn svg, .speakBtn svg, .sendBtn svg {
+    stroke: #111 !important; 
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Hide the word "Speak" so it's a clean circle with just the sound wave */
+  .speakBtnText {
+    display: none !important; 
+  }
+  
+  .speakWave {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+  }
+  
+  /* Create the little sound wave bars for the Speak icon */
+  .speakWaveBar {
+    width: 2.5px;
+    height: 10px;
+    background-color: #111;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .speakWaveBar:nth-child(2) { height: 16px; }
+  .speakWaveBar:nth-child(3) { height: 10px; }
+  .speakWaveBar:nth-child(4) { height: 14px; }
+  .speakWaveBar:nth-child(5) { display: none; }
+}
+
+/* ======= IOS KEYBOARD & IN-APP BROWSER FIX ======= */
+@media (max-width: 1024px) {
+  /* 1. Lock the main sidebar to the exact dynamic viewport */
+  .chatbotSidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: 100dvh !important; /* 'dvh' shrinks dynamically when the keyboard opens */
+    display: flex !important;
+    flex-direction: column !important;
+    border-radius: 0 !important;
+  }
+
+  /* 2. Force the chat history to fill the remaining space flexibly */
+  .chatWindow {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 20px !important;
+  }
+
+  /* 3. Sit the input exactly at the bottom of the flex column (NO fixed positioning) */
+  .chatInputArea {
+    position: relative !important;
+    bottom: auto !important;
+    flex: 0 0 auto !important; /* Prevents the keyboard from crushing the input box */
+    background: transparent !important;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom)) !important;
+    border-top: none !important;
+  }
 }

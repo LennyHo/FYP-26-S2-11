@@ -1420,11 +1420,11 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
         />
         */}
 
-        <div className={styles.composerContainer}>
+<div className={styles.composerContainer}>
           <div className={styles.messageInputOuter}>
             <textarea
               className={styles.userInput}
-              placeholder="Type your message here..."
+              placeholder="Text Avy..."
               value={input}
               onChange={e => setInput(e.target.value)}
               onPaste={handleInputPaste}
@@ -1438,28 +1438,33 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               rows={1}
               style={{resize: 'none', overflow: 'hidden'}}
             />
-            <button
-              type="button"
-              className={styles.sendBtn}
-              onClick={() => sendMessage()}
-              disabled={isLoading || !input.trim()}
-              title="Send message"
-              aria-label="Send message"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 19V5" />
-                <path d="M5 12l7-7 7 7" />
-              </svg>
-            </button>
+            
+            {/* Conditional Rendering: Show Send if typing, else show Mic/Speak */}
+            <div className={styles.chatActionRow}>
+              {input.trim() ? (
+                <button
+                  type="button"
+                  className={styles.sendBtn}
+                  onClick={() => sendMessage()}
+                  disabled={isLoading}
+                  title="Send message"
+                  aria-label="Send message"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 19V5" />
+                    <path d="M5 12l7-7 7 7" />
+                  </svg>
+                </button>
+              ) : (
+                <SpeechControls
+                  isListening={isListening}
+                  isLoading={isLoading}
+                  onMicClick={handleMicrophoneClick}
+                  onSpeakClick={handleSpeakClick}
+                  isSpeakMode={isSpeakMode}
+                />
+              )}
+            </div>
           </div>
         </div>
         {/*
@@ -1498,16 +1503,16 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                     {/* FIX 2: Only ONE controls wrapper at the bottom */}
                     <div className={styles.speakOverlayControls}>
                       <button
-                        type="button"
-                        className={styles.speakStopBtn}
-                        onClick={() => {
-                          if (recognitionRef.current && isListeningRef.current) {
-                            try { recognitionRef.current.stop(); } catch {}
-                          }
-                          setIsSpeakMode(false);
-                          speakModeRef.current = false;
-                          voiceConversationRef.current = false;
-                          setHideQuickPrompts(false);
+                      type="button"
+                      className={styles.speakStopPill}
+                      onClick={() => {
+                        if (recognitionRef.current && isListeningRef.current) {
+                          try { recognitionRef.current.stop(); } catch {}
+                        }
+                        setIsSpeakMode(false);
+                        speakModeRef.current = false;
+                        voiceConversationRef.current = false;
+                        setHideQuickPrompts(false);
 
                           if (overlayMessages.length > 0) {
                             setMessages(prev => {
@@ -1523,10 +1528,9 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                         }}
                 aria-label="Stop"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 19V5" />
-                  <path d="M5 12l7-7 7 7" />
-                </svg>
+                {/* A classic "Stop" square icon */}
+                <span className={styles.stopSquare}></span>
+                Stop
               </button>
 
               <button

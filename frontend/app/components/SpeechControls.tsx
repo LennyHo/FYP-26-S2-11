@@ -12,8 +12,9 @@ interface Props {
 
 export default function SpeechControls({ isListening, isLoading, onMicClick, onSpeakClick, isSpeakMode }: Props) {
   return (
-    <div className={styles.chatActionRow}>
-      <button
+    <div className={styles.chatActionRow} aria-hidden="true">
+      {/*Microphone and Speak buttons commented out per request*/}
+      {/* <button
         type="button"
         className={`${styles.micBtn} ${isListening ? styles.listening : ''}`}
         onClick={onMicClick}
@@ -53,7 +54,7 @@ export default function SpeechControls({ isListening, isLoading, onMicClick, onS
           <span className={styles.speakWaveBar}></span>
         </span>
         <span className={styles.speakBtnText}>{(isSpeakMode || isListening) ? 'Stop' : 'Speak'}</span>
-      </button>
+      </button> */}
     </div>
   );
 }
