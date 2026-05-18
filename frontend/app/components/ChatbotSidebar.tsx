@@ -1412,7 +1412,6 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
             ))}
           </div>
         )}
-
         {/*
         <QuickPrompts
           prompts={QUICK_PROMPTS}
