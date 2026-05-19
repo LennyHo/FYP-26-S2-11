@@ -9,7 +9,11 @@ export default function OurStory() {
       {/* Hero Section */}
       <section className={styles.heroSection}>
         <div className={styles.heroContent}>
-          <h1 className={styles.mainTitle}>DRIPTEA</h1>
+          <img
+            src="/main_logo.svg"
+            alt="DripTea Logo"
+            style={{ maxWidth: '340px', width: '60vw', height: 'auto', margin: '0 auto', display: 'block' }}
+          />
           <h2 className={styles.subtitle}>OVER THE YEARS</h2>
           <div className={styles.decorativeLine}></div>
         </div>

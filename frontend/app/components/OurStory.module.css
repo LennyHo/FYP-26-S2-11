@@ -8,32 +8,36 @@
 /* Hero Section */
 .heroSection {
   position: relative;
-  height: 600px;
+  height: 60vh;
+  min-height: 420px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   margin-bottom: 60px;
 }
-
 .heroBackground {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    linear-gradient(135deg, rgba(139, 101, 71, 0.1) 0%, rgba(139, 101, 71, 0) 40%),
-    linear-gradient(45deg, rgba(169, 137, 80, 0.1) 0%, rgba(169, 137, 80, 0) 40%),
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 2px,
-      rgba(139, 101, 71, 0.03) 2px,
-      rgba(139, 101, 71, 0.03) 4px
-    );
+  background-image: url('/driptea_background.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
   z-index: 0;
 }
+/* Overlay for readability */
+.heroBackground::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(245,241,237,0.25), rgba(245,241,237,0.18));
+  pointer-events: none;
+}
+
+
 
 .heroContent {
   position: relative;
@@ -218,10 +222,48 @@
 .storyText {
   font-size: 16px;
   line-height: 1.8;
-  color: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .heroSection {
+    height: 50vh;
+    min-height: 360px;
+  }
+
+  .mainTitle {
+    font-size: 72px;
+    letter-spacing: 8px;
+  }
+
+  .subtitle {
+    font-size: 28px;
+    letter-spacing: 6px;
+  }
+}
+
+@media (max-width: 600px) {
+  .heroSection {
+    height: 45vh;
+    min-height: 300px;
+    margin-bottom: 40px;
+  }
+
+  .mainTitle {
+    font-size: 40px;
+    letter-spacing: 4px;
+  }
+
+  .subtitle {
+    font-size: 18px;
+    letter-spacing: 3px;
+    margin: 12px 0 16px 0;
+  }
+}
+  /* color: #555;
   margin: 0 0 20px 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+} */
 
 .storyIcon {
   font-size: 48px;
