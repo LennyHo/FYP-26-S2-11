@@ -14,8 +14,8 @@ import {
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
-import avyLogo from '../../img/avy_logo/Group 2.svg';
-import avyIntroduction from '../../img/avy_logo/avy_introduction.png';
+import avyLogo from '../../img/Group 2.svg';
+import avyIntroduction from '../../img/avy_introduction.png';
 import menuData from '../../data/menu.json';
 
 // ==== TYPE DEFINITIONS ====
