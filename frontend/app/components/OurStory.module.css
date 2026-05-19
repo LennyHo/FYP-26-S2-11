@@ -1,8 +1,8 @@
 .container {
   width: 100%;
   overflow-x: hidden;
-  background: linear-gradient(to bottom, #f5f1ed, #faf8f5, #f5f1ed);
   min-height: 100vh;
+  background-color: #F9EACF;
 }
 
 /* Hero Section */
@@ -97,14 +97,8 @@
 }
 
 .timeline::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 3px;
-  height: 100%;
-  background: linear-gradient(to bottom, #a98950, #c9b8a8, #d4c4b8);
-  top: 0;
+  /* removed vertical timeline line per design request */
+  display: none;
 }
 
 .storyItem {
@@ -161,37 +155,68 @@
   padding-top: 15px;
 }
 
-.markerDot {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: white;
-  border: 4px solid #a98950;
+.storyMarker {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 15px;
   position: relative;
-  z-index: 10;
-  box-shadow: 0 0 0 3px rgba(169, 137, 80, 0.1);
-  transition: all 0.3s ease;
 }
 
-.storyItem:hover .markerDot {
-  background: #a98950;
-  box-shadow: 0 0 0 8px rgba(169, 137, 80, 0.2);
+.markerImg {
+  width: 384px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 12px;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  z-index: 10;
+  /* disable transitions and hover transforms for accessibility */
+  transition: none !important;
+  max-width: 92%;
 }
 
 .markerLine {
-  position: absolute;
-  width: 30px;
-  height: 2px;
-  background: #a98950;
-  z-index: 9;
+  /* hide horizontal connector lines (removed brown lines) */
+  display: none;
 }
 
 .storyItem:nth-child(odd) .markerLine {
-  right: -30px;
+  right: -220px;
 }
 
 .storyItem:nth-child(even) .markerLine {
-  left: -30px;
+  left: -220px;
+}
+
+/* Responsive sizing for marker images */
+@media (max-width: 1200px) {
+  .markerImg {
+    width: 328px;
+    height: auto;
+  }
+  .storyItem:nth-child(odd) .markerLine {
+    right: -160px;
+  }
+  .storyItem:nth-child(even) .markerLine {
+    left: -160px;
+  }
+}
+
+@media (max-width: 768px) {
+  .markerImg {
+    width: 328px;
+    height: auto;
+    max-height: 220px;
+  }
+  .storyItem:nth-child(odd) .markerLine {
+    right: -120px;
+  }
+  .storyItem:nth-child(even) .markerLine {
+    left: -120px;
+  }
 }
 
 .storyContent {
@@ -265,16 +290,11 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 } */
 
-.storyIcon {
-  font-size: 48px;
-  margin-top: 15px;
-  opacity: 0.7;
-  transition: all 0.3s ease;
-}
+/* removed emoji icon styling; emoji elements removed from markup */
 
-.storyItem:hover .storyIcon {
-  opacity: 1;
-  transform: scale(1.2);
+/* ensure all images/videos have no hover transition */
+:global(img), :global(video) {
+  transition: none !important;
 }
 
 /* Values Section */

@@ -26,7 +26,7 @@ export default function OurStory() {
           {/* Story Item 1 */}
           <div className={styles.storyItem}>
             <div className={styles.storyMarker}>
-              <div className={styles.markerDot}></div>
+              <img src="/driptea_ourstory_1.png" alt="Our story 2015" className={styles.markerImg} />
               <div className={styles.markerLine}></div>
             </div>
             <div className={styles.storyContent}>
@@ -35,14 +35,14 @@ export default function OurStory() {
               <p className={styles.storyText}>
                 It all started with a simple passion for authentic bubble tea. Our founder, inspired by traditional tea cultures, decided to bring a unique twist to modern beverage crafting. In a small shop in the heart of the city, DripTea was born.
               </p>
-              <div className={styles.storyIcon}>🍵</div>
+              
             </div>
           </div>
 
           {/* Story Item 2 */}
           <div className={styles.storyItem}>
             <div className={styles.storyMarker}>
-              <div className={styles.markerDot}></div>
+              <img src="/driptea_ourstory_2.png" alt="Our story 2017" className={styles.markerImg} />
               <div className={styles.markerLine}></div>
             </div>
             <div className={styles.storyContent}>
@@ -51,14 +51,14 @@ export default function OurStory() {
               <p className={styles.storyText}>
                 With our signature drinks gaining popularity, we expanded to three locations. We committed ourselves to using only the finest ingredients, carefully sourced from sustainable suppliers around the world.
               </p>
-              <div className={styles.storyIcon}>🌱</div>
+              
             </div>
           </div>
 
           {/* Story Item 3 */}
           <div className={styles.storyItem}>
             <div className={styles.storyMarker}>
-              <div className={styles.markerDot}></div>
+              <img src="/driptea_ourstory_3.png" alt="Our story 2019" className={styles.markerImg} />
               <div className={styles.markerLine}></div>
             </div>
             <div className={styles.storyContent}>
@@ -67,14 +67,14 @@ export default function OurStory() {
               <p className={styles.storyText}>
                 We launched our eco-friendly initiative, replacing single-use plastics with sustainable packaging. Our research team developed proprietary blends that revolutionized the taste of bubble tea while maintaining our commitment to environmental responsibility.
               </p>
-              <div className={styles.storyIcon}>♻️</div>
+              
             </div>
           </div>
 
           {/* Story Item 4 */}
           <div className={styles.storyItem}>
             <div className={styles.storyMarker}>
-              <div className={styles.markerDot}></div>
+              <img src="/driptea_ourstory_4.png" alt="Our story 2021" className={styles.markerImg} />
               <div className={styles.markerLine}></div>
             </div>
             <div className={styles.storyContent}>
@@ -83,22 +83,22 @@ export default function OurStory() {
               <p className={styles.storyText}>
                 We embraced technology by launching our online ordering platform and AI-powered chatbot assistant. This allowed us to serve customers more efficiently while maintaining the personal touch that defines the DripTea experience.
               </p>
-              <div className={styles.storyIcon}>🤖</div>
+              
             </div>
           </div>
 
           {/* Story Item 5 */}
           <div className={styles.storyItem}>
             <div className={styles.storyMarker}>
-              <div className={styles.markerDot}></div>
+              <img src="/driptea_ourstory_5.png" alt="Our story 2026" className={styles.markerImg} />
             </div>
             <div className={styles.storyContent}>
               <h3 className={styles.year}>2026</h3>
               <h4 className={styles.storyTitle}>Today & Tomorrow</h4>
               <p className={styles.storyText}>
-                With over 50 locations worldwide and millions of satisfied customers, DripTea continues to innovate. Our vision remains unchanged: to craft exceptional beverages that bring joy to every cup, while respecting our planet and communities.
+                With over 35 locations worldwide, DripTea continues to innovate with more efficencies with Avy. Our vision remains unchanged: to craft exceptional beverages that bring joy to every cup, while respecting our planet and communities.
               </p>
-              <div className={styles.storyIcon}>🌍</div>
+              
             </div>
           </div>
         </div>
