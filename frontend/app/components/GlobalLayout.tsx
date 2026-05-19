@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useSearchParams } from 'next/navigation'; // <-- 1. Add this import
 import { usePathname, useRouter } from 'next/navigation'; // 1. IMPORT ROUTER
 import ChatbotSidebar from './ChatbotSidebar';
 import Footer from './Footer';
@@ -10,6 +11,15 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
   const [isChatOpen, setIsChatOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter(); // 2. INITIALIZE ROUTER
+  const searchParams = useSearchParams();
+
+  React.useEffect(() => {
+    // If the URL has ?avy=open, instantly open the sidebar!
+    if (searchParams.get('avy') === 'open') {
+      setIsChatOpen(true); 
+    }
+  }, [searchParams]);
+
   const hideChatbot =
     pathname.startsWith('/user-admin') ||
     pathname.startsWith('/store-staff') ||
