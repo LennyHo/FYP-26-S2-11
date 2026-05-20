@@ -61,6 +61,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
       {!hideChatbot && (
         <div className={`${styles.chatPane} ${isChatOpen ? styles.chatPaneOpen : styles.chatPaneClosed}`}>
           <ChatbotSidebar
+            isOpen={isChatOpen}
             onClose={() => setIsChatOpen(false)}
             onOpenCart={() => router.push('/cart')}
             onCheckout={() => router.push('/checkout')}

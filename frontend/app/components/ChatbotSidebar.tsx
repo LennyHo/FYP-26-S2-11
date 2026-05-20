@@ -15,7 +15,6 @@ import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
 import avyLogo from '../../img/Group 2.svg';
-import avyIntroduction from '../../img/avy_introduction.png';
 import menuData from '../../data/menu.json';
 
 // ==== TYPE DEFINITIONS ====
@@ -38,6 +37,7 @@ interface Message {
 }
 
 interface ChatbotSidebarProps {
+  isOpen?: boolean;
   onClose?: () => void;
   onOpenCart?: () => void;
   onCheckout?: () => void;
@@ -46,6 +46,27 @@ interface ChatbotSidebarProps {
 // ===== CONSTANTS =====
 const STORAGE_KEY = "driptea_chatbot_messages";
 const CONVERSATION_ID_KEY = "driptea_chatbot_conversation_id";
+const WELCOME_GREETINGS = [
+  'Hello, how are you?',
+  "What's the vibe for today?",
+  'What are you in the mood for today?',
+  'What sounds good today?',
+  'How can I help your tea mood?',
+  'Ready for something refreshing?',
+  'What are we sipping today?',
+  'Need a drink idea?',
+  'Craving something sweet or light?',
+  'What can Avy help with today?',
+  'Tell me your mood today.',
+  'Let us find your perfect drink.',
+  'What kind of tea day is it?',
+  'Feeling fruity, milky, or cozy?',
+];
+
+const getRandomGreeting = () => {
+  const index = Math.floor(Math.random() * WELCOME_GREETINGS.length);
+  return WELCOME_GREETINGS[index];
+};
 
 /** List of trusted health/news sources for filtering reliable information */
 const TRUSTED_SOURCE_HOSTS = [
@@ -59,7 +80,7 @@ const TRUSTED_SOURCE_HOSTS = [
   'straitstimes.com',
 ];
 
-export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: ChatbotSidebarProps) {
+export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout }: ChatbotSidebarProps) {
   // ===== STATE MANAGEMENT =====
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
@@ -77,6 +98,8 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
   const [overlayTranscript, setOverlayTranscript] = useState('');
   const [overlayMessages, setOverlayMessages] = useState<Message[]>([]);
   const [overlayLoading, setOverlayLoading] = useState(false);
+  const [welcomeGreeting, setWelcomeGreeting] = useState(WELCOME_GREETINGS[0]);
+  const [welcomeAnimationKey, setWelcomeAnimationKey] = useState(0);
   // ===== REFS (NON-STATE VALUES) =====
   // Speech API references
   const recognitionRef = useRef<any>(null);
@@ -97,9 +120,15 @@ export default function ChatbotSidebar({ onClose, onOpenCart, onCheckout }: Chat
     sugar?: string;
   } | null>(null);
   const router = useRouter();
-  const hasTypedInput = input.trim().length > 0;
 
   // ===== EFFECTS =====
+
+  useEffect(() => {
+    if (isOpen) {
+      setWelcomeGreeting(getRandomGreeting());
+      setWelcomeAnimationKey(key => key + 1);
+    }
+  }, [isOpen]);
 
   /** Keyboard navigation for image preview (Arrow keys to navigate, Escape to close) */
   useEffect(() => {
@@ -1084,6 +1113,8 @@ const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
 
   function restartConversation() {
     const newConversationId = createConversationId();
+    setWelcomeGreeting(getRandomGreeting());
+    setWelcomeAnimationKey(key => key + 1);
     const greetingMsg: Message = {
       id: Date.now().toString(),
       text: 'Hello! I\'m Avy, your DripTea companion. How can I help you today?',
@@ -1351,17 +1382,8 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
             </div>
 
             {isInitialized && !hasUserMessage && index === 0 && !msg.isUser && (
-              <div
-                className={`${styles.welcomeIntroCard} ${hasTypedInput ? styles.welcomeIntroHidden : ''}`}
-              >
-                <Image
-                  src={avyIntroduction}
-                  alt="A warm welcome from Avy"
-                  className={styles.welcomeIntroImage}
-                  width={273}
-                  height={273}
-                  priority
-                />
+              <div className={styles.welcomeIntroCard}>
+                <p key={welcomeAnimationKey} className={styles.welcomeGreeting}>{welcomeGreeting}</p>
               </div>
             )}
           </React.Fragment>

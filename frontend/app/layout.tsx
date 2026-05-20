@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       {/* 2. Added margin: 0 and padding: 0 so the split-screen completely fills the browser */}
-      <body style={{ margin: 0, padding: 0 }}>
+      <body style={{ margin: 0, padding: 0 }} suppressHydrationWarning>
         
         {/* 3. Wrap everything in the GlobalLayout so the AI chatbot is available on EVERY page! */}
         <GlobalLayout>
