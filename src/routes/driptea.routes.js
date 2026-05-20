@@ -3,21 +3,22 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
-const { ObjectId } = require("mongodb");
+const { Types } = require("mongoose");
 const { connectMongo, getDb } = require("../config/mongo");
+const {
+  COLLECTIONS,
+  User,
+  MenuItem,
+  CartItem,
+  Order,
+  OrderItem,
+  Payment,
+  ChatbotSession,
+} = require("../models/driptea.models");
 
 const router = express.Router();
 let preparationPromise = null;
-
-const COLLECTIONS = [
-  "users",
-  "menu_items",
-  "orders",
-  "order_items",
-  "cart_items",
-  "payments",
-  "chatbot_sessions",
-];
+const DRIPTEA_MODELS = [User, MenuItem, Order, OrderItem, CartItem, Payment, ChatbotSession];
 
 const seedUsers = [
   {
@@ -45,11 +46,11 @@ function normalizeEmail(email) {
 }
 
 function toObjectId(value) {
-  if (!ObjectId.isValid(String(value || ""))) {
+  if (!Types.ObjectId.isValid(String(value || ""))) {
     return null;
   }
 
-  return new ObjectId(String(value));
+  return new Types.ObjectId(String(value));
 }
 
 function createPasswordRecord(password) {
@@ -128,34 +129,26 @@ function loadSeedMenuItems() {
   });
 }
 
-async function ensureDripTeaCollections(db) {
-  const existingCollections = await db.listCollections({}, { nameOnly: true }).toArray();
-  const existingNames = new Set(existingCollections.map((collection) => collection.name));
-
-  for (const collectionName of COLLECTIONS) {
-    if (!existingNames.has(collectionName)) {
-      await db.createCollection(collectionName);
+async function ensureModelCollection(model) {
+  try {
+    await model.createCollection();
+  } catch (error) {
+    if (error.code !== 48 && error.codeName !== "NamespaceExists") {
+      throw error;
     }
   }
+}
 
-  await Promise.all([
-    db.collection("users").createIndex({ email: 1 }, { unique: true }),
-    db.collection("users").createIndex({ role: 1, status: 1 }),
-    db.collection("menu_items").createIndex({ itemId: 1 }, { unique: true }),
-    db.collection("menu_items").createIndex({ category: 1, status: 1 }),
-    db.collection("orders").createIndex({ userId: 1, status: 1 }),
-    db.collection("order_items").createIndex({ orderId: 1 }),
-    db.collection("cart_items").createIndex({ userId: 1, createdAt: 1 }),
-    db.collection("payments").createIndex({ orderId: 1 }),
-    db.collection("chatbot_sessions").createIndex({ userId: 1, updatedAt: -1 }),
-  ]);
+async function ensureDripTeaCollections() {
+  await Promise.all(DRIPTEA_MODELS.map((model) => ensureModelCollection(model)));
+  await Promise.all(DRIPTEA_MODELS.map((model) => model.createIndexes()));
 
   for (const seedUser of seedUsers) {
     const email = normalizeEmail(seedUser.email);
-    const existingUser = await db.collection("users").findOne({ email });
+    const existingUser = await User.findOne({ email }).lean();
 
     if (!existingUser) {
-      await db.collection("users").insertOne({
+      await User.create({
         fullName: seedUser.fullName,
         email,
         role: seedUser.role,
@@ -169,15 +162,12 @@ async function ensureDripTeaCollections(db) {
 
   const seedMenuItems = loadSeedMenuItems();
   for (const item of seedMenuItems) {
-    await db.collection("menu_items").updateOne(
+    await MenuItem.updateOne(
       { itemId: item.itemId },
       {
-        $setOnInsert: {
-          createdAt: new Date(),
-        },
         $set: item,
       },
-      { upsert: true }
+      { upsert: true, runValidators: true }
     );
   }
 }
@@ -192,7 +182,7 @@ async function getPreparedDb() {
   }
 
   if (!preparationPromise) {
-    preparationPromise = ensureDripTeaCollections(db);
+    preparationPromise = ensureDripTeaCollections();
   }
 
   await preparationPromise;
@@ -258,12 +248,16 @@ router.get("/health/mongo", async (_req, res, next) => {
 
 router.post("/mongo/setup", async (_req, res, next) => {
   try {
-    const db = await getPreparedDb();
     const counts = {};
+    await getPreparedDb();
 
-    for (const collectionName of COLLECTIONS) {
-      counts[collectionName] = await db.collection(collectionName).countDocuments();
-    }
+    counts.users = await User.countDocuments();
+    counts.menu_items = await MenuItem.countDocuments();
+    counts.orders = await Order.countDocuments();
+    counts.order_items = await OrderItem.countDocuments();
+    counts.cart_items = await CartItem.countDocuments();
+    counts.payments = await Payment.countDocuments();
+    counts.chatbot_sessions = await ChatbotSession.countDocuments();
 
     res.status(201).json({
       ok: true,
@@ -277,7 +271,7 @@ router.post("/mongo/setup", async (_req, res, next) => {
 
 router.post("/auth/register", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
+    await getPreparedDb();
     const fullName = String(req.body?.fullName || "").trim();
     const email = normalizeEmail(req.body?.email);
     const password = String(req.body?.password || "");
@@ -289,7 +283,7 @@ router.post("/auth/register", async (req, res, next) => {
       });
     }
 
-    const existingUser = await db.collection("users").findOne({ email });
+    const existingUser = await User.findOne({ email }).lean();
     if (existingUser) {
       return res.status(409).json({
         ok: false,
@@ -297,17 +291,13 @@ router.post("/auth/register", async (req, res, next) => {
       });
     }
 
-    const result = await db.collection("users").insertOne({
+    const user = await User.create({
       fullName,
       email,
       role: "customer",
       status: "active",
       ...createPasswordRecord(password),
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
-
-    const user = await db.collection("users").findOne({ _id: result.insertedId });
 
     return res.status(201).json({
       ok: true,
@@ -321,10 +311,10 @@ router.post("/auth/register", async (req, res, next) => {
 
 router.post("/auth/login", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
+    await getPreparedDb();
     const email = normalizeEmail(req.body?.email);
     const password = String(req.body?.password || "");
-    const user = await db.collection("users").findOne({ email });
+    const user = await User.findOne({ email }).lean();
 
     if (!user || !verifyPassword(password, user)) {
       return res.status(401).json({
@@ -352,10 +342,10 @@ router.post("/auth/login", async (req, res, next) => {
 
 router.get("/menu-items", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
+    await getPreparedDb();
     const status = String(req.query.status || "active");
     const query = status === "all" ? {} : { status };
-    const items = await db.collection("menu_items").find(query).sort({ category: 1, itemId: 1 }).toArray();
+    const items = await MenuItem.find(query).sort({ category: 1, itemId: 1 }).lean();
 
     res.json({
       ok: true,
@@ -380,14 +370,14 @@ router.get("/menu-items", async (req, res, next) => {
 
 router.get("/cart-items", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
+    await getPreparedDb();
     const userId = toObjectId(req.query.userId);
 
     if (!userId) {
       return res.status(400).json({ ok: false, message: "A valid userId is required." });
     }
 
-    const items = await db.collection("cart_items").find({ userId }).sort({ createdAt: 1 }).toArray();
+    const items = await CartItem.find({ userId }).sort({ createdAt: 1 }).lean();
 
     return res.json({
       ok: true,
@@ -400,18 +390,18 @@ router.get("/cart-items", async (req, res, next) => {
 
 router.post("/cart-items", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
+    await getPreparedDb();
     const userId = toObjectId(req.body?.userId);
     const quantity = Math.max(1, Number(req.body?.quantity || 1));
     const menuItemId = String(req.body?.menuItemId || "").trim();
     const menuItem = menuItemId
-      ? await db.collection("menu_items").findOne({
+      ? await MenuItem.findOne({
           $or: [
             { itemId: menuItemId },
-            ...(ObjectId.isValid(menuItemId) ? [{ _id: new ObjectId(menuItemId) }] : []),
+            ...(Types.ObjectId.isValid(menuItemId) ? [{ _id: new Types.ObjectId(menuItemId) }] : []),
           ],
           status: "active",
-        })
+        }).lean()
       : null;
 
     if (!userId) {
@@ -438,11 +428,11 @@ router.post("/cart-items", async (req, res, next) => {
       updatedAt: new Date(),
     };
 
-    const result = await db.collection("cart_items").insertOne(cartItem);
+    const result = await CartItem.create(cartItem);
 
     return res.status(201).json({
       ok: true,
-      data: toPublicCartItem({ ...cartItem, _id: result.insertedId }),
+      data: toPublicCartItem(result),
     });
   } catch (error) {
     next(error);
@@ -451,14 +441,14 @@ router.post("/cart-items", async (req, res, next) => {
 
 router.delete("/cart-items/:id", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
+    await getPreparedDb();
     const cartItemId = toObjectId(req.params.id);
 
     if (!cartItemId) {
       return res.status(400).json({ ok: false, message: "A valid cart item id is required." });
     }
 
-    await db.collection("cart_items").deleteOne({ _id: cartItemId });
+    await CartItem.deleteOne({ _id: cartItemId });
 
     return res.json({
       ok: true,
@@ -472,16 +462,16 @@ router.delete("/cart-items/:id", async (req, res, next) => {
 // done by "HDC" - staff dashboard order queue reads real orders from MongoDB.
 router.get("/orders", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
+    await getPreparedDb();
     const status = String(req.query.status || "all").trim().toLowerCase();
     const query = status === "all" ? {} : { status };
-    const orders = await db.collection("orders").find(query).sort({ createdAt: -1 }).limit(100).toArray();
+    const orders = await Order.find(query).sort({ createdAt: -1 }).limit(100).lean();
     const orderIds = orders.map((order) => order._id);
-    const userIds = [...new Set(orders.map((order) => String(order.userId)))].map((id) => new ObjectId(id));
+    const userIds = [...new Set(orders.map((order) => String(order.userId)))].map((id) => new Types.ObjectId(id));
     const [users, orderItems, payments] = await Promise.all([
-      userIds.length > 0 ? db.collection("users").find({ _id: { $in: userIds } }).toArray() : [],
-      orderIds.length > 0 ? db.collection("order_items").find({ orderId: { $in: orderIds } }).toArray() : [],
-      orderIds.length > 0 ? db.collection("payments").find({ orderId: { $in: orderIds } }).toArray() : [],
+      userIds.length > 0 ? User.find({ _id: { $in: userIds } }).lean() : [],
+      orderIds.length > 0 ? OrderItem.find({ orderId: { $in: orderIds } }).lean() : [],
+      orderIds.length > 0 ? Payment.find({ orderId: { $in: orderIds } }).lean() : [],
     ]);
     const usersById = new Map(users.map((user) => [String(user._id), user]));
     const paymentsByOrderId = new Map(payments.map((payment) => [String(payment.orderId), payment]));
@@ -510,7 +500,7 @@ router.get("/orders", async (req, res, next) => {
 
 router.patch("/orders/:id/status", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
+    await getPreparedDb();
     const orderId = toObjectId(req.params.id);
     const status = String(req.body?.status || "").trim().toLowerCase();
     const allowedStatuses = new Set(["pending", "preparing", "ready", "completed"]);
@@ -522,12 +512,18 @@ router.patch("/orders/:id/status", async (req, res, next) => {
       });
     }
 
-    await db.collection("orders").updateOne(
-      { _id: orderId },
-      { $set: { status, updatedAt: new Date() } }
-    );
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId,
+      { $set: { status } },
+      { new: true, runValidators: true }
+    ).lean();
 
-    const updatedOrder = await db.collection("orders").findOne({ _id: orderId });
+    if (!updatedOrder) {
+      return res.status(404).json({
+        ok: false,
+        message: "Order not found.",
+      });
+    }
 
     return res.json({
       ok: true,
@@ -544,7 +540,7 @@ router.patch("/orders/:id/status", async (req, res, next) => {
 
 router.post("/checkout", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
+    await getPreparedDb();
     const userId = toObjectId(req.body?.userId);
     const paymentMethod = String(req.body?.paymentMethod || "fake_card").trim();
 
@@ -552,26 +548,23 @@ router.post("/checkout", async (req, res, next) => {
       return res.status(400).json({ ok: false, message: "A valid userId is required." });
     }
 
-    const cartItems = await db.collection("cart_items").find({ userId }).sort({ createdAt: 1 }).toArray();
+    const cartItems = await CartItem.find({ userId }).sort({ createdAt: 1 }).lean();
     if (cartItems.length === 0) {
       return res.status(400).json({ ok: false, message: "Your cart is empty." });
     }
 
-    const now = new Date();
     const totalAmount = cartItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
-    const orderResult = await db.collection("orders").insertOne({
+    const order = await Order.create({
       userId,
       orderNo: `DT-${Date.now().toString(36).toUpperCase()}`,
       orderType: "manual",
       status: "pending",
       totalAmount,
       currency: "SGD",
-      createdAt: now,
-      updatedAt: now,
     });
 
     const orderItems = cartItems.map((item) => ({
-      orderId: orderResult.insertedId,
+      orderId: order._id,
       userId,
       menuItemId: item.menuItemId || null,
       menuItemCode: item.menuItemCode || null,
@@ -582,34 +575,32 @@ router.post("/checkout", async (req, res, next) => {
       unitPrice: item.unitPrice,
       lineTotal: item.lineTotal,
       customization: item.customization || {},
-      createdAt: now,
     }));
 
-    await db.collection("order_items").insertMany(orderItems);
+    await OrderItem.insertMany(orderItems);
 
-    const paymentResult = await db.collection("payments").insertOne({
-      orderId: orderResult.insertedId,
+    const payment = await Payment.create({
+      orderId: order._id,
       userId,
       method: paymentMethod,
       status: "paid",
       amount: totalAmount,
       currency: "SGD",
       transactionRef: `FAKE-${crypto.randomBytes(6).toString("hex").toUpperCase()}`,
-      createdAt: now,
     });
 
-    await db.collection("cart_items").deleteMany({ userId });
+    await CartItem.deleteMany({ userId });
 
     return res.status(201).json({
       ok: true,
       order: {
-        id: String(orderResult.insertedId),
+        id: String(order._id),
         status: "pending",
         totalAmount,
         orderType: "manual",
       },
       payment: {
-        id: String(paymentResult.insertedId),
+        id: String(payment._id),
         status: "paid",
         method: paymentMethod,
       },

@@ -1,8 +1,8 @@
-const { MongoClient } = require("mongodb");
+const mongoose = require("mongoose");
 const { env } = require("./env");
 
-let client;
 let database;
+let connectionPromise;
 
 async function connectMongo() {
   if (!env.mongodbUri) {
@@ -14,14 +14,21 @@ async function connectMongo() {
     return database;
   }
 
-  // done by "HDC" - fail faster when MongoDB is not reachable so UI requests do not hang.
-  // client = new MongoClient(env.mongodbUri);
-  client = new MongoClient(env.mongodbUri, { serverSelectionTimeoutMS: 5000 });
-  // end done by "HDC"
-  await client.connect();
-  database = client.db(env.mongodbDbName);
+  if (!connectionPromise) {
+    connectionPromise = mongoose.connect(env.mongodbUri, {
+      dbName: env.mongodbDbName,
+      serverSelectionTimeoutMS: 5000,
+    }).catch((error) => {
+      connectionPromise = null;
+      throw error;
+    });
+  }
 
-  console.log(`Connected to MongoDB database "${env.mongodbDbName}".`);
+  await connectionPromise;
+
+  database = mongoose.connection.db;
+
+  console.log(`Connected to MongoDB database "${env.mongodbDbName}" using Mongoose.`);
 
   return database;
 }
@@ -31,13 +38,13 @@ function getDb() {
 }
 
 async function closeMongo() {
-  if (!client) {
+  if (mongoose.connection.readyState === 0) {
     return;
   }
 
-  await client.close();
-  client = null;
+  await mongoose.disconnect();
   database = null;
+  connectionPromise = null;
 }
 
 module.exports = {
