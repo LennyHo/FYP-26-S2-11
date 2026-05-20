@@ -11,6 +11,7 @@ import {
   convertDrinkNamesToLinks,
   applyGlossaryTooltips,
 } from '../utils/chatHelpers';
+// import ImageUploadButton from './ImageUploadButton';
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
@@ -590,6 +591,67 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
    */
   async function sendMessage(text?: string, shouldSpeak: boolean = isSpeakMode) {
     const messageText = text || input.trim();
+    // If there is a pending image, send it instead of text
+    if (pendingImages.length > 0) {
+      const img = pendingImages[0];
+      try {
+        setIsLoading(true);
+        // Fetch the image as blob and convert to base64
+        const response = await fetch(img.previewUrl);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => {
+            const result = reader.result;
+            if (typeof result === 'string') resolve(result.split(',')[1]);
+            else reject(new Error('Failed to read image'));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        // Add user message with image preview
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: `<img src="${img.previewUrl}" alt="uploaded image" style="max-width:120px;max-height:120px;border-radius:8px;" />`,
+          isUser: true,
+        }]);
+        setPendingImages([]);
+        setInput('');
+        // Send to backend
+        let convId = conversationId;
+        if (!convId) {
+          convId = createConversationId();
+          try { localStorage.setItem(CONVERSATION_ID_KEY, convId); } catch (e) {}
+          setConversationId(convId);
+        }
+        const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:5000';
+        const res = await fetch(`${apiBase}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: messageText || 'Describe this drink',
+            image: base64,
+            conversationId: convId,
+          }),
+        });
+        const data = await res.json();
+        const replyText = typeof data?.reply === 'string' ? data.reply : 'Error connecting to backend';
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          text: replyText,
+          isUser: false,
+        }]);
+      } catch (err) {
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          text: 'Error sending image.',
+          isUser: false,
+        }]);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
     if (!messageText) return;
 
     // Ensure a conversationId exists; create one as a fallback (prevents silent early return)
@@ -1449,42 +1511,17 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
 
 <div className={styles.composerContainer}>
           <div className={styles.messageInputOuter}>
-            {/* Plus button for image upload */}
-            <div className={styles.plusBtnWrap}>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{ display: 'none' }}
-                id="chatbot-image-input"
-                onChange={e => {
-                  const files = e.target.files;
-                  if (files && files[0]) {
-                    const file = files[0];
-                    const previewUrl = URL.createObjectURL(file);
-                    setPendingImages(prev => [...prev, { name: file.name, previewUrl, source: 'camera' }]);
-                  }
-                  // Reset input so same file can be picked again
-                  e.target.value = '';
-                }}
-              />
-              <button
-                type="button"
-                className={styles.plusBtn}
-                aria-label="Upload or take a photo"
-                title="Upload or take a photo"
-                onClick={() => {
-                  const input = document.getElementById('chatbot-image-input');
-                  if (input) (input as HTMLInputElement).click();
-                }}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="16" />
-                  <line x1="8" y1="12" x2="16" y2="12" />
-                </svg>
-              </button>
-            </div>
+            {/*
+            // Old inline image upload UI moved to ImageUploadButton component
+            <div className={styles.plusBtnWrap}> ... </div>
+            */}
+            {/* <ImageUploadButton
+              onImagePicked={(file, source) => {
+                const previewUrl = URL.createObjectURL(file);
+                setPendingImages(prev => [...prev, { name: file.name, previewUrl, source }]);
+              }}
+              disabled={isLoading}
+            /> */}
             <textarea
               className={styles.userInput}
               placeholder="Text Avy..."
