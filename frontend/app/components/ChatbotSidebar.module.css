@@ -1,3 +1,38 @@
+.plusBtnWrap {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.plusBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #A55EA3 0%, #AB1C6E 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-right: 4px;
+  box-shadow: 0 2px 8px rgba(171, 28, 110, 0.12);
+  cursor: pointer;
+  transition: background 0.2s;
+  order: 1;
+}
+
+.plusBtn svg {
+  width: 22px;
+  height: 22px;
+  stroke: #fff;
+  stroke-width: 2.2;
+  fill: none;
+}
+
+.plusBtn:active:not(:disabled) {
+  transform: scale(0.95);
+}
 .drinkFlipCardImgWrap {
   display: flex;
   justify-content: center;

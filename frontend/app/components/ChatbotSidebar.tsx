@@ -1449,6 +1449,42 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
 
 <div className={styles.composerContainer}>
           <div className={styles.messageInputOuter}>
+            {/* Plus button for image upload */}
+            <div className={styles.plusBtnWrap}>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: 'none' }}
+                id="chatbot-image-input"
+                onChange={e => {
+                  const files = e.target.files;
+                  if (files && files[0]) {
+                    const file = files[0];
+                    const previewUrl = URL.createObjectURL(file);
+                    setPendingImages(prev => [...prev, { name: file.name, previewUrl, source: 'camera' }]);
+                  }
+                  // Reset input so same file can be picked again
+                  e.target.value = '';
+                }}
+              />
+              <button
+                type="button"
+                className={styles.plusBtn}
+                aria-label="Upload or take a photo"
+                title="Upload or take a photo"
+                onClick={() => {
+                  const input = document.getElementById('chatbot-image-input');
+                  if (input) (input as HTMLInputElement).click();
+                }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+              </button>
+            </div>
             <textarea
               className={styles.userInput}
               placeholder="Text Avy..."
@@ -1465,7 +1501,6 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               rows={1}
               style={{resize: 'none', overflow: 'hidden'}}
             />
-            
             {/* Conditional Rendering: Show Send if typing, else show Mic/Speak */}
             <div className={styles.chatActionRow}>
               {input.trim() ? (
