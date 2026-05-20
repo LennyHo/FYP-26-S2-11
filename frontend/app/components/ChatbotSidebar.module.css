@@ -1,3 +1,38 @@
+.plusBtnWrap {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.plusBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #A55EA3 0%, #AB1C6E 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-right: 4px;
+  box-shadow: 0 2px 8px rgba(171, 28, 110, 0.12);
+  cursor: pointer;
+  transition: background 0.2s;
+  order: 1;
+}
+
+.plusBtn svg {
+  width: 22px;
+  height: 22px;
+  stroke: #fff;
+  stroke-width: 2.2;
+  fill: none;
+}
+
+.plusBtn:active:not(:disabled) {
+  transform: scale(0.95);
+}
 .drinkFlipCardImgWrap {
   display: flex;
   justify-content: center;
@@ -23,12 +58,13 @@
 }
 
 .chatbotSidebar {
+  --avy-chat-gradient: linear-gradient(180deg, #F7F7F7 0%, #efddea 45%, #fff7f7 100%);
   position: absolute;
   inset: 0;
   width: 100%;
   max-width: min(420px, 100vw);
   zoom: 0.97;
-  background: transparent;
+  background: var(--avy-chat-gradient);
   display: flex;
   flex-direction: column;
   box-shadow: -4px 0 16px rgba(2, 23, 46, 0.12);
@@ -244,7 +280,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: #f7f7f7;
+  background: var(--avy-chat-gradient);
   scroll-behavior: smooth;
   overflow-x: hidden;
 }
@@ -252,31 +288,46 @@
 .welcomeIntroCard {
   width: min(100%, 340px);
   align-self: center;
-  border-radius: 14px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(130px, 28vw, 210px);
+  padding: 20px 18px;
   background: transparent;
-  max-height: 260px;
+  max-height: 240px;
   opacity: 1;
   transform: translateY(0);
   transition: opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease;
+  text-align: center;
 }
 
-.welcomeIntroHidden {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-10px) scale(0.98);
+.welcomeGreeting {
   margin: 0;
-  pointer-events: none;
+  color: #7f246f;
+  font-size: 1.32rem;
+  line-height: 1.22;
+  font-weight: 500;
+  letter-spacing: 0;
+  max-width: 16ch;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72),
+    0 8px 22px rgba(74, 24, 66, 0.22);
+  animation: welcomeGreetingIn 260ms ease-out both;
+  will-change: opacity, transform, filter;
 }
 
-.welcomeIntroImage {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: clamp(180px, 34vw, 260px);
-  object-fit: contain;
-  object-position: center;
-  border-radius: 14px;
+@keyframes welcomeGreetingIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
 }
 
 .chatWindow::-webkit-scrollbar {
@@ -1004,6 +1055,11 @@
     margin: 0 auto;
   }
 
+  .welcomeGreeting {
+    font-size: 1.48rem;
+    max-width: 15ch;
+  }
+
   .headerMainTitle {
     font-size: 1.05rem;
   }
@@ -1037,6 +1093,19 @@
   }
 }
 
+@media (max-width: 430px) {
+  .welcomeIntroCard {
+    max-width: 94%;
+    min-height: 138px;
+    padding: 18px 12px;
+  }
+
+  .welcomeGreeting {
+    font-size: 1.56rem;
+    max-width: 14ch;
+  }
+}
+
 /* Extra small / narrow devices */
 @media (max-width: 380px) {
   .headerMainTitle { font-size: 1rem; }
@@ -1044,6 +1113,7 @@
   .chatHeader { padding: 8px 10px; }
   .chatWindow { padding: 8px 10px; }
   .userInput { padding: 8px 10px; font-size: 0.92rem; }
+  .welcomeGreeting { font-size: 1.62rem; max-width: 14ch; }
 }
 
 .drinkAddToCartBtn:active {
@@ -1369,8 +1439,8 @@
     box-sizing: border-box;
   }
 
-  .welcomeIntroImage {
-    max-height: clamp(160px, 44vw, 220px);
+  .welcomeIntroCard {
+    min-height: clamp(120px, 36vw, 180px);
   }
 }
 
@@ -1384,7 +1454,7 @@
     max-width: 100%;
     border-radius: 0;
     box-shadow: none;
-    background: transparent;
+    background: var(--avy-chat-gradient);
   }
 
   .chatHeader {
@@ -1394,7 +1464,7 @@
   .chatWindow {
     padding: 18px;
     padding-bottom: 86px; /* make room for input area */
-    background: #f7f7f7;
+    background: var(--avy-chat-gradient);
   }
 
   .chatInputArea {
@@ -1407,9 +1477,8 @@
     border-top: 1px solid rgba(0,0,0,0.04);
   }
 
-  .welcomeIntroImage {
-    max-height: clamp(200px, 30vw, 320px);
-    object-fit: contain;
+  .welcomeIntroCard {
+    min-height: clamp(150px, 24vw, 240px);
   }
 
   .quickPromptsRow {
@@ -1780,6 +1849,7 @@
     display: flex !important;
     flex-direction: column !important;
     border-radius: 0 !important;
+    background: var(--avy-chat-gradient) !important;
   }
 
   /* 2. Force the chat history to fill the remaining space flexibly */
@@ -1788,6 +1858,7 @@
     overflow-y: auto !important;
     margin-bottom: 0 !important;
     padding-bottom: 20px !important;
+    background: var(--avy-chat-gradient) !important;
   }
 
   /* 3. Sit the input exactly at the bottom of the flex column (NO fixed positioning) */

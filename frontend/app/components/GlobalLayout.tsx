@@ -1,15 +1,29 @@
 "use client";
 
-import React, { useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation'; // 1. IMPORT ROUTER
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import ChatbotSidebar from './ChatbotSidebar';
 import Footer from './Footer';
 import styles from '../layout.module.css';
+
+// --- 1. TINY HELPER COMPONENT ---
+function AvyQueryListener({ onOpen }: { onOpen: () => void }) {
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    if (searchParams.get('avy') === 'open') {
+      onOpen();
+    }
+  }, [searchParams, onOpen]);
+
+  return null; // This component is invisible!
+}
 
 export default function GlobalLayout({ children }: { children: React.ReactNode }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter(); // 2. INITIALIZE ROUTER
+
   const hideChatbot =
     pathname.startsWith('/user-admin') ||
     pathname.startsWith('/store-staff') ||
@@ -24,11 +38,16 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/login') ||
     pathname.startsWith('/register');
 
-  // Add a special class to the root for login page to enable full-width CSS
-  // Add a special class to the root for login page or when chatbot is hidden
   const rootClass = `${styles.globalShell} ${(pathname === '/login' || hideChatbot) ? 'loginPage' : ''}`;
+  
   return (
     <div className={rootClass}>
+      
+      {/* 👇 2. ADD THE SUSPENSE LISTENER HERE 👇 */}
+      <Suspense fallback={null}>
+        <AvyQueryListener onOpen={() => setIsChatOpen(true)} />
+      </Suspense>
+      {/* 👆 -------------------------------- 👆 */}
 
       {/* LEFT SIDE: MAIN WEBSITE */}
       <div
@@ -42,6 +61,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
       {!hideChatbot && (
         <div className={`${styles.chatPane} ${isChatOpen ? styles.chatPaneOpen : styles.chatPaneClosed}`}>
           <ChatbotSidebar
+            isOpen={isChatOpen}
             onClose={() => setIsChatOpen(false)}
             onOpenCart={() => router.push('/cart')}
             onCheckout={() => router.push('/checkout')}
