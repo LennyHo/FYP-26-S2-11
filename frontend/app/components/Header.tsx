@@ -134,7 +134,7 @@ export default function Header() {
 
         <Link href="/buy-driptea" className={styles.navLink} onClick={() => setMenuOpen(false)}>BUY DRIPTEA</Link>
         <Link href="/our-story" className={styles.navLink} onClick={() => setMenuOpen(false)}>OUR STORY</Link>
-        <Link href="/global-stores" className={styles.navLink} onClick={() => setMenuOpen(false)}>GLOBAL STORES</Link>
+        {/* <Link href="/global-stores" className={styles.navLink} onClick={() => setMenuOpen(false)}>GLOBAL STORES</Link> */}
       </nav>
       
       {/* Make the brand clickable to return to the home page */}
@@ -150,9 +150,7 @@ export default function Header() {
       </div>
       
       <div className={styles.actions}>
-        <Link href="/contact" className={styles.navLink} style={{ fontWeight: 600 }}>
-          CONTACT
-        </Link>
+        {/* <Link href="/contact" className={styles.navLink}>CONTACT</Link> */}
         {currentUser || isStaffDashboard ? (
           <button className={styles.loginLink} onClick={handleLogout}>
             Log out
