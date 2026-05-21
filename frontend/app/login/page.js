@@ -91,7 +91,7 @@ export default function LoginPage() {
       } else if (payload.user.role === 'store_staff') {
         router.push('/store-staff-dashboard');
       } else {
-        router.push('/buy-driptea');
+        router.push('/'); // Redirect customer to landing page
       }
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : 'Login failed.');

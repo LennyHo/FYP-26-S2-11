@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 import Link from 'next/link';
@@ -121,7 +121,7 @@ export default function Header() {
   };
   // end done by "HDC"
 
-  return (
+return (
     <header className={styles.header}>
       <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`} role="navigation" aria-label="Primary">
         <button
@@ -152,25 +152,67 @@ export default function Header() {
       <div className={styles.actions}>
         {/* <Link href="/contact" className={styles.navLink}>CONTACT</Link> */}
         {currentUser || isStaffDashboard ? (
-          <button className={styles.loginLink} onClick={handleLogout}>
-            Log out
-          </button>
+          <ProfileDropdown onLogout={handleLogout} />
         ) : (
           <Link href="/login" className={styles.loginLink}>Log in</Link>
         )}
-        {/* Upgraded Cart to be a clickable button with dynamic data */}
-        <button 
-          className={styles.cartButton}
-          onClick={() => router.push('/cart')}
-        >
-          <span className={styles.cart}>🛒</span>
+        
+        {/* RESTORED CART BUTTON */}
+        <button className={styles.cartBtn} onClick={() => router.push('/cart')}>
+          Cart
           {cartCount > 0 && (
-            <span className={styles.cartSummary}>
+            <span>
               {cartCount} Items (S$ {cartTotal.toFixed(2)})
             </span>
           )}
         </button>
       </div>
     </header>
+  );
+}
+
+// Profile dropdown component for better click usability
+function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  function handleMenuItemClick(action: () => void) {
+    setOpen(false);
+    action();
+  }
+
+  return (
+    <div className={styles.profileMenuWrapper} ref={menuRef}>
+      <button
+        className={styles.profilePicBtn}
+        tabIndex={0}
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <img src="/user.png" alt="Profile" className={styles.profilePic} />
+      </button>
+      {open && (
+        <div className={styles.profileDropdown}>
+          <Link href="/profile" className={styles.profileDropdownItem} onClick={() => setOpen(false)}>
+            Settings
+          </Link>
+          <button className={styles.profileDropdownItem} onClick={() => handleMenuItemClick(onLogout)}>
+            Log out
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
