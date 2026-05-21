@@ -150,6 +150,9 @@ export default function Header() {
       </div>
       
       <div className={styles.actions}>
+        <Link href="/contact" className={styles.navLink} style={{ fontWeight: 600 }}>
+          CONTACT
+        </Link>
         {currentUser || isStaffDashboard ? (
           <button className={styles.loginLink} onClick={handleLogout}>
             Log out
@@ -157,7 +160,6 @@ export default function Header() {
         ) : (
           <Link href="/login" className={styles.loginLink}>Log in</Link>
         )}
-        
         {/* Upgraded Cart to be a clickable button with dynamic data */}
         <button 
           className={styles.cartButton}

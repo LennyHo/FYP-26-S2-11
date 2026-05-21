@@ -45,6 +45,9 @@ export default function StaffHeader() {
         </nav>
 
         <div className={styles.actions}>
+          <Link href="/contact" className={styles.navLink}>
+            CONTACT
+          </Link>
           <button 
             className={styles.logoutBtn}
             onClick={() => router.push('/login')}

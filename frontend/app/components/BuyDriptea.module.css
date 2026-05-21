@@ -137,13 +137,30 @@
   justify-content: center;
 }
 
+
 .imageCard {
   position: relative;
-  width: min(100%, 440px);
-  padding: 16px;
-  border-radius: 30px;
-  background: linear-gradient(180deg, rgba(59, 39, 26, 0.98), rgba(120, 76, 42, 0.92));
-  box-shadow: 0 26px 50px rgba(59, 39, 26, 0.22);
+  width: min(100%, 480px);
+  padding: 0;
+  border-radius: 32px;
+  background: none;
+  box-shadow: 0 26px 50px rgba(59, 39, 26, 0.18);
+  overflow: hidden;
+}
+
+.animatedCard {
+  animation: fadeInScale 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .imageBadge {
@@ -165,8 +182,9 @@
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 22px;
+  border-radius: 32px;
   object-fit: cover;
+  box-shadow: 0 8px 32px rgba(59, 39, 26, 0.13);
 }
 
 .section,
