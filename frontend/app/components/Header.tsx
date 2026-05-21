@@ -134,6 +134,7 @@ export default function Header() {
 
         <Link href="/buy-driptea" className={styles.navLink} onClick={() => setMenuOpen(false)}>BUY DRIPTEA</Link>
         <Link href="/our-story" className={styles.navLink} onClick={() => setMenuOpen(false)}>OUR STORY</Link>
+        <Link href="/global-stores" className={styles.navLink} onClick={() => setMenuOpen(false)}>GLOBAL STORES</Link>
       </nav>
       
       {/* Make the brand clickable to return to the home page */}

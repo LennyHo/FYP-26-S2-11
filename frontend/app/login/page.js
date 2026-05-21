@@ -201,8 +201,8 @@ export default function LoginPage() {
               <div className={styles.visualGlow} />
               <div className={styles.visualImageWrap}>
                 <Image
-                  src="/img/bubble_teas/test.jpg"
-                  alt="DripTea"
+                  src="/login_wallpaper.png"
+                  alt="Login Wallpaper"
                   fill
                   priority
                   className={styles.visualImage}
