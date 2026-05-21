@@ -14,11 +14,12 @@ const {
   OrderItem,
   Payment,
   ChatbotSession,
+  Voucher,
 } = require("../models/driptea.models");
 
 const router = express.Router();
 let preparationPromise = null;
-const DRIPTEA_MODELS = [User, MenuItem, Order, OrderItem, CartItem, Payment, ChatbotSession];
+const DRIPTEA_MODELS = [User, MenuItem, Order, OrderItem, CartItem, Payment, ChatbotSession, Voucher];
 
 const seedUsers = [
   {
@@ -258,6 +259,7 @@ router.post("/mongo/setup", async (_req, res, next) => {
     counts.cart_items = await CartItem.countDocuments();
     counts.payments = await Payment.countDocuments();
     counts.chatbot_sessions = await ChatbotSession.countDocuments();
+    counts.vouchers = await Voucher.countDocuments();
 
     res.status(201).json({
       ok: true,
@@ -439,6 +441,77 @@ router.post("/cart-items", async (req, res, next) => {
   }
 });
 
+// Vouchers: public read and admin create
+router.get("/vouchers", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const onlyAvailable = String(req.query.onlyAvailable || "true").toLowerCase() !== "false";
+    const now = new Date();
+    const baseQuery = {};
+
+    if (onlyAvailable) {
+      baseQuery.active = true;
+      baseQuery.$and = [
+        { $or: [{ validFrom: null }, { validFrom: { $lte: now } }] },
+        { $or: [{ validTo: null }, { validTo: { $gte: now } }] },
+      ];
+    }
+
+    const vouchers = await Voucher.find(baseQuery).sort({ validTo: 1 }).lean();
+
+    return res.json({ ok: true, data: vouchers.map((v) => ({
+      id: String(v._id),
+      code: v.code,
+      description: v.description,
+      discountType: v.discountType,
+      discountValue: v.discountValue,
+      minOrderAmount: v.minOrderAmount,
+      validFrom: v.validFrom,
+      validTo: v.validTo,
+      active: !!v.active,
+    })) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/vouchers", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const code = String(req.body?.code || "").trim().toUpperCase();
+    const discountType = String(req.body?.discountType || "fixed");
+    const discountValue = Number(req.body?.discountValue || 0);
+
+    if (!code || !["fixed", "percent"].includes(discountType) || !Number.isFinite(discountValue)) {
+      return res.status(400).json({ ok: false, message: "code, discountType and discountValue are required." });
+    }
+
+    const payload = {
+      code,
+      description: String(req.body?.description || ""),
+      discountType,
+      discountValue,
+      minOrderAmount: Number(req.body?.minOrderAmount || 0),
+      validFrom: req.body?.validFrom ? new Date(req.body.validFrom) : null,
+      validTo: req.body?.validTo ? new Date(req.body.validTo) : null,
+      usageLimit: req.body?.usageLimit ? Number(req.body.usageLimit) : null,
+      perUserLimit: req.body?.perUserLimit ? Number(req.body.perUserLimit) : null,
+      active: req.body?.active === undefined ? true : !!req.body.active,
+    };
+
+    const existing = await Voucher.findOne({ code }).lean();
+    if (existing) {
+      return res.status(409).json({ ok: false, message: "Voucher code already exists." });
+    }
+
+    const created = await Voucher.create(payload);
+
+    return res.status(201).json({ ok: true, data: { id: String(created._id), code: created.code } });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.delete("/cart-items/:id", async (req, res, next) => {
   try {
     await getPreparedDb();
@@ -543,6 +616,7 @@ router.post("/checkout", async (req, res, next) => {
     await getPreparedDb();
     const userId = toObjectId(req.body?.userId);
     const paymentMethod = String(req.body?.paymentMethod || "fake_card").trim();
+    const voucherCode = String(req.body?.voucherCode || "").trim().toUpperCase();
 
     if (!userId) {
       return res.status(400).json({ ok: false, message: "A valid userId is required." });
@@ -553,7 +627,49 @@ router.post("/checkout", async (req, res, next) => {
       return res.status(400).json({ ok: false, message: "Your cart is empty." });
     }
 
-    const totalAmount = cartItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
+    let totalAmount = cartItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
+    let appliedVoucher = null;
+
+    if (voucherCode) {
+      const voucher = await Voucher.findOne({ code: voucherCode }).lean();
+      if (!voucher || !voucher.active) {
+        return res.status(400).json({ ok: false, message: 'Invalid or inactive voucher code.' });
+      }
+
+      const now = new Date();
+      if ((voucher.validFrom && voucher.validFrom > now) || (voucher.validTo && voucher.validTo < now)) {
+        return res.status(400).json({ ok: false, message: 'Voucher is not valid at this time.' });
+      }
+
+      if (voucher.usageLimit && Number(voucher.redeemedCount || 0) >= Number(voucher.usageLimit)) {
+        return res.status(400).json({ ok: false, message: 'Voucher usage limit reached.' });
+      }
+
+      if (voucher.minOrderAmount && totalAmount < Number(voucher.minOrderAmount)) {
+        return res.status(400).json({ ok: false, message: 'Cart does not meet voucher minimum order amount.' });
+      }
+
+      if (voucher.perUserLimit) {
+        const usedCount = await Order.countDocuments({ userId, voucherCode: voucher.code });
+        if (usedCount >= Number(voucher.perUserLimit)) {
+          return res.status(400).json({ ok: false, message: 'You have already used this voucher the maximum number of times.' });
+        }
+      }
+
+      // calculate discount
+      let discountAmount = 0;
+      if (voucher.discountType === 'percent') {
+        discountAmount = Math.round((totalAmount * (Number(voucher.discountValue || 0) / 100)) * 100) / 100;
+      } else {
+        discountAmount = Number(voucher.discountValue || 0);
+      }
+
+      const newTotal = Math.max(0, Math.round((totalAmount - discountAmount) * 100) / 100);
+
+      appliedVoucher = voucher;
+      totalAmount = newTotal;
+    }
+
     const order = await Order.create({
       userId,
       orderNo: `DT-${Date.now().toString(36).toUpperCase()}`,
@@ -561,6 +677,7 @@ router.post("/checkout", async (req, res, next) => {
       status: "pending",
       totalAmount,
       currency: "SGD",
+      voucherCode: appliedVoucher ? appliedVoucher.code : null,
     });
 
     const orderItems = cartItems.map((item) => ({
@@ -588,6 +705,15 @@ router.post("/checkout", async (req, res, next) => {
       currency: "SGD",
       transactionRef: `FAKE-${crypto.randomBytes(6).toString("hex").toUpperCase()}`,
     });
+
+    if (appliedVoucher && appliedVoucher._id) {
+      try {
+        await Voucher.updateOne({ _id: appliedVoucher._id }, { $inc: { redeemedCount: 1 } });
+      } catch (e) {
+        // non-fatal: log and continue
+        console.warn('Failed to increment voucher redeemedCount', e?.message || e);
+      }
+    }
 
     await CartItem.deleteMany({ userId });
 

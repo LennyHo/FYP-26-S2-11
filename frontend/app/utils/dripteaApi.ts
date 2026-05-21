@@ -144,14 +144,17 @@ export function deleteCartItem(cartItemId: string) {
   });
 }
 
-export function checkoutCart(userId: string, paymentMethod: string) {
+export function checkoutCart(userId: string, paymentMethod: string, voucherCode?: string) {
+  const payload: Record<string, unknown> = { userId, paymentMethod };
+  if (voucherCode) payload.voucherCode = voucherCode;
+
   return requestJson<{
     ok: boolean;
     order: { id: string; status: string; totalAmount: number; orderType: string };
     payment: { id: string; status: string; method: string };
   }>('/api/checkout', {
     method: 'POST',
-    body: JSON.stringify({ userId, paymentMethod }),
+    body: JSON.stringify(payload),
   });
 }
 

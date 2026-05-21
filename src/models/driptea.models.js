@@ -10,6 +10,7 @@ const COLLECTIONS = [
   "cart_items",
   "payments",
   "chatbot_sessions",
+  "vouchers",
 ];
 
 const userSchema = new Schema(
@@ -105,6 +106,7 @@ const orderSchema = new Schema(
     },
     totalAmount: { type: Number, required: true, min: 0 },
     currency: { type: String, required: true, default: "SGD" },
+    voucherCode: { type: String, default: null },
   },
   { collection: "orders", timestamps: true }
 );
@@ -173,6 +175,27 @@ const OrderItem = models.OrderItem || model("OrderItem", orderItemSchema);
 const Payment = models.Payment || model("Payment", paymentSchema);
 const ChatbotSession = models.ChatbotSession || model("ChatbotSession", chatbotSessionSchema);
 
+const voucherSchema = new Schema(
+  {
+    code: { type: String, required: true, trim: true, uppercase: true, unique: true },
+    description: { type: String, default: "" },
+    discountType: { type: String, required: true, enum: ["percent", "fixed"], default: "fixed" },
+    discountValue: { type: Number, required: true, min: 0 },
+    minOrderAmount: { type: Number, default: 0, min: 0 },
+    validFrom: { type: Date, default: null },
+    validTo: { type: Date, default: null },
+    usageLimit: { type: Number, default: null },
+    perUserLimit: { type: Number, default: null },
+    redeemedCount: { type: Number, default: 0 },
+    active: { type: Boolean, default: true },
+  },
+  { collection: "vouchers", timestamps: true }
+);
+
+voucherSchema.index({ code: 1 });
+
+const Voucher = models.Voucher || model("Voucher", voucherSchema);
+
 module.exports = {
   COLLECTIONS,
   User,
@@ -181,5 +204,6 @@ module.exports = {
   Order,
   OrderItem,
   Payment,
+  Voucher,
   ChatbotSession,
 };

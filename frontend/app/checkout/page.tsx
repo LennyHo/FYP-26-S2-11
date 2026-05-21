@@ -77,6 +77,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [items, setItems] = useState<CheckoutItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('fake_card');
+  const [voucherCode, setVoucherCode] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
@@ -113,7 +114,7 @@ export default function CheckoutPage() {
       const currentUser = getStoredUser();
 
       if (currentUser) {
-        const result = await checkoutCart(currentUser.id, paymentMethod);
+        const result = await checkoutCart(currentUser.id, paymentMethod, voucherCode ? voucherCode.trim() : undefined);
         window.localStorage.removeItem("dripTeaCartData");
         window.dispatchEvent(new Event('cartUpdated'));
         setItems([]);
@@ -200,6 +201,16 @@ export default function CheckoutPage() {
                   <option value="fake_wallet">Fake wallet</option>
                   <option value="fake_counter">Pay at counter</option>
                 </select>
+              </label>
+
+              <label style={{ display: 'grid', gap: 8, maxWidth: 320, fontWeight: 700 }}>
+                Voucher code (optional)
+                <input
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value)}
+                  placeholder="Enter voucher code"
+                  style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(141, 99, 63, 0.35)' }}
+                />
               </label>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
