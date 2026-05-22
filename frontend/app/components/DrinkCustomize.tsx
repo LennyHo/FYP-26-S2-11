@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from './Header';
 import styles from './DrinkCustomize.module.css';
 // done by "HDC" - sends Add to Cart actions to backend cart_items for logged-in users.
-import { addCartItem, formatLocalCartLine, getStoredUser } from '../utils/dripteaApi';
+import { addCartItem, formatLocalCartLine, getDripTeaApiBase, getStoredUser } from '../utils/dripteaApi';
 // end done by "HDC"
 
 const menuData = [
@@ -127,6 +127,35 @@ export default function DrinkCustomize() {
   const totalSugarG = Math.round(selectedDrink.sugarG * sweetness.multiplier) + topping.sugarG;
   const totalCalories = selectedDrink.calories + topping.calories;
   const totalPrice = (selectedDrink.price + size.surcharge + topping.price) * quantity;
+  type AddCartItemResult = Awaited<ReturnType<typeof addCartItem>>;
+
+  function logLocalCartSave(updatedCartData: string) {
+    console.info('[DripTea cart save] saved browser cart copy', {
+      storage: 'localStorage',
+      key: 'dripTeaCartData',
+      itemCount: updatedCartData.split('\n').filter(Boolean).length,
+      itemName: selectedDrink.name,
+    });
+  }
+
+  function logBackendCartSave(response: AddCartItemResult) {
+    console.info('[DripTea cart save] saved backend cart item', {
+      apiBase: getDripTeaApiBase(),
+      storage: response.storage?.type || 'mongodb',
+      database: response.storage?.database || '(not reported)',
+      collection: response.storage?.collection || 'cart_items',
+      cartItemId: response.data?.id,
+      itemName: response.data?.name,
+    });
+  }
+
+  function logBackendCartSkipped() {
+    console.info('[DripTea cart save] skipped backend cart save', {
+      reason: 'No logged-in user found in localStorage.',
+      backendApiBase: getDripTeaApiBase(),
+      savedOnlyTo: 'localStorage:dripTeaCartData',
+    });
+  }
 
   // done by "HDC" - keep the old local cart for UI display, and sync to backend for MongoDB testing.
   async function handleAddToCart() {
@@ -141,12 +170,13 @@ export default function DrinkCustomize() {
     // end done by "HDC"
     localStorage.setItem("dripTeaCartData", updated);
     window.dispatchEvent(new Event('cartUpdated'));
+    logLocalCartSave(updated);
 
     // done by "HDC" - write logged-in customer cart items to MongoDB cart_items.
     const currentUser = getStoredUser();
     if (currentUser) {
       try {
-        await addCartItem({
+        const response = await addCartItem({
           userId: currentUser.id,
           menuItemId: selectedDrink.id,
           name: selectedDrink.name,
@@ -168,9 +198,12 @@ export default function DrinkCustomize() {
             },
           },
         });
+        logBackendCartSave(response);
       } catch (error) {
         console.error('[DripTea cart sync]', error);
       }
+    } else {
+      logBackendCartSkipped();
     }
     // end done by "HDC"
 
@@ -195,7 +228,7 @@ export default function DrinkCustomize() {
     const currentUser = getStoredUser();
 
     if (currentUser) {
-      await addCartItem({
+      const response = await addCartItem({
         userId: currentUser.id,
         menuItemId: selectedDrink.id,
         name: selectedDrink.name,
@@ -217,12 +250,16 @@ export default function DrinkCustomize() {
           },
         },
       });
+      logBackendCartSave(response);
+    } else {
+      logBackendCartSkipped();
     }
 
     const existingData = localStorage.getItem("dripTeaCartData") || "";
     const updated = existingData ? `${existingData}\n${backendCartItem}` : backendCartItem;
     localStorage.setItem("dripTeaCartData", updated);
     window.dispatchEvent(new Event('cartUpdated'));
+    logLocalCartSave(updated);
   }
 
   async function handleAddToCartAndReturnToMenu() {

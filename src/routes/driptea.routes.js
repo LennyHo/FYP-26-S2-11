@@ -390,7 +390,7 @@ router.get("/cart-items", async (req, res, next) => {
 
 router.post("/cart-items", async (req, res, next) => {
   try {
-    await getPreparedDb();
+    const db = await getPreparedDb();
     const userId = toObjectId(req.body?.userId);
     const quantity = Math.max(1, Number(req.body?.quantity || 1));
     const menuItemId = String(req.body?.menuItemId || "").trim();
@@ -429,10 +429,24 @@ router.post("/cart-items", async (req, res, next) => {
     };
 
     const result = await CartItem.create(cartItem);
+    const storage = {
+      type: "mongodb",
+      database: db.databaseName,
+      collection: "cart_items",
+    };
+
+    console.log("[DripTea cart save] saved cart item", {
+      storage: `${storage.database}.${storage.collection}`,
+      cartItemId: String(result._id),
+      userId: String(userId),
+      itemName: result.name,
+      quantity: result.quantity,
+    });
 
     return res.status(201).json({
       ok: true,
       data: toPublicCartItem(result),
+      storage,
     });
   } catch (error) {
     next(error);
