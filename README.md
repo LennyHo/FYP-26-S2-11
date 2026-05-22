@@ -50,10 +50,7 @@ Use real keys (not placeholders), then restart the backend.
 1. Start backend:
    npm start
 2. Check Supabase health:
-   <!-- done by "HDC" - backend default port follows teammates' port 5000. -->
-   <!-- GET http://localhost:4000/health/supabase -->
    GET http://localhost:5000/health/supabase
-   <!-- end done by "HDC" -->
 
 If the response says `configured: false`, check the Supabase URL and keys in your `.env` file.
 
@@ -62,14 +59,10 @@ If the response says `configured: false`, check the Supabase URL and keys in you
 1. Start backend:
    npm start
 2. Check AI health:
-   <!-- done by "HDC" - backend default port follows teammates' port 5000. -->
-   <!-- GET http://localhost:4000/health/ai -->
    GET http://localhost:5000/health/ai
 3. Test chat route:
-   <!-- POST http://localhost:4000/chat -->
    POST http://localhost:5000/chat
    Body: {"message":"Hello"}
-   <!-- end done by "HDC" -->
 
 ## Start the server:
 
