@@ -1,6 +1,6 @@
 # DripTea Database Schema
 
-This backend uses MongoDB with Mongoose. The default database name is `fyp_chatbot`, configured by `MONGODB_DB_NAME` in `.env`.
+This backend uses MongoDB with Mongoose. The default database name is `fyp-chatbot`, configured by `MONGODB_DB_NAME` in `.env`.
 
 Connection setup lives in `src/config/mongo.js`. The Mongoose schemas and models live in `src/models/driptea.models.js`.
 

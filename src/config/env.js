@@ -18,7 +18,7 @@ const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   appName: process.env.APP_NAME || "FYP-26-S2-11 Backend",
   mongodbUri: process.env.MONGODB_URI || "",
-  mongodbDbName: process.env.MONGODB_DB_NAME || "fyp_chatbot",
+  mongodbDbName: process.env.MONGODB_DB_NAME || "fyp-chatbot",
   mongodbAutoconnect: parseBoolean(process.env.MONGODB_AUTOCONNECT, false),
 };
 

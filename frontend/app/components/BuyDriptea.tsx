@@ -52,44 +52,19 @@ export default function BuyDripTeaPage() {
       <main className={styles.main}>
         <section className={styles.hero}>
           <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}>Fresh drops. Calm indulgence.</p>
-            <h1 className={styles.title}>BUY DRIPTEA</h1>
+            <h1 className={styles.title}>Refresh Your Day</h1>
             <p className={styles.description}>
-              A static visual shopping page for DripTea drinks, built to showcase the brand
-              experience before checkout.
+              Explore bold flavors and soothing blends. Find your new favorite DripTea now!
             </p>
 
-            <div className={styles.actions}>
-              <Link className={styles.primaryAction} href="/cart">
-                View Cart
-              </Link>
-              <Link className={styles.secondaryAction} href="/our-story">
-                Read Our Story
-              </Link>
-            </div>
-
-            <div className={styles.metaRow}>
-              <div>
-                <span className={styles.metaLabel}>Starting from</span>
-                <strong className={styles.metaValue}>S$ 4.20</strong>
-              </div>
-              <div>
-                <span className={styles.metaLabel}>Pickup ready</span>
-                <strong className={styles.metaValue}>12 min</strong>
-              </div>
-              <div>
-                <span className={styles.metaLabel}>Popular add-on</span>
-                <strong className={styles.metaValue}>Pearl topping</strong>
-              </div>
-            </div>
+            {/* Actions and meta removed for a cleaner hero */}
           </div>
 
           <div className={styles.heroVisual}>
-            <div className={styles.imageCard}>
-              <span className={styles.imageBadge}>Signature collection</span>
+            <div className={`${styles.imageCard} ${styles.animatedCard}`}>
               <img
-                src="/driptea_drinks.jpg"
-                alt="Assorted DripTea drinks in a premium display"
+                src="/buy_dripTea_cover.png"
+                alt="DripTea Signature Collection"
                 className={styles.heroImage}
               />
             </div>

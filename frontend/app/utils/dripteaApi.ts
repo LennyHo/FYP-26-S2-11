@@ -21,6 +21,18 @@ export type DripTeaCartItem = {
   customization: Record<string, unknown>;
 };
 
+export type DripTeaStorageTarget = {
+  type: string;
+  database?: string;
+  collection?: string;
+};
+
+export type DripTeaCartItemResponse = {
+  ok: boolean;
+  data: DripTeaCartItem;
+  storage?: DripTeaStorageTarget;
+};
+
 // done by "HDC" - shared local cart parser handles item details that contain pipe characters.
 export type DripTeaLocalCartItem = {
   name: string;
@@ -92,6 +104,10 @@ const API_BASE = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'https://fyp-26-s2
 const USER_STORAGE_KEY = 'dripTeaCurrentUser';
 const TOKEN_STORAGE_KEY = 'dripTeaAuthToken';
 
+export function getDripTeaApiBase() {
+  return API_BASE;
+}
+
 async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -128,7 +144,7 @@ export function clearStoredUser() {
 }
 
 export function addCartItem(payload: Record<string, unknown>) {
-  return requestJson<{ ok: boolean; data: DripTeaCartItem }>('/api/cart-items', {
+  return requestJson<DripTeaCartItemResponse>('/api/cart-items', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
