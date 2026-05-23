@@ -96,34 +96,56 @@ export type DripTeaOrder = {
 };
 // end done by "HDC"
 
-// done by "HDC" - frontend bridge calls deployed Render backend unless Vercel env overrides it.
-// const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:4000';
-// const API_BASE = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'http://localhost:5000';
-const API_BASE = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'https://fyp-26-s2-11.onrender.com').replace(/\/$/, '');
+// done by "HDC" - frontend bridge tries env override, Render, then local backend.
+const API_BASES = [
+  process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
+  'https://driptea-trrn.onrender.com',
+  'http://localhost:5000',
+]
+  .filter((value): value is string => Boolean(value))
+  .map((value) => value.replace(/\/$/, ''))
+  .filter((value, index, values) => values.indexOf(value) === index);
 // end done by "HDC"
 const USER_STORAGE_KEY = 'dripTeaCurrentUser';
 const TOKEN_STORAGE_KEY = 'dripTeaAuthToken';
 
 export function getDripTeaApiBase() {
-  return API_BASE;
+  return API_BASES[0];
 }
 
 async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init.headers || {}),
-    },
-  });
-  const payload = await response.json().catch(() => ({}));
+  let lastMessage = 'DripTea backend request failed.';
 
-  if (!response.ok) {
-    const message = typeof payload?.message === 'string' ? payload.message : 'DripTea backend request failed.';
-    throw new Error(message);
+  for (const apiBase of API_BASES) {
+    let shouldTryNext = false;
+
+    try {
+      const response = await fetch(`${apiBase}${path}`, {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init.headers || {}),
+        },
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        return payload as T;
+      }
+
+      lastMessage = typeof payload?.message === 'string' ? payload.message : 'DripTea backend request failed.';
+      shouldTryNext = response.status >= 500;
+    } catch (error) {
+      lastMessage = error instanceof Error ? error.message : 'DripTea backend request failed.';
+      shouldTryNext = true;
+    }
+
+    if (!shouldTryNext) {
+      throw new Error(lastMessage);
+    }
   }
 
-  return payload as T;
+  throw new Error(lastMessage);
 }
 
 export function getStoredUser(): DripTeaUser | null {

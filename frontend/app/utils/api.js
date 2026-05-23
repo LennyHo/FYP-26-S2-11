@@ -2,18 +2,44 @@
 // You can add more functions as needed
 
 export async function fetchFromApi(endpoint, options = {}) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'; // Change as needed
-  const url = `${baseUrl}${endpoint}`;
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+  const baseUrls = [
+    process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
+    'https://driptea-trrn.onrender.com',
+    'http://localhost:5000',
+  ]
+    .filter(Boolean)
+    .map((value) => value.replace(/\/$/, ''))
+    .filter((value, index, values) => values.indexOf(value) === index);
+
+  let lastError = 'API error';
+
+  for (const baseUrl of baseUrls) {
+    let shouldTryNext = false;
+
+    try {
+      const response = await fetch(`${baseUrl}${endpoint}`, options);
+      if (response.ok) {
+        return response.json();
+      }
+
+      lastError = `API error: ${response.status}`;
+      shouldTryNext = response.status >= 500;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : 'API error';
+      shouldTryNext = true;
+    }
+
+    if (!shouldTryNext) {
+      throw new Error(lastError);
+    }
   }
-  return response.json();
+
+  throw new Error(lastError);
 }
 
 // Example: GET request
 export async function getMenu() {
-  return fetchFromApi('/api/menu');
+  return fetchFromApi('/api/menu-items');
 }
 
 // Example: POST request

@@ -313,7 +313,8 @@ router.post("/auth/register", async (req, res, next) => {
 
 router.post("/auth/login", async (req, res, next) => {
   try {
-    await getPreparedDb();
+    const db = await getPreparedDb();
+    console.log(`[Auth Login] Connected to MongoDB database "${db.databaseName}".`);
     const email = normalizeEmail(req.body?.email);
     const password = String(req.body?.password || "");
     const user = await User.findOne({ email }).lean();
@@ -342,7 +343,7 @@ router.post("/auth/login", async (req, res, next) => {
   }
 });
 
-router.get("/menu-items", async (req, res, next) => {
+router.get(["/menu-items", "/menu"], async (req, res, next) => {
   try {
     await getPreparedDb();
     const status = String(req.query.status || "active");

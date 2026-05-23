@@ -33,6 +33,48 @@ const mainLogoSvg = `
 </svg>
 `;
 
+const DRIPTEA_API_BASES = [
+  process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
+  'https://driptea-trrn.onrender.com',
+  'http://localhost:5000',
+]
+  .filter(Boolean)
+  .map((value) => value.replace(/\/$/, ''))
+  .filter((value, index, values) => values.indexOf(value) === index);
+
+async function loginAgainstAvailableBackend(credentials) {
+  let lastMessage = 'Login failed.';
+
+  for (const apiBase of DRIPTEA_API_BASES) {
+    let shouldTryNext = false;
+
+    try {
+      const response = await fetch(`${apiBase}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        return payload;
+      }
+
+      lastMessage = payload.message || 'Login failed.';
+      shouldTryNext = response.status >= 500;
+    } catch (error) {
+      lastMessage = error instanceof Error ? error.message : 'Login failed.';
+      shouldTryNext = true;
+    }
+
+    if (!shouldTryNext) {
+      throw new Error(lastMessage);
+    }
+  }
+
+  throw new Error(lastMessage);
+}
+
 export default function LoginPage() {
   // done by "HDC" - stores backend auth result so test credentials can be used.
   const router = useRouter();
@@ -63,24 +105,10 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      // done by "HDC" - login bridge calls deployed Render backend unless Vercel env overrides it.
-      // const response = await fetch('http://localhost:4000/api/auth/login', {
-      // const response = await fetch('http://localhost:5000/api/auth/login', {
-      const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'https://fyp-26-s2-11.onrender.com').replace(/\/$/, '');
-      const response = await fetch(`${apiBase}/api/auth/login`, {
-      // end done by "HDC"
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: emailRef.current?.value || '',
-          password: passwordRef.current?.value || '',
-        }),
+      const payload = await loginAgainstAvailableBackend({
+        email: emailRef.current?.value || '',
+        password: passwordRef.current?.value || '',
       });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.message || 'Login failed.');
-      }
 
       localStorage.setItem('dripTeaCurrentUser', JSON.stringify(payload.user));
       localStorage.setItem('dripTeaAuthToken', payload.token);

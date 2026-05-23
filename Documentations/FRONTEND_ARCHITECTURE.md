@@ -157,7 +157,7 @@ Current functions:
 These functions call the Node.js backend using:
 
 ```ts
-const API_BASE = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'https://fyp-26-s2-11.onrender.com').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || 'https://driptea-trrn.onrender.com').replace(/\/$/, '');
 ```
 
 For local backend development, use this environment variable:

@@ -970,7 +970,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
 
       // Original client-side fallback, commented out:
       /*
-      const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'https://fyp-26-s2-11.onrender.com';
+      const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'https://driptea-trrn.onrender.com';
       // const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:5000';
       const response = await fetch(`${apiBase}/chat`, {
         method: 'POST',

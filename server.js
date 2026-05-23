@@ -54,6 +54,21 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
+app.get("/", (_req, res) => {
+    return res.json({
+        ok: true,
+        service: "DripTea backend",
+        message: "Backend is running. Use /api/health/mongo to check MongoDB.",
+    });
+});
+
+app.get("/api/health", (_req, res) => {
+    return res.json({
+        ok: true,
+        service: "DripTea backend",
+    });
+});
+
 // done by "HDC" - mount the MongoDB-backed API without changing the existing chatbot route.
 app.use("/api", dripTeaRoutes);
 // end done by "HDC"

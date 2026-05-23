@@ -192,8 +192,6 @@ const voucherSchema = new Schema(
   { collection: "vouchers", timestamps: true }
 );
 
-voucherSchema.index({ code: 1 });
-
 const Voucher = models.Voucher || model("Voucher", voucherSchema);
 
 module.exports = {

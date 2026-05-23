@@ -204,7 +204,7 @@ export async function POST(request: Request) {
       configuredBase,
       'http://localhost:5000',
       'http://127.0.0.1:5000',
-      'https://fyp-26-s2-11.onrender.com',
+      'https://driptea-trrn.onrender.com',
     ].filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index);
 
     let backendResponse: Response | null = null;
