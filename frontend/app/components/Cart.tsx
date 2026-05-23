@@ -90,6 +90,10 @@ export default function Cart() {
         // end done by "HDC"
       } catch (error) {
         console.error('[DripTea cart fetch]', error);
+        setCartItems([]);
+        setTotal(0);
+        setIsLoading(false);
+        return;
       }
     }
 

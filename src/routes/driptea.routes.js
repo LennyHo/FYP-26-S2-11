@@ -219,6 +219,24 @@ function toPublicCartItem(item) {
   };
 }
 
+async function getActiveCustomerForCart(userId) {
+  const user = await User.findById(userId).lean();
+
+  if (!user) {
+    const error = new Error("Cart user was not found. Please log in again.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (user.role !== "customer" || user.status !== "active") {
+    const error = new Error("Only active customer accounts can use the cart.");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return user;
+}
+
 // done by "HDC" - public staff order shape for order queue display.
 function toPublicOrder(order, user, items, payment) {
   return {
@@ -392,6 +410,7 @@ router.get("/cart-items", async (req, res, next) => {
       return res.status(400).json({ ok: false, message: "A valid userId is required." });
     }
 
+    await getActiveCustomerForCart(userId);
     const items = await CartItem.find({ userId }).sort({ createdAt: 1 }).lean();
 
     return res.json({
@@ -423,6 +442,7 @@ router.post("/cart-items", async (req, res, next) => {
       return res.status(400).json({ ok: false, message: "A valid userId is required." });
     }
 
+    const cartUser = await getActiveCustomerForCart(userId);
     const unitPrice = Number(req.body?.unitPrice || menuItem?.price || 0);
     const lineTotal = Number(req.body?.lineTotal || unitPrice * quantity);
     const cartItem = {
@@ -462,7 +482,7 @@ router.post("/cart-items", async (req, res, next) => {
     };
 
     console.log(
-      `[DripTea add to cart] SUCCESS backend=${backend.renderExternalUrl || backend.url || "(not reported)"} mongoHost=${storage.mongoHost} storage=${storage.type}:${storage.database}.${storage.collection} cartItemId=${String(result._id)} userId=${String(userId)} item="${result.name}" quantity=${result.quantity}`
+      `[DripTea add to cart] SUCCESS backend=${backend.renderExternalUrl || backend.url || "(not reported)"} mongoHost=${storage.mongoHost} storage=${storage.type}:${storage.database}.${storage.collection} cartItemId=${String(result._id)} userId=${String(userId)} userEmail=${cartUser.email} item="${result.name}" quantity=${result.quantity}`
     );
 
     return res.status(201).json({

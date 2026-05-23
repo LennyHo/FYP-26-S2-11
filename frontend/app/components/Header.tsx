@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 import Link from 'next/link';
 // done by "HDC" - reads backend-auth user stored by login so the header can show Log out.
-import { clearStoredUser, getStoredUser, parseLocalCartLine, type DripTeaUser } from '../utils/dripteaApi';
+import { clearStoredUser, getCartItems, getStoredUser, parseLocalCartLine, type DripTeaUser } from '../utils/dripteaApi';
 // end done by "HDC"
 
 // Inline SVG for the brand logo to avoid bundler import issues and ensure consistent rendering
@@ -61,8 +61,8 @@ export default function Header() {
   // end done by "HDC"
   const isStaffDashboard = pathname.startsWith('/user-admin') || pathname.startsWith('/store-staff');
 
-  // Read the AI's saved cart data from localStorage
-  const updateCartDisplay = () => {
+  // Read the browser cart copy when the backend cart is unavailable.
+  const updateCartDisplayFromLocalStorage = () => {
     const savedData = localStorage.getItem("dripTeaCartData");
     if (savedData) {
       const drinks = savedData.split('\n').filter(line => line.trim() !== '');
@@ -91,11 +91,47 @@ export default function Header() {
     }
   };
 
+  // Logged-in customers use MongoDB cart_items as the source of truth.
+  const updateCartDisplay = async () => {
+    const user = getStoredUser();
+
+    if (user) {
+      try {
+        const response = await getCartItems(user.id);
+        const backendItems = response.data || [];
+        const backendItemCount = backendItems.reduce((sum, item) => sum + Math.max(1, Number(item.quantity || 1)), 0);
+        const backendTotal = backendItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
+
+        setCartCount(backendItemCount);
+        setCartTotal(backendTotal);
+        return;
+      } catch (error) {
+        console.warn('[DripTea cart badge] backend count unavailable for logged-in user; not using localStorage count', error);
+        setCartCount(0);
+        setCartTotal(0);
+        return;
+      }
+    }
+
+    updateCartDisplayFromLocalStorage();
+  };
+
   // Listen for the custom "cartUpdated" event triggered by the AI
   useEffect(() => {
-    updateCartDisplay(); 
-    window.addEventListener('cartUpdated', updateCartDisplay);
-    return () => window.removeEventListener('cartUpdated', updateCartDisplay);
+    const handleCartUpdated = () => {
+      void updateCartDisplay();
+    };
+
+    handleCartUpdated();
+    window.addEventListener('cartUpdated', handleCartUpdated);
+    window.addEventListener('authUpdated', handleCartUpdated);
+    window.addEventListener('storage', handleCartUpdated);
+
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdated);
+      window.removeEventListener('authUpdated', handleCartUpdated);
+      window.removeEventListener('storage', handleCartUpdated);
+    };
   }, []);
 
   // done by "HDC" - update Login/Log out button after login, logout, or browser storage changes.
