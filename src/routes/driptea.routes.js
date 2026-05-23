@@ -5,6 +5,7 @@ const path = require("path");
 const express = require("express");
 const { Types } = require("mongoose");
 const { connectMongo, getDb } = require("../config/mongo");
+const { env } = require("../config/env");
 const {
   COLLECTIONS,
   User,
@@ -20,6 +21,17 @@ const {
 const router = express.Router();
 let preparationPromise = null;
 const DRIPTEA_MODELS = [User, MenuItem, Order, OrderItem, CartItem, Payment, ChatbotSession, Voucher];
+
+function getMongoHostLabel() {
+  if (!env.mongodbUri) return "(MONGODB_URI not set)";
+
+  try {
+    const parsed = new URL(env.mongodbUri);
+    return parsed.host || "(MongoDB host not reported)";
+  } catch {
+    return "(MongoDB host not parseable)";
+  }
+}
 
 const seedUsers = [
   {
@@ -436,20 +448,28 @@ router.post("/cart-items", async (req, res, next) => {
       type: "mongodb",
       database: db.databaseName,
       collection: "cart_items",
+      mongoHost: getMongoHostLabel(),
+    };
+    const forwardedProto = req.get("x-forwarded-proto");
+    const forwardedHost = req.get("x-forwarded-host");
+    const backendHost = forwardedHost || req.get("host") || null;
+    const backend = {
+      host: backendHost,
+      url: backendHost ? `${forwardedProto || req.protocol}://${backendHost}` : null,
+      origin: req.get("origin") || null,
+      renderService: process.env.RENDER_SERVICE_NAME || null,
+      renderExternalUrl: process.env.RENDER_EXTERNAL_URL || null,
     };
 
-    console.log("[DripTea cart save] saved cart item", {
-      storage: `${storage.database}.${storage.collection}`,
-      cartItemId: String(result._id),
-      userId: String(userId),
-      itemName: result.name,
-      quantity: result.quantity,
-    });
+    console.log(
+      `[DripTea add to cart] SUCCESS backend=${backend.renderExternalUrl || backend.url || "(not reported)"} mongoHost=${storage.mongoHost} storage=${storage.type}:${storage.database}.${storage.collection} cartItemId=${String(result._id)} userId=${String(userId)} item="${result.name}" quantity=${result.quantity}`
+    );
 
     return res.status(201).json({
       ok: true,
       data: toPublicCartItem(result),
       storage,
+      backend,
     });
   } catch (error) {
     next(error);

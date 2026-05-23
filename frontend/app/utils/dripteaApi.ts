@@ -25,12 +25,20 @@ export type DripTeaStorageTarget = {
   type: string;
   database?: string;
   collection?: string;
+  mongoHost?: string;
 };
 
 export type DripTeaCartItemResponse = {
   ok: boolean;
   data: DripTeaCartItem;
   storage?: DripTeaStorageTarget;
+  backend?: {
+    host?: string | null;
+    url?: string | null;
+    origin?: string | null;
+    renderService?: string | null;
+    renderExternalUrl?: string | null;
+  };
 };
 
 // done by "HDC" - shared local cart parser handles item details that contain pipe characters.
@@ -113,13 +121,18 @@ export function getDripTeaApiBase() {
   return API_BASES[0];
 }
 
-async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function requestJson<T>(path: string, init: RequestInit = {}, logLabel?: string): Promise<T> {
   let lastMessage = 'DripTea backend request failed.';
 
-  for (const apiBase of API_BASES) {
+  for (let index = 0; index < API_BASES.length; index += 1) {
+    const apiBase = API_BASES[index];
     let shouldTryNext = false;
 
     try {
+      if (logLabel) {
+        console.info(`[${logLabel}] ATTEMPT ${index + 1}/${API_BASES.length} backend=${apiBase}${path}`);
+      }
+
       const response = await fetch(`${apiBase}${path}`, {
         ...init,
         headers: {
@@ -130,14 +143,28 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
       const payload = await response.json().catch(() => ({}));
 
       if (response.ok) {
+        if (logLabel) {
+          const storage = payload?.storage;
+          const cartItemId = payload?.data?.id || "(not reported)";
+          console.info(
+            `[${logLabel}] SUCCESS backend=${apiBase} mongoHost=${storage?.mongoHost || "(MongoDB host not reported)"} savedTo=${storage?.type || "unknown"}:${storage?.database || "(database not reported)"}.${storage?.collection || "(collection not reported)"} cartItemId=${cartItemId}`
+          );
+        }
+
         return payload as T;
       }
 
       lastMessage = typeof payload?.message === 'string' ? payload.message : 'DripTea backend request failed.';
       shouldTryNext = response.status >= 500;
+      if (logLabel) {
+        console.warn(`[${logLabel}] FAILED backend=${apiBase} status=${response.status} retrying=${shouldTryNext} message="${lastMessage}"`);
+      }
     } catch (error) {
       lastMessage = error instanceof Error ? error.message : 'DripTea backend request failed.';
       shouldTryNext = true;
+      if (logLabel) {
+        console.warn(`[${logLabel}] ERROR backend=${apiBase} retrying=true message="${lastMessage}"`);
+      }
     }
 
     if (!shouldTryNext) {
@@ -169,7 +196,7 @@ export function addCartItem(payload: Record<string, unknown>) {
   return requestJson<DripTeaCartItemResponse>('/api/cart-items', {
     method: 'POST',
     body: JSON.stringify(payload),
-  });
+  }, 'DripTea add to cart');
 }
 
 export function getCartItems(userId: string) {

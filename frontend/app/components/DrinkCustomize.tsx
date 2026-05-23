@@ -130,31 +130,27 @@ export default function DrinkCustomize() {
   type AddCartItemResult = Awaited<ReturnType<typeof addCartItem>>;
 
   function logLocalCartSave(updatedCartData: string) {
-    console.info('[DripTea cart save] saved browser cart copy', {
-      storage: 'localStorage',
-      key: 'dripTeaCartData',
-      itemCount: updatedCartData.split('\n').filter(Boolean).length,
-      itemName: selectedDrink.name,
-    });
+    console.info(
+      `[DripTea cart save] LOCAL_COPY savedTo=localStorage key=dripTeaCartData itemCount=${updatedCartData.split('\n').filter(Boolean).length} item="${selectedDrink.name}"`
+    );
   }
 
   function logBackendCartSave(response: AddCartItemResult) {
-    console.info('[DripTea cart save] saved backend cart item', {
-      apiBase: getDripTeaApiBase(),
-      storage: response.storage?.type || 'mongodb',
-      database: response.storage?.database || '(not reported)',
-      collection: response.storage?.collection || 'cart_items',
-      cartItemId: response.data?.id,
-      itemName: response.data?.name,
-    });
+    const storageType = response.storage?.type || 'mongodb';
+    const database = response.storage?.database || '(database not reported)';
+    const collection = response.storage?.collection || 'cart_items';
+    const mongoHost = response.storage?.mongoHost || '(MongoDB host not reported)';
+    const backend = response.backend?.renderExternalUrl || response.backend?.url || getDripTeaApiBase();
+
+    console.info(
+      `[DripTea cart save] BACKEND_SAVED backend=${backend} mongoHost=${mongoHost} savedTo=${storageType}:${database}.${collection} cartItemId=${response.data?.id || '(not reported)'} item="${response.data?.name || selectedDrink.name}"`
+    );
   }
 
   function logBackendCartSkipped() {
-    console.info('[DripTea cart save] skipped backend cart save', {
-      reason: 'No logged-in user found in localStorage.',
-      backendApiBase: getDripTeaApiBase(),
-      savedOnlyTo: 'localStorage:dripTeaCartData',
-    });
+    console.info(
+      `[DripTea cart save] BACKEND_SKIPPED reason="No logged-in user found in localStorage" configuredBackend=${getDripTeaApiBase()} savedOnlyTo=localStorage:dripTeaCartData`
+    );
   }
 
   // done by "HDC" - keep the old local cart for UI display, and sync to backend for MongoDB testing.
