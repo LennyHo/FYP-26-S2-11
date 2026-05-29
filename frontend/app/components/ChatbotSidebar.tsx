@@ -160,7 +160,8 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
   const avyLogoRef = useRef<HTMLDivElement>(null);
   const avyEyeLeftRef = useRef<SVGPathElement>(null);
   const avyEyeRightRef = useRef<SVGPathElement>(null);
-  
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
 
   /** Initialize chat: restore conversation history or start fresh */
   useEffect(() => {
@@ -1200,6 +1201,13 @@ const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [input]);
+
   /** Handle clicks in chat window for navigation and button interactions */
   const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -1606,6 +1614,7 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               disabled={isLoading}
             /> */}
             <textarea
+              ref={textareaRef}
               className={styles.userInput}
               placeholder="Text Avy..."
               value={input}
