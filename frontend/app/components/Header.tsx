@@ -195,9 +195,16 @@ return (
         
         {/* RESTORED CART BUTTON */}
         <button className={styles.cartBtn} onClick={() => router.push('/cart')}>
-          Cart
+          <span className={styles.cartIcon} aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="8.5" cy="19" r="1.5" fill="#7b4b2a"/>
+              <circle cx="16.5" cy="19" r="1.5" fill="#7b4b2a"/>
+              <path d="M2 2h2.5l2.1 11.32A2 2 0 0 0 8.56 15h7.88a2 2 0 0 0 1.96-1.68l1.1-6.32H5.12" stroke="#7b4b2a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </span>
+          <span className={styles.cartText}>Cart</span>
           {cartCount > 0 && (
-            <span>
+            <span className={styles.cartBadge}>
               {cartCount} Items (S$ {cartTotal.toFixed(2)})
             </span>
           )}
@@ -211,6 +218,19 @@ return (
 function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [profilePic, setProfilePic] = useState<string>("");
+  useEffect(() => {
+    // Get user from localStorage (sync with header)
+    const user = getStoredUser();
+    setProfilePic(user?.profilePic || "/profile_empty.png");
+    // Listen for profile updates
+    const handler = () => {
+      const updatedUser = getStoredUser();
+      setProfilePic(updatedUser?.profilePic || "/profile_empty.png");
+    };
+    window.addEventListener("profileUpdated", handler);
+    return () => window.removeEventListener("profileUpdated", handler);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -237,7 +257,7 @@ function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <img src="/user.png" alt="Profile" className={styles.profilePic} />
+        <img src={profilePic} alt="Profile" className={styles.profilePic} />
       </button>
       {open && (
         <div className={styles.profileDropdown}>

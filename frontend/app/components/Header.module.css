@@ -1,3 +1,39 @@
+/* Cart button styles */
+.cartBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #7b4b2a;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 12px;
+  transition: background 0.18s;
+  position: relative;
+}
+.cartBtn:hover, .cartBtn:focus {
+  background: #f7efe4;
+}
+.cartIcon {
+  display: flex;
+  align-items: center;
+  margin-right: 2px;
+}
+.cartText {
+  margin-right: 2px;
+}
+.cartBadge {
+  background: #f7efe4;
+  color: #7b4b2a;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  padding: 2px 8px;
+  margin-left: 4px;
+  font-weight: 500;
+}
 .profileMenuWrapper {
   position: relative;
   display: flex;

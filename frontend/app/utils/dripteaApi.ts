@@ -5,6 +5,7 @@ export type DripTeaUser = {
   email: string;
   role: string;
   status: string;
+  profilePic?: string; // URL or base64 string
 };
 
 export type DripTeaCartItem = {
