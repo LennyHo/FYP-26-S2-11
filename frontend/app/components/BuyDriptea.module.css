@@ -18,19 +18,43 @@
 }
 
 .hero {
-  grid-template-columns: 1.1fr 0.9fr;
+  position: relative;
+  min-height: 360px;
+  grid-template-columns: minmax(0, 0.58fr) minmax(280px, 0.42fr);
   align-items: center;
   padding: 28px;
-  border: 1px solid rgba(220, 199, 180, 0.9);
+  border: 1px solid rgba(255, 238, 219, 0.72);
   border-radius: 30px;
-  background: linear-gradient(135deg, rgba(255, 250, 245, 0.92), rgba(245, 231, 217, 0.88));
+  background: #1f170f;
   box-shadow: var(--shadow);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.heroBackgroundVideo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(22, 13, 7, 0.86) 0%, rgba(44, 28, 16, 0.66) 42%, rgba(44, 28, 16, 0.18) 78%),
+    linear-gradient(180deg, rgba(255, 247, 233, 0.08), rgba(18, 12, 7, 0.18));
 }
 
 .heroCopy {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: 620px;
+  padding: 18px 0 18px 10px;
 }
 
 .eyebrow,
@@ -43,16 +67,27 @@
 }
 
 .title {
-  color: var(--foreground);
   font-size: clamp(2.8rem, 8vw, 5.3rem);
   line-height: 0.92;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
+  background: linear-gradient(110deg, #fff8eb 0%, #f4d6a8 42%, #bfd37d 74%, #ffffff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.34));
 }
 
 .description {
   max-width: 560px;
-  color: var(--muted);
-  font-size: 1.02rem;
+  color: #fff3df;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.55;
+  border-left: 4px solid #bfd37d;
+  padding-left: 16px;
+  background: linear-gradient(90deg, rgba(255, 248, 235, 0.16), rgba(255, 248, 235, 0));
+  border-radius: 12px;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.38);
 }
 
 .actions {
@@ -182,6 +217,15 @@
   display: block;
   width: 100%;
   height: auto;
+  border-radius: 32px;
+  object-fit: cover;
+  box-shadow: 0 8px 32px rgba(59, 39, 26, 0.13);
+}
+
+.heroVideo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
   border-radius: 32px;
   object-fit: cover;
   box-shadow: 0 8px 32px rgba(59, 39, 26, 0.13);

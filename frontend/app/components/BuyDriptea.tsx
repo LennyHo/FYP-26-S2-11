@@ -51,6 +51,18 @@ export default function BuyDripTeaPage() {
 
       <main className={styles.main}>
         <section className={styles.hero}>
+          <video
+            className={styles.heroBackgroundVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            aria-hidden="true"
+          >
+            <source src="/buy_driptea_2.mp4" type="video/mp4" />
+          </video>
+          <div className={styles.heroOverlay} />
+
           <div className={styles.heroCopy}>
             <h1 className={styles.title}>Refresh Your Day</h1>
             <p className={styles.description}>
@@ -58,16 +70,6 @@ export default function BuyDripTeaPage() {
             </p>
 
             {/* Actions and meta removed for a cleaner hero */}
-          </div>
-
-          <div className={styles.heroVisual}>
-            <div className={`${styles.imageCard} ${styles.animatedCard}`}>
-              <img
-                src="/buy_dripTea_cover.png"
-                alt="DripTea Signature Collection"
-                className={styles.heroImage}
-              />
-            </div>
           </div>
         </section>
 
