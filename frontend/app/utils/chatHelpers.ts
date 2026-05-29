@@ -162,10 +162,50 @@ export const DRINK_INFO: Record<string, { ingredients: string[]; diabeticAdvice:
     diabeticAdvice: 'Moderate sugar. Oolong has antioxidants that may help blood sugar control.',
     insulinImpact: 'Oolong supports gradual digestion; moderate insulin demand if you choose 25-50% sugar.'
   },
+  b004: {
+    ingredients: ['Osmanthus-infused tea', 'Milk', 'Sugar syrup'],
+    diabeticAdvice: 'Moderate sugar. Choose 0-25% sugar level to keep the floral milk tea lighter.',
+    insulinImpact: 'Milk and added sugar may cause a moderate insulin response. Lower sugar helps reduce the spike.'
+  },
+  b005: {
+    ingredients: ['Da Hong Bao oolong tea', 'Milk', 'Sugar syrup'],
+    diabeticAdvice: 'Moderate sugar. Da Hong Bao is tea-forward, so 0-25% sugar can preserve flavor with less glucose impact.',
+    insulinImpact: 'Oolong tea with milk has moderate insulin demand when sweetened. Pair with food for steadier absorption.'
+  },
   b006: {
     ingredients: ['Matcha powder', 'Milk', 'Minimal sugar'],
     diabeticAdvice: 'Very low sugar. Matcha provides slow-release energy without sharp glucose spike.',
     insulinImpact: 'Low insulin response. Matcha contains L-theanine which promotes stable blood sugar.'
+  },
+  b007: {
+    ingredients: ['Matcha powder', 'Milk', 'Strawberry puree'],
+    diabeticAdvice: 'Higher natural and added sugar from strawberry puree. Choose 0-25% sugar to reduce glucose spike.',
+    insulinImpact: 'Fruit puree and milk can create a moderate insulin response. Lower sugar and no topping can help.'
+  },
+  b008: {
+    ingredients: ['Matcha powder', 'Milk', 'Cranberry'],
+    diabeticAdvice: 'Moderate sugar with tart cranberry flavor. Choose 0-25% sugar for better blood sugar control.',
+    insulinImpact: 'Cranberry and milk may cause a moderate insulin response. Matcha can help slow the perceived energy crash.'
+  },
+  b009: {
+    ingredients: ['Matcha powder', 'Jasmine tea', 'Milk'],
+    diabeticAdvice: 'Moderate sugar. Jasmine and matcha flavors work well at 0-25% sugar.',
+    insulinImpact: 'Milk and sweetener may cause a mild to moderate insulin response. Lower sugar keeps it steadier.'
+  },
+  b010: {
+    ingredients: ['Dark chocolate', 'Milk', 'Ice', 'Sugar'],
+    diabeticAdvice: 'High sugar and calories. Choose 0% sugar and avoid sweet toppings if you need tighter glucose control.',
+    insulinImpact: 'Chocolate, milk, and sugar can cause a stronger insulin response. Best treated as an occasional dessert drink.'
+  },
+  b011: {
+    ingredients: ['Milo', 'Milk', 'Ice', 'Milo powder'],
+    diabeticAdvice: 'High sugar and calories. Choose 0% sugar and no topping to reduce the overall glucose load.',
+    insulinImpact: 'Malt chocolate powder and milk can cause a stronger insulin response. Pair with food and choose a smaller size.'
+  },
+  b012: {
+    ingredients: ['Taro', 'Milk', 'Ice', 'Sugar syrup'],
+    diabeticAdvice: 'Moderate to high sugar. Choose 0-25% sugar because taro-style drinks can be naturally starchy and sweet.',
+    insulinImpact: 'Taro and sugar can cause a moderate insulin response. Lower sugar helps reduce glucose impact.'
   }
 };
 

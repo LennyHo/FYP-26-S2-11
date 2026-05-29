@@ -124,6 +124,19 @@ function filterMenu(menu, userMessage) {
     return results.sort((a, b) => b.score - a.score).slice(0, 5);
 }
 
+function messageMatchesMenuTerm(userMessage) {
+    const msg = userMessage.toLowerCase();
+    return menuData.beverages.some(item => {
+        const menuTerms = [
+            item.name,
+            item.category,
+            ...(item.tags || []),
+        ].filter(Boolean);
+
+        return menuTerms.some(term => msg.includes(String(term).toLowerCase()));
+    });
+}
+
 // =========================
 // CONVERSATION MEMORY
 // =========================
@@ -161,7 +174,7 @@ function isMenuRequest(userMessage) {
         return false;
     }
     
-    return menuKeywords.test(msg);
+    return menuKeywords.test(msg) || messageMatchesMenuTerm(userMessage);
 }
 
 function buildSystemPrompt(userMessage) {
