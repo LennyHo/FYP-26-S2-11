@@ -205,6 +205,11 @@
   box-shadow: 0 4px 10px rgba(139, 90, 70, 0.12);
 }
 
+.backBtn {
+  position: relative;
+  overflow: visible;
+}
+
 .backBtn:focus-visible,
 .restartBtn:focus-visible {
   outline: 2px solid rgba(160, 116, 77, 0.45);
@@ -222,6 +227,49 @@
 .backBtn:active,
 .restartBtn:active {
   transform: scale(0.97);
+}
+
+.backBtnTooltip {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 10px);
+  transform: translateY(-4px) scale(0.98);
+  z-index: 5;
+  min-width: max-content;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: #f7f7f7;
+  color: #222;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  white-space: nowrap;
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+}
+
+.backBtnTooltip::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  background: #f7f7f7;
+  border-left: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  transform: rotate(45deg);
+}
+
+.backBtn:hover .backBtnTooltip,
+.backBtn:focus-visible .backBtnTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
 }
 
 .headerBtnIcon {

@@ -1279,12 +1279,14 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
             type="button"
             className={styles.backBtn}
             onClick={() => onClose?.()}
-            aria-label="Back"
+            aria-label="Close Avy"
           >
             <svg className={styles.headerBtnIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M14.5 5.5L8 12l6.5 6.5" />
-              <path d="M9 12h8" />
+              <rect x="4.5" y="4" width="15" height="16" rx="2.5" />
+              <path d="M9 4v16" />
+              <path d="M15.25 9.25L12.5 12l2.75 2.75" />
             </svg>
+            <span className={styles.backBtnTooltip} role="tooltip">Close Avy</span>
           </button>
           <div className={styles.titleWrap}>
             <div
