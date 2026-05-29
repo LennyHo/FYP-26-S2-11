@@ -73,7 +73,7 @@
   font-family: "Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   border-radius: inherit;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: visible;
 }
 
 .chatbotWrapper {
@@ -107,33 +107,38 @@
 }
 
 .chatHeader {
-  padding: 14px 16px 16px;
-  background: transparent !important;
-  border-bottom: none;
+  padding: 12px 14px;
+  background: var(--avy-chat-gradient) !important;
+  border-bottom: 1px solid rgba(171, 28, 110, 0.08);
+  position: relative;
+  z-index: 20;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow: none;
+  gap: 0;
+  box-shadow: 0 8px 24px rgba(171, 28, 110, 0.08);
 }
 
 .headerTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  min-height: 44px;
 }
 
 .titleWrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
+  min-width: 0;
+  flex: 0 0 auto;
 }
 
 .avyLogoAnimated {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  filter: drop-shadow(0 4px 10px rgba(160, 116, 77, 0.24));
+  filter: drop-shadow(0 4px 10px rgba(171, 28, 110, 0.28));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -205,9 +210,34 @@
   box-shadow: 0 4px 10px rgba(139, 90, 70, 0.12);
 }
 
+.headerIconBtn {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+  background: transparent;
+  color: #AB1C6E;
+}
+
+.headerIconBtn:hover,
+.headerIconBtn:focus-visible {
+  background: rgba(171, 28, 110, 0.08);
+  color: #7f246f;
+}
+
+.headerIconBtn:active {
+  transform: scale(0.96);
+}
+
 .backBtn {
   position: relative;
   overflow: visible;
+  flex: 0 0 auto;
 }
 
 .backBtn:focus-visible,
@@ -231,10 +261,11 @@
 
 .backBtnTooltip {
   position: absolute;
-  left: 0;
-  top: calc(100% + 10px);
-  transform: translateY(-4px) scale(0.98);
-  z-index: 5;
+  left: auto;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translate(4px, -50%) scale(0.98);
+  z-index: 40;
   min-width: max-content;
   padding: 9px 14px;
   border-radius: 999px;
@@ -255,21 +286,22 @@
 .backBtnTooltip::before {
   content: "";
   position: absolute;
-  left: 15px;
-  top: -7px;
+  left: auto;
+  right: -7px;
+  top: 50%;
   width: 14px;
   height: 14px;
   background: #f7f7f7;
-  border-left: 1px solid rgba(0, 0, 0, 0.12);
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
-  transform: rotate(45deg);
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  transform: translateY(-50%) rotate(45deg);
 }
 
 .backBtn:hover .backBtnTooltip,
 .backBtn:focus-visible .backBtnTooltip {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0) scale(1);
+  transform: translate(0, -50%) scale(1);
 }
 
 .headerBtnIcon {
@@ -285,19 +317,102 @@
 .headerMainTitle {
   margin: 0;
   color: var(--foreground);
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: 1.24rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .headerControls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .headerContent {
   width: 100%;
+}
+
+.headerSearch {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 190px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(171, 28, 110, 0.12);
+}
+
+.headerSearchInput {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+.headerSearchInput::placeholder {
+  color: rgba(44, 35, 40, 0.48);
+}
+
+.searchCount {
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(171, 28, 110, 0.85);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.settingsWrap {
+  position: relative;
+}
+
+.settingsMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  width: 190px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+}
+
+.settingsMenu button {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #1b1b1b;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settingsMenu button:hover,
+.settingsMenu button:focus-visible {
+  background: rgba(171, 28, 110, 0.08);
+  outline: none;
 }
 
 .headerTitle {
@@ -331,6 +446,17 @@
   background: var(--avy-chat-gradient);
   scroll-behavior: smooth;
   overflow-x: hidden;
+}
+
+.noSearchResults {
+  align-self: center;
+  margin-top: 18px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  color: rgba(0, 0, 0, 0.58);
+  font-size: 0.86rem;
+  font-weight: 600;
 }
 
 .welcomeIntroCard {
@@ -1765,49 +1891,59 @@
 
 /* ======= CLAUDE-STYLE MOBILE & TABLET REDESIGN ======= */
 @media (max-width: 1024px) {
-  /* 1. Hide the center header elements */
-  .titleWrap,
+  /* 1. Hide the old secondary header content */
   .headerContent {
     display: none !important;
   }
 
-  /* 2. Make the header float transparently */
   .chatHeader {
-    position: absolute !important;
+    position: relative !important;
     top: 0;
     left: 0;
     right: 0;
-    background: transparent !important;
-    box-shadow: none !important;
-    padding: 16px;
+    background: var(--avy-chat-gradient) !important;
+    box-shadow: 0 8px 24px rgba(171, 28, 110, 0.08) !important;
+    padding: 10px 12px;
     z-index: 100;
-    pointer-events: none; /* Lets you tap the chat behind the empty space */
+    pointer-events: auto;
   }
 
   .headerTop {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     width: 100%;
+    gap: 8px;
   }
 
-  /* 3. Re-enable clicks for the top buttons and make them clean circles */
-  .backBtn,
-  .restartBtn {
+  .avyLogoAnimated {
+    width: 38px;
+    height: 38px;
+  }
+
+  .headerMainTitle {
+    font-size: 1.08rem;
+  }
+
+  .headerIconBtn {
     pointer-events: auto;
-    background: #ffffff !important;
-    border: 1px solid rgba(0,0,0,0.08) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
-    color: #333 !important;
-    width: 42px !important;
-    height: 42px !important;
+    width: 36px !important;
+    height: 36px !important;
   }
 
-  /* Push messages down so they don't hide under the floating top buttons */
+  .backBtn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .headerSearch {
+    max-width: none;
+  }
+
   .chatWindow {
-    padding-top: 70px !important; 
+    padding-top: 14px !important; 
   }
 
-  /* 4. Float the bottom input area and remove the solid white background */
   .chatInputArea {
     position: fixed;
     bottom: 0;

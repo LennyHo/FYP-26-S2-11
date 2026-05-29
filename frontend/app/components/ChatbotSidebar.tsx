@@ -101,6 +101,9 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [welcomeGreeting, setWelcomeGreeting] = useState(WELCOME_GREETINGS[0]);
   const [welcomeAnimationKey, setWelcomeAnimationKey] = useState(0);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   // ===== REFS (NON-STATE VALUES) =====
   // Speech API references
   const recognitionRef = useRef<any>(null);
@@ -1252,6 +1255,13 @@ const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
   };
 
   const hasUserMessage = messages.some(msg => msg.isUser);
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const messageMatchesSearch = (msg: Message) => {
+    if (!normalizedSearchQuery) return true;
+    return msg.text.replace(/<[^>]*>/g, ' ').toLowerCase().includes(normalizedSearchQuery);
+  };
+  const visibleMessages = normalizedSearchQuery ? messages.filter(messageMatchesSearch) : messages;
+  const searchResultCount = normalizedSearchQuery ? visibleMessages.length : 0;
 
   /** Send quick prompt as message when user clicks suggested prompt button */
   // const handleQuickPromptClick = (prompt: string) => {
@@ -1275,20 +1285,20 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
       {/* Header with logo and controls */}
       <div className={styles.chatHeader}>
         <div className={styles.headerTop}>
-          <button
-            type="button"
-            className={styles.backBtn}
-            onClick={() => onClose?.()}
-            aria-label="Close Avy"
-          >
-            <svg className={styles.headerBtnIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <rect x="4.5" y="4" width="15" height="16" rx="2.5" />
-              <path d="M9 4v16" />
-              <path d="M15.25 9.25L12.5 12l2.75 2.75" />
-            </svg>
-            <span className={styles.backBtnTooltip} role="tooltip">Close Avy</span>
-          </button>
           <div className={styles.titleWrap}>
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={() => onClose?.()}
+              aria-label="Close Avy"
+            >
+              <svg className={styles.headerBtnIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <rect x="4.5" y="4" width="15" height="16" rx="2.5" />
+                <path d="M9 4v16" />
+                <path d="M15.25 9.25L12.5 12l2.75 2.75" />
+              </svg>
+              <span className={styles.backBtnTooltip} role="tooltip">Close Avy</span>
+            </button>
             <div
               ref={avyLogoRef}
               className={styles.avyLogoAnimated}
@@ -1358,10 +1368,49 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
             </div>
             <h3 className={styles.headerMainTitle}>Avy</h3>
           </div>
+          {isSearchOpen && (
+            <div className={styles.headerSearch}>
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className={styles.headerSearchInput}
+                placeholder="Search messages"
+                aria-label="Search Avy messages"
+                autoFocus
+              />
+              {normalizedSearchQuery && (
+                <span className={styles.searchCount}>{searchResultCount}</span>
+              )}
+            </div>
+          )}
           <div className={styles.headerControls}>
             <button
               type="button"
-              className={styles.restartBtn}
+              className={styles.headerIconBtn}
+              onClick={() => {
+                setIsSearchOpen(value => !value);
+                setIsSettingsOpen(false);
+                if (isSearchOpen) setSearchQuery('');
+              }}
+              aria-label={isSearchOpen ? 'Close message search' : 'Search messages'}
+            >
+              <svg className={styles.headerBtnIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                {isSearchOpen ? (
+                  <>
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                  </>
+                ) : (
+                  <>
+                    <circle cx="11" cy="11" r="6" />
+                    <path d="M16 16l4 4" />
+                  </>
+                )}
+              </svg>
+            </button>
+            <button
+              type="button"
+              className={styles.headerIconBtn}
               onClick={restartConversation}
               aria-label="Restart conversation"
             >
@@ -1370,17 +1419,49 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                 <path d="M21 4.5V10h-5.5" />
               </svg>
             </button>
+            {/*
+            <div className={styles.settingsWrap}>
+              <button
+                type="button"
+                className={styles.headerIconBtn}
+                onClick={() => {
+                  setIsSettingsOpen(value => !value);
+                  setIsSearchOpen(false);
+                  setSearchQuery('');
+                }}
+                aria-label="Open Avy settings"
+                aria-expanded={isSettingsOpen}
+              >
+                <svg className={styles.headerBtnIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M12 2.75v2.1" />
+                  <path d="M12 19.15v2.1" />
+                  <path d="M4.9 4.9l1.48 1.48" />
+                  <path d="M17.62 17.62l1.48 1.48" />
+                  <path d="M2.75 12h2.1" />
+                  <path d="M19.15 12h2.1" />
+                  <path d="M4.9 19.1l1.48-1.48" />
+                  <path d="M17.62 6.38l1.48-1.48" />
+                </svg>
+              </button>
+              {isSettingsOpen && (
+                <div className={styles.settingsMenu}>
+                  <button type="button" onClick={restartConversation}>Restart conversation</button>
+                  <button type="button" onClick={() => onClose?.()}>Close Avy</button>
+                </div>
+              )}
+            </div>
+            */}
           </div>
-        </div>
-
-        <div className={styles.headerContent}>
-          <p className={styles.subtitle}>AI Assistant DripTea Health Buddy</p>
         </div>
       </div>
 
       {/* Message display area - scrollable with auto-scroll to newest message */}
       <div className={styles.chatWindow} ref={chatWindowRef} onClick={handleChatClick}>
-        {messages.map((msg, index) => (
+        {normalizedSearchQuery && visibleMessages.length === 0 && (
+          <div className={styles.noSearchResults}>No messages found</div>
+        )}
+        {visibleMessages.map((msg, index) => (
           <React.Fragment key={msg.id}>
             <div className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
             {!msg.isUser && (
@@ -1445,7 +1526,7 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               )}
             </div>
 
-            {isInitialized && !hasUserMessage && index === 0 && !msg.isUser && (
+            {isInitialized && !normalizedSearchQuery && !hasUserMessage && index === 0 && !msg.isUser && (
               <div className={styles.welcomeIntroCard}>
                 <p key={welcomeAnimationKey} className={styles.welcomeGreeting}>{welcomeGreeting}</p>
               </div>

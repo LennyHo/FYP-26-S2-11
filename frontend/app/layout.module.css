@@ -52,7 +52,7 @@
   transition: transform 0.36s cubic-bezier(.2,.9,.2,1);
   box-shadow: -8px 0 24px rgba(15, 15, 15, 0.06);
   border-radius: 14px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .chatPaneOpen {
