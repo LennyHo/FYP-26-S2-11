@@ -219,8 +219,8 @@ export default function Header() {
           </span>
           <span className={styles.cartText}>Cart</span>
           {cartCount > 0 && (
-            <span className={styles.cartBadge}>
-              {cartCount} Items (S$ {cartTotal.toFixed(2)})
+            <span className={styles.cartBadge} aria-label={`${cartCount} items in cart`}>
+              {cartCount > 9 ? '9+' : cartCount}
             </span>
           )}
         </button>
