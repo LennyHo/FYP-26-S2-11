@@ -56,6 +56,7 @@ export default function Header() {
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
   // done by "HDC" - customer/admin/staff login state from backend auth.
   const [currentUser, setCurrentUser] = useState<DripTeaUser | null>(null);
   // end done by "HDC"
@@ -157,23 +158,43 @@ export default function Header() {
   };
   // end done by "HDC"
 
-return (
+  const openMenu = () => { setMenuOpen(true); setMenuClosing(false); };
+  const closeMenu = () => { if (menuOpen && !menuClosing) setMenuClosing(true); };
+  const toggleMenu = () => { menuOpen ? closeMenu() : openMenu(); };
+  const handleNavAnimEnd = () => { if (menuClosing) { setMenuOpen(false); setMenuClosing(false); } };
+
+  const authContent = currentUser || isStaffDashboard
+    ? <ProfileDropdown onLogout={handleLogout} />
+    : <Link href="/login" className={styles.loginLink}>Log in</Link>;
+
+  return (
     <header className={styles.header}>
-      <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`} role="navigation" aria-label="Primary">
+      {/* Nav links: desktop left column; mobile absolute dropdown */}
+      <nav
+        className={`${styles.nav} ${menuOpen && !menuClosing ? styles.navOpen : ''} ${menuClosing ? styles.navClosing : ''}`}
+        role="navigation"
+        aria-label="Primary"
+        onAnimationEnd={handleNavAnimEnd}
+      >
+        <Link href="/buy-driptea" className={styles.navLink} onClick={closeMenu}>BUY DRIPTEA</Link>
+        <Link href="/our-story" className={styles.navLink} onClick={closeMenu}>OUR STORY</Link>
+        {/* <Link href="/global-stores" className={styles.navLink} onClick={closeMenu}>GLOBAL STORES</Link> */}
+      </nav>
+
+      {/* Mobile-only top-right: profile pic + hamburger */}
+      <div className={styles.topRight}>
+        <div className={styles.mobileAuth}>{authContent}</div>
         <button
-          className={styles.menuBtn}
+          type="button"
+          className={`${styles.menuBtn} ${menuOpen ? styles.menuBtnOpen : ''}`}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMenuOpen(!menuOpen)}
+          onClick={toggleMenu}
         >
           <span className={styles.hamburger} aria-hidden="true" />
         </button>
+      </div>
 
-        <Link href="/buy-driptea" className={styles.navLink} onClick={() => setMenuOpen(false)}>BUY DRIPTEA</Link>
-        <Link href="/our-story" className={styles.navLink} onClick={() => setMenuOpen(false)}>OUR STORY</Link>
-        {/* <Link href="/global-stores" className={styles.navLink} onClick={() => setMenuOpen(false)}>GLOBAL STORES</Link> */}
-      </nav>
-      
-      {/* Make the brand clickable to return to the home page */}
+      {/* Brand logo — click to go home */}
       <div
         className={`${styles.brand} ${styles.brandImage}`}
         onClick={() => router.push('/')}
@@ -184,17 +205,11 @@ return (
           dangerouslySetInnerHTML={{ __html: mainLogoSvg }}
         />
       </div>
-      
+
+      {/* Desktop: profile + cart. Mobile: cart only (auth is in topRight) */}
       <div className={styles.actions}>
-        {/* <Link href="/contact" className={styles.navLink}>CONTACT</Link> */}
-        {currentUser || isStaffDashboard ? (
-          <ProfileDropdown onLogout={handleLogout} />
-        ) : (
-          <Link href="/login" className={styles.loginLink}>Log in</Link>
-        )}
-        
-        {/* RESTORED CART BUTTON */}
-        <button className={styles.cartBtn} onClick={() => router.push('/cart')}>
+        <div className={styles.desktopAuth}>{authContent}</div>
+        <button type="button" className={styles.cartBtn} onClick={() => router.push('/cart')}>
           <span className={styles.cartIcon} aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="8.5" cy="19" r="1.5" fill="#7b4b2a"/>
@@ -251,10 +266,11 @@ function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
   return (
     <div className={styles.profileMenuWrapper} ref={menuRef}>
       <button
+        type="button"
         className={styles.profilePicBtn}
         tabIndex={0}
         aria-haspopup="true"
-        aria-expanded={open}
+        aria-expanded={open ? 'true' : 'false'}
         onClick={() => setOpen((v) => !v)}
       >
         <img src={profilePic} alt="Profile" className={styles.profilePic} />
@@ -264,7 +280,7 @@ function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
           <Link href="/profile" className={styles.profileDropdownItem} onClick={() => setOpen(false)}>
             Settings
           </Link>
-          <button className={styles.profileDropdownItem} onClick={() => handleMenuItemClick(onLogout)}>
+          <button type="button" className={styles.profileDropdownItem} onClick={() => handleMenuItemClick(onLogout)}>
             Log out
           </button>
         </div>
