@@ -64,21 +64,14 @@ export default function AboutUs() {
 
     stats.forEach((item, index) => {
       const timeoutId = window.setTimeout(() => {
-        const duration = 1600;
-        const startValue = Math.floor(item.target * (0.22 + Math.random() * 0.22));
+        const duration = 1800;
+        const startValue = 0;
         const startTime = performance.now();
-
-        setDisplayValues(previous => {
-          if (previous[index] === startValue) return previous;
-          const next = [...previous];
-          next[index] = startValue;
-          return next;
-        });
 
         const tick = (now: number) => {
           const elapsed = now - startTime;
           const progress = Math.min(elapsed / duration, 1);
-          const eased = 1 - Math.pow(1 - progress, 4);
+          const eased = 1 - Math.pow(1 - progress, 3);
           const nextValue = Math.round(startValue + (item.target - startValue) * eased);
 
           setDisplayValues(previous => {
@@ -135,6 +128,7 @@ export default function AboutUs() {
             >
               {displayValues[index]} {item.label}
             </h3>
+            <span className={styles.statDivider} aria-hidden="true" />
             <p className={styles.cardText}>{item.text}</p>
           </article>
           );

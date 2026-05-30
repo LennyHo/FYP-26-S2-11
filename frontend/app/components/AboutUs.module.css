@@ -22,22 +22,39 @@
 .statCard {
   min-height: 240px;
   border-radius: 24px;
-  border: 1px solid #d8d8d8;
-  background: transparent;
-  padding: 24px 28px;
+  border: 1px solid rgba(200, 175, 148, 0.48);
+  background: rgba(255, 250, 245, 0.72);
+  padding: 28px 32px;
   display: flex;
   flex-direction: column;
-  gap: 56px;
+  gap: 16px;
+  box-shadow: 0 4px 18px rgba(59, 39, 26, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(59, 39, 26, 0.1);
 }
 
 .cups {
   margin: 0;
   color: #050d1f;
-  font-size: clamp(1.72rem, 2.05vw, 2.1rem);
+  font-size: clamp(1.8rem, 2.2vw, 2.3rem);
   line-height: 1.08;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
   will-change: transform, opacity;
+}
+
+.statDivider {
+  display: block;
+  width: 36px;
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #9b6d4a, rgba(155, 109, 74, 0.3));
+  flex-shrink: 0;
 }
 
 .leftNumber,
@@ -107,10 +124,21 @@
 .cardText {
   margin: 0;
   max-width: 420px;
-  color: #6f6f6f;
-  font-size: clamp(1.08rem, 1.2vw, 1.42rem);
-  line-height: 1.42;
+  color: #777;
+  font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+  line-height: 1.55;
   font-weight: 400;
+}
+
+@keyframes numberFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 960px) {
@@ -120,9 +148,16 @@
   }
 
   .statCard {
-    min-height: 210px;
-    gap: 42px;
+    min-height: unset;
+    gap: 14px;
     padding: 24px;
+  }
+
+  .leftNumber.numberVisible,
+  .rightNumber.numberVisible {
+    animation-name: numberFadeUp;
+    animation-duration: 600ms;
+    animation-timing-function: cubic-bezier(0.2, 0.75, 0.2, 1);
   }
 }
 
@@ -137,9 +172,9 @@
   }
 
   .statCard {
-    min-height: 170px;
+    min-height: unset;
     border-radius: 20px;
-    gap: 28px;
+    gap: 12px;
     padding: 20px;
   }
 

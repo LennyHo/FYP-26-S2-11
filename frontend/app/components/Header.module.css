@@ -127,7 +127,7 @@
   background: rgba(255, 250, 245, 0.78);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  box-shadow: 0 12px 28px rgba(2, 23, 46, 0.12);
+  box-shadow: 0 4px 12px rgba(2, 23, 46, 0.06);
 }
 
 .nav,
@@ -270,7 +270,7 @@
     gap: 6px;
     align-items: stretch;
     z-index: 220;
-    box-shadow: 0 16px 44px rgba(2,23,46,0.16);
+    box-shadow: 0 4px 14px rgba(2,23,46,0.08);
   }
 
   .navOpen .navLink {
