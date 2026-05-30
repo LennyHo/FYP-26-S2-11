@@ -35,9 +35,8 @@ const mainLogoSvg = `
 
 const DRIPTEA_API_BASES = [
   process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
-  ...(process.env.NODE_ENV === 'development'
-    ? ['http://localhost:5000', 'https://driptea-trrn.onrender.com']
-    : ['https://driptea-trrn.onrender.com', 'http://localhost:5000']),
+  'https://driptea-trrn.onrender.com',
+  'http://localhost:5000',
 ]
   .filter(Boolean)
   .map((value) => value.replace(/\/$/, ''))

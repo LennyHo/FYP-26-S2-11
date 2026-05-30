@@ -267,6 +267,32 @@
   transform: translateY(-1px);
 }
 
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+  transform: none;
+}
+
+.statusMessage {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.success {
+  border: 1px solid rgba(45, 90, 31, 0.22);
+  background: rgba(123, 168, 106, 0.14);
+  color: #2d5a1f;
+}
+
+.error {
+  border: 1px solid rgba(162, 45, 0, 0.22);
+  background: rgba(244, 59, 3, 0.12);
+  color: #a22d00;
+}
+
 .register {
   margin-top: 18px;
   color: var(--muted);

@@ -1,7 +1,59 @@
+'use client';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import styles from './register.module.css';
 import BackgroundShapes from '../login/BackgroundShapes';
+import { registerCustomer } from '../utils/dripteaApi';
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [statusMessage, setStatusMessage] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function updateField(field, value) {
+    setFormData(current => ({ ...current, [field]: value }));
+  }
+
+  async function handleRegister(event) {
+    event.preventDefault();
+    setStatusMessage('');
+    setIsError(false);
+
+    if (formData.password !== formData.confirmPassword) {
+      setIsError(true);
+      setStatusMessage('Passwords do not match.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await registerCustomer({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      });
+      setStatusMessage('Account created. Redirecting to login...');
+      window.setTimeout(() => {
+        router.push('/login');
+      }, 700);
+    } catch (error) {
+      setIsError(true);
+      setStatusMessage(error instanceof Error ? error.message : 'Unable to create account.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className={styles.page}>
       <BackgroundShapes />
@@ -36,32 +88,77 @@ export default function RegisterPage() {
           <div className={styles.heading}>
             <span className={styles.kicker}>Welcome to DRIPTEA</span>
             <h1 className={styles.title}>Create your free account</h1>
-            <p className={styles.subtitle}>This is a UI-only registration page for now. Form submission can be connected to backend later.</p>
+            <p className={styles.subtitle}>Create your customer account, then sign in to start ordering.</p>
           </div>
 
-          <form className={styles.form} autoComplete="off">
+          <form className={styles.form} autoComplete="off" onSubmit={handleRegister}>
             <div>
               <label htmlFor="fullName" className={styles.label}>Full name</label>
-              <input type="text" id="fullName" name="fullName" required className={styles.input} placeholder="Your full name" />
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                required
+                className={styles.input}
+                placeholder="Your full name"
+                value={formData.fullName}
+                onChange={(event) => updateField('fullName', event.target.value)}
+              />
             </div>
             <div>
               <label htmlFor="email" className={styles.label}>Email</label>
-              <input type="email" id="email" name="email" required className={styles.input} placeholder="username@gmail.com" />
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                className={styles.input}
+                placeholder="username@gmail.com"
+                value={formData.email}
+                onChange={(event) => updateField('email', event.target.value)}
+              />
             </div>
             <div>
               <label htmlFor="password" className={styles.label}>Password</label>
-              <input type="password" id="password" name="password" required className={styles.input} placeholder="Create password" />
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                minLength={6}
+                className={styles.input}
+                placeholder="Create password"
+                value={formData.password}
+                onChange={(event) => updateField('password', event.target.value)}
+              />
             </div>
             <div>
               <label htmlFor="confirmPassword" className={styles.label}>Confirm password</label>
-              <input type="password" id="confirmPassword" name="confirmPassword" required className={styles.input} placeholder="Confirm password" />
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                required
+                minLength={6}
+                className={styles.input}
+                placeholder="Confirm password"
+                value={formData.confirmPassword}
+                onChange={(event) => updateField('confirmPassword', event.target.value)}
+              />
             </div>
-            <button type="submit" className={styles.button}>get started with DRIPTEA</button>
+            <button type="submit" className={styles.button} disabled={isSubmitting}>
+              {isSubmitting ? 'creating account...' : 'get started with DRIPTEA'}
+            </button>
+            {statusMessage && (
+              <p role="alert" className={`${styles.statusMessage} ${isError ? styles.error : styles.success}`}>
+                {statusMessage}
+              </p>
+            )}
           </form>
 
           <div className={styles.register}>
             Already have an account?
-            <a href="/login">Sign in</a>
+            <Link href="/login">Sign in</Link>
           </div>
         </div>
       </div>

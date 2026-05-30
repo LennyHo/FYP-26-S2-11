@@ -106,12 +106,10 @@ export type DripTeaOrder = {
 };
 // end done by "HDC"
 
-// done by "HDC" - frontend bridge tries env override, then prefers local backend in development.
 const API_BASES = [
   process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
-  ...(process.env.NODE_ENV === 'development'
-    ? ['http://localhost:5000', 'https://driptea-trrn.onrender.com']
-    : ['https://driptea-trrn.onrender.com', 'http://localhost:5000']),
+  'https://driptea-trrn.onrender.com',
+  'http://localhost:5000',
 ]
   .filter((value): value is string => Boolean(value))
   .map((value) => value.replace(/\/$/, ''))
@@ -193,6 +191,17 @@ export function clearStoredUser() {
   window.localStorage.removeItem(USER_STORAGE_KEY);
   window.localStorage.removeItem(TOKEN_STORAGE_KEY);
   window.dispatchEvent(new Event('authUpdated'));
+}
+
+export function registerCustomer(payload: {
+  fullName: string;
+  email: string;
+  password: string;
+}) {
+  return requestJson<{ ok: boolean; user: DripTeaUser; token: string }>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
 export function addCartItem(payload: Record<string, unknown>) {
