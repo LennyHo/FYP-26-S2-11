@@ -3,6 +3,7 @@ const express = require("express");
 const healthRoutes = require("./routes/health.routes");
 const exampleRoutes = require("./routes/example.routes");
 const dialogflowRoutes = require("./routes/dialogflow.routes");
+const dripteaRoutes = require("./routes/driptea.routes");
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.get("/", (_req, res) => {
 app.use("/api/health", healthRoutes);
 app.use("/api/examples", exampleRoutes);
 app.use("/api/dialogflow", dialogflowRoutes);
+app.use("/api", dripteaRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

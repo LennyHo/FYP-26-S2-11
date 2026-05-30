@@ -218,7 +218,7 @@ return (
 function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [profilePic, setProfilePic] = useState<string>("");
+  const [profilePic, setProfilePic] = useState<string>("/profile_empty.png");
   useEffect(() => {
     // Get user from localStorage (sync with header)
     const user = getStoredUser();
