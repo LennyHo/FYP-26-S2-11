@@ -3,9 +3,9 @@
 
 export async function fetchFromApi(endpoint, options = {}) {
   const baseUrls = [
+    'http://localhost:5000',
     process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
     'https://driptea-trrn.onrender.com',
-    'http://localhost:5000',
   ]
     .filter(Boolean)
     .map((value) => value.replace(/\/$/, ''))

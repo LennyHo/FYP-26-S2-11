@@ -34,9 +34,9 @@ const mainLogoSvg = `
 `;
 
 const DRIPTEA_API_BASES = [
+  'http://localhost:5000',
   process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
   'https://driptea-trrn.onrender.com',
-  'http://localhost:5000',
 ]
   .filter(Boolean)
   .map((value) => value.replace(/\/$/, ''))

@@ -107,9 +107,9 @@ export type DripTeaOrder = {
 // end done by "HDC"
 
 const API_BASES = [
+  'http://localhost:5000',
   process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
   'https://driptea-trrn.onrender.com',
-  'http://localhost:5000',
 ]
   .filter((value): value is string => Boolean(value))
   .map((value) => value.replace(/\/$/, ''))

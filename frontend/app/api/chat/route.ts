@@ -201,9 +201,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const configuredBase = process.env.DRIPTEA_API_BASE?.trim();
     const backendBases = [
-      configuredBase,
       'http://localhost:5000',
       'http://127.0.0.1:5000',
+      configuredBase,
       'https://driptea-trrn.onrender.com',
     ].filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index);
 

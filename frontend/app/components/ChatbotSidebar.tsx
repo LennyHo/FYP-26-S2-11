@@ -628,7 +628,9 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
           try { localStorage.setItem(CONVERSATION_ID_KEY, convId); } catch (e) {}
           setConversationId(convId);
         }
-        const apiBase = (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'http://localhost:5000';
+        const apiBase = process.env.NODE_ENV === 'development'
+          ? 'http://localhost:5000'
+          : ((process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'https://driptea-trrn.onrender.com');
         const res = await fetch(`${apiBase}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -960,7 +962,9 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
       // done by "HDC" - resolved merge by keeping teammate proxy-first chat route and retaining direct 5000 fallback as commented reference.
       // Proxy-first behavior: prefer server-side Next.js API route; allow override via NEXT_PUBLIC_DRIPTEA_API_BASE.
       const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
-      const apiEndpoint = configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat';
+      const apiEndpoint = process.env.NODE_ENV === 'development'
+        ? '/api/chat'
+        : (configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat');
       console.log('[Chat] POST', apiEndpoint, { message: messageText, conversationId: convId });
       const response = await fetch(apiEndpoint, {
         method: 'POST',
@@ -1098,7 +1102,9 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
 
     try {
       const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
-      const apiEndpoint = configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat';
+      const apiEndpoint = process.env.NODE_ENV === 'development'
+        ? '/api/chat'
+        : (configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat');
 
       // SECRET HACK: Tell Gemini to act like a Voice Assistant
       const voiceModePrompt = `${text}\n\n[SYSTEM NOTE: The user is speaking to you via Voice Mode. Reply in 1 to 2 short, natural, conversational sentences. Do NOT use markdown, bold text, bullet points, or HTML.]`;
