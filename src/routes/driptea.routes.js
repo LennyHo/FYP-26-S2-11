@@ -92,6 +92,8 @@ function publicUser(user) {
     email: user.email,
     role: user.role,
     status: user.status,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 }
 
@@ -247,7 +249,6 @@ function toPublicOrder(order, user, items, payment) {
     status: order.status,
     orderType: order.orderType,
     totalAmount: Number(order.totalAmount || 0),
-    currency: order.currency || "SGD",
     paymentStatus: payment?.status || "unpaid",
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
@@ -367,6 +368,147 @@ router.post("/auth/login", async (req, res, next) => {
       ok: true,
       user: publicUser(user),
       token: crypto.randomBytes(24).toString("hex"),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/users", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const search = String(req.query.search || "").trim();
+    const query = search
+      ? {
+          $or: [
+            { fullName: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+            { role: { $regex: search, $options: "i" } },
+            { status: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+    const users = await User.find(query).sort({ role: 1, fullName: 1 }).lean();
+
+    return res.json({
+      ok: true,
+      data: users.map(publicUser),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/users", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const fullName = String(req.body?.fullName || "").trim();
+    const email = normalizeEmail(req.body?.email);
+    const password = String(req.body?.password || "");
+    const role = String(req.body?.role || "customer").trim();
+    const status = String(req.body?.status || "active").trim();
+    const allowedRoles = new Set(["user_admin", "store_staff", "customer"]);
+    const allowedStatuses = new Set(["active", "suspended"]);
+
+    if (!fullName || !email || password.length < 6 || !allowedRoles.has(role) || !allowedStatuses.has(status)) {
+      return res.status(400).json({
+        ok: false,
+        message: "Full name, valid email, password of at least 6 characters, role, and status are required.",
+      });
+    }
+
+    const existingUser = await User.findOne({ email }).lean();
+    if (existingUser) {
+      return res.status(409).json({
+        ok: false,
+        message: "An account with this email already exists.",
+      });
+    }
+
+    const user = await User.create({
+      fullName,
+      email,
+      role,
+      status,
+      ...createPasswordRecord(password),
+    });
+
+    return res.status(201).json({
+      ok: true,
+      data: publicUser(user),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/users/:id", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const userId = toObjectId(req.params.id);
+    const allowedRoles = new Set(["user_admin", "store_staff", "customer"]);
+    const allowedStatuses = new Set(["active", "suspended"]);
+    const update = {};
+
+    if (!userId) {
+      return res.status(400).json({ ok: false, message: "A valid user id is required." });
+    }
+
+    if (req.body?.fullName !== undefined) {
+      const fullName = String(req.body.fullName || "").trim();
+      if (!fullName) {
+        return res.status(400).json({ ok: false, message: "Full name is required." });
+      }
+      update.fullName = fullName;
+    }
+
+    if (req.body?.email !== undefined) {
+      const email = normalizeEmail(req.body.email);
+      if (!email) {
+        return res.status(400).json({ ok: false, message: "A valid email is required." });
+      }
+
+      const duplicateUser = await User.findOne({ email, _id: { $ne: userId } }).lean();
+      if (duplicateUser) {
+        return res.status(409).json({ ok: false, message: "An account with this email already exists." });
+      }
+
+      update.email = email;
+    }
+
+    if (req.body?.role !== undefined) {
+      const role = String(req.body.role || "").trim();
+      if (!allowedRoles.has(role)) {
+        return res.status(400).json({ ok: false, message: "A valid role is required." });
+      }
+      update.role = role;
+    }
+
+    if (req.body?.status !== undefined) {
+      const status = String(req.body.status || "").trim();
+      if (!allowedStatuses.has(status)) {
+        return res.status(400).json({ ok: false, message: "A valid status is required." });
+      }
+      update.status = status;
+    }
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ ok: false, message: "No user updates were provided." });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: update },
+      { new: true, runValidators: true }
+    ).lean();
+
+    if (!updatedUser) {
+      return res.status(404).json({ ok: false, message: "User not found." });
+    }
+
+    return res.json({
+      ok: true,
+      data: publicUser(updatedUser),
     });
   } catch (error) {
     next(error);
@@ -731,7 +873,6 @@ router.post("/checkout", async (req, res, next) => {
       orderType: "manual",
       status: "pending",
       totalAmount,
-      currency: "SGD",
       voucherCode: appliedVoucher ? appliedVoucher.code : null,
     });
 
@@ -757,7 +898,6 @@ router.post("/checkout", async (req, res, next) => {
       method: paymentMethod,
       status: "paid",
       amount: totalAmount,
-      currency: "SGD",
       transactionRef: `FAKE-${crypto.randomBytes(6).toString("hex").toUpperCase()}`,
     });
 

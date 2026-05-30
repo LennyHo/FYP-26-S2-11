@@ -14,6 +14,7 @@ The application creates these collections:
 - `orders`
 - `order_items`
 - `payments`
+- `vouchers`
 - `chatbot_sessions`
 
 ## users
@@ -126,7 +127,7 @@ Stores submitted customer orders.
 | `orderType` | String | Yes | Currently `manual` |
 | `status` | String | Yes | `pending`, `preparing`, `ready`, or `completed` |
 | `totalAmount` | Number | Yes | Order total |
-| `currency` | String | Yes | Defaults to `SGD` |
+| `voucherCode` | String/null | No | Applied voucher code, when used |
 | `createdAt` | Date | Yes | Added by Mongoose timestamps |
 | `updatedAt` | Date | Yes | Added by Mongoose timestamps |
 
@@ -174,7 +175,6 @@ Stores payment records created during checkout.
 | `method` | String | Yes | Payment method, currently defaults to `fake_card` |
 | `status` | String | Yes | `paid`, `unpaid`, or `failed` |
 | `amount` | Number | Yes | Payment amount |
-| `currency` | String | Yes | Defaults to `SGD` |
 | `transactionRef` | String | Yes | Fake transaction reference |
 | `createdAt` | Date | Yes | Added by Mongoose timestamps |
 
@@ -183,6 +183,27 @@ Index:
 ```js
 { orderId: 1 }
 ```
+
+## vouchers
+
+Stores discount vouchers that can be applied during checkout.
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `_id` | ObjectId | Yes | MongoDB document id |
+| `code` | String | Yes | Uppercased and unique |
+| `description` | String | No | Voucher description |
+| `discountType` | String | Yes | `percent` or `fixed` |
+| `discountValue` | Number | Yes | Percentage or fixed discount amount |
+| `minOrderAmount` | Number | No | Minimum cart amount needed |
+| `validFrom` | Date/null | No | Start date, when set |
+| `validTo` | Date/null | No | End date, when set |
+| `usageLimit` | Number/null | No | Total redemption limit |
+| `perUserLimit` | Number/null | No | Per-user redemption limit |
+| `redeemedCount` | Number | No | Number of redemptions used |
+| `active` | Boolean | No | Whether voucher can be used |
+| `createdAt` | Date | Yes | Added by Mongoose timestamps |
+| `updatedAt` | Date | Yes | Added by Mongoose timestamps |
 
 ## chatbot_sessions
 
@@ -230,6 +251,9 @@ menu_items._id
 orders._id
   -> order_items.orderId
   -> payments.orderId
+
+vouchers.code
+  -> orders.voucherCode
 ```
 
 ## Seed Data

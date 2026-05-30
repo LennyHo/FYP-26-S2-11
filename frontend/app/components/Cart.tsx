@@ -184,12 +184,14 @@ export default function Cart() {
       void fetchCartData();
     };
     window.addEventListener('cartUpdated', handleCartUpdated);
+    window.addEventListener('authUpdated', handleCartUpdated);
     // done by "HDC" - keep totals current while the cart is open, including backend changes after checkout/cart edits.
     window.addEventListener('focus', handleCartUpdated);
     window.addEventListener('storage', handleCartUpdated);
     const refreshTimer = window.setInterval(handleCartUpdated, 2500);
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdated);
+      window.removeEventListener('authUpdated', handleCartUpdated);
       window.removeEventListener('focus', handleCartUpdated);
       window.removeEventListener('storage', handleCartUpdated);
       window.clearInterval(refreshTimer);

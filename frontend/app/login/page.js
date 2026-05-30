@@ -7,6 +7,7 @@ import BackgroundShapes from './BackgroundShapes';
 // done by "HDC" - minimal backend login bridge for testing MongoDB auth routes.
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { syncStoredCartFromBackend } from '../utils/dripteaApi';
 // end done by "HDC"
 
 const mainLogoSvg = `
@@ -34,8 +35,9 @@ const mainLogoSvg = `
 
 const DRIPTEA_API_BASES = [
   process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
-  'https://driptea-trrn.onrender.com',
-  'http://localhost:5000',
+  ...(process.env.NODE_ENV === 'development'
+    ? ['http://localhost:5000', 'https://driptea-trrn.onrender.com']
+    : ['https://driptea-trrn.onrender.com', 'http://localhost:5000']),
 ]
   .filter(Boolean)
   .map((value) => value.replace(/\/$/, ''))
@@ -131,7 +133,18 @@ export default function LoginPage() {
 
       localStorage.setItem('dripTeaCurrentUser', JSON.stringify(payload.user));
       localStorage.setItem('dripTeaAuthToken', payload.token);
+      if (payload.user?.id && payload.user.role === 'customer') {
+        try {
+          await syncStoredCartFromBackend(payload.user.id);
+        } catch (error) {
+          console.warn('[DripTea login cart sync]', error);
+          localStorage.removeItem('dripTeaCartData');
+        }
+      } else {
+        localStorage.removeItem('dripTeaCartData');
+      }
       window.dispatchEvent(new Event('authUpdated'));
+      window.dispatchEvent(new Event('cartUpdated'));
 
       if (payload.user.role === 'user_admin') {
         router.push('/user-admin-dashboard');

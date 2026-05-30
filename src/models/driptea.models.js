@@ -105,7 +105,6 @@ const orderSchema = new Schema(
       default: "pending",
     },
     totalAmount: { type: Number, required: true, min: 0 },
-    currency: { type: String, required: true, default: "SGD" },
     voucherCode: { type: String, default: null },
   },
   { collection: "orders", timestamps: true }
@@ -139,7 +138,6 @@ const paymentSchema = new Schema(
     method: { type: String, required: true, trim: true },
     status: { type: String, required: true, enum: ["paid", "unpaid", "failed"], default: "paid" },
     amount: { type: Number, required: true, min: 0 },
-    currency: { type: String, required: true, default: "SGD" },
     transactionRef: { type: String, required: true, trim: true },
   },
   { collection: "payments", timestamps: { createdAt: true, updatedAt: false } }

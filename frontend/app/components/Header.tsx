@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 import Link from 'next/link';
 // done by "HDC" - reads backend-auth user stored by login so the header can show Log out.
-import { clearStoredUser, getCartItems, getStoredUser, parseLocalCartLine, type DripTeaUser } from '../utils/dripteaApi';
+import { clearStoredUser, getStoredUser, parseLocalCartLine, syncStoredCartFromBackend, type DripTeaUser } from '../utils/dripteaApi';
 // end done by "HDC"
 
 // Inline SVG for the brand logo to avoid bundler import issues and ensure consistent rendering
@@ -96,10 +96,9 @@ export default function Header() {
   const updateCartDisplay = async () => {
     const user = getStoredUser();
 
-    if (user) {
+    if (user?.role === 'customer') {
       try {
-        const response = await getCartItems(user.id);
-        const backendItems = response.data || [];
+        const backendItems = await syncStoredCartFromBackend(user.id);
         const backendItemCount = backendItems.reduce((sum, item) => sum + Math.max(1, Number(item.quantity || 1)), 0);
         const backendTotal = backendItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
 
@@ -112,6 +111,12 @@ export default function Header() {
         setCartTotal(0);
         return;
       }
+    }
+
+    if (user) {
+      setCartCount(0);
+      setCartTotal(0);
+      return;
     }
 
     updateCartDisplayFromLocalStorage();

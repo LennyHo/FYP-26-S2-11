@@ -6,6 +6,8 @@ export type DripTeaUser = {
   role: string;
   status: string;
   profilePic?: string; // URL or base64 string
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type DripTeaCartItem = {
@@ -91,7 +93,6 @@ export type DripTeaOrder = {
   status: string;
   orderType: string;
   totalAmount: number;
-  currency: string;
   paymentStatus: string;
   createdAt?: string;
   updatedAt?: string;
@@ -105,11 +106,12 @@ export type DripTeaOrder = {
 };
 // end done by "HDC"
 
-// done by "HDC" - frontend bridge tries env override, Render, then local backend.
+// done by "HDC" - frontend bridge tries env override, then prefers local backend in development.
 const API_BASES = [
   process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
-  'https://driptea-trrn.onrender.com',
-  'http://localhost:5000',
+  ...(process.env.NODE_ENV === 'development'
+    ? ['http://localhost:5000', 'https://driptea-trrn.onrender.com']
+    : ['https://driptea-trrn.onrender.com', 'http://localhost:5000']),
 ]
   .filter((value): value is string => Boolean(value))
   .map((value) => value.replace(/\/$/, ''))
@@ -204,6 +206,43 @@ export function getCartItems(userId: string) {
   return requestJson<{ ok: boolean; data: DripTeaCartItem[] }>(`/api/cart-items?userId=${encodeURIComponent(userId)}`);
 }
 
+export function cartItemsToLocalCartData(items: DripTeaCartItem[]) {
+  return items
+    .map((item) => {
+      const toppings = Array.isArray(item.customization?.toppings)
+        ? (item.customization.toppings as string[]).join(', ')
+        : '';
+      const details = [
+        item.quantity ? `Qty ${item.quantity}` : '',
+        typeof item.customization?.size === 'string' ? item.customization.size : '',
+        typeof item.customization?.ice === 'string' ? item.customization.ice : '',
+        typeof item.customization?.sugar === 'string' ? item.customization.sugar : '',
+        toppings,
+      ].filter(Boolean).join(' | ');
+
+      return formatLocalCartLine({
+        name: item.name,
+        details,
+        price: Number(item.lineTotal || 0),
+        imageSrc: item.image,
+      });
+    })
+    .join('\n');
+}
+
+export async function syncStoredCartFromBackend(userId: string) {
+  const response = await getCartItems(userId);
+  const cartData = cartItemsToLocalCartData(response.data || []);
+
+  if (cartData) {
+    window.localStorage.setItem('dripTeaCartData', cartData);
+  } else {
+    window.localStorage.removeItem('dripTeaCartData');
+  }
+
+  return response.data || [];
+}
+
 export function deleteCartItem(cartItemId: string) {
   return requestJson<{ ok: boolean; deletedId: string }>(`/api/cart-items/${encodeURIComponent(cartItemId)}`, {
     method: 'DELETE',
@@ -236,4 +275,29 @@ export function updateOrderStatus(orderId: string, status: string) {
   });
 }
 // end done by "HDC"
+
+export function getUsers(search: string = '') {
+  const query = search ? `?search=${encodeURIComponent(search)}` : '';
+  return requestJson<{ ok: boolean; data: DripTeaUser[] }>(`/api/users${query}`);
+}
+
+export function createUser(payload: {
+  fullName: string;
+  email: string;
+  password: string;
+  role: string;
+  status: string;
+}) {
+  return requestJson<{ ok: boolean; data: DripTeaUser }>('/api/users', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'fullName' | 'email' | 'role' | 'status'>>) {
+  return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
 // end done by "HDC"

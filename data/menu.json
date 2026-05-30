@@ -1,6 +1,5 @@
 {
   "store_info": {
-    "currency": "SGD",
     "nutri_grade_thresholds_per_100ml": {
       "A": 1,
       "B": 5,
