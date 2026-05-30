@@ -3,9 +3,20 @@
 A database class diagram shows each stored data object as a class, lists its important fields, and shows how the objects reference each other. For this project, the classes are based on the MongoDB/Mongoose models in `src/models/driptea.models.js`.
 
 ```mermaid
-classDiagram
-  direction LR
+---
+config:
+  layout: elk
+  elk:
+    edgeRouting: ORTHOGONAL
+    spacing:
+      nodeNode: 100
+      rank: 150
+---
 
+classDiagram
+  direction TB
+
+  %% USER CLASSES (LEFT)
   class User {
     ObjectId _id
     String fullName
@@ -18,6 +29,79 @@ classDiagram
     Date updatedAt
   }
 
+  class ChatbotSession {
+    ObjectId _id
+    ObjectId userId
+    String conversationId
+    ChatbotMessage[] messages
+    Date createdAt
+    Date updatedAt
+  }
+
+  class ChatbotMessage {
+    String role
+    String content
+    Date createdAt
+  }
+
+  %% ORDER CLASSES (CENTER)
+  class Order {
+    ObjectId _id
+    ObjectId userId
+    String orderNo
+    String orderType
+    String status
+    Number totalAmount
+    String voucherCode
+    Date createdAt
+    Date updatedAt
+  }
+
+  class Payment {
+    ObjectId _id
+    ObjectId orderId
+    ObjectId userId
+    String method
+    String status
+    Number amount
+    String transactionRef
+    Date createdAt
+  }
+
+  class OrderItem {
+    ObjectId _id
+    ObjectId orderId
+    ObjectId userId
+    ObjectId menuItemId
+    String menuItemCode
+    String name
+    String image
+    String category
+    Number quantity
+    Number unitPrice
+    Number lineTotal
+    Mixed customization
+    Date createdAt
+  }
+
+  class Voucher {
+    ObjectId _id
+    String code
+    String description
+    String discountType
+    Number discountValue
+    Number minOrderAmount
+    Date validFrom
+    Date validTo
+    Number usageLimit
+    Number perUserLimit
+    Number redeemedCount
+    Boolean active
+    Date createdAt
+    Date updatedAt
+  }
+
+  %% MENU CLASSES (RIGHT)
   class MenuItem {
     ObjectId _id
     String itemId
@@ -64,94 +148,23 @@ classDiagram
     Date updatedAt
   }
 
-  class Order {
-    ObjectId _id
-    ObjectId userId
-    String orderNo
-    String orderType
-    String status
-    Number totalAmount
-    String voucherCode
-    Date createdAt
-    Date updatedAt
-  }
-
-  class OrderItem {
-    ObjectId _id
-    ObjectId orderId
-    ObjectId userId
-    ObjectId menuItemId
-    String menuItemCode
-    String name
-    String image
-    String category
-    Number quantity
-    Number unitPrice
-    Number lineTotal
-    Mixed customization
-    Date createdAt
-  }
-
-  class Payment {
-    ObjectId _id
-    ObjectId orderId
-    ObjectId userId
-    String method
-    String status
-    Number amount
-    String transactionRef
-    Date createdAt
-  }
-
-  class Voucher {
-    ObjectId _id
-    String code
-    String description
-    String discountType
-    Number discountValue
-    Number minOrderAmount
-    Date validFrom
-    Date validTo
-    Number usageLimit
-    Number perUserLimit
-    Number redeemedCount
-    Boolean active
-    Date createdAt
-    Date updatedAt
-  }
-
-  class ChatbotSession {
-    ObjectId _id
-    ObjectId userId
-    String conversationId
-    ChatbotMessage[] messages
-    Date createdAt
-    Date updatedAt
-  }
-
-  class ChatbotMessage {
-    String role
-    String content
-    Date createdAt
-  }
-
+  %% RELATIONSHIPS (no text labels)
   User "1" --> "0..*" CartItem
   User "1" --> "0..*" Order
   User "1" --> "0..*" OrderItem
   User "1" --> "0..*" Payment
   User "0..1" --> "0..*" ChatbotSession
 
-  MenuItem "0..1" --> "0..*" CartItem
-  MenuItem "0..1" --> "0..*" OrderItem
+  ChatbotSession "1" *-- "0..*" ChatbotMessage
 
   MenuItem "1" *-- "0..*" CustomizationOption
   MenuItem "1" *-- "1" NutritionInfo
+  MenuItem "1" --> "0..*" CartItem
+  MenuItem "1" --> "0..*" OrderItem
 
   Order "1" --> "1..*" OrderItem
   Order "1" --> "0..1" Payment
   Voucher "0..1" --> "0..*" Order
-
-  ChatbotSession "1" *-- "0..*" ChatbotMessage
 ```
 
 ## Collections Represented
