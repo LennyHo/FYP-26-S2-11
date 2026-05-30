@@ -167,7 +167,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form className={styles.form} autoComplete="off" onSubmit={handleLogin}>
+            <form className={styles.form} onSubmit={handleLogin}>
               <div className={styles.field}>
                 <label htmlFor="email" className={styles.label}>Email</label>
                 <input
@@ -177,6 +177,7 @@ export default function LoginPage() {
                   name="email"
                   required
                   className={styles.input}
+                  autoComplete="username"
                   placeholder="username@gmail.com"
                 />
               </div>
@@ -190,6 +191,7 @@ export default function LoginPage() {
                   name="password"
                   required
                   className={styles.input}
+                  autoComplete="current-password"
                   placeholder="Password"
                 />
               </div>
