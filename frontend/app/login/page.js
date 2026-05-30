@@ -1,8 +1,7 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import styles from './login.module.css';
 import BackgroundShapes from './BackgroundShapes';
 // done by "HDC" - minimal backend login bridge for testing MongoDB auth routes.
@@ -83,6 +82,26 @@ export default function LoginPage() {
   // end done by "HDC"
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const FADE = 1; // seconds to fade in/out
+    const handleTimeUpdate = () => {
+      if (!video.duration) return;
+      const timeLeft = video.duration - video.currentTime;
+      if (timeLeft < FADE) {
+        video.style.opacity = timeLeft / FADE;
+      } else if (video.currentTime < FADE) {
+        video.style.opacity = video.currentTime / FADE;
+      } else {
+        video.style.opacity = '1';
+      }
+    };
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    return () => video.removeEventListener('timeupdate', handleTimeUpdate);
+  }, []);
 
   const testCredentials = {
     admin: { email: 'admin@driptea.com', password: 'Admin@123' },
@@ -228,14 +247,15 @@ export default function LoginPage() {
             <div className={styles.visualFrame}>
               <div className={styles.visualGlow} />
               <div className={styles.visualImageWrap}>
-                <Image
-                  src="/login_wallpaper.png"
-                  alt="Login Wallpaper"
-                  fill
-                  priority
+                {/* <video
+                  ref={videoRef}
+                  src="/buy_driptea_1.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
                   className={styles.visualImage}
-                  sizes="(max-width: 1080px) 100vw, 50vw"
-                />
+                /> */}
               </div>
             </div>
           </div>
