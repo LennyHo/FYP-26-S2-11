@@ -584,6 +584,41 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
     stopNarrationAndListen();
   };
 
+  /** Close the voice overlay and stop all speech/listening */
+  const closeOverlay = () => {
+    window.speechSynthesis?.cancel();
+    if (recognitionRef.current && isListeningRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+    }
+    setIsSpeakMode(false);
+    speakModeRef.current = false;
+    voiceConversationRef.current = false;
+    setHideQuickPrompts(false);
+    if (overlayMessages.length > 0) {
+      setMessages(prev => {
+        const updated = [...prev, ...overlayMessages];
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+    }
+    setOverlayMessages([]);
+    setOverlayTranscript('');
+    setOverlayLoading(false);
+  };
+
+  /** Toggle mic listening inside the overlay (does NOT close the overlay) */
+  const handleOverlayMicClick = () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not available. This feature requires Chrome, Edge, or Safari.');
+      return;
+    }
+    if (isListeningRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+    } else {
+      requestRecognitionStart();
+    }
+  };
+
   // ===== MAIN MESSAGE HANDLER =====
   /**
    * Send user message and receive bot response
@@ -1013,9 +1048,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
           ? plainText
           : `Sure — ${plainText}`;
 
-        speakText(humaneIntro, () => {
-          resumeSpeakModeListening();
-        });
+        speakText(humaneIntro);
       }
 
       // Extract cart data: look for hidden HTML block with order info
@@ -1127,21 +1160,16 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
 
       if (shouldSpeak) {
         const plainText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
-        speakText(plainText, () => {
-          // after speaking, resume listening for continued conversation
-          resumeSpeakModeListening();
-        });
+        speakText(plainText);
       }
     } catch (err) {
       // CRITICAL FIX: Handle the backend error and speak it out loud to prevent freezing!
       const errorText = "I'm having trouble connecting to the server. Please check your connection.";
       const botMsg: Message = { id: (Date.now() + 1).toString(), text: errorText, isUser: false };
       setOverlayMessages(prev => [...prev, botMsg]);
-      
+
       if (shouldSpeak) {
-        speakText(errorText, () => {
-          resumeSpeakModeListening();
-        });
+        speakText(errorText);
       }
     } finally {
       setOverlayLoading(false);
@@ -1599,15 +1627,14 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
             ))}
           </div>
         )}
-        {/*
+
         <QuickPrompts
           prompts={QUICK_PROMPTS}
-          onPromptClick={handleQuickPromptClick}
+          onPromptClick={prompt => sendMessage(prompt, false)}
           isLoading={isLoading}
-          hasTypedInput={hasTypedInput}
+          hasTypedInput={!!input.trim()}
           hideQuickPrompts={hideQuickPrompts}
         />
-        */}
 
 <div className={styles.composerContainer}>
           <div className={styles.messageInputOuter}>
@@ -1682,88 +1709,54 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
         {/* Speak mode full-screen overlay */}
               {isSpeakMode && (
                 <div className={styles.speakOverlay} role="dialog" aria-modal="true">
+                  {/* X close button — top left */}
+                  <button
+                    type="button"
+                    className={styles.overlayCloseBtn}
+                    onClick={closeOverlay}
+                    aria-label="Close voice mode"
+                  >
+                    ✕
+                  </button>
+
                   <div className={styles.speakOverlayInner}>
                     <div className={styles.speakOverlayText}>
-                        {overlayLoading ? "Avy is thinking..." : isListening ? "Listening..." : "Avy is speaking..."}
+                      {overlayLoading ? "Avy is thinking..." : isListening ? "Listening..." : "Tap mic to speak"}
                     </div>
-                  <div className={styles.speakTranscript}>
-                    {overlayMessages.map(msg => (
-                      <div key={msg.id} className={msg.isUser ? styles.speakUserMsg : styles.speakBotMsg}>
-                        <div dangerouslySetInnerHTML={{ __html: msg.isUser ? msg.text : msg.text }} />
-                      </div>
-                    ))}
 
-                    {overlayTranscript && !overlayLoading && (
-                      <div className={styles.speakLineContainer} aria-live="polite">
+                    <div className={styles.speakTranscript}>
+                      {overlayMessages.map(msg => (
+                        <div key={msg.id} className={msg.isUser ? styles.speakUserMsg : styles.speakBotMsg}>
+                          <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+                        </div>
+                      ))}
+
+                      {overlayTranscript && !overlayLoading && (
+                        <div className={styles.speakLineContainer} aria-live="polite">
                           <span className={styles.speakLine}>{overlayTranscript}</span>
                         </div>
                       )}
                     </div>
 
-                    {/* FIX 2: Only ONE controls wrapper at the bottom */}
+                    {/* Single mic button at the bottom */}
                     <div className={styles.speakOverlayControls}>
                       <button
-                      type="button"
-                      className={styles.speakStopPill}
-                      onClick={() => {
-                        if (recognitionRef.current && isListeningRef.current) {
-                          try { recognitionRef.current.stop(); } catch {}
-                        }
-                        setIsSpeakMode(false);
-                        speakModeRef.current = false;
-                        voiceConversationRef.current = false;
-                        setHideQuickPrompts(false);
-
-                          if (overlayMessages.length > 0) {
-                            setMessages(prev => {
-                              const updated = [...prev, ...overlayMessages];
-                              try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
-                              return updated;
-                            });
-                          }
-
-                          setOverlayMessages([]);
-                          setOverlayTranscript('');
-                          setOverlayLoading(false);
-                        }}
-                aria-label="Stop"
-              >
-                {/* A classic "Stop" square icon */}
-                <span className={styles.stopSquare}></span>
-                Stop
-              </button>
-
-              <button
-                type="button"
-                className={styles.speakStopPill}
-                onClick={() => {
-                  if (recognitionRef.current && isListeningRef.current) {
-                    try { recognitionRef.current.stop(); } catch {}
-                  }
-                  setIsSpeakMode(false);
-                  speakModeRef.current = false;
-                  voiceConversationRef.current = false;
-                  setHideQuickPrompts(false);
-
-                  if (overlayMessages.length > 0) {
-                    setMessages(prev => {
-                      const updated = [...prev, ...overlayMessages];
-                      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch {}
-                      return updated;
-                    });
-                  }
-
-                  setOverlayMessages([]);
-                  setOverlayTranscript('');
-                  setOverlayLoading(false);
-                }}
-              >
-                Stop
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                        type="button"
+                        className={`${styles.overlayMicBtn} ${isListening ? styles.overlayMicBtnListening : ''}`}
+                        onClick={handleOverlayMicClick}
+                        disabled={overlayLoading}
+                        aria-label={isListening ? 'Stop listening' : 'Start listening'}
+                      >
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                          <path d="M17 11a5 5 0 0 1-10 0" />
+                          <path d="M12 16v4" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
       {/* Full-screen image preview modal with arrow navigation */}
       {previewIndex !== null && pendingImages[previewIndex] && (

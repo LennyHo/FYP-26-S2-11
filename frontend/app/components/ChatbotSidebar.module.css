@@ -1,3 +1,6 @@
+.micBtn, .speakBtn {
+  display: none !important;
+}
 .plusBtnWrap {
   display: flex;
   align-items: center;
@@ -846,7 +849,7 @@
 }
 
 .drinkRecOtherText:empty {
-  display: none;
+
 }
 
 .drinkRecCardsWrap {
@@ -1077,65 +1080,138 @@
   }
 }
 
-.quickPromptsRow {
+.quickPromptsWrapper {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding: 0 2px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  max-height: 72px;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
   opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease;
+  transition: opacity 0.25s ease, margin 0.25s ease;
 }
 
 .quickPromptsHidden {
-  max-height: 0;
   opacity: 0;
-  transform: translateY(-10px) scale(0.98);
-  margin: 0;
+  margin-bottom: 0;
   pointer-events: none;
+  overflow: hidden;
+  max-height: 0;
+}
+
+/* Clickable "Try asking" toggle */
+.quickPromptsLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 12px 6px;
+  margin: -12px -6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #b89070;
+  transition: color 0.18s ease;
+}
+
+.quickPromptsLabel:hover:not(:disabled) {
+  color: #8c5c30;
+}
+
+.quickPromptsChevron {
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.quickPromptsLabelOpen .quickPromptsChevron {
+  transform: rotate(180deg);
+}
+
+/* Horizontal scrolling row — same on all screen sizes */
+.quickPromptsRow {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 7px;
+  padding: 2px 2px 6px;
+  overflow-x: auto;
+  overflow-y: visible;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-mask-image: linear-gradient(to right, black 84%, transparent 100%);
+  mask-image: linear-gradient(to right, black 84%, transparent 100%);
+  animation: promptsSlideDown 0.2s ease both;
+}
+
+.quickPromptsRow::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes promptsSlideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .quickPromptBtn {
   flex: 0 0 auto;
-  border: 1px solid rgba(160, 116, 77, 0.18);
-  border-radius: 999px;
-  padding: 8px 12px;
-  background: rgba(245, 241, 237, 0.92);
-  color: #5f4637;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid rgba(160, 116, 77, 0.2);
+  border-radius: 10px;
+  padding: 7px 12px 7px 11px;
+  background: linear-gradient(135deg, rgba(255, 253, 249, 0.97), rgba(248, 242, 235, 0.97));
+  color: #6b4c38;
   font: inherit;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(160, 116, 77, 0.08);
-  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 4px rgba(160, 116, 77, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.quickPromptBtn:nth-child(1) { animation: promptFadeUp 0.25s ease both 0ms; }
+.quickPromptBtn:nth-child(2) { animation: promptFadeUp 0.25s ease both 50ms; }
+.quickPromptBtn:nth-child(3) { animation: promptFadeUp 0.25s ease both 100ms; }
+.quickPromptBtn:nth-child(4) { animation: promptFadeUp 0.25s ease both 150ms; }
+
+@keyframes promptFadeUp {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.quickPromptText {
+  line-height: 1.3;
+}
+
+.quickPromptArrow {
+  opacity: 0.38;
+  flex-shrink: 0;
+  transition: transform 0.18s ease, opacity 0.18s ease;
 }
 
 .quickPromptBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  background: rgba(241, 232, 223, 0.98);
-  box-shadow: 0 4px 12px rgba(160, 116, 77, 0.14);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #fffaf4, #f5ece0);
+  border-color: rgba(160, 116, 77, 0.36);
+  box-shadow: 0 4px 14px rgba(160, 116, 77, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.quickPromptBtn:hover:not(:disabled) .quickPromptArrow {
+  transform: translateX(2px);
+  opacity: 0.7;
+}
+
+.quickPromptBtn:active:not(:disabled) {
+  transform: scale(0.97);
+  box-shadow: 0 1px 4px rgba(160, 116, 77, 0.1);
 }
 
 .quickPromptBtn:disabled {
-  opacity: 0.6;
+  opacity: 0.45;
   cursor: not-allowed;
-}
-
-.quickPromptsRow::-webkit-scrollbar {
-  height: 6px;
-}
-
-.quickPromptsRow::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.quickPromptsRow::-webkit-scrollbar-thumb {
-  background: rgba(160, 116, 77, 0.24);
-  border-radius: 999px;
 }
 
 .composerContainer {
@@ -1281,8 +1357,9 @@
     height: 36px;
   }
 
-  .quickPromptsRow {
-    max-height: 64px;
+  .quickPromptBtn {
+    font-size: 0.8rem;
+    padding: 7px 10px;
   }
 
   .imagePreviewContent {
@@ -1680,7 +1757,7 @@
     min-height: clamp(150px, 24vw, 240px);
   }
 
-  .quickPromptsRow {
+  .quickPromptsWrapper {
     margin-bottom: 10px;
   }
 }
@@ -1745,6 +1822,57 @@
   font-weight: 600;
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
   cursor: pointer;
+}
+
+/* X close button — top-left of the overlay */
+.overlayCloseBtn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.07);
+  color: #444;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s;
+}
+.overlayCloseBtn:hover {
+  background: rgba(0, 0, 0, 0.13);
+}
+
+/* Single mic button inside the overlay */
+.overlayMicBtn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.overlayMicBtn:hover:not(:disabled) {
+  transform: scale(1.06);
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.45);
+}
+.overlayMicBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.overlayMicBtnListening {
+  animation: pulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.5);
 }
 
 /* 1. Container structure */
@@ -1974,10 +2102,14 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    background: transparent !important; 
+    background: transparent !important;
     border-top: none !important;
     padding: 10px 16px calc(16px + env(safe-area-inset-bottom)) !important;
     pointer-events: none;
+  }
+
+  .quickPromptsWrapper {
+    pointer-events: auto;
   }
 
   .composerContainer {
