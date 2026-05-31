@@ -172,6 +172,17 @@ export default function Header() {
     ? <ProfileDropdown onLogout={handleLogout} />
     : <Link href="/login" className={styles.loginLink}>Log in</Link>;
 
+  const mobileAuthContent = currentUser || isStaffDashboard
+    ? <ProfileDropdown onLogout={handleLogout} />
+    : (
+      <Link href="/login" className={styles.loginIconBtn} aria-label="Log in">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" stroke="#7b4b2a" strokeWidth="1.8" strokeLinecap="round"/>
+          <path d="M4 20c0-3.314 3.582-6 8-6s8 2.686 8 6" stroke="#7b4b2a" strokeWidth="1.8" strokeLinecap="round"/>
+        </svg>
+      </Link>
+    );
+
   return (
     <header className={styles.header}>
       {/* Nav links: desktop left column; mobile absolute dropdown */}
@@ -188,14 +199,27 @@ export default function Header() {
 
       {/* Mobile-only top-right: profile pic + hamburger */}
       <div className={styles.topRight}>
-        <div className={styles.mobileAuth}>{authContent}</div>
+        <div className={styles.mobileAuth}>{mobileAuthContent}</div>
         <button
           type="button"
           className={`${styles.menuBtn} ${menuOpen ? styles.menuBtnOpen : ''}`}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           onClick={toggleMenu}
         >
-          <span className={styles.hamburger} aria-hidden="true" />
+          <svg className={styles.menuIcon} width="20" height="16" viewBox="0 0 20 16" fill="none" aria-hidden="true">
+            {menuOpen ? (
+              <>
+                <path d="M2 2L18 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M18 2L2 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              </>
+            ) : (
+              <>
+                <path d="M0 1h20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M0 8h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M0 15h9"  stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              </>
+            )}
+          </svg>
         </button>
       </div>
 
@@ -275,7 +299,7 @@ function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
         className={styles.profilePicBtn}
         tabIndex={0}
         aria-haspopup="true"
-        aria-expanded={open ? 'true' : 'false'}
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
         <img src={profilePic} alt="Profile" className={styles.profilePic} />

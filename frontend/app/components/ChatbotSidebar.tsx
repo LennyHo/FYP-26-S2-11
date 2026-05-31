@@ -1380,7 +1380,10 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                 </defs>
               </svg>
             </div>
-            <h3 className={styles.headerMainTitle}>Avy</h3>
+            <div className={styles.avyTitleGroup}>
+              <h3 className={styles.headerMainTitle}>Avy</h3>
+              <span className={styles.headerSubtitle}>DripConcierge</span>
+            </div>
           </div>
           {isSearchOpen && (
             <div className={styles.headerSearch}>

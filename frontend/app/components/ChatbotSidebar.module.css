@@ -58,7 +58,7 @@
 }
 
 .chatbotSidebar {
-  --avy-chat-gradient: linear-gradient(180deg, #F7F7F7 0%, #efddea 45%, #fff7f7 100%);
+  --avy-chat-gradient: #ffffff;
   position: absolute;
   inset: 0;
   width: 100%;
@@ -99,9 +99,9 @@
   /* Prevents the input box from being crushed */
   flex-shrink: 0;
   padding: 12px 16px;
-  background-color: white;
-  border-top: 1px solid #eaeaea;
-  
+  background: transparent;
+  border-top: none;
+
   /* CRITICAL FOR IPHONE: Adds extra padding for the bottom home bar */
   padding-bottom: calc(12px + env(safe-area-inset-bottom));
 }
@@ -110,12 +110,14 @@
   padding: 12px 14px;
   background: var(--avy-chat-gradient) !important;
   border-bottom: 1px solid rgba(171, 28, 110, 0.08);
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
   position: relative;
   z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 0;
-  box-shadow: 0 8px 24px rgba(171, 28, 110, 0.08);
+  box-shadow: none;
 }
 
 .headerTop {
@@ -138,7 +140,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  filter: drop-shadow(0 4px 10px rgba(171, 28, 110, 0.28));
+  filter: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -207,7 +209,7 @@
   transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   background: #fff;
   color: #AB1C6E; /* Avy purple for icons */
-  box-shadow: 0 4px 10px rgba(139, 90, 70, 0.12);
+  box-shadow: none;
 }
 
 .headerIconBtn {
@@ -251,7 +253,7 @@
   transform: scale(1.05);
   background: #f7f7f7;
   color: #A55EA3;
-  box-shadow: 0 6px 14px rgba(139, 90, 70, 0.2);
+  box-shadow: none;
 }
 
 .backBtn:active,
@@ -262,38 +264,37 @@
 .backBtnTooltip {
   position: absolute;
   left: auto;
-  right: calc(100% + 12px);
+  right: calc(100% + 14px);
   top: 50%;
-  transform: translate(4px, -50%) scale(0.98);
+  transform: translate(8px, -50%) scale(0.88);
   z-index: 40;
   min-width: max-content;
-  padding: 9px 14px;
+  padding: 7px 13px;
   border-radius: 999px;
-  background: #f7f7f7;
-  color: #222;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
-  font-size: 0.92rem;
-  font-weight: 500;
+  background: linear-gradient(135deg, #AB1C6E 0%, #A55EA3 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 20px rgba(171, 28, 110, 0.32), 0 2px 6px rgba(171, 28, 110, 0.18);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   line-height: 1;
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
   white-space: nowrap;
-  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+  transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.18s ease;
 }
 
 .backBtnTooltip::before {
   content: "";
   position: absolute;
-  left: auto;
-  right: -7px;
+  right: -5px;
   top: 50%;
-  width: 14px;
-  height: 14px;
-  background: #f7f7f7;
-  border-right: 1px solid rgba(0, 0, 0, 0.12);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  width: 10px;
+  height: 10px;
+  background: #A55EA3;
+  border: none;
   transform: translateY(-50%) rotate(45deg);
 }
 
@@ -302,6 +303,12 @@
   opacity: 1;
   visibility: visible;
   transform: translate(0, -50%) scale(1);
+}
+
+@media (hover: none) {
+  .backBtnTooltip {
+    display: none;
+  }
 }
 
 .headerBtnIcon {
@@ -314,12 +321,31 @@
   stroke-linejoin: round;
 }
 
+.avyTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .headerMainTitle {
   margin: 0;
-  color: var(--foreground);
+  background: linear-gradient(135deg, #AB1C6E 0%, #A55EA3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   font-size: 1.24rem;
   font-weight: 800;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.headerSubtitle {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(171, 28, 110, 0.45);
   line-height: 1;
 }
 
@@ -439,6 +465,7 @@
 .chatWindow {
   flex: 1;
   padding: 16px;
+  padding-bottom: 24px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -484,9 +511,7 @@
   font-weight: 500;
   letter-spacing: 0;
   max-width: 16ch;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.72),
-    0 8px 22px rgba(74, 24, 66, 0.22);
+  text-shadow: none;
   animation: welcomeGreetingIn 260ms ease-out both;
   will-change: opacity, transform, filter;
 }
@@ -1041,7 +1066,8 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    background: #fff;
+    background: transparent;
+    border-top: none;
     z-index: 10;
     padding-bottom: max(14px, env(safe-area-inset-bottom));
     box-sizing: border-box;
@@ -1606,8 +1632,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: #ffffff;
-    border-top: 1px solid rgba(0,0,0,0.04);
+    background: transparent;
+    border-top: none;
     width: 100%;
     box-sizing: border-box;
   }
@@ -1646,8 +1672,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: #ffffff;
-    border-top: 1px solid rgba(0,0,0,0.04);
+    background: transparent;
+    border-top: none;
   }
 
   .welcomeIntroCard {

@@ -178,43 +178,31 @@
   margin-left: 12px;
 }
 
-/* Hamburger menu button (mobile) */
+/* Menu button (mobile) */
 .menuBtn {
   display: none;
-  background: none;
-  border: none;
-  padding: 6px;
+  background: rgba(123, 75, 42, 0.07);
+  border: 1px solid rgba(123, 75, 42, 0.13);
+  padding: 7px 9px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 12px;
+  transition: background 0.18s, border-color 0.18s, transform 0.18s;
+  color: var(--muted);
 }
 
-.hamburger {
+.menuBtn:hover {
+  background: rgba(123, 75, 42, 0.13);
+}
+
+.menuBtnOpen {
+  background: rgba(227, 100, 71, 0.10);
+  border-color: rgba(227, 100, 71, 0.22);
+  color: #e36447;
+}
+
+.menuIcon {
   display: block;
-  width: 22px;
-  height: 2px;
-  background: var(--muted);
-  border-radius: 2px;
-  position: relative;
-}
-
-.hamburger::before,
-.hamburger::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  width: 22px;
-  height: 2px;
-  background: var(--muted);
-  border-radius: 2px;
-}
-
-.hamburger::before { top: -7px; }
-.hamburger::after { top: 7px; }
-
-.hamburger,
-.hamburger::before,
-.hamburger::after {
-  transition: transform 0.24s ease, opacity 0.24s ease, top 0.24s ease, background 0.24s ease;
+  transition: color 0.18s;
 }
 
 /* topRight wrapper: mobile-only profile + hamburger — hidden on desktop */
@@ -289,18 +277,6 @@
   }
 
   /* Hamburger → X when open */
-  .menuBtnOpen .hamburger {
-    background: transparent;
-  }
-  .menuBtnOpen .hamburger::before {
-    top: 0;
-    transform: rotate(45deg);
-  }
-  .menuBtnOpen .hamburger::after {
-    top: 0;
-    transform: rotate(-45deg);
-  }
-
   /* Nav hidden by default; becomes absolute dropdown when open/closing */
   .nav {
     display: none;
@@ -517,6 +493,23 @@
   color: var(--accent-ink) !important;
   cursor: pointer;
   font: inherit;
+}
+
+.loginIconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(227, 100, 71, 0.12);
+  color: #7b4b2a;
+  transition: background 0.18s;
+}
+
+.loginIconBtn:hover,
+.loginIconBtn:focus {
+  background: rgba(227, 100, 71, 0.22);
 }
 
 .cart {
