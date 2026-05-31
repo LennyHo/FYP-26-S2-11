@@ -59,14 +59,22 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
 
       {/* RIGHT SIDE: CHATBOT */}
       {!hideChatbot && (
-        <div className={`${styles.chatPane} ${isChatOpen ? styles.chatPaneOpen : styles.chatPaneClosed}`}>
-          <ChatbotSidebar
-            isOpen={isChatOpen}
-            onClose={() => setIsChatOpen(false)}
-            onOpenCart={() => router.push('/cart')}
-            onCheckout={() => router.push('/checkout')}
+        <>
+          {/* Backdrop — fades in on mobile when chat opens */}
+          <div
+            className={`${styles.chatBackdrop} ${isChatOpen ? styles.chatBackdropVisible : ''}`}
+            onClick={() => setIsChatOpen(false)}
+            aria-hidden="true"
           />
-        </div>
+          <div className={`${styles.chatPane} ${isChatOpen ? styles.chatPaneOpen : styles.chatPaneClosed}`}>
+            <ChatbotSidebar
+              isOpen={isChatOpen}
+              onClose={() => setIsChatOpen(false)}
+              onOpenCart={() => router.push('/cart')}
+              onCheckout={() => router.push('/checkout')}
+            />
+          </div>
+        </>
       )}
 
       {/* FLOATING CHAT TOGGLE BUTTON */}

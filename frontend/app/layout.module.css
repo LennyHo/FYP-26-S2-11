@@ -323,8 +323,29 @@
   }
 }
 
-/* Mobile: make chat a full-screen overlay and hide main content when open */
+/* Backdrop — desktop: invisible, mobile: dims content behind the chat */
+.chatBackdrop {
+  display: none;
+}
+
+/* Mobile: slide-up sheet with dimmed backdrop */
 @media (max-width: 640px) {
+  .chatBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 99998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.38s ease;
+  }
+
+  .chatBackdropVisible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .globalShell {
     display: block;
     height: auto;
@@ -337,9 +358,11 @@
     transition: none;
   }
 
-  /* When the chat is opened, hide the main pane so layout doesn't break */
+  /* Keep main pane in DOM so backdrop can dim it during transition */
   .mainPaneWithChat {
-    display: none;
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .chatPane {
@@ -351,22 +374,31 @@
     bottom: 0;
     width: 100%;
     max-width: none;
-    height: 100vh;
+    height: 100%;
     border-left: none;
     background: #ffffff;
-    transform: translateX(100%);
-    transition: transform 0.28s cubic-bezier(.2,.9,.2,1);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
-    border-radius: 0;
+    /* Slide up from bottom */
+    transform: translateY(100%);
+    opacity: 0;
+    transition:
+      transform 0.42s cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 0.3s ease,
+      border-radius 0.42s ease;
+    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.18);
+    border-radius: 22px 22px 0 0;
     z-index: 99999;
+    overflow: hidden;
   }
 
   .chatPaneOpen {
-    transform: translateX(0);
+    transform: translateY(0);
+    opacity: 1;
+    border-radius: 22px 22px 0 0;
   }
 
   .chatPaneClosed {
-    transform: translateX(100%);
+    transform: translateY(100%);
+    opacity: 0;
     pointer-events: none;
     box-shadow: none;
   }
