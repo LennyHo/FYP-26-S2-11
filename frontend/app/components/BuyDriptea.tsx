@@ -66,6 +66,16 @@ export default function BuyDripTeaPage() {
             muted
             playsInline
             aria-hidden="true"
+            // Mobile autoplay fix
+            ref={el => {
+              if (el && typeof window !== 'undefined') {
+                const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isMobile) {
+                  el.setAttribute('autoplay', 'true');
+                  el.play().catch(() => {});
+                }
+              }
+            }}
           >
             <source src="/buy_driptea_2.mp4" type="video/mp4" />
           </video>
@@ -184,6 +194,15 @@ export default function BuyDripTeaPage() {
           </div>
         </section>
 
+        {/*
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <p className={styles.sectionEyebrow}>Frequently Asked Questions</p>
+            <h2>FAQ</h2>
+          </div>
+          Add FAQ content here if needed
+        </section>
+        */}
       </main>
     </div>
   );

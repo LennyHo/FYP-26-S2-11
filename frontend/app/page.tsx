@@ -4,7 +4,7 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import MeetTheCrew from './components/MeetTheCrew';
 import AboutUs from './components/AboutUs';
-import FAQ from './components/FAQ';
+// import FAQ from './components/FAQ';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -15,7 +15,7 @@ export default function Home() {
         <Hero />
         <AboutUs />
         <MeetTheCrew />
-        <FAQ />
+        {/* <FAQ /> */}
       </main>
     </div>
   );
