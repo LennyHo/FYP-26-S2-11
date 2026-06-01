@@ -285,6 +285,31 @@ export function updateOrderStatus(orderId: string, status: string) {
 }
 // end done by "HDC"
 
+// done by "HDC" - menu item management for store-staff panel
+export type DripTeaMenuItem = {
+  id: string;
+  mongoId: string;
+  name: string;
+  image?: string;
+  category: string;
+  tags?: string[];
+  price: number;
+  description?: string;
+  status: string;
+};
+
+export function getMenuItems(status: string = 'all') {
+  return requestJson<{ ok: boolean; data: DripTeaMenuItem[] }>(`/api/menu-items?status=${encodeURIComponent(status)}`);
+}
+
+export function updateMenuItemStatus(id: string, status: string) {
+  return requestJson<{ ok: boolean; data: { id: string; mongoId: string; status: string } }>(`/api/menu-items/${encodeURIComponent(id)}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+// end done by "HDC"
+
 export function getUsers(search: string = '') {
   const query = search ? `?search=${encodeURIComponent(search)}` : '';
   return requestJson<{ ok: boolean; data: DripTeaUser[] }>(`/api/users${query}`);

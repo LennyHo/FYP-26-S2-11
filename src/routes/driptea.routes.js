@@ -543,6 +543,26 @@ router.get(["/menu-items", "/menu"], async (req, res, next) => {
   }
 });
 
+router.patch("/menu-items/:id/status", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const status = String(req.body?.status || "").trim().toLowerCase();
+    const allowedStatuses = new Set(["active", "inactive"]);
+    if (!allowedStatuses.has(status)) {
+      return res.status(400).json({ ok: false, message: "status must be 'active' or 'inactive'" });
+    }
+    const item = await MenuItem.findOneAndUpdate(
+      { $or: [{ itemId: req.params.id }, ...(Types.ObjectId.isValid(req.params.id) ? [{ _id: new Types.ObjectId(req.params.id) }] : [])] },
+      { $set: { status } },
+      { new: true }
+    ).lean();
+    if (!item) return res.status(404).json({ ok: false, message: "Menu item not found" });
+    res.json({ ok: true, data: { id: item.itemId, mongoId: String(item._id), status: item.status } });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/cart-items", async (req, res, next) => {
   try {
     await getPreparedDb();

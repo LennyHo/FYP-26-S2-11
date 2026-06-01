@@ -3,11 +3,8 @@
 import StaffHeader from '../components/StaffHeader';
 import styles from './page.module.css';
 import { useEffect, useState } from 'react';
-// done by "HDC" - staff order queue is backed by real MongoDB orders.
 import { getOrders, updateOrderStatus, type DripTeaOrder } from '../utils/dripteaApi';
-// end done by "HDC"
 
-// done by "HDC" - local display shape for the staff order queue table.
 type StaffOrderRow = {
   id: string;
   orderNo: string;
@@ -18,8 +15,8 @@ type StaffOrderRow = {
 };
 
 const fallbackOrders: StaffOrderRow[] = [
-  { id: 'mock-1', orderNo: 'ORD-1001', customer: 'Alice', status: 'preparing', total: '$8.50', itemSummary: 'Sample order' },
-  { id: 'mock-2', orderNo: 'ORD-1002', customer: 'Bob', status: 'ready', total: '$5.00', itemSummary: 'Sample order' },
+  { id: 'mock-1', orderNo: 'ORD-1001', customer: 'Alice', status: 'preparing', total: 'S$ 8.50', itemSummary: '1 x Da Hong Pao, 1 x Honey Lemon' },
+  { id: 'mock-2', orderNo: 'ORD-1002', customer: 'Bob', status: 'ready', total: 'S$ 5.00', itemSummary: '1 x Matcha Latte' },
 ];
 
 function formatStatus(status: string) {
@@ -27,241 +24,239 @@ function formatStatus(status: string) {
 }
 
 function toStaffOrderRow(order: DripTeaOrder): StaffOrderRow {
-  const itemSummary = order.items
-    .map(item => `${item.quantity} x ${item.name}`)
-    .join(', ');
-
   return {
     id: order.id,
     orderNo: order.orderNo,
     customer: order.customer,
     status: order.status,
     total: `S$ ${Number(order.totalAmount || 0).toFixed(2)}`,
-    itemSummary: itemSummary || 'No items recorded',
+    itemSummary: order.items.map(i => `${i.quantity} x ${i.name}`).join(', ') || 'No items recorded',
   };
 }
-// end done by "HDC"
+
+const STATUS_FLOW: Record<string, { next: string; label: string; cls: string }> = {
+  pending:    { next: 'preparing', label: 'Start Preparing', cls: 'btnPrepare' },
+  preparing:  { next: 'ready',     label: 'Mark Ready',      cls: 'btnReady'   },
+  ready:      { next: 'completed', label: 'Complete',         cls: 'btnComplete'},
+};
 
 export default function StoreStaffDashboardPage() {
   const [activeTab, setActiveTab] = useState('orders');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // done by "HDC" - keep sample rows only as a fallback when backend orders cannot be loaded.
   const [orders, setOrders] = useState<StaffOrderRow[]>(fallbackOrders);
   const [ordersError, setOrdersError] = useState('');
-  // end done by "HDC"
-
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [inventory, setInventory] = useState([
-    { id: 1, name: 'Oolong Tea', qty: 12, unit: 'bags' },
-    { id: 2, name: 'Tapioca Pearls', qty: 6, unit: 'kg' },
+    { id: 1, name: 'Oolong Tea',      qty: 12, unit: 'bags' },
+    { id: 2, name: 'Tapioca Pearls',  qty: 4,  unit: 'kg'   },
+    { id: 3, name: 'Aloe Vera',       qty: 8,  unit: 'pcs'  },
+    { id: 4, name: 'Cheese Foam Mix', qty: 3,  unit: 'packs'},
+    { id: 5, name: 'Honey Syrup',     qty: 7,  unit: 'btl'  },
   ]);
 
-  // done by "HDC" - poll backend orders so customer fake payments appear in the staff queue.
   async function refreshOrders() {
     try {
       const response = await getOrders('all');
       setOrders(response.data.map(toStaffOrderRow));
       setOrdersError('');
-    } catch (error) {
-      console.error('[DripTea staff orders]', error);
-      setOrdersError('Unable to load live orders. Showing fallback rows.');
+    } catch {
+      setOrdersError('Unable to load live orders — showing sample data.');
     }
   }
 
   useEffect(() => {
     void refreshOrders();
-    const refreshTimer = window.setInterval(() => {
-      void refreshOrders();
-    }, 5000);
-
-    return () => window.clearInterval(refreshTimer);
+    const t = window.setInterval(() => void refreshOrders(), 5000);
+    return () => window.clearInterval(t);
   }, []);
-  // end done by "HDC"
+
+  const advanceStatus = async (row: StaffOrderRow) => {
+    const flow = STATUS_FLOW[row.status.toLowerCase()];
+    if (!flow) return;
+    setUpdatingId(row.id);
+    try {
+      if (!row.id.startsWith('mock-')) await updateOrderStatus(row.id, flow.next);
+      setOrders(prev => prev.map(o => o.id === row.id ? { ...o, status: flow.next } : o));
+    } catch {
+      setOrdersError('Failed to update order. Please try again.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const adjustQty = (id: number, delta: number) =>
+    setInventory(prev => prev.map(it => it.id === id ? { ...it, qty: Math.max(0, it.qty + delta) } : it));
 
   const filteredOrders = orders.filter(o =>
-    o.orderNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    o.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    o.itemSummary.toLowerCase().includes(searchQuery.toLowerCase())
+    [o.orderNo, o.customer, o.itemSummary].some(v => v.toLowerCase().includes(searchQuery.toLowerCase()))
   );
-
   const filteredInventory = inventory.filter(i =>
     i.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // done by "HDC" - mark real MongoDB orders complete from the staff queue.
-  const markOrderCompleted = async (id: string) => {
-    if (id.startsWith('mock-')) {
-      setOrders(orders.map(o => (o.id === id ? { ...o, status: 'completed' } : o)));
-      return;
-    }
-
-    try {
-      await updateOrderStatus(id, 'completed');
-      setOrders(orders.map(o => (o.id === id ? { ...o, status: 'completed' } : o)));
-      void refreshOrders();
-    } catch (error) {
-      console.error('[DripTea complete order]', error);
-      setOrdersError('Unable to update this order. Please try again.');
-    }
-  };
-  // end done by "HDC"
-
-  const adjustQty = (id: number, delta: number) => {
-    setInventory(inventory.map(it => (it.id === id ? { ...it, qty: Math.max(0, it.qty + delta) } : it)));
-  };
+  const openCount      = orders.filter(o => o.status !== 'completed').length;
+  const preparingCount = orders.filter(o => o.status === 'preparing').length;
+  const lowStockCount  = inventory.filter(i => i.qty <= 5).length;
 
   return (
     <div className={styles.page}>
       <StaffHeader />
 
       <main className={styles.main}>
-        <section className={styles.hero}>
-          <div>
-            <p className={styles.eyebrow}>Staff dashboard</p>
-            <h1>Store Staff Control Panel</h1>
-            <p>Process orders, manage stock, and view shift-related information.</p>
-          </div>
-          <div className={styles.heroPanel}>
-            <div>
-              <span>Open Orders</span>
-              <strong>{orders.filter(o => o.status.toLowerCase() !== 'completed').length}</strong>
-            </div>
-            <div>
-              <span>Inventory Items</span>
-              <strong>{inventory.length}</strong>
-            </div>
-            <div>
-              <span>Alerts</span>
-              <strong>{inventory.filter(i => i.qty <= 5).length}</strong>
-            </div>
-          </div>
-        </section>
 
-        <section className={styles.tabsSection}>
+        {/* Stats row */}
+        <div className={styles.statsRow}>
+          <div className={styles.statCard}>
+            <span className={styles.statIcon}>📋</span>
+            <div>
+              <span className={styles.statLabel}>Open Orders</span>
+              <strong className={styles.statValue}>{openCount}</strong>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statIcon}>⏳</span>
+            <div>
+              <span className={styles.statLabel}>Preparing</span>
+              <strong className={`${styles.statValue} ${styles.orange}`}>{preparingCount}</strong>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statIcon}>📦</span>
+            <div>
+              <span className={styles.statLabel}>Inventory Items</span>
+              <strong className={styles.statValue}>{inventory.length}</strong>
+            </div>
+          </div>
+          <div className={`${styles.statCard} ${lowStockCount > 0 ? styles.statAlert : ''}`}>
+            <span className={styles.statIcon}>⚠️</span>
+            <div>
+              <span className={styles.statLabel}>Low Stock</span>
+              <strong className={`${styles.statValue} ${lowStockCount > 0 ? styles.red : ''}`}>{lowStockCount}</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs + Search */}
+        <div className={styles.tabsBar}>
           <div className={styles.tabsNav}>
-            <button
-              className={`${styles.tab} ${activeTab === 'orders' ? styles.active : ''}`}
-              onClick={() => setActiveTab('orders')}
-            >
-              Orders
+            <button type="button" className={`${styles.tab} ${activeTab === 'orders' ? styles.active : ''}`} onClick={() => setActiveTab('orders')}>
+              Order Queue
+              {openCount > 0 && <span className={styles.badge}>{openCount}</span>}
             </button>
-            <button
-              className={`${styles.tab} ${activeTab === 'inventory' ? styles.active : ''}`}
-              onClick={() => setActiveTab('inventory')}
-            >
+            <button type="button" className={`${styles.tab} ${activeTab === 'inventory' ? styles.active : ''}`} onClick={() => setActiveTab('inventory')}>
               Inventory
+              {lowStockCount > 0 && <span className={`${styles.badge} ${styles.badgeRed}`}>{lowStockCount}</span>}
             </button>
           </div>
 
-          <div className={styles.searchContainer}>
+          <div className={styles.searchWrap}>
+            <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
             <input
               type="text"
-              placeholder={activeTab === 'orders' ? 'Search orders or customer...' : 'Search inventory...'}
+              placeholder={activeTab === 'orders' ? 'Search orders or customer…' : 'Search inventory…'}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className={styles.searchInput}
             />
           </div>
-        </section>
+        </div>
 
+        {ordersError && <p className={styles.errorBanner}>{ordersError}</p>}
+
+        {/* Orders tab */}
         {activeTab === 'orders' && (
-          <section className={styles.tabContent}>
-            <div className={styles.sectionHeader}>
-              <h2>Order Queue</h2>
-            </div>
-            {/* done by "HDC" - show live-order load/update issues without hiding the queue. */}
-            {ordersError && <p className={styles.sessionSubtext}>{ordersError}</p>}
-            {/* end done by "HDC" */}
-
+          <div className={styles.tableCard}>
             <div className={styles.tableContainer}>
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>Order No</th>
+                    <th>Order</th>
                     <th>Customer</th>
                     <th>Status</th>
                     <th>Total</th>
-                    <th>Actions</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOrders.length > 0 ? (
-                    filteredOrders.map(ord => (
-                      <tr key={ord.id}>
-                        <td>{ord.orderNo}</td>
+                  {filteredOrders.length > 0 ? filteredOrders.map(ord => {
+                    const flow = STATUS_FLOW[ord.status.toLowerCase()];
+                    return (
+                      <tr key={ord.id} className={ord.status === 'completed' ? styles.rowDone : ''}>
+                        <td className={styles.orderNo}>{ord.orderNo}</td>
                         <td>
-                          <strong>{ord.customer}</strong>
-                          <br />
-                          <span className={styles.sessionSubtext}>{ord.itemSummary}</span>
+                          <span className={styles.customerName}>{ord.customer}</span>
+                          <span className={styles.itemSummary}>{ord.itemSummary}</span>
                         </td>
-                        <td><span className={`${styles.status} ${styles[ord.status.toLowerCase()]}`}>{formatStatus(ord.status)}</span></td>
-                        <td>{ord.total}</td>
-                        <td className={styles.actions}>
-                          <button
-                            className={styles.btnSmall}
-                            onClick={() => void markOrderCompleted(ord.id)}
-                            disabled={ord.status.toLowerCase() === 'completed'}
-                          >
-                            Complete
-                          </button>
+                        <td>
+                          <span className={`${styles.statusBadge} ${styles[ord.status.toLowerCase()]}`}>
+                            {formatStatus(ord.status)}
+                          </span>
+                        </td>
+                        <td className={styles.total}>{ord.total}</td>
+                        <td>
+                          {flow ? (
+                            <button
+                              className={`${styles.actionBtn} ${styles[flow.cls]}`}
+                              onClick={() => void advanceStatus(ord)}
+                              disabled={updatingId === ord.id}
+                            >
+                              {updatingId === ord.id ? '…' : flow.label}
+                            </button>
+                          ) : (
+                            <span className={styles.doneLabel}>✓ Done</span>
+                          )}
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className={styles.noResults}>No orders found</td>
-                    </tr>
+                    );
+                  }) : (
+                    <tr><td colSpan={5} className={styles.empty}>No orders found</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
-          </section>
+          </div>
         )}
 
+        {/* Inventory tab */}
         {activeTab === 'inventory' && (
-          <section className={styles.tabContent}>
-            <div className={styles.sectionHeader}>
-              <h2>Inventory Management</h2>
-            </div>
-
+          <div className={styles.tableCard}>
             <div className={styles.tableContainer}>
               <table className={styles.table}>
                 <thead>
                   <tr>
                     <th>Item</th>
-                    <th>Qty</th>
+                    <th>Stock</th>
                     <th>Unit</th>
-                    <th>Actions</th>
+                    <th>Adjust</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInventory.length > 0 ? (
-                    filteredInventory.map(item => (
-                      <tr key={item.id}>
-                        <td>{item.name}</td>
-                        <td>{item.qty}</td>
-                        <td>{item.unit}</td>
-                        <td className={styles.actions}>
-                          <button className={styles.btnSmall} onClick={() => adjustQty(item.id, -1)}>-</button>
-                          <button className={styles.btnSmall} onClick={() => adjustQty(item.id, 1)}>+</button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className={styles.noResults}>No inventory items</td>
+                  {filteredInventory.length > 0 ? filteredInventory.map(item => (
+                    <tr key={item.id} className={item.qty <= 5 ? styles.rowLowStock : ''}>
+                      <td>
+                        <span className={styles.itemName}>{item.name}</span>
+                        {item.qty <= 5 && <span className={styles.lowBadge}>Low stock</span>}
+                      </td>
+                      <td className={`${styles.qtyCell} ${item.qty <= 5 ? styles.qtyLow : ''}`}>{item.qty}</td>
+                      <td className={styles.unitCell}>{item.unit}</td>
+                      <td>
+                        <div className={styles.qtyControls}>
+                          <button type="button" className={styles.qtyBtn} onClick={() => adjustQty(item.id, -1)} disabled={item.qty === 0}>−</button>
+                          <button type="button" className={`${styles.qtyBtn} ${styles.qtyBtnAdd}`} onClick={() => adjustQty(item.id, 1)}>+</button>
+                        </div>
+                      </td>
                     </tr>
+                  )) : (
+                    <tr><td colSpan={4} className={styles.empty}>No items found</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
-          </section>
+          </div>
         )}
 
-        <section className={styles.sessionSection}>
-          <h2>Staff Tools</h2>
-          <p className={styles.sessionSubtext}>Stories covered: 33-38 (order processing, inventory, shift info)</p>
-        </section>
       </main>
     </div>
   );

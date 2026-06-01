@@ -36,7 +36,7 @@ export default function StaffHeader() {
           <Link href="/store-staff" className={styles.navLink}>
             Menu Management
           </Link>
-          <Link href="/store-staff" className={styles.navLink}>
+          <Link href="/store-staff-dashboard" className={styles.navLink}>
             Dashboard
           </Link>
           {/* <Link href="/global-stores" className={styles.navLink}>Global Stores</Link> */}
