@@ -1,9 +1,11 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './Profile.module.css';
 import { getStoredUser } from '../utils/dripteaApi';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [profilePic, setProfilePic] = useState<string>("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,7 +31,6 @@ export default function ProfilePage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Save to localStorage (and backend if needed)
     const user = getStoredUser();
     if (user) {
       const updated = { ...user, profilePic, fullName: name, email };
@@ -37,32 +38,92 @@ export default function ProfilePage() {
       window.dispatchEvent(new Event('profileUpdated'));
       window.dispatchEvent(new Event('authUpdated'));
       setStatus("Profile updated!");
-      setTimeout(() => setStatus(""), 2000);
+      setTimeout(() => setStatus(""), 2500);
     }
   }
 
   return (
-    <main className={styles.container}>
-      <h1 className={styles.heading}>Profile Settings</h1>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.avatarPreview}>
-          <label htmlFor="profilePic" style={{ cursor: 'pointer' }}>
-            {profilePic && (
-              <img src={profilePic} alt="Profile preview" className={styles.avatarImg} />
-            )}
-          </label>
+    <main className={styles.page}>
+      <div className={styles.card}>
+        {/* Header */}
+        <div className={styles.header}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => router.back()}
+            aria-label="Go back"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5" />
+              <path d="M12 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+          <h1 className={styles.heading}>Profile Settings</h1>
+          <div className={styles.headerSpacer} />
         </div>
-        <input className={styles.input} id="profilePic" name="profilePic" type="file" accept="image/*" onChange={handlePicChange} style={{ marginBottom: 0 }} />
 
-        <label className={styles.label} htmlFor="name">Name</label>
-        <input className={styles.input} id="name" name="name" type="text" value={name} onChange={e => setName(e.target.value)} autoComplete="off" />
+        {/* Avatar */}
+        <div className={styles.avatarSection}>
+          <div className={styles.avatarWrapper}>
+            <img
+              src={profilePic || "/profile_empty.png"}
+              alt="Profile"
+              className={styles.avatarImg}
+            />
+            <label htmlFor="profilePic" className={styles.avatarEditBtn} aria-label="Change profile picture">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </label>
+            <input id="profilePic" name="profilePic" type="file" accept="image/*" onChange={handlePicChange} className={styles.fileInput} />
+          </div>
+          <p className={styles.avatarHint}>Tap the pencil to change your photo</p>
+        </div>
 
-        <label className={styles.label} htmlFor="email">Email</label>
-        <input className={styles.input} id="email" name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" />
+        {/* Form */}
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="name">Full Name</label>
+            <input
+              className={styles.input}
+              id="name"
+              name="name"
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Your full name"
+              autoComplete="off"
+            />
+          </div>
 
-        <button className={styles.button} type="submit">Save Changes</button>
-        {status && <div style={{ color: '#7b4b2a', textAlign: 'center', marginTop: '0.7rem', fontWeight: 600 }}>{status}</div>}
-      </form>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="email">Email Address</label>
+            <input
+              className={styles.input}
+              id="email"
+              name="email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              autoComplete="off"
+            />
+          </div>
+
+          <button className={styles.saveBtn} type="submit">Save Changes</button>
+
+          {status && (
+            <div className={styles.successMsg}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {status}
+            </div>
+          )}
+        </form>
+      </div>
     </main>
   );
 }

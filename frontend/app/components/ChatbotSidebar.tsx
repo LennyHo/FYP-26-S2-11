@@ -843,7 +843,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
           setTimeout(() => {
             const botMsg: Message = {
               id: (Date.now() + 1).toString(),
-              text: `Nice, ${ice} ice.\n\nNext, sugar level? Normal, Less, or Zero?`,
+              text: `Nice, ${ice} ice.\n\nNext, sugar level? Choose: 0%, 25%, 50%, or 100%.`,
               isUser: false,
             };
             setMessages(prev => [...prev, botMsg]);
@@ -866,19 +866,33 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
 
       // Customization Step 3: Collect sugar level
       if (pendingDrinkForCustomization.step === 'sugar') {
-        const sugarMatch = customizationText.match(/\b(normal|less|zero)\b/i);
-        if (sugarMatch) {
+        const namedMatch = customizationText.match(/\b(normal|less|zero|no\s*sugar)\b/i);
+        const pctMatch = customizationText.match(/\b(100|50|25|0)\s*%?\b/);
+
+        let sugar: string | null = null;
+        if (namedMatch) {
+          const v = namedMatch[1].toLowerCase().replace(/\s+/g, '');
+          sugar = v === 'normal' ? '50%' : v === 'less' ? '25%' : '0%';
+        } else if (pctMatch) {
+          sugar = `${pctMatch[1]}%`;
+        }
+
+        if (sugar) {
           const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
           setMessages(prev => [...prev, userMsg]);
           setIsLoading(true);
 
-          const sugar = sugarMatch[1].charAt(0).toUpperCase() + sugarMatch[1].slice(1).toLowerCase();
-          setPendingDrinkForCustomization(prev => ({ ...prev!, step: 'topping', sugar }));
+          setPendingDrinkForCustomization(prev => ({ ...prev!, step: 'topping', sugar: sugar! }));
+
+          const isHighSugar = sugar === '50%' || sugar === '100%';
+          const replyText = isHighSugar
+            ? `Just a heads-up — ${sugar} sugar is on the sweeter side (Nutri-Grade ${sugar === '100%' ? 'D' : 'C'}). Noted though!\n\nAny toppings? Tapioca Pearls (+$1.20), Aloe Vera (+$1.00), Cheese Foam (+$1.50), or No Topping?`
+            : `Perfect, ${sugar} sugar!\n\nAny toppings? Tapioca Pearls (+$1.20), Aloe Vera (+$1.00), Cheese Foam (+$1.50), or No Topping?`;
 
           setTimeout(() => {
             const botMsg: Message = {
               id: (Date.now() + 1).toString(),
-              text: `Perfect, ${sugar} sugar.\n\nFinally, any toppings? Tapioca Pearls, Aloe Vera, Cheese Foam, or No Topping?`,
+              text: replyText,
               isUser: false,
             };
             setMessages(prev => [...prev, botMsg]);
@@ -890,7 +904,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
           const userMsg: Message = { id: Date.now().toString(), text: messageText, isUser: true };
           const botMsg: Message = {
             id: (Date.now() + 1).toString(),
-            text: `I didn't catch that. Please choose: Normal, Less, or Zero sugar?`,
+            text: `I didn't catch that. Please choose: 0%, 25%, 50%, or 100% sugar.`,
             isUser: false,
           };
           setMessages(prev => [...prev, userMsg, botMsg]);
