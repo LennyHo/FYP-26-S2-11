@@ -26,7 +26,7 @@
   {
     "id": "b001",
     "name": "Classic Milk Tea",
-    "image": "images/b001.jpeg",
+    "image": "/img/bubble_teas/b001.png",
     "category": "Milk Tea",
     "tags": ["classic", "black tea", "creamy"],
     "price": 4.50,
@@ -38,7 +38,7 @@
   {
     "id": "b002",
     "name": "Jasmine Green Tea",
-    "image": "images/b002.jpeg",
+    "image": "/img/bubble_teas/b002.png",
     "category": "Milk Tea",
     "tags": ["jasmine", "green tea", "light"],
     "price": 4.20,
@@ -50,7 +50,7 @@
   {
     "id": "b003",
     "name": "Oolong Milk Tea",
-    "image": "images/b003.jpeg",
+    "image": "/img/bubble_teas/b003.png",
     "category": "Milk Tea",
     "tags": ["oolong", "roasted", "rich"],
     "price": 4.80,
@@ -62,7 +62,7 @@
   {
     "id": "b004",
     "name": "Osmanthus Milk Tea",
-    "image": "images/b004.jpeg",
+    "image": "/img/bubble_teas/b004.png",
     "category": "Milk Tea",
     "tags": ["osmanthus", "floral", "fragrant"],
     "price": 5.00,
@@ -74,7 +74,7 @@
   {
     "id": "b005",
     "name": "Da Hong Bao Milk Tea",
-    "image": "images/b005.jpeg",
+    "image": "/img/bubble_teas/b005.png",
     "category": "Milk Tea",
     "tags": ["da hong bao", "premium", "oolong"],
     "price": 5.20,
@@ -87,7 +87,7 @@
   {
     "id": "b006",
     "name": "Matcha Latte",
-    "image": "images/b006.jpeg",
+    "image": "/img/bubble_teas/b006.png",
     "category": "Matcha Teas",
     "tags": ["matcha", "green tea", "premium"],
     "price": 5.50,
@@ -99,7 +99,7 @@
   {
     "id": "b007",
     "name": "Strawberry Matcha Tea",
-    "image": "images/b007.jpeg",
+    "image": "/img/bubble_teas/b007.png",
     "category": "Matcha Teas",
     "tags": ["matcha", "strawberry", "fruit"],
     "price": 6.00,
@@ -111,7 +111,7 @@
   {
     "id": "b008",
     "name": "Cranberry Matcha Tea",
-    "image": "images/b008.jpeg",
+    "image": "/img/bubble_teas/b008.png",
     "category": "Matcha Teas",
     "tags": ["matcha", "cranberry", "tart"],
     "price": 6.00,
@@ -123,7 +123,7 @@
   {
     "id": "b009",
     "name": "Jasmine Matcha Tea",
-    "image": "images/b009.jpeg",
+    "image": "/img/bubble_teas/b009.png",
     "category": "Matcha Teas",
     "tags": ["matcha", "jasmine", "floral"],
     "price": 5.80,
@@ -136,7 +136,7 @@
   {
     "id": "b010",
     "name": "Double Chocolate Frappe",
-    "image": "images/b010.jpeg",
+    "image": "/img/bubble_teas/b010.png",
     "category": "Ice Blended",
     "tags": ["chocolate", "sweet", "frappe"],
     "price": 6.50,
@@ -148,7 +148,7 @@
   {
     "id": "b011",
     "name": "Milo Dinosaur",
-    "image": "images/b011.jpeg",
+    "image": "/img/bubble_teas/b011.png",
     "category": "Local Favorites",
     "tags": ["milo", "chocolate", "malt"],
     "price": 5.00,
@@ -161,7 +161,7 @@
   {
     "id": "b012",
     "name": "Taro Slush",
-    "image": "images/b012.jpeg",
+    "image": "/img/bubble_teas/b012.png",
     "category": "Ice Blended",
     "tags": ["taro", "sweet", "slush"],
     "price": 6.00,

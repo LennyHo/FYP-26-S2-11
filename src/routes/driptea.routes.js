@@ -122,7 +122,7 @@ function loadSeedMenuItems() {
     return {
       itemId: item.id,
       name: item.name,
-      image: item.image?.startsWith("/") ? item.image : `/${item.image || ""}`,
+      image: `/img/bubble_teas/${item.id}.png`,
       category: item.category,
       tags: item.tags || [],
       price: Number(item.price || 0),

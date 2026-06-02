@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
 const axios = require("axios");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
@@ -84,7 +83,30 @@ app.get("/health/supabase", (_req, res) => {
 // =========================
 // LOAD MENU & UTILS
 // =========================
-const menuData = JSON.parse(fs.readFileSync("./data/menu.json", "utf8"));
+const { MenuItem } = require("./src/models/driptea.models");
+
+let cachedMenuBeverages = null;
+
+async function getMenuBeverages() {
+    if (cachedMenuBeverages) return cachedMenuBeverages;
+    const items = await MenuItem.find({ status: "active" }).lean();
+    cachedMenuBeverages = items.map(item => ({
+        id: item.itemId,
+        name: item.name,
+        image: item.image,
+        category: item.category,
+        tags: item.tags || [],
+        price: item.price,
+        description: item.description,
+        base_calories: item.nutritionInfo?.baseCalories || 0,
+        base_sugar_g: item.nutritionInfo?.baseSugarG || 0,
+        base_volume_ml: item.nutritionInfo?.baseVolumeMl || 500,
+    }));
+    return cachedMenuBeverages;
+}
+
+// Invalidate cache every 5 minutes so menu changes are picked up
+setInterval(() => { cachedMenuBeverages = null; }, 5 * 60 * 1000);
 
 function getNutriGrade(sugarPer100ml) {
     if (sugarPer100ml <= 1) return "A";
@@ -93,14 +115,12 @@ function getNutriGrade(sugarPer100ml) {
     return "D";
 }
 
-function filterMenu(menu, userMessage) {
+function filterMenu(beverages, userMessage) {
     const msg = userMessage.toLowerCase();
     const priceMatch = msg.match(/(?:below|under|less than)\s*\$?(\d+(\.\d+)?)/);
     const maxPrice = priceMatch ? parseFloat(priceMatch[1]) : null;
 
-    const isRecommendRequest = /recommend|signature|best|推荐|招牌|介绍|其他/.test(msg);
-
-    let results = menu.beverages.filter(item => {
+    let results = beverages.filter(item => {
         if (maxPrice !== null) return item.price <= maxPrice;
         return true;
     }).map(item => {
@@ -124,15 +144,11 @@ function filterMenu(menu, userMessage) {
     return results.sort((a, b) => b.score - a.score).slice(0, 5);
 }
 
-function messageMatchesMenuTerm(userMessage) {
+async function messageMatchesMenuTerm(userMessage) {
     const msg = userMessage.toLowerCase();
-    return menuData.beverages.some(item => {
-        const menuTerms = [
-            item.name,
-            item.category,
-            ...(item.tags || []),
-        ].filter(Boolean);
-
+    const beverages = await getMenuBeverages();
+    return beverages.some(item => {
+        const menuTerms = [item.name, item.category, ...(item.tags || [])].filter(Boolean);
         return menuTerms.some(term => msg.includes(String(term).toLowerCase()));
     });
 }
@@ -163,29 +179,27 @@ function appendToConversation(history, message) {
 // =========================
 // SYSTEM PROMPT BUILDER
 // =========================
-function isMenuRequest(userMessage) {
+async function isMenuRequest(userMessage) {
     const msg = userMessage.toLowerCase();
-    // Detect if user is asking for recommendations, categories, comparisons, or menu
-    const menuKeywords = /recommend|suggest|signature|best|menu|list|show.*drink|what.*have|category|sugar.*compar|calor.*compar|compare|low sugar|healthy|diet|allerg|ingredi|option/i;
+    const menuKeywords = /rec|recommend|suggest|signature|best|menu|list|show.*drink|what.*have|category|sugar.*compar|calor.*compar|compare|low sugar|healthy|diet|allerg|ingredi|option|drink|order|what.*got|what.*sell/i;
     const greetingKeywords = /^(hi|hello|hey|good morning|good afternoon|good evening|what's up|sup|howdy|hola|你好|ni hao|salut|ciao|namaste)/i;
-    
-    // If it's just a greeting, don't show menu
+
     if (greetingKeywords.test(msg) && msg.length < 30) {
         return false;
     }
-    
-    return menuKeywords.test(msg) || messageMatchesMenuTerm(userMessage);
+
+    return menuKeywords.test(msg) || await messageMatchesMenuTerm(userMessage);
 }
 
-function buildSystemPrompt(userMessage) {
-    const langInstruction = USE_MATCHED_LANGUAGE 
-        ? "CRITICAL FINAL RULE: You MUST reply in the exact same language as the user's last message! If they spoke Chinese, reply in Chinese. If English, reply in English." 
+async function buildSystemPrompt(userMessage) {
+    const langInstruction = USE_MATCHED_LANGUAGE
+        ? "CRITICAL FINAL RULE: You MUST reply in the exact same language as the user's last message! If they spoke Chinese, reply in Chinese. If English, reply in English."
         : "CRITICAL FINAL RULE: You MUST reply in UK English only, regardless of the user's language.";
 
-    // Only show menu if user is asking for it
     let drinkContext = "";
-    if (isMenuRequest(userMessage)) {
-        const filtered = filterMenu(menuData, userMessage);
+    if (await isMenuRequest(userMessage)) {
+        const beverages = await getMenuBeverages();
+        const filtered = filterMenu(beverages, userMessage);
         const structuredData = filtered.map(item => ({
             id: item.id, name: item.name, price: item.price,
             calories: item.base_calories, sugar: item.base_sugar_g,
@@ -194,16 +208,12 @@ function buildSystemPrompt(userMessage) {
         drinkContext = `AVAILABLE DRINKS CONTEXT:
 ${JSON.stringify(structuredData, null, 2)}`;
     } else {
-        drinkContext = "NOTE: Menu items will be shown only when the user asks for recommendations, categories, comparisons, or explicitly requests to see the menu.";
+        drinkContext = "NOTE: No menu data is loaded for this message. You MUST NOT mention, list, or recommend ANY specific drinks or invent any drink names/IDs. If the user asks for drinks, ask them what they are in the mood for first.";
     }
 
     return `You are Avy, the DripTea Health Advisor. You are a helpful, human-like AI assistant.
 
 ${drinkContext}
-LIVE STORE CONTEXT:
-- **Bugis Junction Branch**: 400m away | Current Queue: 5 mins (Quiet)
-- **Downtown Branch**: 2km away | Current Queue: 25 mins (Packed)
-- **Campus Branch**: 5km away | Current Queue: 12 mins (Normal)
 
 NUTRI-GRADE MATH (Official HPB Guidelines):
 Base Volume is 500ml. Added Sugar: 0%=0g | 25%=10g | 50%=20g | 100%=40g.
@@ -218,6 +228,7 @@ CONVERSATION RULES (CRITICAL):
 5. WHEN TO SHOW MENU: Only show menu items if the user EXPLICITLY asks for recommendations, comparisons, the full menu, or to order.
 6. HEALTH QUESTIONS: Answer straightforwardly with facts, keeping it brief.
 7. NEVER recommend a drink that does not match the requested flavor.
+7a. STRICT MENU RULE: You may ONLY recommend drinks that appear in the AVAILABLE DRINKS CONTEXT above. NEVER invent, guess, or hallucinate drink names, IDs, or details. If a drink is not in the context, it does not exist.
 8. CART MEMORY: Keep track of all drinks the user has confirmed.
 9. HTML OVERRIDE: When generating buttons or new lines, use exact HTML brackets like <button> and <br>. 
 10. FAST-TRACK ORDERING: If user gives ALL details (Name, Size, Sugar, Toppings), bypass phases.
@@ -393,7 +404,7 @@ app.post("/chat", async (req, res) => {
         }
 
         // TEXT HANDLING (Gemini Rotator -> Fallback to Groq)
-        const systemPrompt = buildSystemPrompt(safeMessage);
+        const systemPrompt = await buildSystemPrompt(safeMessage);
         const history = getConversationHistory(safeConversationId);
         let textReply = "";
 
