@@ -1,6 +1,3 @@
-.micBtn, .speakBtn {
-  display: none !important;
-}
 .plusBtnWrap {
   display: flex;
   align-items: center;

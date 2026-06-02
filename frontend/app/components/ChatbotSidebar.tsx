@@ -13,7 +13,7 @@ import {
 } from '../utils/chatHelpers';
 // CHANGED: Import getStoredUser so chatbot can send userId for cart queries
 import { getStoredUser } from '../utils/dripteaApi';
-// import ImageUploadButton from './ImageUploadButton';
+import ImageUploadButton from './ImageUploadButton';
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
@@ -1687,9 +1687,8 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               rows={1}
               style={{resize: 'none', overflow: 'hidden'}}
             />
-            {/* Conditional Rendering: Show Send if typing, else show Mic/Speak */}
-            <div className={styles.chatActionRow}>
-              {input.trim() ? (
+            {input.trim() && (
+              <div className={styles.chatActionRow}>
                 <button
                   type="button"
                   className={styles.sendBtn}
@@ -1703,27 +1702,17 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                     <path d="M5 12l7-7 7 7" />
                   </svg>
                 </button>
-              ) : (
-                <SpeechControls
-                  isListening={isListening}
-                  isLoading={isLoading}
-                  onMicClick={handleMicrophoneClick}
-                  onSpeakClick={handleSpeakClick}
-                  isSpeakMode={isSpeakMode}
-                />
-              )}
-            </div>
+              </div>
+            )}
+            {/* <SpeechControls
+              isListening={isListening}
+              isLoading={isLoading}
+              onMicClick={handleMicrophoneClick}
+              onSpeakClick={handleSpeakClick}
+              isSpeakMode={isSpeakMode}
+            /> */}
           </div>
         </div>
-        {/*
-        <SpeechControls
-          isListening={isListening}
-          isLoading={isLoading}
-          onMicClick={handleMicrophoneClick}
-          onSpeakClick={handleSpeakClick}
-          isSpeakMode={isSpeakMode}
-        />
-        */}
       </div>
 
 
