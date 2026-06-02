@@ -93,6 +93,7 @@ export default function Header() {
   };
 
   // Logged-in customers use MongoDB cart_items as the source of truth.
+  // CHANGED: Also check localStorage as fallback for items just added but not yet synced to backend
   const updateCartDisplay = async () => {
     const user = getStoredUser();
 
@@ -102,13 +103,28 @@ export default function Header() {
         const backendItemCount = backendItems.reduce((sum, item) => sum + Math.max(1, Number(item.quantity || 1)), 0);
         const backendTotal = backendItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
 
+        // CHANGED: Also check localStorage to ensure recently added items appear immediately
+        // (backend sync might still be in progress)
+        const localData = localStorage.getItem("dripTeaCartData");
+        if (localData) {
+          const localDrinks = localData.split('\n').filter(line => line.trim() !== '');
+          const localCount = localDrinks.length;
+          
+          // CHANGED: Use localStorage count if it's higher than backend
+          // This handles the case where item was just added but backend sync not complete
+          if (localCount > backendItemCount) {
+            updateCartDisplayFromLocalStorage();
+            return;
+          }
+        }
+
         setCartCount(backendItemCount);
         setCartTotal(backendTotal);
         return;
       } catch (error) {
-        console.warn('[DripTea cart badge] backend count unavailable for logged-in user; not using localStorage count', error);
-        setCartCount(0);
-        setCartTotal(0);
+        console.warn('[DripTea cart badge] backend count unavailable for logged-in user; falling back to localStorage', error);
+        // CHANGED: Fall back to localStorage instead of showing empty cart
+        updateCartDisplayFromLocalStorage();
         return;
       }
     }

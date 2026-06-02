@@ -179,6 +179,40 @@ function appendToConversation(history, message) {
 // =========================
 // SYSTEM PROMPT BUILDER
 // =========================
+
+// CHANGED: New function to detect if user is asking about their cart
+function isCartQuery(userMessage) {
+    const msg = userMessage.toLowerCase();
+    const cartKeywords = /cart|check.*cart|view.*cart|my.*cart|what.*in.*cart|what.*i.*order|my.*order|review/i;
+    return cartKeywords.test(msg);
+}
+
+// CHANGED: New function to fetch actual cart from database
+async function getChatbotActualCart(userId) {
+    try {
+        if (!userId) {
+            console.log('[CHAT] No userId provided for cart fetch');
+            return null;
+        }
+        
+        console.log('[CHAT] Attempting to fetch cart for userId:', userId);
+        // CHANGED: Call the new chatbot cart endpoint
+        const response = await axios.get(`http://localhost:${PORT}/api/chatbot/cart/${encodeURIComponent(userId)}`);
+        console.log('[CHAT] Cart fetch response:', response.status, response.data);
+        
+        if (response.data && response.data.ok && response.data.data && response.data.data.length > 0) {
+            console.log('[CHAT] Successfully fetched', response.data.data.length, 'cart items for user', userId);
+            return response.data.data;
+        }
+        
+        console.log('[CHAT] Cart fetch returned no items. Response:', response.data);
+        return null;
+    } catch (error) {
+        console.error('[CHAT] Failed to fetch actual cart from database:', error.message, error.response?.data || error.response?.status || '');
+        return null;
+    }
+}
+
 async function isMenuRequest(userMessage) {
     const msg = userMessage.toLowerCase();
     const menuKeywords = /rec|recommend|suggest|signature|best|menu|list|show.*drink|what.*have|category|sugar.*compar|calor.*compar|compare|low sugar|healthy|diet|allerg|ingredi|option|drink|order|what.*got|what.*sell/i;
@@ -363,16 +397,18 @@ async function callGroqText(userMessage, history, systemPrompt) {
 // =========================
 app.post("/chat", async (req, res) => {
     try {
-        const { message, image, conversationId } = req.body || {};
+        const { message, image, conversationId, userId } = req.body || {};
         const safeMessage = typeof message === "string" ? message.trim() : "";
         const safeConversationId = typeof conversationId === "string" && conversationId.trim()
             ? conversationId.trim().slice(0, 64) : "default";
+        // CHANGED: Extract userId to fetch actual cart from database
+        const safeUserId = typeof userId === "string" ? userId.trim() : null;
 
         if (!image && !safeMessage) {
             return res.status(400).json({ reply: "Please send a message.", system_action: { ui_navigation: "none" } });
         }
 
-        console.log(`[CHAT] ${new Date().toISOString()} | msg="${safeMessage.slice(0, 50)}" | img=${Boolean(image)}`);
+        console.log(`[CHAT] ${new Date().toISOString()} | msg="${safeMessage.slice(0, 50)}" | img=${Boolean(image)} | userId=${safeUserId || "anonymous"}`);
 
         // IMAGE HANDLING (Gemini Rotator)
         if (image) {
@@ -404,7 +440,44 @@ app.post("/chat", async (req, res) => {
         }
 
         // TEXT HANDLING (Gemini Rotator -> Fallback to Groq)
-        const systemPrompt = await buildSystemPrompt(safeMessage);
+        // CHANGED: Check if user is asking about their cart
+        let systemPrompt = await buildSystemPrompt(safeMessage);
+        let cartContext = "";
+        
+        const isCart = isCartQuery(safeMessage);
+        console.log(`[CHAT] isCartQuery result: ${isCart} | message: "${safeMessage}"`);
+        
+        if (isCart) {
+            console.log(`[CHAT] Cart query detected. safeUserId: ${safeUserId}`);
+            // CHANGED: Try to fetch actual cart from database if userId is provided
+            if (safeUserId) {
+                try {
+                    const actualCart = await getChatbotActualCart(safeUserId);
+                    console.log(`[CHAT] actualCart result:`, actualCart);
+                    if (actualCart && actualCart.length > 0) {
+                        const { formatCartForChatbot } = require("./src/controllers/chatbotController");
+                        const cartDisplay = formatCartForChatbot(actualCart);
+                        cartContext = `CUSTOMER CART CONTEXT:\n${cartDisplay}`;
+                        console.log(`[CHAT] Fetched actual cart for user ${safeUserId} with ${actualCart.length} items`);
+                    } else {
+                        cartContext = "NOTE: User has no items in their cart yet.";
+                        console.log(`[CHAT] Cart is empty or null for user ${safeUserId}`);
+                    }
+                } catch (error) {
+                    console.warn(`[CHAT] Failed to fetch cart for user ${safeUserId}:`, error.message);
+                    cartContext = "NOTE: Unable to fetch cart data. Ask user to check again.";
+                }
+            } else {
+                cartContext = "NOTE: User is asking about their cart but is not logged in. Inform them to log in first.";
+                console.log(`[CHAT] No userId provided for cart query`);
+            }
+            
+            systemPrompt = systemPrompt.replace(
+                "ORDERING PHASES (Only start these when user explicitly wants to order):",
+                `${cartContext}\n\nORDERING PHASES (Only start these when user explicitly wants to order):`
+            );
+        }
+        
         const history = getConversationHistory(safeConversationId);
         let textReply = "";
 

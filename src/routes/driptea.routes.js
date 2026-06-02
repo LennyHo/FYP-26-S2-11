@@ -17,6 +17,10 @@ const {
   ChatbotSession,
   Voucher,
 } = require("../models/driptea.models");
+// CHANGED: Import cart controller for MVC structure
+const { addBeverageToCart } = require("../controllers/cartController");
+// CHANGED: Import chatbot controller for MVC structure
+const { getChatbotCartItems, formatCartForChatbot } = require("../controllers/chatbotController");
 
 const router = express.Router();
 let preparationPromise = null;
@@ -584,79 +588,50 @@ router.get("/cart-items", async (req, res, next) => {
   }
 });
 
+// CHANGED: Route handler refactored to use cartController for MVC structure
+// Business logic moved to src/controllers/cartController.js
 router.post("/cart-items", async (req, res, next) => {
   try {
-    const db = await getPreparedDb();
-    const userId = toObjectId(req.body?.userId);
-    const quantity = Math.max(1, Number(req.body?.quantity || 1));
-    const menuItemId = String(req.body?.menuItemId || "").trim();
-    const menuItem = menuItemId
-      ? await MenuItem.findOne({
-          $or: [
-            { itemId: menuItemId },
-            ...(Types.ObjectId.isValid(menuItemId) ? [{ _id: new Types.ObjectId(menuItemId) }] : []),
-          ],
-          status: "active",
-        }).lean()
-      : null;
-
-    if (!userId) {
-      return res.status(400).json({ ok: false, message: "A valid userId is required." });
-    }
-
-    const cartUser = await getActiveCustomerForCart(userId);
-    const unitPrice = Number(req.body?.unitPrice || menuItem?.price || 0);
-    const lineTotal = Number(req.body?.lineTotal || unitPrice * quantity);
-    const cartItem = {
-      userId,
-      menuItemId: menuItem?._id || null,
-      menuItemCode: menuItem?.itemId || menuItemId || null,
-      name: String(req.body?.name || menuItem?.name || "Custom Drink").trim(),
-      image: String(req.body?.image || menuItem?.image || "").trim(),
-      category: String(req.body?.category || menuItem?.category || "").trim(),
-      quantity,
-      unitPrice,
-      lineTotal,
-      customization: req.body?.customization && typeof req.body.customization === "object"
-        ? req.body.customization
-        : {},
-      status: "active",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    const result = await CartItem.create(cartItem);
-    const storage = {
-      type: "mongodb",
-      database: db.databaseName,
-      collection: "cart_items",
-      mongoHost: getMongoHostLabel(),
-    };
-    const forwardedProto = req.get("x-forwarded-proto");
-    const forwardedHost = req.get("x-forwarded-host");
-    const backendHost = forwardedHost || req.get("host") || null;
-    const backend = {
-      host: backendHost,
-      url: backendHost ? `${forwardedProto || req.protocol}://${backendHost}` : null,
-      origin: req.get("origin") || null,
-      renderService: process.env.RENDER_SERVICE_NAME || null,
-      renderExternalUrl: process.env.RENDER_EXTERNAL_URL || null,
-    };
-
-    console.log(
-      `[DripTea add to cart] SUCCESS backend=${backend.renderExternalUrl || backend.url || "(not reported)"} mongoHost=${storage.mongoHost} storage=${storage.type}:${storage.database}.${storage.collection} cartItemId=${String(result._id)} userId=${String(userId)} userEmail=${cartUser.email} item="${result.name}" quantity=${result.quantity}`
-    );
-
-    return res.status(201).json({
-      ok: true,
-      data: toPublicCartItem(result),
-      storage,
-      backend,
-    });
+    // CHANGED: Call controller function instead of handling logic inline
+    const response = await addBeverageToCart(req.body, req);
+    return res.status(201).json(response);
   } catch (error) {
+    // CHANGED: Controller throws errors with statusCode property if status is not 500
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        ok: false,
+        message: error.message,
+      });
+    }
     next(error);
   }
 });
+
+// CHANGED: New Chatbot Cart Endpoint - Get cart items for chatbot display
+// Used by the chatbot when user asks "check my cart"
+router.get("/chatbot/cart/:userId", async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    console.log('[DripTea Route] Chatbot cart request for userId:', userId);
+    
+    await getPreparedDb();
+
+    // CHANGED: Call chatbot controller to fetch and format cart items
+    const cartData = await getChatbotCartItems(userId);
+    console.log('[DripTea Route] Chatbot cart response:', cartData.message, 'items:', cartData.itemCount);
+    return res.json(cartData);
+  } catch (error) {
+    console.error('[DripTea Route] Chatbot cart error:', error.message);
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        ok: false,
+        message: error.message,
+      });
+    }
+    next(error);
+  }
+});
+
 
 // Vouchers: public read and admin create
 router.get("/vouchers", async (req, res, next) => {

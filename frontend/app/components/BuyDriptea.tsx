@@ -1,3 +1,6 @@
+// CHANGED: Added 'use client' directive because component uses refs on video element
+'use client';
+
 import Header from '../components/Header';
 import styles from './BuyDriptea.module.css';
 import Link from 'next/link';

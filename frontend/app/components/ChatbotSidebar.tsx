@@ -11,6 +11,8 @@ import {
   convertDrinkNamesToLinks,
   applyGlossaryTooltips,
 } from '../utils/chatHelpers';
+// CHANGED: Import getStoredUser so chatbot can send userId for cart queries
+import { getStoredUser } from '../utils/dripteaApi';
 // import ImageUploadButton from './ImageUploadButton';
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
@@ -666,6 +668,8 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         const apiBase = process.env.NODE_ENV === 'development'
           ? 'http://localhost:5000'
           : ((process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'https://driptea-trrn.onrender.com');
+        // CHANGED: Add userId to chat request so chatbot can fetch actual cart
+        const currentUser = getStoredUser();
         const res = await fetch(`${apiBase}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -673,6 +677,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
             message: messageText || 'Describe this drink',
             image: base64,
             conversationId: convId,
+            userId: currentUser?.id || null,
           }),
         });
         const data = await res.json();
@@ -1018,9 +1023,11 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // CHANGED: Add userId to chat request so chatbot can fetch actual cart
         body: JSON.stringify({
           message: messageText,
           conversationId: convId,
+          userId: (getStoredUser())?.id || null,
         }),
       });
       console.log('[Chat] Response status', response.status);

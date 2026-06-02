@@ -215,16 +215,25 @@ export default function DrinkCustomize() {
   }
   // end done by "HDC"
 
-  // done by "HDC" - shared save flow so Add to Cart can return to menu while Place Order still goes to payment.
-  async function saveCartItemForSelectedDrink() {
+  // CHANGED: Optimized save flow - fire-and-forget backend, immediate UI response
+  // This function updates local storage immediately and syncs to backend in background
+  function saveCartItemForSelectedDrinkAsync() {
     const toppingLabel = topping.key === 'none' ? '' : `, ${topping.name}`;
     const details = `Qty ${quantity} | ${size.label} | ${ice} | ${sweetness.label}${toppingLabel}`;
-    // const backendCartItem = `${selectedDrink.name} (${details})|${details}|S$ ${totalPrice.toFixed(2)}|${selectedDrink.image}`;
     const backendCartItem = formatLocalCartLine({ name: selectedDrink.name, details, price: totalPrice, imageSrc: selectedDrink.image });
-    const currentUser = getStoredUser();
+    
+    // CHANGED: Save to localStorage immediately (fast, synchronous)
+    const existingData = localStorage.getItem("dripTeaCartData") || "";
+    const updated = existingData ? `${existingData}\n${backendCartItem}` : backendCartItem;
+    localStorage.setItem("dripTeaCartData", updated);
+    window.dispatchEvent(new Event('cartUpdated'));
+    logLocalCartSave(updated);
 
+    // CHANGED: Fire backend sync in background without waiting (improves UI responsiveness)
+    const currentUser = getStoredUser();
     if (currentUser) {
-      const response = await addCartItem({
+      // Use Promise without await - don't wait for backend
+      addCartItem({
         userId: currentUser.id,
         menuItemId: selectedDrink.id,
         name: selectedDrink.name,
@@ -245,32 +254,34 @@ export default function DrinkCustomize() {
             nutriGrade: selectedDrink.nutriGrade,
           },
         },
-      });
-      logBackendCartSave(response);
+      })
+        .then(response => {
+          logBackendCartSave(response);
+        })
+        .catch(error => {
+          console.error('[DripTea cart sync background]', error);
+          // Silent fail - local cart still saved
+        });
     } else {
       logBackendCartSkipped();
     }
-
-    const existingData = localStorage.getItem("dripTeaCartData") || "";
-    const updated = existingData ? `${existingData}\n${backendCartItem}` : backendCartItem;
-    localStorage.setItem("dripTeaCartData", updated);
-    window.dispatchEvent(new Event('cartUpdated'));
-    logLocalCartSave(updated);
   }
 
+  // CHANGED: Now handles navigation to home page immediately, no waiting for backend
   async function handleAddToCartAndReturnToMenu() {
     try {
-      await saveCartItemForSelectedDrink();
+      // CHANGED: Use async version that doesn't wait for backend
+      saveCartItemForSelectedDrinkAsync();
       setAddedToCart(true);
-      const categoryParam = params.category;
-      const categorySlug = typeof categoryParam === 'string' ? categoryParam : toDrinkSlug(selectedDrink.category);
-      router.push(`/menu/${categorySlug}`);
+      // CHANGED: Navigate to home page instead of menu category
+      router.push('/');
     } catch (error) {
       console.error('[DripTea cart add]', error);
       alert('Unable to add this drink to cart. Please try again.');
     }
   }
 
+  // CHANGED: Keep old version for checkout (needs to wait for backend before payment)
   async function handlePlaceOrderWithCartSave() {
     try {
       await saveCartItemForSelectedDrink();
