@@ -61,28 +61,24 @@ export default function StoreStaffPage() {
         {/* Stats */}
         <div className={styles.statsRow}>
           <div className={styles.statCard}>
-            <span className={styles.statIcon}>🍵</span>
             <div>
               <span className={styles.statLabel}>Total Items</span>
               <strong className={styles.statValue}>{items.length}</strong>
             </div>
           </div>
           <div className={styles.statCard}>
-            <span className={styles.statIcon}>✅</span>
             <div>
               <span className={styles.statLabel}>Active</span>
               <strong className={`${styles.statValue} ${styles.green}`}>{activeCount}</strong>
             </div>
           </div>
           <div className={`${styles.statCard} ${inactiveCount > 0 ? styles.statAlert : ''}`}>
-            <span className={styles.statIcon}>⏸️</span>
             <div>
               <span className={styles.statLabel}>Inactive</span>
               <strong className={`${styles.statValue} ${inactiveCount > 0 ? styles.orange : ''}`}>{inactiveCount}</strong>
             </div>
           </div>
           <div className={styles.statCard}>
-            <span className={styles.statIcon}>🗂️</span>
             <div>
               <span className={styles.statLabel}>Categories</span>
               <strong className={styles.statValue}>{categories.length - 1}</strong>
@@ -152,7 +148,7 @@ export default function StoreStaffPage() {
                               unoptimized
                             />
                           ) : (
-                            <div className={styles.itemImgPlaceholder}>🍵</div>
+                            <div className={styles.itemImgPlaceholder} />
                           )}
                           <div>
                             <span className={styles.itemName}>{item.name}</span>

@@ -237,30 +237,38 @@ export default function UserAdminDashboardPage() {
       <AdminHeader />
 
       <main className={styles.main}>
-        <section className={styles.hero}>
-          <div>
-            <p className={styles.eyebrow}>Admin dashboard</p>
-            <h1>User Admin Control Panel</h1>
-            <p>
-              Manage user profiles and accounts, search for specific users, and maintain controlled
-              access across the platform.
-            </p>
+
+        {/* Stats row */}
+        <div className={styles.statsRow}>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Total Users</span>
+            <strong className={styles.statValue}>{users.length}</strong>
           </div>
-          <div className={styles.heroPanel}>
-            <div>
-              <span>Total Profiles</span>
-              <strong>{users.length}</strong>
-            </div>
-            <div>
-              <span>Active Accounts</span>
-              <strong>{activeUsers}</strong>
-            </div>
-            <div>
-              <span>User Types</span>
-              <strong>{userTypeCount}</strong>
-            </div>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Customers</span>
+            <strong className={styles.statValue}>
+              {users.filter(u => u.role === 'customer').length}
+            </strong>
           </div>
-        </section>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Store Staff</span>
+            <strong className={styles.statValue}>
+              {users.filter(u => u.role === 'store_staff').length}
+            </strong>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statLabel}>Admins</span>
+            <strong className={styles.statValue}>
+              {users.filter(u => u.role === 'user_admin').length}
+            </strong>
+          </div>
+          <div className={`${styles.statCard} ${users.filter(u => u.status === 'suspended').length > 0 ? styles.statAlert : ''}`}>
+            <span className={styles.statLabel}>Suspended</span>
+            <strong className={`${styles.statValue} ${users.filter(u => u.status === 'suspended').length > 0 ? styles.statRed : ''}`}>
+              {users.filter(u => u.status === 'suspended').length}
+            </strong>
+          </div>
+        </div>
 
         <section className={styles.tabsSection}>
           <div className={styles.tabsNav}>
@@ -300,17 +308,6 @@ export default function UserAdminDashboardPage() {
               <button type="button" className={styles.actionButton} onClick={openCreateModal}>
                 <FaPlus /> Create New Profile
               </button>
-            </div>
-
-            <div className={styles.storiesCoverage}>
-              <h3>User Stories Covered</h3>
-              <ul>
-                <li><span className={styles.badge}>Story 1</span> Create user profiles for different user types</li>
-                <li><span className={styles.badge}>Story 2</span> View user profiles for quick information access</li>
-                <li><span className={styles.badge}>Story 3</span> Update user profiles to keep details current</li>
-                <li><span className={styles.badge}>Story 4</span> Suspend profiles to maintain controlled access</li>
-                <li><span className={styles.badge}>Story 5</span> Search profiles to retrieve specific user information</li>
-              </ul>
             </div>
 
             <div className={styles.tableContainer}>
@@ -363,17 +360,6 @@ export default function UserAdminDashboardPage() {
               </button>
             </div>
 
-            <div className={styles.storiesCoverage}>
-              <h3>User Stories Covered</h3>
-              <ul>
-                <li><span className={styles.badge}>Story 6</span> Create user accounts for new platform access</li>
-                <li><span className={styles.badge}>Story 7</span> View account details for each user</li>
-                <li><span className={styles.badge}>Story 8</span> Update accounts to keep records accurate</li>
-                <li><span className={styles.badge}>Story 9</span> Suspend accounts to prevent unauthorized access</li>
-                <li><span className={styles.badge}>Story 10</span> Search users by username for fast lookup</li>
-              </ul>
-            </div>
-
             <div className={styles.tableContainer}>
               <table className={styles.table}>
                 <thead>
@@ -415,15 +401,6 @@ export default function UserAdminDashboardPage() {
           </section>
         )}
 
-        <section className={styles.sessionSection}>
-          <h2>Session Management</h2>
-          <p className={styles.sessionSubtext}>Stories 11 & 12: Login and logout functionality</p>
-          <div className={styles.sessionButtons}>
-            <button type="button" className={styles.sessionButton} onClick={handleLogout}>
-              Log Out
-            </button>
-          </div>
-        </section>
       </main>
 
       {viewingUser && (

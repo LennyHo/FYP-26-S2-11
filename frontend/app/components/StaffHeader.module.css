@@ -1,11 +1,11 @@
 .header {
-  background: linear-gradient(135deg, #2d4a3a 0%, #1f3428 100%);
-  border-bottom: 2px solid #7ba86a;
+  background: linear-gradient(135deg, #4b311f 0%, #2f2016 100%);
+  border-bottom: 2px solid rgba(196, 162, 130, 0.4);
   padding: 16px 0;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(59, 39, 26, 0.2);
 }
 
 .container {
@@ -33,16 +33,11 @@
   align-items: center;
 }
 
-.logoSvg svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
 
 .brandText {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #a8d5a8;
+  color: #f5e6d8;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -54,7 +49,7 @@
 }
 
 .navLink {
-  color: #9dc499;
+  color: #ddc9b4;
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 600;
@@ -65,8 +60,8 @@
 }
 
 .navLink:hover {
-  color: #a8d5a8;
-  border-bottom-color: #7ba86a;
+  color: #fff8f2;
+  border-bottom-color: rgba(196, 162, 130, 0.7);
 }
 
 .actions {
@@ -77,9 +72,9 @@
 
 .logoutBtn {
   padding: 8px 16px;
-  border: 1px solid #7ba86a;
+  border: 1px solid rgba(196, 162, 130, 0.5);
   background: transparent;
-  color: #a8d5a8;
+  color: #f5e6d8;
   border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 600;
@@ -88,8 +83,8 @@
 }
 
 .logoutBtn:hover {
-  background: rgba(123, 168, 106, 0.2);
-  border-color: #a8d5a8;
+  background: rgba(196, 162, 130, 0.15);
+  border-color: rgba(196, 162, 130, 0.8);
 }
 
 @media (max-width: 720px) {

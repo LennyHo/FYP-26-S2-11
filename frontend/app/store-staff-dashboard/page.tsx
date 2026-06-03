@@ -107,28 +107,24 @@ export default function StoreStaffDashboardPage() {
         {/* Stats row */}
         <div className={styles.statsRow}>
           <div className={styles.statCard}>
-            <span className={styles.statIcon}>📋</span>
             <div>
               <span className={styles.statLabel}>Open Orders</span>
               <strong className={styles.statValue}>{openCount}</strong>
             </div>
           </div>
           <div className={styles.statCard}>
-            <span className={styles.statIcon}>⏳</span>
             <div>
               <span className={styles.statLabel}>Preparing</span>
               <strong className={`${styles.statValue} ${styles.orange}`}>{preparingCount}</strong>
             </div>
           </div>
           <div className={styles.statCard}>
-            <span className={styles.statIcon}>📦</span>
             <div>
               <span className={styles.statLabel}>Inventory Items</span>
               <strong className={styles.statValue}>{inventory.length}</strong>
             </div>
           </div>
           <div className={`${styles.statCard} ${lowStockCount > 0 ? styles.statAlert : ''}`}>
-            <span className={styles.statIcon}>⚠️</span>
             <div>
               <span className={styles.statLabel}>Low Stock</span>
               <strong className={`${styles.statValue} ${lowStockCount > 0 ? styles.red : ''}`}>{lowStockCount}</strong>
