@@ -37,6 +37,10 @@ const authRoutes = require("./src/routes/auth.routes");
 app.use("/api", authRoutes);
 console.log("[ROUTES] Auth routes mounted");
 
+const userRoutes = require("./src/routes/user.routes");
+app.use("/api", userRoutes);
+console.log("[ROUTES] User routes mounted");
+
 // Test
 app.post("/api/chat-test", (req, res) => {
   res.json({ ok: true, body: req.body });
