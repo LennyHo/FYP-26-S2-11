@@ -67,17 +67,23 @@ Make sure all of the following are installed and working on your machine **befor
 
 ## Project Structure
 
+This project follows the **MVC (Model-View-Controller)** architectural pattern:
+
+- **Model** — `src/models/` contains Mongoose schemas that define the data layer (users, menu items, orders, etc.)
+- **View** — `view/` is the Next.js frontend that renders the UI and interacts with the user
+- **Controller** — `src/Controllers/` holds Express handler functions that contain business logic; `src/routes/` wires HTTP endpoints to those controllers
+
 ```
 FYP-26-S2-11/
-├── frontend/          ← Next.js app (port 3000)
+├── view/              ← (V) Next.js app — View layer (port 3000)
 │   ├── app/           ← Next.js App Router pages & components
 │   ├── public/        ← Static assets
 │   └── package.json
 ├── src/
 │   ├── config/        ← env.js, mongo.js (DB connection)
-│   ├── models/        ← Mongoose models (User, MenuItem, Order, …)
+│   ├── models/        ← (M) Mongoose models — Model layer
 │   ├── routes/        ← Express route files
-│   └── Controllers/
+│   └── Controllers/   ← (C) Business logic — Controller layer
 ├── data/
 │   └── menu.json      ← Beverage catalogue used by the chatbot
 ├── server.js          ← Backend entry point (port 5000)
@@ -112,9 +118,9 @@ CHAT_LANGUAGE_MODE=english   # or "match" to reply in the user's language
 
 > **Never commit real keys.** Add `.env` to your `.gitignore`.
 
-### Frontend — `frontend/.env.local`
+### Frontend — `view/.env.local`
 
-Create a `.env.local` file inside the `frontend/` folder:
+Create a `.env.local` file inside the `view/` folder:
 
 ```env
 DRIPTEA_API_BASE=http://localhost:5000
@@ -217,11 +223,11 @@ Connected to MongoDB database "fyp-chatbot" using Mongoose.
 
 ## Frontend Setup
 
-The frontend is inside the `frontend/` subfolder.
+The frontend (View layer) is inside the `view/` subfolder.
 
 ```bash
-# 1. Navigate to the frontend folder
-cd FYP-26-S2-11/frontend
+# 1. Navigate to the view folder
+cd FYP-26-S2-11/view
 
 # 2. Install dependencies (first time or after pulling new changes)
 npm install
