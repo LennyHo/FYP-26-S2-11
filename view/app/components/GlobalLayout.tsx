@@ -29,7 +29,9 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/store-staff') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/register') ||
-    pathname.startsWith('/profile');
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/change-password');
 
   const hideFooter =
     pathname.startsWith('/user-admin') ||
