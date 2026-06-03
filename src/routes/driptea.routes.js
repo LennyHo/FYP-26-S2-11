@@ -378,6 +378,23 @@ router.post("/auth/login", async (req, res, next) => {
   }
 });
 
+router.post("/auth/check-email", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const email = normalizeEmail(req.body?.email);
+    if (!email) {
+      return res.status(400).json({ ok: false, message: "A valid email is required." });
+    }
+    const user = await User.findOne({ email }).lean();
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "No account found with that email address." });
+    }
+    return res.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post("/auth/reset-password", async (req, res, next) => {
   try {
     await getPreparedDb();

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { resetPassword } from '../utils/dripteaApi';
+import { checkEmailExists, resetPassword } from '../utils/dripteaApi';
 import styles from './ForgotPassword.module.css';
 
 type Step = 'email' | 'reset' | 'done';
@@ -22,7 +22,15 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     if (!email.trim()) return;
-    setStep('reset');
+    setIsLoading(true);
+    try {
+      await checkEmailExists(email.trim());
+      setStep('reset');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not verify email.');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   async function handleReset(e: React.FormEvent) {
@@ -113,7 +121,9 @@ export default function ForgotPasswordPage() {
               />
             </div>
             {error && <p className={styles.error}>{error}</p>}
-            <button className={styles.submitBtn} type="submit">Continue</button>
+            <button className={styles.submitBtn} type="submit" disabled={isLoading}>
+              {isLoading ? 'Checking...' : 'Continue'}
+            </button>
           </form>
         )}
 

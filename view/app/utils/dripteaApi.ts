@@ -335,6 +335,13 @@ export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'f
   });
 }
 
+export function checkEmailExists(email: string) {
+  return requestJson<{ ok: boolean }>('/api/auth/check-email', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
 export function resetPassword(email: string, newPassword: string) {
   return requestJson<{ ok: boolean; message: string }>('/api/auth/reset-password', {
     method: 'POST',
