@@ -9,18 +9,18 @@ import { addCartItem, formatLocalCartLine, getDripTeaApiBase, getStoredUser } fr
 // end done by "HDC"
 
 const menuData = [
-  { id: "b001", name: "Classic Milk Tea", image: "/images/b001.jpeg", category: "Milk Tea", price: 4.50, description: "Our signature premium black tea blended with rich milk.", nutriGrade: "B", sugarG: 8, calories: 150 },
-  { id: "b002", name: "Jasmine Green Tea", image: "/images/b002.jpeg", category: "Milk Tea", price: 4.20, description: "Light and refreshing jasmine green tea with subtle floral aroma.", nutriGrade: "A", sugarG: 4, calories: 90 },
-  { id: "b003", name: "Oolong Milk Tea", image: "/images/b003.jpeg", category: "Milk Tea", price: 4.80, description: "Smooth oolong tea with a roasted aroma blended with milk.", nutriGrade: "B", sugarG: 8, calories: 160 },
-  { id: "b004", name: "Osmanthus Milk Tea", image: "/images/b004.jpeg", category: "Milk Tea", price: 5.00, description: "Fragrant osmanthus-infused milk tea with a floral finish.", nutriGrade: "B", sugarG: 10, calories: 170 },
-  { id: "b005", name: "Da Hong Bao Milk Tea", image: "/images/b005.jpeg", category: "Milk Tea", price: 5.20, description: "Premium Da Hong Bao oolong tea with deep, complex flavor.", nutriGrade: "B", sugarG: 8, calories: 155 },
-  { id: "b006", name: "Matcha Latte", image: "/images/b006.jpeg", category: "Matcha Teas", price: 5.50, description: "Ceremonial grade Uji matcha layered with fresh milk.", nutriGrade: "B", sugarG: 10, calories: 180 },
-  { id: "b007", name: "Strawberry Matcha Tea", image: "/images/b007.jpeg", category: "Matcha Teas", price: 6.00, description: "Fresh strawberry puree layered with premium matcha.", nutriGrade: "B", sugarG: 12, calories: 200 },
-  { id: "b008", name: "Cranberry Matcha Tea", image: "/images/b008.jpeg", category: "Matcha Teas", price: 6.00, description: "Tangy cranberry paired with smooth matcha.", nutriGrade: "B", sugarG: 10, calories: 190 },
-  { id: "b009", name: "Jasmine Matcha Tea", image: "/images/b009.jpeg", category: "Matcha Teas", price: 5.80, description: "Floral jasmine tea blended with rich matcha.", nutriGrade: "A", sugarG: 6, calories: 140 },
-  { id: "b010", name: "Double Chocolate Frappe", image: "/images/b010.jpeg", category: "Ice Blended", price: 6.50, description: "Rich dark chocolate blended with ice and milk.", nutriGrade: "C", sugarG: 20, calories: 280 },
-  { id: "b012", name: "Taro Slush", image: "/images/b012.jpeg", category: "Ice Blended", price: 6.00, description: "Creamy taro blended into a refreshing slush.", nutriGrade: "B", sugarG: 14, calories: 210 },
-  { id: "b011", name: "Milo Dinosaur", image: "/images/b011.jpeg", category: "Local Favourites", price: 5.00, description: "Classic iced Milo topped with a mountain of Milo powder.", nutriGrade: "C", sugarG: 18, calories: 250 },
+  { id: "b001", name: "Classic Milk Tea", image: "/img/bubble_teas/b001.png", category: "Milk Tea", price: 4.50, description: "Our signature premium black tea blended with rich milk.", nutriGrade: "B", sugarG: 8, calories: 150 },
+  { id: "b002", name: "Jasmine Green Tea", image: "/img/bubble_teas/b002.png", category: "Milk Tea", price: 4.20, description: "Light and refreshing jasmine green tea with subtle floral aroma.", nutriGrade: "A", sugarG: 4, calories: 90 },
+  { id: "b003", name: "Oolong Milk Tea", image: "/img/bubble_teas/b003.png", category: "Milk Tea", price: 4.80, description: "Smooth oolong tea with a roasted aroma blended with milk.", nutriGrade: "B", sugarG: 8, calories: 160 },
+  { id: "b004", name: "Osmanthus Milk Tea", image: "/img/bubble_teas/b004.png", category: "Milk Tea", price: 5.00, description: "Fragrant osmanthus-infused milk tea with a floral finish.", nutriGrade: "B", sugarG: 10, calories: 170 },
+  { id: "b005", name: "Da Hong Bao Milk Tea", image: "/img/bubble_teas/b005.png", category: "Milk Tea", price: 5.20, description: "Premium Da Hong Bao oolong tea with deep, complex flavor.", nutriGrade: "B", sugarG: 8, calories: 155 },
+  { id: "b006", name: "Matcha Latte", image: "/img/bubble_teas/b006.png", category: "Matcha Teas", price: 5.50, description: "Ceremonial grade Uji matcha layered with fresh milk.", nutriGrade: "B", sugarG: 10, calories: 180 },
+  { id: "b007", name: "Strawberry Matcha Tea", image: "/img/bubble_teas/b007.png", category: "Matcha Teas", price: 6.00, description: "Fresh strawberry puree layered with premium matcha.", nutriGrade: "B", sugarG: 12, calories: 200 },
+  { id: "b008", name: "Cranberry Matcha Tea", image: "/img/bubble_teas/b008.png", category: "Matcha Teas", price: 6.00, description: "Tangy cranberry paired with smooth matcha.", nutriGrade: "B", sugarG: 10, calories: 190 },
+  { id: "b009", name: "Jasmine Matcha Tea", image: "/img/bubble_teas/b009.png", category: "Matcha Teas", price: 5.80, description: "Floral jasmine tea blended with rich matcha.", nutriGrade: "A", sugarG: 6, calories: 140 },
+  { id: "b010", name: "Double Chocolate Frappe", image: "/img/bubble_teas/b010.png", category: "Ice Blended", price: 6.50, description: "Rich dark chocolate blended with ice and milk.", nutriGrade: "C", sugarG: 20, calories: 280 },
+  { id: "b012", name: "Taro Slush", image: "/img/bubble_teas/b012.png", category: "Ice Blended", price: 6.00, description: "Creamy taro blended into a refreshing slush.", nutriGrade: "B", sugarG: 14, calories: 210 },
+  { id: "b011", name: "Milo Dinosaur", image: "/img/bubble_teas/b011.png", category: "Local Favourites", price: 5.00, description: "Classic iced Milo topped with a mountain of Milo powder.", nutriGrade: "C", sugarG: 18, calories: 250 },
 ];
 
 const sizes = [
@@ -302,12 +302,12 @@ export default function DrinkCustomize() {
         <div className={styles.topSection}>
           <div className={styles.imageWrapper}>
             <img
-              src={imageSrc || '/driptea_drinks.jpg'}
+              src={imageSrc || '/buy_dripTea_cover.png'}
               alt={selectedDrink.name}
               className={styles.drinkImage}
               onError={() => {
-                if (imageSrc !== '/driptea_drinks.jpg') {
-                  setImageSrc('/driptea_drinks.jpg');
+                if (imageSrc !== '/buy_dripTea_cover.png') {
+                  setImageSrc('/buy_dripTea_cover.png');
                 }
               }}
             />
