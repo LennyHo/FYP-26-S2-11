@@ -165,12 +165,17 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0;
+  padding: 4px;
+  border-radius: 6px;
   color: #9d948d;
   display: flex;
   align-items: center;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.togglePassword:hover {
+  color: #6b4f37;
+  background: rgba(160, 116, 77, 0.1);
 }
 
 .actionsRow {
