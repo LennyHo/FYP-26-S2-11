@@ -103,7 +103,7 @@ export default function LoginPage() {
 
   const testCredentials = {
     admin: { email: 'yiyuanzhuan@driptea.com', password: 'Admin@123' },
-    staff: { email: 'willaimsBilly@driptea.com', password: 'Staff@123' },
+    staff: { email: 'williamsbilly@driptea.com', password: 'Staff@123' },
     customer: { email: 'customer@gmail.com', password: 'Customer@123' },
   };
 
