@@ -187,21 +187,61 @@ export function getStoredUser(): DripTeaUser | null {
   }
 }
 
+export function storeUser(user: DripTeaUser, token?: string) {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+
+  if (token) {
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  }
+
+  window.dispatchEvent(new Event("authUpdated"));
+}
+
 export function clearStoredUser() {
   window.localStorage.removeItem(USER_STORAGE_KEY);
   window.localStorage.removeItem(TOKEN_STORAGE_KEY);
   window.dispatchEvent(new Event('authUpdated'));
 }
 
-export function registerCustomer(payload: {
+export async function registerCustomer(payload: {
   fullName: string;
   email: string;
   password: string;
 }) {
-  return requestJson<{ ok: boolean; user: DripTeaUser; token: string }>('/api/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  const response = await requestJson<{ ok: boolean; user: DripTeaUser; token: string }>(
+    "/api/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (response.ok && response.user) {
+    storeUser(response.user, response.token);
+  }
+
+  return response;
+}
+
+export async function loginCustomer(payload: {
+  email: string;
+  password: string;
+}) {
+  const response = await requestJson<{ ok: boolean; user: DripTeaUser; token: string }>(
+    "/api/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (response.ok && response.user) {
+    storeUser(response.user, response.token);
+  }
+
+  return response;
 }
 
 export function addCartItem(payload: Record<string, unknown>) {
@@ -211,8 +251,9 @@ export function addCartItem(payload: Record<string, unknown>) {
   }, 'DripTea add to cart');
 }
 
-export function getCartItems(userId: string) {
-  return requestJson<{ ok: boolean; data: DripTeaCartItem[] }>(`/api/cart-items?userId=${encodeURIComponent(userId)}`);
+export async function getCartItems(userId: string) {
+  const res = await fetch(`http://localhost:5000/api/cart-items?userId=${encodeURIComponent(userId)}`);
+  return res.json();
 }
 
 export function cartItemsToLocalCartData(items: DripTeaCartItem[]) {
@@ -332,13 +373,6 @@ export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'f
   return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
-  });
-}
-
-export function checkEmailExists(email: string) {
-  return requestJson<{ ok: boolean }>('/api/auth/check-email', {
-    method: 'POST',
-    body: JSON.stringify({ email }),
   });
 }
 

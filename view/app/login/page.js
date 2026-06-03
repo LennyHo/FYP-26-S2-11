@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRef, useEffect, useState } from 'react';
 import styles from './login.module.css';
 import { useRouter } from 'next/navigation';
-import { syncStoredCartFromBackend } from '../utils/dripteaApi';
+import { syncStoredCartFromBackend, storeUser } from '../utils/dripteaApi';
 
 const mainLogoSvg = `
 <svg width="708" height="400" viewBox="0 0 708 400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

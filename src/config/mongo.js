@@ -1,54 +1,23 @@
-const mongoose = require("mongoose");
-const { env } = require("./env");
+const dns = require("dns");
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+dns.setDefaultResultOrder("ipv4first");
 
-let database;
-let connectionPromise;
+const mongoose = require("mongoose");
 
 async function connectMongo() {
-  if (!env.mongodbUri) {
-    console.warn("MongoDB connection skipped because MONGODB_URI is not set.");
-    return null;
+  const uri = process.env.MONGODB_URI;
+  const dbName = process.env.MONGODB_DB_NAME || "driptea_vs1";
+
+  if (!uri) {
+    throw new Error("MONGODB_URI is missing in .env");
   }
 
-  if (database) {
-    return database;
-  }
+  await mongoose.connect(uri, {
+    dbName,
+    serverSelectionTimeoutMS: 10000,
+  });
 
-  if (!connectionPromise) {
-    connectionPromise = mongoose.connect(env.mongodbUri, {
-      dbName: env.mongodbDbName,
-      serverSelectionTimeoutMS: 5000,
-    }).catch((error) => {
-      connectionPromise = null;
-      throw error;
-    });
-  }
-
-  await connectionPromise;
-
-  database = mongoose.connection.db;
-
-  console.log(`Connected to MongoDB database "${env.mongodbDbName}" using Mongoose.`);
-
-  return database;
+  console.log(`Connected to MongoDB database "${dbName}"`);
 }
 
-function getDb() {
-  return database;
-}
-
-async function closeMongo() {
-  if (mongoose.connection.readyState === 0) {
-    return;
-  }
-
-  await mongoose.disconnect();
-  database = null;
-  connectionPromise = null;
-}
-
-module.exports = {
-  closeMongo,
-  connectMongo,
-  getDb,
-};
+module.exports = { connectMongo };

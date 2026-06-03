@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import styles from './ChatbotSidebar.module.css';
+import { getStoredUser } from "../utils/dripteaApi";
 import {
   drinkData,
   QUICK_PROMPTS,
@@ -11,9 +12,7 @@ import {
   convertDrinkNamesToLinks,
   applyGlossaryTooltips,
 } from '../utils/chatHelpers';
-// CHANGED: Import getStoredUser so chatbot can send userId for cart queries
-import { getStoredUser } from '../utils/dripteaApi';
-import ImageUploadButton from './ImageUploadButton';
+// import ImageUploadButton from './ImageUploadButton';
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
@@ -125,7 +124,34 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
     ice?: string;
     sugar?: string;
   } | null>(null);
+
   const router = useRouter();
+
+  useEffect(() => {
+    (window as any).handleCart = () => {
+      router.push("/cart");
+    };
+
+    (window as any).handleCheckout = () => {
+      router.push("/checkout");
+    };
+
+    (window as any).handleMenu = () => {
+      router.push("/buy-driptea");
+    };
+
+    return () => {
+      delete (window as any).handleCart;
+      delete (window as any).handleCheckout;
+      delete (window as any).handleMenu;
+    };
+  }, [router]);
+
+
+  const getCurrentUserId = () => {
+    const user = getStoredUser();
+    return user?.id || "";
+  };
 
   // ===== EFFECTS =====
 
@@ -668,8 +694,6 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         const apiBase = process.env.NODE_ENV === 'development'
           ? 'http://localhost:5000'
           : ((process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'https://driptea-trrn.onrender.com');
-        // CHANGED: Add userId to chat request so chatbot can fetch actual cart
-        const currentUser = getStoredUser();
         const res = await fetch(`${apiBase}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -677,7 +701,6 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
             message: messageText || 'Describe this drink',
             image: base64,
             conversationId: convId,
-            userId: currentUser?.id || null,
           }),
         });
         const data = await res.json();
@@ -718,7 +741,13 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         setHideQuickPrompts(true);
       console.log('Stopped listening while Avy is typing');
     }
+    
+        // Hardcode user Id:
+        const getCurrentUserId = () => {
+          return "6a0d439f6dc5d154f7ab75a8";
+      };
 
+/*
     // HANDLER 1: Local cart queries (no backend call needed)
     const normalizedQuery = messageText.toLowerCase().trim();
     const cartQueryPatterns = [
@@ -755,7 +784,8 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
       setInput('');
       return;
     }
-
+*/
+/*
     // HANDLER 2: Drink add-to-cart intent with step-by-step customization
     try {
       const addRegex = /(?:add|please add|put)\s+(?:a\s+)?(?:the\s+)?(?:[0-9]+\s+)?(.+?)\s*(?:to(?:\s+my)?\s+cart)?$/i;
@@ -794,7 +824,8 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
     } catch (e) {
       // ignore intent parse errors and proceed to backend
     }
-
+*/
+/*
     // HANDLER 3: Handle active customization flow (collect size → ice → sugar → topping)
     if (pendingDrinkForCustomization) {
       const customizationText = messageText.toLowerCase();
@@ -1000,7 +1031,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         }
       }
     }
-
+*/
     // HANDLER 4: Default - send to backend chat API
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -1017,18 +1048,22 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
       // Proxy-first behavior: prefer server-side Next.js API route; allow override via NEXT_PUBLIC_DRIPTEA_API_BASE.
       const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
       const apiEndpoint = process.env.NODE_ENV === 'development'
-        ? '/api/chat'
-        : (configured ? `${configured.replace(/\/$/, '')}/chat` : '/api/chat');
+        ? 'http://localhost:5000/api/chat'
+        : (configured ? `${configured.replace(/\/$/, '')}/api/chat` : '/api/chat');
+
+      const userId =
+        localStorage.getItem("userId") ||
+        localStorage.getItem("driptea_user_id") ||
+        localStorage.getItem("customerId") ||
+        "";
       console.log('[Chat] POST', apiEndpoint, { message: messageText, conversationId: convId });
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // CHANGED: Add userId to chat request so chatbot can fetch actual cart
         body: JSON.stringify({
-          message: messageText,
-          conversationId: convId,
-          userId: (getStoredUser())?.id || null,
-        }),
+        message: messageText,
+        userId: getCurrentUserId(),
+      }),
       });
       console.log('[Chat] Response status', response.status);
 
@@ -1167,7 +1202,11 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: voiceModePrompt, conversationId: convId }),
+        body: JSON.stringify({
+        message: voiceModePrompt,
+        conversationId: convId,
+        userId: getCurrentUserId(),
+      }),
       });
       console.log('[Chat][Overlay] Response status', response.status);
 
@@ -1687,8 +1726,9 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               rows={1}
               style={{resize: 'none', overflow: 'hidden'}}
             />
-            {input.trim() && (
-              <div className={styles.chatActionRow}>
+            {/* Conditional Rendering: Show Send if typing, else show Mic/Speak */}
+            <div className={styles.chatActionRow}>
+              {input.trim() ? (
                 <button
                   type="button"
                   className={styles.sendBtn}
@@ -1702,17 +1742,27 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                     <path d="M5 12l7-7 7 7" />
                   </svg>
                 </button>
-              </div>
-            )}
-            {/* <SpeechControls
-              isListening={isListening}
-              isLoading={isLoading}
-              onMicClick={handleMicrophoneClick}
-              onSpeakClick={handleSpeakClick}
-              isSpeakMode={isSpeakMode}
-            /> */}
+              ) : (
+                <SpeechControls
+                  isListening={isListening}
+                  isLoading={isLoading}
+                  onMicClick={handleMicrophoneClick}
+                  onSpeakClick={handleSpeakClick}
+                  isSpeakMode={isSpeakMode}
+                />
+              )}
+            </div>
           </div>
         </div>
+        {/*
+        <SpeechControls
+          isListening={isListening}
+          isLoading={isLoading}
+          onMicClick={handleMicrophoneClick}
+          onSpeakClick={handleSpeakClick}
+          isSpeakMode={isSpeakMode}
+        />
+        */}
       </div>
 
 

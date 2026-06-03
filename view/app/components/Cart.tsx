@@ -1,12 +1,26 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-// Use ./ because the CSS is in the same folder as this file
-import './Cart.css'; 
-// done by "HDC" - cart page reads/removes backend cart_items for logged-in customers.
-import { deleteCartItem, formatLocalCartLine, getCartItems, getStoredUser, parseLocalCartLine, type DripTeaCartItem } from '../utils/dripteaApi';
-// end done by "HDC"
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getCartItems } from "../utils/dripteaApi";
+import { getStoredUser } from "../utils/dripteaApi";
+
+interface DripTeaCartItem {
+  id?: string;
+  _id?: string;
+  name: string;
+  image?: string;
+  category?: string;
+  quantity?: number;
+  unitPrice?: number;
+  lineTotal?: number;
+  customization?: {
+    size?: string;
+    ice?: string;
+    sugar?: string;
+    toppings?: string[];
+  };
+}
 
 interface CartItem {
   backendId?: string;
@@ -17,241 +31,192 @@ interface CartItem {
   quantity?: number;
 }
 
-const drinkNameToId: Record<string, { id: string; category: string }> = {
-  "Classic Milk Tea": { id: "b001", category: "milk-tea" },
-  "Jasmine Green Tea": { id: "b002", category: "milk-tea" },
-  "Oolong Milk Tea": { id: "b003", category: "milk-tea" },
-  "Osmanthus Milk Tea": { id: "b004", category: "milk-tea" },
-  "Da Hong Bao Milk Tea": { id: "b005", category: "milk-tea" },
-  "Matcha Latte": { id: "b006", category: "matcha-teas" },
-  "Strawberry Matcha Tea": { id: "b007", category: "matcha-teas" },
-  "Cranberry Matcha Tea": { id: "b008", category: "matcha-teas" },
-  "Jasmine Matcha Tea": { id: "b009", category: "matcha-teas" },
-  "Double Chocolate Frappe": { id: "b010", category: "ice-blended" },
-  "Taro Slush": { id: "b012", category: "ice-blended" },
-  "Milo Dinosaur": { id: "b011", category: "local-favourites" },
-};
-
 export default function Cart() {
   const router = useRouter();
+
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [total, setTotal] = useState<number>(0);
+  const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // done by "HDC" - prefer backend cart_items when a customer is logged in, with local cart fallback.
-  const fetchCartData = async () => {
-    const currentUser = getStoredUser();
+  async function fetchCartData() {
+    setIsLoading(true);
 
-    if (currentUser) {
-      try {
-        const response = await getCartItems(currentUser.id);
-        const backendItems = response.data || [];
-        const parsedBackendItems: CartItem[] = backendItems.map((item: DripTeaCartItem) => {
-          const toppings = Array.isArray(item.customization?.toppings)
-            ? (item.customization.toppings as string[]).join(', ')
-            : '';
-          const details = [
-            item.quantity ? `Qty ${item.quantity}` : '',
-            typeof item.customization?.size === 'string' ? item.customization.size : '',
-            typeof item.customization?.ice === 'string' ? item.customization.ice : '',
-            typeof item.customization?.sugar === 'string' ? item.customization.sugar : '',
-            toppings,
-          ].filter(Boolean).join(' | ');
+    try {
+      const user = getStoredUser();
 
-          return {
-            backendId: item.id,
-            name: item.name,
-            details,
-            price: Number(item.lineTotal || 0),
-            imageSrc: item.image,
-            quantity: item.quantity,
-          };
-        });
-
-        // done by "HDC" - backend is the source of truth for logged-in carts, including empty carts.
-        const calculatedBackendTotal = parsedBackendItems.reduce((sum, item) => sum + item.price, 0);
-        setCartItems(parsedBackendItems);
-        setTotal(calculatedBackendTotal);
-        if (parsedBackendItems.length > 0) {
-          localStorage.setItem(
-            "dripTeaCartData",
-            parsedBackendItems
-              // done by "HDC" - avoid pipe delimiters inside saved details so totals parse correctly.
-              // .map(item => `${item.name}|${item.details}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`)
-              .map(item => formatLocalCartLine({ name: item.name, details: item.details, price: item.price, imageSrc: item.imageSrc }))
-              // end done by "HDC"
-              .join('\n')
-          );
-        } else {
-          localStorage.removeItem("dripTeaCartData");
-        }
-        setIsLoading(false);
-        return;
-        // end done by "HDC"
-      } catch (error) {
-        console.error('[DripTea cart fetch]', error);
+      if (!user) {
         setCartItems([]);
         setTotal(0);
         setIsLoading(false);
         return;
       }
-    }
+      
+      const response = await getCartItems(user.id);
+      const backendItems: DripTeaCartItem[] = response.data || [];
 
-    const savedData = localStorage.getItem("dripTeaCartData");
-    if (savedData) {
-      const drinks = savedData.split('\n');
-      let calculatedTotal = 0;
-      const parsedItems: CartItem[] = [];
+      const grouped = new Map<string, CartItem>();
 
-      drinks.forEach(drinkLine => {
-        // done by "HDC" - parse from the price segment, not the third pipe segment.
-        const parsedCartLine = parseLocalCartLine(drinkLine);
-        if (parsedCartLine) {
-          calculatedTotal += parsedCartLine.price;
-          parsedItems.push(parsedCartLine);
-          return;
-        }
-        // end done by "HDC"
-        const parts = drinkLine.split('|');
-        if (parts.length >= 3) {
-          let name = parts[0].trim();
-          // Extract just the drink name without customization details in parentheses
-          const nameMatch = name.match(/^([^(]+)/);
-          if (nameMatch) {
-            name = nameMatch[1].trim();
-          }
-          const details = parts[1].trim();
-          const priceString = parts[2].replace(/[^0-9.]/g, '');
-          const price = parseFloat(priceString);
-          const imageSrc = parts.length === 4 ? parts[3].trim() : undefined;
+      backendItems.forEach((item) => {
+        const toppings = Array.isArray(item.customization?.toppings)
+          ? item.customization.toppings.join(", ")
+          : "";
 
-          if (!isNaN(price)) {
-            calculatedTotal += price;
-            parsedItems.push({ name, details, price, imageSrc });
-          }
+        const details = [
+          item.customization?.size || "Regular",
+          item.customization?.ice || "Normal Ice",
+          item.customization?.sugar || "Normal Sweet",
+          toppings,
+        ]
+          .filter(Boolean)
+          .join(" | ");
+
+        const key = JSON.stringify({
+          name: item.name,
+          details,
+        });
+
+        const quantity = Number(item.quantity || 1);
+        const lineTotal = Number(item.lineTotal || 0);
+
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            backendId: item.id || item._id,
+            name: item.name,
+            details: `Qty ${quantity} | ${details}`,
+            price: lineTotal,
+            imageSrc: item.image,
+            quantity,
+          });
+        } else {
+          const existing = grouped.get(key)!;
+          const newQuantity = Number(existing.quantity || 0) + quantity;
+          existing.quantity = newQuantity;
+          existing.price += lineTotal;
+          existing.details = `Qty ${newQuantity} | ${details}`;
         }
       });
+
+      const parsedItems = Array.from(grouped.values());
+      const calculatedTotal = parsedItems.reduce((sum, item) => sum + item.price, 0);
+
       setCartItems(parsedItems);
       setTotal(calculatedTotal);
-    } else {
+    } catch (error) {
+      console.error("[Cart] Failed to fetch cart items:", error);
       setCartItems([]);
       setTotal(0);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  };
-  // end done by "HDC"
-
-  // done by "HDC" - remove persisted backend cart item when available.
-  const removeItem = async (index: number) => {
-    const itemToRemove = cartItems[index];
-
-    if (itemToRemove?.backendId) {
-      try {
-        await deleteCartItem(itemToRemove.backendId);
-        await fetchCartData();
-        window.dispatchEvent(new Event('cartUpdated'));
-        return;
-      } catch (error) {
-        console.error('[DripTea cart remove]', error);
-      }
-    }
-
-    const updatedItems = cartItems.filter((_, i) => i !== index);
-    setCartItems(updatedItems);
-    
-    // Update localStorage and total
-    const newTotal = updatedItems.reduce((sum, item) => sum + item.price, 0);
-    setTotal(newTotal);
-    
-    // Save to localStorage
-    const updatedCartData = updatedItems
-      // done by "HDC" - keep saved local cart lines parseable after remove.
-      // .map(item => `${item.name}|${item.details}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`)
-      .map(item => formatLocalCartLine({ name: item.name, details: item.details, price: item.price, imageSrc: item.imageSrc }))
-      // end done by "HDC"
-      .join('\n');
-    localStorage.setItem("dripTeaCartData", updatedCartData);
-    
-    // Trigger event for other components
-    window.dispatchEvent(new Event('cartUpdated'));
-  };
-  // end done by "HDC"
+  }
 
   useEffect(() => {
-    void fetchCartData();
-    // done by "HDC" - event listener wrapper for async backend cart reload.
+    fetchCartData();
+
     const handleCartUpdated = () => {
-      void fetchCartData();
+      fetchCartData();
     };
-    window.addEventListener('cartUpdated', handleCartUpdated);
-    window.addEventListener('authUpdated', handleCartUpdated);
-    // done by "HDC" - keep totals current while the cart is open, including backend changes after checkout/cart edits.
-    window.addEventListener('focus', handleCartUpdated);
-    window.addEventListener('storage', handleCartUpdated);
-    const refreshTimer = window.setInterval(handleCartUpdated, 2500);
+
+    window.addEventListener("cartUpdated", handleCartUpdated);
+
     return () => {
-      window.removeEventListener('cartUpdated', handleCartUpdated);
-      window.removeEventListener('authUpdated', handleCartUpdated);
-      window.removeEventListener('focus', handleCartUpdated);
-      window.removeEventListener('storage', handleCartUpdated);
-      window.clearInterval(refreshTimer);
+      window.removeEventListener("cartUpdated", handleCartUpdated);
     };
-    // end done by "HDC"
-    // end done by "HDC"
   }, []);
 
   return (
-    <div className="cart-page-container">
-      {/* 1. Added Back to Home Button */}
-      <button onClick={() => router.push('/')} className="back-btn">
+    <main style={{ padding: "48px", maxWidth: "900px" }}>
+      <button
+        type="button"
+        onClick={() => router.push("/buy-driptea")}
+        style={{
+          border: "1px solid #4b2e1f",
+          borderRadius: "999px",
+          padding: "8px 18px",
+          background: "white",
+          cursor: "pointer",
+          marginBottom: "24px",
+        }}
+      >
         ← Back to Menu
       </button>
-      
-      <h1 className="page-title">Your Shopping Cart</h1>
-      
-      <div className="cart-items-list">
-        {cartItems.length === 0 ? (
-          <p style={{ padding: '20px 0' }}>Your cart is empty.</p>
-        ) : (
-          cartItems.map((item, index) => {
-            const drinkInfo = drinkNameToId[item.name];
-            return (
-            <div key={index} className="cart-item-row">
-              <div className="item-info">
-                <div className="cart-item-details">
-                  {drinkInfo ? (
-                    <h3><a href={`/menu/${drinkInfo.category}/${drinkInfo.id}`} className="drink-link">{item.name}</a></h3>
-                  ) : (
-                    <h3>{item.name}</h3>
-                  )}
-                  <p>{item.details}</p>
-                </div>
+
+      <h1 style={{ fontSize: "34px", marginBottom: "18px" }}>Your Shopping Cart</h1>
+
+      <hr style={{ marginBottom: "28px" }} />
+
+      {isLoading ? (
+        <p>Loading cart...</p>
+      ) : cartItems.length === 0 ? (
+        <p>Your cart is empty.</p>
+      ) : (
+        <section>
+          {cartItems.map((item, index) => (
+            <div
+              key={`${item.name}-${index}`}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto auto",
+                alignItems: "center",
+                gap: "16px",
+                borderBottom: "1px solid #eee",
+                padding: "18px 0",
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0 }}>{item.name}</h3>
+                <p style={{ margin: "6px 0 0", color: "#555" }}>{item.details}</p>
               </div>
-              <div className="cart-item-price">S$ {item.price.toFixed(2)}</div>
-              <button 
-                onClick={() => removeItem(index)} 
-                className="remove-btn"
-                title="Remove from cart"
+
+              <strong style={{ color: "#c9792b", fontSize: "20px" }}>
+                S$ {item.price.toFixed(2)}
+              </strong>
+
+              <button
+                type="button"
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #ccc",
+                  cursor: "pointer",
+                }}
+                disabled
               >
                 Remove
               </button>
             </div>
-          );
-          })
-        )}
-      </div>
+          ))}
+        </section>
+      )}
 
-      <div className="cart-footer">
-        <div className="cart-total-text">Total: S$ {total.toFixed(2)}</div>
-        {/* 2. Added Proceed to Checkout inside the cart page */}
-        <button 
-          onClick={() => router.push('/checkout')} 
-          className="checkout-btn"
+      <hr style={{ margin: "32px 0 24px" }} />
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <h2>Total: S$ {total.toFixed(2)}</h2>
+
+        <button
+          type="button"
           disabled={cartItems.length === 0}
+          onClick={() => router.push("/checkout")}
+          style={{
+            padding: "14px 26px",
+            borderRadius: "12px",
+            border: "none",
+            background: cartItems.length === 0 ? "#ccc" : "#c9792b",
+            color: "white",
+            fontWeight: 700,
+            cursor: cartItems.length === 0 ? "not-allowed" : "pointer",
+          }}
         >
           Proceed to Checkout
         </button>
       </div>
-    </div>
+    </main>
   );
 }
