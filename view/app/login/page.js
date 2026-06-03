@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useRef, useEffect, useState } from 'react';
 import styles from './login.module.css';
-import BackgroundShapes from './BackgroundShapes';
 import { useRouter } from 'next/navigation';
 import { syncStoredCartFromBackend } from '../utils/dripteaApi';
 
@@ -186,7 +185,6 @@ export default function LoginPage() {
 
   return (
     <div className={styles.page}>
-      <BackgroundShapes />
       <div className={styles.shell}>
         <section className={styles.card}>
           <div className={styles.copyPanel}>
