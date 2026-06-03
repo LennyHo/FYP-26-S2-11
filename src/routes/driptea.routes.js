@@ -378,6 +378,62 @@ router.post("/auth/login", async (req, res, next) => {
   }
 });
 
+router.post("/auth/reset-password", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const email = normalizeEmail(req.body?.email);
+    const newPassword = String(req.body?.newPassword || "");
+
+    if (!email) {
+      return res.status(400).json({ ok: false, message: "A valid email is required." });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ ok: false, message: "New password must be at least 6 characters." });
+    }
+
+    const user = await User.findOne({ email }).lean();
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "No account found with that email address." });
+    }
+
+    await User.findByIdAndUpdate(user._id, { $set: { ...createPasswordRecord(newPassword), updatedAt: new Date() } });
+
+    return res.json({ ok: true, message: "Password reset successfully." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/auth/change-password", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const userId = toObjectId(req.body?.userId);
+    const currentPassword = String(req.body?.currentPassword || "");
+    const newPassword = String(req.body?.newPassword || "");
+
+    if (!userId) {
+      return res.status(400).json({ ok: false, message: "A valid user id is required." });
+    }
+    if (!currentPassword || newPassword.length < 6) {
+      return res.status(400).json({ ok: false, message: "Current password and a new password of at least 6 characters are required." });
+    }
+
+    const user = await User.findById(userId).lean();
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "User not found." });
+    }
+    if (!verifyPassword(currentPassword, user)) {
+      return res.status(401).json({ ok: false, message: "Current password is incorrect." });
+    }
+
+    await User.findByIdAndUpdate(userId, { $set: { ...createPasswordRecord(newPassword), updatedAt: new Date() } });
+
+    return res.json({ ok: true, message: "Password updated successfully." });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/users", async (req, res, next) => {
   try {
     await getPreparedDb();

@@ -334,4 +334,18 @@ export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'f
     body: JSON.stringify(payload),
   });
 }
+
+export function resetPassword(email: string, newPassword: string) {
+  return requestJson<{ ok: boolean; message: string }>('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ email, newPassword }),
+  });
+}
+
+export function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  return requestJson<{ ok: boolean; message: string }>('/api/auth/change-password', {
+    method: 'PATCH',
+    body: JSON.stringify({ userId, currentPassword, newPassword }),
+  });
+}
 // end done by "HDC"

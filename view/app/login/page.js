@@ -256,7 +256,7 @@ export default function LoginPage() {
               </div>
 
               <div className={styles.actionsRow}>
-                <button type="button" className={styles.forgot}>Forgot password?</button>
+                <button type="button" className={styles.forgot} onClick={() => router.push('/forgot-password')}>Forgot password?</button>
               </div>
 
               <button type="submit" className={styles.button} disabled={isSubmitting}>
