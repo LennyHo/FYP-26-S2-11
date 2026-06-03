@@ -1,14 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import styles from './login.module.css';
 import BackgroundShapes from './BackgroundShapes';
-// done by "HDC" - minimal backend login bridge for testing MongoDB auth routes.
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { syncStoredCartFromBackend } from '../utils/dripteaApi';
-// end done by "HDC"
 
 const mainLogoSvg = `
 <svg width="708" height="400" viewBox="0 0 708 400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -76,11 +73,11 @@ async function loginAgainstAvailableBackend(credentials) {
 }
 
 export default function LoginPage() {
-  // done by "HDC" - stores backend auth result so test credentials can be used.
   const router = useRouter();
   const [statusMessage, setStatusMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // end done by "HDC"
+  const [errors, setErrors] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
   const videoRef = useRef(null);
@@ -118,15 +115,43 @@ export default function LoginPage() {
     }
   };
 
-  // done by "HDC" - submit existing login form to backend without changing page design.
+  const validateForm = () => {
+    const email = emailRef.current?.value.trim() || '';
+    const password = passwordRef.current?.value || '';
+    const newErrors = { email: '', password: '' };
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email) {
+      newErrors.email = 'Email is required.';
+    } else if (!emailRegex.test(email)) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required.';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters.';
+    }
+
+    setErrors(newErrors);
+    return !newErrors.email && !newErrors.password;
+  };
+
+  const clearFieldError = (field) => {
+    setErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
   const handleLogin = async (event) => {
     event.preventDefault();
     setStatusMessage('');
+
+    if (!validateForm()) return;
+
     setIsSubmitting(true);
 
     try {
       const payload = await loginAgainstAvailableBackend({
-        email: emailRef.current?.value || '',
+        email: emailRef.current?.value.trim() || '',
         password: passwordRef.current?.value || '',
       });
 
@@ -158,7 +183,6 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
-  // end done by "HDC"
 
   return (
     <div className={styles.page}>
@@ -187,25 +211,37 @@ export default function LoginPage() {
                   type="email"
                   id="email"
                   name="email"
-                  required
-                  className={styles.input}
+                  className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
                   autoComplete="username"
                   placeholder="username@gmail.com"
+                  onChange={() => clearFieldError('email')}
                 />
+                {errors.email && <span className={styles.fieldError}>{errors.email}</span>}
               </div>
 
               <div className={styles.field}>
                 <label htmlFor="password" className={styles.label}>Password</label>
-                <input
-                  ref={passwordRef}
-                  type="password"
-                  id="password"
-                  name="password"
-                  required
-                  className={styles.input}
-                  autoComplete="current-password"
-                  placeholder="Password"
-                />
+                <div className={styles.passwordWrapper}>
+                  <input
+                    ref={passwordRef}
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    name="password"
+                    className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
+                    autoComplete="current-password"
+                    placeholder="Password"
+                    onChange={() => clearFieldError('password')}
+                  />
+                  <button
+                    type="button"
+                    className={styles.togglePassword}
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
+                {errors.password && <span className={styles.fieldError}>{errors.password}</span>}
               </div>
 
               <div className={styles.actionsRow}>
@@ -215,13 +251,11 @@ export default function LoginPage() {
               <button type="submit" className={styles.button} disabled={isSubmitting}>
                 {isSubmitting ? 'Signing in...' : 'Sign in'}
               </button>
-              {/* done by "HDC" - backend auth error display. */}
               {statusMessage && (
-                <p role="alert" style={{ margin: 0, color: '#b42318', fontWeight: 600 }}>
+                <p role="alert" className={styles.fieldError} style={{ margin: 0 }}>
                   {statusMessage}
                 </p>
               )}
-              {/* end done by "HDC" */}
             </form>
 
             <div className={styles.testButtons}>

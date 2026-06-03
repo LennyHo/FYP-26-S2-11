@@ -137,6 +137,42 @@
   box-shadow: 0 0 0 4px rgba(160, 116, 77, 0.12);
 }
 
+.inputError {
+  border-color: #d92d20 !important;
+  box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.12) !important;
+}
+
+.fieldError {
+  color: #b42318;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrapper .input {
+  padding-right: 40px;
+}
+
+.togglePassword {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  color: #9d948d;
+  display: flex;
+  align-items: center;
+}
+
 .actionsRow {
   display: flex;
   justify-content: flex-end;
