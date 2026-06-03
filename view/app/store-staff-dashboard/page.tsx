@@ -159,7 +159,6 @@ export default function StoreStaffDashboardPage() {
           </div>
         </div>
 
-        {ordersError && <p className={styles.errorBanner}>{ordersError}</p>}
 
         {/* Orders tab */}
         {activeTab === 'orders' && (

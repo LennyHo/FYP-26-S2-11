@@ -349,6 +349,13 @@ export function updateMenuItemStatus(id: string, status: string) {
     body: JSON.stringify({ status }),
   });
 }
+
+export function createMenuItem(payload: { name: string; category: string; price: number; description?: string; tags?: string[]; status?: string }) {
+  return requestJson<{ ok: boolean; data: DripTeaMenuItem }>('/api/menu-items', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
 // end done by "HDC"
 
 export function getUsers(search: string = '') {

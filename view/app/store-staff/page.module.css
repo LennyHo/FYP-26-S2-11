@@ -316,6 +316,159 @@
   font-size: 0.9rem;
 }
 
+/* ── Add Drink button ───────────────────────────────────────── */
+.addBtn {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #4b311f, #2f2016);
+  color: #fff8f2;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 12px rgba(59, 39, 26, 0.18);
+}
+.addBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(59, 39, 26, 0.24); }
+.addBtn:active { transform: translateY(0); }
+
+/* ── Modal ──────────────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 17, 15, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: #fffaf5;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 24px 56px rgba(59, 39, 26, 0.22);
+  border: 1px solid rgba(220, 199, 180, 0.7);
+  animation: modalIn 0.2s ease-out;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(220, 199, 180, 0.5);
+}
+
+.modalTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #17110f;
+  margin: 0;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #9d948d;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.modalClose:hover { color: #17110f; background: rgba(141, 99, 63, 0.08); }
+
+.modalForm {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.formLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1f1814;
+}
+
+.formHint {
+  font-weight: 400;
+  color: #9d948d;
+}
+
+.required { color: #c0321d; }
+
+.formInput {
+  padding: 9px 12px;
+  border: 1px solid rgba(220, 199, 180, 0.95);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #17110f;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.formInput::placeholder { color: #9d948d; }
+.formInput:focus { border-color: #8d633f; box-shadow: 0 0 0 3px rgba(141, 99, 63, 0.12); }
+
+.formError {
+  color: #b42318;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.cancelBtn {
+  padding: 9px 18px;
+  border: 1px solid rgba(220, 199, 180, 0.9);
+  border-radius: 10px;
+  background: transparent;
+  color: #7f7067;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cancelBtn:hover { background: rgba(141, 99, 63, 0.06); }
+
+.saveBtn {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4b311f, #2f2016);
+  color: #fff8f2;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.saveBtn:hover { opacity: 0.9; transform: translateY(-1px); }
+.saveBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .statsRow   { grid-template-columns: repeat(2, 1fr); }

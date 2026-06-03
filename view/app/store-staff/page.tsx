@@ -4,7 +4,7 @@ import StaffHeader from '../components/StaffHeader';
 import styles from './page.module.css';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { getMenuItems, updateMenuItemStatus, type DripTeaMenuItem } from '../utils/dripteaApi';
+import { getMenuItems, updateMenuItemStatus, createMenuItem, type DripTeaMenuItem } from '../utils/dripteaApi';
 
 export default function StoreStaffPage() {
   const [items, setItems] = useState<DripTeaMenuItem[]>([]);
@@ -13,6 +13,10 @@ export default function StoreStaffPage() {
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('all');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ name: '', category: '', price: '', description: '', tags: '', status: 'active' });
+  const [addError, setAddError] = useState('');
+  const [adding, setAdding] = useState(false);
 
   async function fetchItems() {
     try {
@@ -38,6 +42,34 @@ export default function StoreStaffPage() {
       setError('Failed to update item status.');
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  async function handleAddDrink(e: React.SyntheticEvent) {
+    e.preventDefault();
+    setAddError('');
+    const price = parseFloat(addForm.price);
+    if (!addForm.name.trim() || !addForm.category.trim() || isNaN(price) || price < 0) {
+      setAddError('Name, category, and a valid price are required.');
+      return;
+    }
+    setAdding(true);
+    try {
+      const res = await createMenuItem({
+        name: addForm.name.trim(),
+        category: addForm.category.trim(),
+        price,
+        description: addForm.description.trim(),
+        tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+        status: addForm.status,
+      });
+      setItems(prev => [...prev, res.data]);
+      setShowAddModal(false);
+      setAddForm({ name: '', category: '', price: '', description: '', tags: '', status: 'active' });
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : 'Failed to add drink.');
+    } finally {
+      setAdding(false);
     }
   }
 
@@ -88,6 +120,9 @@ export default function StoreStaffPage() {
 
         {/* Toolbar */}
         <div className={styles.toolbar}>
+          <button type="button" className={styles.addBtn} onClick={() => setShowAddModal(true)}>
+            + Add Drink
+          </button>
           <div className={styles.catTabs}>
             {categories.map(cat => (
               <button
@@ -193,6 +228,54 @@ export default function StoreStaffPage() {
         </div>
 
       </main>
+
+      {showAddModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Add New Drink</h2>
+              <button type="button" className={styles.modalClose} onClick={() => setShowAddModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleAddDrink} className={styles.modalForm}>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Name <span className={styles.required}>*</span></label>
+                <input className={styles.formInput} value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Taro Milk Tea" />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Category <span className={styles.required}>*</span></label>
+                <input className={styles.formInput} value={addForm.category} onChange={e => setAddForm(f => ({ ...f, category: e.target.value }))} placeholder="e.g. Milk Tea" list="cat-list" />
+                <datalist id="cat-list">
+                  {Array.from(new Set(items.map(i => i.category))).sort().map(c => <option key={c} value={c} />)}
+                </datalist>
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Price (S$) <span className={styles.required}>*</span></label>
+                <input className={styles.formInput} type="number" min="0" step="0.01" value={addForm.price} onChange={e => setAddForm(f => ({ ...f, price: e.target.value }))} placeholder="e.g. 5.90" />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Description</label>
+                <input className={styles.formInput} value={addForm.description} onChange={e => setAddForm(f => ({ ...f, description: e.target.value }))} placeholder="Short description (optional)" />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Tags <span className={styles.formHint}>(comma-separated)</span></label>
+                <input className={styles.formInput} value={addForm.tags} onChange={e => setAddForm(f => ({ ...f, tags: e.target.value }))} placeholder="e.g. sweet, popular, vegan" />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Status</label>
+                <select className={styles.formInput} title="Status" value={addForm.status} onChange={e => setAddForm(f => ({ ...f, status: e.target.value }))}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              {addError && <p className={styles.formError}>{addError}</p>}
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowAddModal(false)}>Cancel</button>
+                <button type="submit" className={styles.saveBtn} disabled={adding}>{adding ? 'Adding…' : 'Add Drink'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

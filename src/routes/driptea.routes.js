@@ -543,6 +543,32 @@ router.get(["/menu-items", "/menu"], async (req, res, next) => {
   }
 });
 
+router.post("/menu-items", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const name = String(req.body?.name || "").trim();
+    const category = String(req.body?.category || "").trim();
+    const price = Number(req.body?.price);
+    const description = String(req.body?.description || "").trim();
+    const tags = Array.isArray(req.body?.tags) ? req.body.tags.map(String) : [];
+    const status = String(req.body?.status || "active").trim();
+
+    if (!name || !category || !Number.isFinite(price) || price < 0) {
+      return res.status(400).json({ ok: false, message: "Name, category, and a valid price are required." });
+    }
+
+    const itemId = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const item = await MenuItem.create({ itemId, name, category, price, description, tags, status, image: "", customizationOptions: [], nutritionInfo: {} });
+
+    return res.status(201).json({
+      ok: true,
+      data: { id: item.itemId, mongoId: String(item._id), name: item.name, category: item.category, price: item.price, description: item.description, tags: item.tags, status: item.status },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.patch("/menu-items/:id/status", async (req, res, next) => {
   try {
     await getPreparedDb();
