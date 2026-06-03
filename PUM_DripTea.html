@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PUM — DripTea AI Chatbot</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.7; margin: 2.5cm 2.5cm; color: #000; }
+    h1 { font-size: 18pt; text-align: center; margin-bottom: 4px; }
+    h2 { font-size: 14pt; border-bottom: 1px solid #000; padding-bottom: 4px; margin-top: 32px; }
+    h3 { font-size: 12pt; margin-top: 18px; margin-bottom: 4px; }
+    p { margin: 6px 0; }
+    ul { margin: 6px 0 6px 20px; }
+    li { margin-bottom: 3px; }
+    pre, code { font-family: "Courier New", monospace; font-size: 10pt; background-color: #f4f4f4; padding: 2px 4px; }
+    pre { padding: 10px; border-left: 3px solid #ccc; margin: 10px 0; white-space: pre-wrap; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 11pt; }
+    th { background-color: #e0e0e0; border: 1px solid #999; padding: 6px 10px; text-align: left; }
+    td { border: 1px solid #999; padding: 6px 10px; }
+    .subtitle { text-align: center; font-size: 11pt; color: #444; margin-bottom: 30px; }
+    .note { background-color: #fff8dc; border-left: 4px solid #f0c040; padding: 8px 12px; margin: 10px 0; font-size: 11pt; }
+    .section-label { background-color: #f0e6ff; border-left: 4px solid #9b59b6; padding: 6px 12px; margin: 24px 0 6px 0; font-weight: bold; font-size: 11pt; }
+  </style>
+</head>
+<body>
+
+  <h1>FYP-26-S2-11 &mdash; DripTea AI Chatbot</h1>
+  <p class="subtitle">Preliminary User Manual (PUM)</p>
+
+  <!-- ===================== SECTION 1 ===================== -->
+  <h2>1. Introduction</h2>
+  <p>This Preliminary User Manual is written to help a first-time user get the DripTea AI Chatbot web application up and running. It covers the installation steps, configuration, and a walkthrough of the main pages so users can get to their first order without confusion.</p>
+
+  <h3>1.1 What this manual covers</h3>
+  <ul>
+    <li>Initial installation on Windows and Mac (frontend + backend).</li>
+    <li>First-time configuration (environment variables and database setup).</li>
+    <li>Verifying the installation to confirm all services are connected.</li>
+    <li>A quick tour of the main pages and the AI chatbot widget.</li>
+  </ul>
+
+  <h3>1.2 What we assume about the readers</h3>
+  <ul>
+    <li>Basic familiarity with opening a terminal and running commands.</li>
+    <li>Readers know how to clone a project from GitHub and open it in VSCode.</li>
+  </ul>
+
+  <h3>1.3 Scope and Purpose</h3>
+  <p>DripTea is a bubble tea ordering web application for a bubble tea shop in Singapore. Customers can chat with <strong>Avy</strong>, an AI chatbot, to get drink recommendations and place orders. This manual covers initial installation, configuration, and the main GUIs.</p>
+  <div class="note"><strong>Don't want to install locally?</strong> The app is live at: <strong>https://driptea-ruby.vercel.app/</strong></div>
+
+  <!-- ===================== SECTION 2 ===================== -->
+  <h2>2. The Initial Installation Instructions</h2>
+
+  <h3>2.1 Prerequisites</h3>
+  <p><strong>System Requirements</strong></p>
+  <ul>
+    <li>Node.js v18 or later</li>
+    <li>npm v9 or later</li>
+    <li>A MongoDB Atlas account (or a local MongoDB instance)</li>
+    <li>A Groq API key &mdash; https://console.groq.com/keys</li>
+    <li>A Gemini API key &mdash; https://aistudio.google.com/apikey</li>
+    <li>Git (to clone the repository)</li>
+  </ul>
+
+  <h3>2.2 Backend Setup</h3>
+  <p>Run these steps from the project root folder (<code>FYP-26-S2-11/</code>).</p>
+  <pre>cd FYP-26-S2-11
+npm install</pre>
+
+  <p>Create a <code>.env</code> file in the project root and fill in your keys:</p>
+  <pre>GROQ_API_KEY=your_groq_api_key_here
+GEMINI_API_KEY=your_gemini_key_1,your_gemini_key_2
+MONGODB_URI=mongodb+srv://&lt;username&gt;:&lt;password&gt;@&lt;cluster&gt;.mongodb.net/?appName=fyp-chatbot
+MONGODB_DB_NAME=fyp-chatbot
+MONGODB_AUTOCONNECT=true
+PORT=5000
+NODE_ENV=development
+CHAT_LANGUAGE_MODE=english</pre>
+
+  <p>Start the backend:</p>
+  <pre>npm run dev</pre>
+
+  <h3>2.3 Frontend Setup</h3>
+  <p>Run these steps from inside the <code>view/</code> folder. Create a <code>.env.local</code> file inside <code>view/</code>:</p>
+  <pre>DRIPTEA_API_BASE=http://localhost:5000</pre>
+  <pre>cd FYP-26-S2-11/view
+npm install
+npm run dev</pre>
+  <p>Open <strong>http://localhost:3000</strong> in your browser.</p>
+
+  <h3>2.4 Verifying the Installation</h3>
+  <p>After both servers are running, open the chatbot widget at <strong>http://localhost:3000</strong> and type <em>"Hello"</em>. Avy should reply. This confirms the frontend, backend, AI, and database are all connected correctly.</p>
+
+  <h3>2.5 Default Seed Accounts</h3>
+  <p>These accounts are created automatically on first startup. Use them to test each role.</p>
+  <table>
+    <tr><th>Role</th><th>Email</th><th>Password</th></tr>
+    <tr><td>User Admin</td><td>admin@driptea.com</td><td>Admin@123</td></tr>
+    <tr><td>Store Staff</td><td>staff@driptea.com</td><td>Staff@123</td></tr>
+    <tr><td>Customer</td><td>customer@driptea.com</td><td>Customer@123</td></tr>
+  </table>
+
+  <!-- ===================== SECTION 3 ===================== -->
+  <h2>3. Key Features</h2>
+
+  <h3>3.1 User Roles</h3>
+  <p><strong>Customer</strong> &mdash; Browse the menu, chat with Avy for recommendations, customise drinks, manage cart and checkout.</p>
+  <p><strong>Store Staff</strong> &mdash; Manage the drink menu, process incoming orders, and monitor inventory.</p>
+  <p><strong>User Admin</strong> &mdash; Manage all user accounts and control access from the admin dashboard.</p>
+
+  <!-- ===================== SECTION 4 ===================== -->
+  <h2>4. GUI Walkthrough &mdash; Customer</h2>
+
+  <h3>4.1 Landing Page</h3>
+  <p>This is the first page users see when visiting DripTea. It shows the main banner, navigation links, and a floating Avy chatbot widget for users to start ordering or get recommendations immediately.</p>
+
+  <h3>4.2 Login Page</h3>
+  <p>Users enter their registered email address and password to log in to their account.</p>
+
+  <h3>4.2.1 Login Page &mdash; Wrong Details</h3>
+  <p>If the wrong email or password is entered, an error message is shown prompting the user to try again.</p>
+
+  <h3>4.3 Register Page</h3>
+  <p>New customers fill in their full name, email address, and password to create a DripTea account.</p>
+
+  <h3>4.4 Recovery Page</h3>
+  <p>Users who have forgotten their password can enter their registered email address to reset it and create a new password.</p>
+
+  <h3>4.5 Profile Page</h3>
+  <p>Customers can update their personal details, change their profile picture, and update their password from this page.</p>
+
+  <h3>4.6 Menu Page</h3>
+  <p>This page shows the full DripTea drink menu organised by category. Users can browse or filter drinks by category.</p>
+
+  <h3>4.6.1 Drink Detail &amp; Customisation Page</h3>
+  <p>Clicking on a drink opens the detail page where users can customise their order by selecting size, ice level, sugar level, and toppings before adding it to the cart.</p>
+
+  <h3>4.7 Cart Page</h3>
+  <p>Users can review all the drinks they have added, including customisations and price, and either remove items or proceed to checkout.</p>
+
+  <h3>4.8 Checkout Page</h3>
+  <p>Users confirm and place their order from this page. Once submitted, the order is sent to store staff for processing.</p>
+
+  <h3>4.9 Order History &amp; Tracking</h3>
+  <p>Customers can view past orders and track the current status of active orders. Users can also ask Avy directly in the chatbot for updates on their order.</p>
+
+  <!-- ---- CHATBOT BASIC ---- -->
+  <div class="section-label">AI Chatbot &mdash; Basic Features</div>
+
+  <h3>4.10 AI Chatbot &mdash; Avy</h3>
+  <p>Avy is the DripTea AI chatbot available as a floating widget on the website. When opened, Avy greets the user and is ready to take drink orders or answer questions.</p>
+
+  <h3>4.10.1 Sending a Message</h3>
+  <p>Users type a message in the text box and press Send. While Avy is processing, a typing indicator is shown. Chat history with timestamps is displayed in the window.</p>
+
+  <h3>4.10.2 Quick Prompts</h3>
+  <p>Pre-set shortcut buttons appear above the input box for common queries. Users can tap any prompt to send it instantly without typing, which is useful for first-time users.</p>
+
+  <h3>4.10.3 Ordering Through the Chatbot</h3>
+  <p>Avy guides users through the full ordering flow — from choosing a drink to selecting size, ice, sugar, and toppings. Once confirmed, users can view the cart or customise the order further directly from the chat.</p>
+
+  <h3>4.10.4 Health &amp; Dietary Assistance</h3>
+  <p>Users can ask Avy health-related questions such as "What is the healthiest drink?" or "Which drinks are low in sugar?" and Avy will suggest suitable options from the menu.</p>
+
+  <h3>4.10.5 Knowledge Information</h3>
+  <p>Users can ask Avy about any drink ingredient or topping, for example "What is pearl?" Avy will explain what it is and how it pairs with drinks to help users make informed choices.</p>
+
+  <h3>4.10.6 Searching Chat History</h3>
+  <p>Users can click the search icon at the top of the chatbot to search through past messages by keyword.</p>
+
+  <!-- ---- CHATBOT ADVANCED ---- -->
+  <div class="section-label">AI Chatbot &mdash; Advanced Features</div>
+
+  <h3>4.11 Image Recognition</h3>
+  <p>Users can upload a drink photo, paste an image, or use their camera to send an image to Avy. Avy will analyse the image and respond, for example identifying the drink and suggesting similar items from the menu.</p>
+
+  <h3>4.12 Speak &amp; Microphone Mode</h3>
+  <p>Users can click the microphone button to speak their order or question. A full-screen voice overlay is available for a hands-free conversation where Avy listens, processes, and reads its replies out loud.</p>
+
+  <h3>4.13 Multilingual Support</h3>
+  <p>Avy can detect the language a user is typing in and reply in the same language, allowing non-English speaking customers to use the chatbot comfortably.</p>
+
+  <h3>4.14 Fallback Response</h3>
+  <p>If Avy receives a message it cannot understand or that is outside its scope, it responds with a fallback message and guides the user back to drink-related topics.</p>
+
+  <!-- ===================== SECTION 5 ===================== -->
+  <h2>5. GUI Walkthrough &mdash; Store Staff</h2>
+
+  <h3>5.1 Store Staff Login</h3>
+  <p>Store staff log in using their registered email and password. Once logged in, they are brought to the Menu Management page.</p>
+
+  <h3>5.2 Menu Management</h3>
+  <p>This page shows all drinks on the menu with their category, price, and current status. Staff can toggle any drink between Active and Inactive to control what customers can order.</p>
+
+  <h3>5.3 Add Drinks</h3>
+  <p>Staff can add a new drink to the menu by filling in the drink name, category, price, description, tags, and status. The new drink appears on the menu once saved.</p>
+
+  <h3>5.4 Dashboard</h3>
+  <p>The Order Dashboard is where staff manage all incoming customer orders. It shows a live summary of open orders, orders being prepared, total inventory, and low stock alerts.</p>
+
+  <h3>5.4.1 Order Queue Tab</h3>
+  <p>This tab lists all incoming orders. Staff advance each order through the workflow by clicking "Start Preparing", "Mark Ready", and "Complete". The list refreshes automatically every 5 seconds.</p>
+
+  <h3>5.4.2 Inventory Tab</h3>
+  <p>Staff can view current stock levels and adjust quantities in real time using plus and minus buttons. Items running low are flagged with a warning badge.</p>
+
+  <h3>5.5 Search</h3>
+  <p>A search bar on both the Menu Management page and the Order Dashboard lets staff quickly find drinks or orders by name, category, or order details.</p>
+
+  <!-- ===================== SECTION 6 ===================== -->
+  <h2>6. GUI Walkthrough &mdash; User Admin</h2>
+
+  <h3>6.1 User Admin Login</h3>
+  <p>Admins log in using their registered email and password. Once logged in, they are brought to the User Admin Dashboard.</p>
+
+  <h3>6.2 User Admin Dashboard</h3>
+  <p>The dashboard gives an overview of all registered users, broken down by role (Customer, Store Staff, Admin) and account status. Suspended accounts are highlighted as an alert.</p>
+
+  <h3>6.3 View User Account</h3>
+  <p>Admins can click on any user to view their full account details including name, email, role, status, and account dates. Admins can also create new user accounts from this section.</p>
+
+  <h3>6.4 Suspend User Account</h3>
+  <p>Admins can suspend or reactivate any user account directly from the user table with a single click. Suspended accounts are visually flagged in the dashboard.</p>
+
+  <h3>6.5 Search User Account</h3>
+  <p>A search bar lets admins quickly find any user by name or email address across both the User Profiles and User Accounts tabs.</p>
+
+</body>
+</html>
