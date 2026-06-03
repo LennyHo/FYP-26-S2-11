@@ -107,7 +107,7 @@ export default function LoginPage() {
   const testCredentials = {
     admin: { email: 'admin@driptea.com', password: 'Admin@123' },
     staff: { email: 'staff@driptea.com', password: 'Staff@123' },
-    customer: { email: 'customer@driptea.com', password: 'Customer@123' },
+    customer: { email: 'customer@gmail.com', password: 'Customer@123' },
   };
 
   const fillTestCredentials = (role) => {
