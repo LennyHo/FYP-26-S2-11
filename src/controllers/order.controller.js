@@ -123,7 +123,7 @@ async function checkoutCart(req, res) {
     const order = await createOrderWithUniqueNumber({
         userId,
         orderNo: `DT-${Date.now()}`,
-        displayOrderNo,
+        displayOrderNo: order.displayOrderNo,
         items: cartItems.map((item) => ({
         menuItemId: item.menuItemId,
         name: item.name,
