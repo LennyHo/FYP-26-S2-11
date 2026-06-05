@@ -55,6 +55,8 @@ async function callGeminiTextWithRotation(userMessage, history, systemPrompt) {
   for (let i = 0; i < geminiKeys.length; i++) {
     const indexToTry = (currentGeminiKeyIndex + i) % geminiKeys.length;
 
+    console.log(`[AI] Trying Gemini key ${indexToTry + 1}/${geminiKeys.length}`);
+
     try {
       const genAI = new GoogleGenerativeAI(geminiKeys[indexToTry]);
       const model = genAI.getGenerativeModel({
@@ -71,6 +73,8 @@ async function callGeminiTextWithRotation(userMessage, history, systemPrompt) {
       const result = await chatSession.sendMessage(userMessage);
 
       currentGeminiKeyIndex = indexToTry;
+      console.log(`[AI] Gemini key ${indexToTry + 1} succeeded`);
+
       return result.response.text();
     } catch (error) {
       console.warn(`[AI] Gemini key ${indexToTry + 1} failed:`, error.message);
