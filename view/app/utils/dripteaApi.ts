@@ -407,3 +407,27 @@ export function changePassword(userId: string, currentPassword: string, newPassw
   });
 }
 // end done by "HDC"
+
+// Purchase History API
+export type DripTeaPurchaseHistoryItem = {
+  id: string;
+  orderNo: string;
+  displayOrderNo?: string;
+  status: string;
+  paymentStatus: string;
+  totalAmount: number;
+  createdAt?: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+    customization?: Record<string, unknown>;
+  }>;
+};
+
+export function getPurchaseHistory(userId: string) {
+  return requestJson<{ ok: boolean; data: DripTeaPurchaseHistoryItem[] }>(
+    `/api/purchase-history?userId=${encodeURIComponent(userId)}`
+  );
+}

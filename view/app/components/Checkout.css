@@ -1,234 +1,234 @@
 .checkout-page {
-  min-height: 100vh;
-  background: #f9f6f0;
+    min-height: 100vh;
+    background: #f9f6f0;
 }
 
 .checkout-main {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 32px 20px 72px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 32px 20px 72px;
 }
 
 .checkout-back-btn {
-  border: none;
-  background: transparent;
-  color: #8d633f;
-  font-weight: 800;
-  cursor: pointer;
-  margin-bottom: 18px;
+    border: none;
+    background: transparent;
+    color: #8d633f;
+    font-weight: 800;
+    cursor: pointer;
+    margin-bottom: 18px;
 }
 
 .checkout-card {
-  background: #fff;
-  border: 1px solid rgba(220, 199, 180, 0.85);
-  border-radius: 18px;
-  padding: 28px;
+    background: #fff;
+    border: 1px solid rgba(220, 199, 180, 0.85);
+    border-radius: 18px;
+    padding: 28px;
 }
 
 .checkout-label {
-  color: #8d633f;
-  font-weight: 800;
-  margin: 0 0 8px;
+    color: #8d633f;
+    font-weight: 800;
+    margin: 0 0 8px;
 }
 
 .checkout-card h1 {
-  margin: 0 0 24px;
-  color: #2c1810;
+    margin: 0 0 24px;
+    color: #2c1810;
 }
 
 .checkout-content {
-  display: grid;
-  gap: 24px;
+    display: grid;
+    gap: 24px;
 }
 
 .checkout-items {
-  display: grid;
-  gap: 12px;
+    display: grid;
+    gap: 12px;
 }
 
 .checkout-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid rgba(220, 199, 180, 0.55);
-  padding-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid rgba(220, 199, 180, 0.55);
+    padding-bottom: 12px;
 }
 
 .checkout-item p {
-  margin: 4px 0 0;
-  color: #6f625c;
+    margin: 4px 0 0;
+    color: #6f625c;
 }
 
 .checkout-field {
-  display: grid;
-  gap: 8px;
-  max-width: 320px;
-  font-weight: 700;
+    display: grid;
+    gap: 8px;
+    max-width: 320px;
+    font-weight: 700;
 }
 
 .checkout-field select,
 .checkout-field input {
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(141, 99, 63, 0.35);
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(141, 99, 63, 0.35);
 }
 
 .checkout-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .checkout-footer strong {
-  font-size: 24px;
+    font-size: 24px;
 }
 
 .checkout-footer button {
-  border: none;
-  border-radius: 12px;
-  padding: 14px 22px;
-  background: #1f5f2b;
-  color: #fff;
-  font-weight: 900;
-  cursor: pointer;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 22px;
+    background: #1f5f2b;
+    color: #fff;
+    font-weight: 900;
+    cursor: pointer;
 }
 
 .checkout-footer button:disabled {
-  background: #c7b8aa;
-  cursor: not-allowed;
+    background: #c7b8aa;
+    cursor: not-allowed;
 }
 
 .checkout-error {
-  margin: 0;
-  color: #b42318;
-  font-weight: 700;
+    margin: 0;
+    color: #b42318;
+    font-weight: 700;
 }
 
 .order-status-page {
-  padding-top: 34px;
+    padding-top: 34px;
 }
 
 .order-progress {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  margin-bottom: 72px;
-  color: #cdbdaf;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: 72px;
+    color: #cdbdaf;
 }
 
 .progress-step {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 28px;
-  font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 28px;
+    font-weight: 900;
 }
 
 .progress-step span {
-  width: 54px;
-  height: 54px;
-  border: 4px solid #cdbdaf;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-weight: 900;
+    width: 54px;
+    height: 54px;
+    border: 4px solid #cdbdaf;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
 }
 
 .progress-step.active {
-  color: #9a6a3d;
+    color: #9a6a3d;
 }
 
 .progress-step.active span {
-  background: #9a6a3d;
-  color: #fff;
-  border-color: #9a6a3d;
+    background: #9a6a3d;
+    color: #fff;
+    border-color: #9a6a3d;
 }
 
 .progress-line {
-  width: 140px;
-  height: 4px;
-  background: #bca891;
+    width: 140px;
+    height: 4px;
+    background: #bca891;
 }
 
 .order-status-content {
-  display: grid;
-  grid-template-columns: 420px 1fr;
-  align-items: center;
-  gap: 70px;
-  max-width: 900px;
-  margin: 0 auto 80px;
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    align-items: center;
+    gap: 70px;
+    max-width: 900px;
+    margin: 0 auto 80px;
 }
 
 .clock-visual {
-  font-size: 230px;
-  text-align: center;
-  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15));
+    font-size: 230px;
+    text-align: center;
+    filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15));
 }
 
 .order-info {
-  color: #5b351f;
+    color: #5b351f;
 }
 
 .order-info h1 {
-  font-size: 40px;
-  margin: 0 0 26px;
-  font-weight: 900;
+    font-size: 40px;
+    margin: 0 0 26px;
+    font-weight: 900;
 }
 
 .order-info p {
-  font-size: 26px;
-  line-height: 1.45;
-  margin: 0 0 14px;
+    font-size: 26px;
+    line-height: 1.45;
+    margin: 0 0 14px;
 }
 
 .back-menu-wide-btn {
-  display: block;
-  width: 420px;
-  max-width: 90%;
-  margin: 0 auto;
-  border: 1.5px solid #5b351f;
-  border-radius: 999px;
-  background: transparent;
-  color: #5b351f;
-  padding: 11px 22px;
-  font-weight: 800;
-  cursor: pointer;
+    display: block;
+    width: 420px;
+    max-width: 90%;
+    margin: 0 auto;
+    border: 1.5px solid #5b351f;
+    border-radius: 999px;
+    background: transparent;
+    color: #5b351f;
+    padding: 11px 22px;
+    font-weight: 800;
+    cursor: pointer;
 }
 
 .back-menu-wide-btn:hover {
-  background: #5b351f;
-  color: #fff;
+    background: #5b351f;
+    color: #fff;
 }
 
 @media (max-width: 900px) {
-  .order-progress {
+.order-progress {
     flex-direction: column;
     align-items: flex-start;
     margin-left: 24px;
-  }
+}
 
-  .progress-line {
+.progress-line {
     display: none;
-  }
+}
 
-  .order-status-content {
+.order-status-content {
     grid-template-columns: 1fr;
     gap: 24px;
     text-align: center;
-  }
+}
 
-  .clock-visual {
+.clock-visual {
     font-size: 150px;
-  }
+}
 
-  .order-info h1 {
+.order-info h1 {
     font-size: 32px;
-  }
+}
 
-  .order-info p {
+.order-info p {
     font-size: 20px;
-  }
+}
 }

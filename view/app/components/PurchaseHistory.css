@@ -1,0 +1,137 @@
+.purchase-page {
+    min-height: 100vh;
+    background: #f9f6f0;
+}
+
+.purchase-main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 42px 20px 80px;
+}
+
+.purchase-card {
+    background: #fff;
+    border-radius: 22px;
+    padding: 36px;
+    border: 1px solid rgba(220, 199, 180, 0.85);
+    box-shadow: 0 8px 22px rgba(72, 43, 24, 0.08);
+}
+
+.purchase-header p {
+    margin: 0 0 8px;
+    color: #9a6a3d;
+    font-weight: 900;
+}
+
+.purchase-header h1 {
+    margin: 0 0 28px;
+    color: #2c1810;
+    font-size: 38px;
+}
+
+.purchase-message {
+    margin: 0;
+    color: #6f625c;
+    font-weight: 700;
+}
+
+.purchase-list {
+    display: grid;
+    gap: 20px;
+}
+
+.purchase-order {
+    border: 1px solid rgba(220, 199, 180, 0.75);
+    border-radius: 18px;
+    padding: 22px;
+    background: #fffaf5;
+}
+
+.purchase-order-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 1px solid rgba(220, 199, 180, 0.65);
+    padding-bottom: 16px;
+}
+
+.purchase-order-top h2 {
+    margin: 0;
+    color: #5b351f;
+}
+
+.purchase-order-top p {
+    margin: 6px 0 0;
+    color: #7a6a60;
+}
+
+.purchase-status {
+    text-align: right;
+    display: grid;
+    gap: 8px;
+}
+
+.purchase-status span {
+    color: #1f5f2b;
+    font-weight: 900;
+    text-transform: capitalize;
+}
+
+.purchase-status strong {
+    color: #2c1810;
+    font-size: 20px;
+}
+
+.purchase-items {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.purchase-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.purchase-item strong {
+    color: #2c1810;
+}
+
+.purchase-item p {
+    margin: 4px 0 0;
+    color: #6f625c;
+}
+
+.purchase-item span {
+    font-weight: 800;
+    color: #5b351f;
+}
+
+.purchase-payment {
+    margin-top: 18px;
+    color: #6f625c;
+}
+
+.purchase-payment strong {
+    color: #5b351f;
+    text-transform: capitalize;
+}
+
+@media (max-width: 700px) {
+    .purchase-card {
+    padding: 24px;
+}
+
+.purchase-order-top {
+    flex-direction: column;
+}
+
+.purchase-status {
+    text-align: left;
+}
+
+.purchase-item {
+    flex-direction: column;
+}
+}

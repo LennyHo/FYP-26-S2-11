@@ -31,6 +31,11 @@ app.use("/api", cartRoutes);
 const checkoutRoutes = require("./src/routes/checkout.routes");
 app.use("/api", checkoutRoutes);
 
+// User Story 19: View Purchase History
+const purchaseHistoryRoutes = require("./src/routes/purchaseHistory.routes");
+app.use("/api", purchaseHistoryRoutes);
+console.log("[ROUTES] Purchase history routes mounted");
+
 // Chatbot routes
 const chatbotRoutes = require("./src/routes/chatbot.routes");
 app.use("/api", chatbotRoutes);
