@@ -12,4 +12,25 @@ const userSchema = new mongoose.Schema(
   { timestamps: true, collection: "users" }
 );
 
+userSchema.statics.saveUserAccount = async function saveUserAccount(userData) {
+  const email = String(userData.email || "").toLowerCase();
+
+  let role = userData.role || "customer";
+
+  if (email.includes("admin")) {
+    role = "user_admin";
+  } else if (email.includes("staff")) {
+    role = "store_staff";
+  }
+
+  return this.create({
+    fullName: userData.fullName,
+    email,
+    role,
+    status: userData.status || "active",
+    passwordHash: userData.passwordHash,
+    passwordSalt: userData.passwordSalt,
+  });
+};
+
 module.exports = mongoose.model("User", userSchema);

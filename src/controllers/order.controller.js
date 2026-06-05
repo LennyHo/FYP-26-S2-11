@@ -330,7 +330,7 @@ async function updateOrderStatus(req, res) {
 }
 
 module.exports = {
-    checkoutCart,
+    processPayment,
     getOrders,
     getOrder,
     updateOrderStatus,
