@@ -70,15 +70,19 @@ async function buildSystemPrompt(userMessage, extraContext = "") {
     const beverages = await getMenuBeverages();
     const filtered = filterMenu(beverages, userMessage);
 
+    const parseNum = (val) => {
+      const n = parseFloat(String(val || "").replace(/[^0-9.]/g, ""));
+      return isNaN(n) ? null : n;
+    };
+
     const structuredData = filtered.map((item) => ({
       id: item.itemId || item.id || item._id,
       name: item.name,
       price: item.price,
-      calories: item.base_calories,
-      sugar: item.base_sugar_g,
+      calories: parseNum(item.base_calories),
+      sugar: parseNum(item.base_sugar_g),
       nutri_grade: item.nutri_grade,
       tags: item.tags,
-      description: item.description,
       image: item.image || `/img/${item.itemId}.png`,
     }));
 
@@ -117,6 +121,12 @@ CONVERSATION RULES:
 12. Do not generate "View Cart" or "Proceed to Checkout" buttons after final order summary.
 13. Backend will generate the final cart buttons.
 14. When order is complete, output hidden-cart-data exactly once.
+
+FALLBACK RULE:
+If the user's message is unrelated to DripTea, greetings, ordering drinks, menu, cart, checkout, payment, nutrition, store help, or customer support, reply exactly:
+
+I'm sorry, I haven't learned about this yet.<br><br>
+Please contact our real barista for further assistance.
 
 ORDERING FLOW:
 PHASE 1: Ask or confirm drink selection.

@@ -5,10 +5,7 @@ const {
 } = require("../utils/chatIntent.util");
 
 const aiClient = require("../ai/aiClient");
-const {
-    getConversationHistory,
-    appendToConversation,
-} = require("../utils/conversationMemory");
+const ChatbotSession = require("../models/chatbotSession.model");
 
 const { buildSystemPrompt } = require("./prompt.service");
 const cartService = require("./cart.service");
@@ -64,7 +61,7 @@ function extractHiddenCartData(reply) {
     .filter((item) => item.name);
     }
 
-    function parseCustomization(details) {
+function parseCustomization(details) {
     const text = String(details || "");
 
     const parts = text
@@ -100,6 +97,28 @@ function extractHiddenCartData(reply) {
     };
 }
 
+function resolveLastDrinkFromHistory(history) {
+    if (!Array.isArray(history)) return null;
+    for (let i = history.length - 1; i >= 0; i--) {
+        const msg = history[i];
+        if (msg.role !== "assistant") continue;
+        const content = String(msg.content || "");
+        // Check hidden-cart-data first (most reliable)
+        const cartMatch = content.match(/<div class=['"]hidden-cart-data['"][^>]*>([\s\S]*?)<\/div>/i);
+        if (cartMatch) {
+            const name = cartMatch[1].split("|")[0].trim();
+            if (name) return name;
+        }
+        // Fall back to order summary pattern: "[Drink Name] - S$[price]"
+        const summaryMatch = content.match(/Here is your order summary:(?:<br>)?\s*([^<\n\-]+?)\s*-\s*S\$/i);
+        if (summaryMatch) {
+            const name = summaryMatch[1].trim();
+            if (name) return name;
+        }
+    }
+    return null;
+}
+
 function cleanAiReply(reply) {
     return String(reply || "")
     .replace(/<div class=['"]hidden-cart-data['"][^>]*>[\s\S]*?<\/div>/i, "")
@@ -114,103 +133,104 @@ function fixMissingLineBreaks(reply) {
         .replace(/([^>])\s*(Please let me know)/gi, "$1<br><br>$2");
 }
 
-    async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
-        const addedItems = [];
-        
-        // Test
-        console.log("[ChatbotService] userId for add cart:", userId);
+async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
+    const addedItems = [];
+    
+    // Test
+    console.log("[ChatbotService] userId for add cart:", userId);
 
-        for (const hiddenItem of hiddenCartItems) {
-        const drink = await findDrinkByName(hiddenItem.name);
+    for (const hiddenItem of hiddenCartItems) {
+    const drink = await findDrinkByName(hiddenItem.name);
 
-        if (!drink) {
-            console.warn("[ChatbotService] Hidden cart drink not found:", hiddenItem.name);
-            continue;
-        }
+    if (!drink) {
+        console.warn("[ChatbotService] Hidden cart drink not found:", hiddenItem.name);
+        continue;
+    }
 
-        const customization = parseCustomization(hiddenItem.details);
+    const customization = parseCustomization(hiddenItem.details);
 
-        const cartItem = await cartService.addToCart(userId, drink.itemId, {
-            quantity: 1,
-            customization,
-        });
+    const cartItem = await cartService.addToCart(userId, drink.itemId, {
+        quantity: 1,
+        customization,
+    });
 
-        addedItems.push(cartItem);
-        }
+    addedItems.push(cartItem);
+    }
 
-        return addedItems;
-        }
+    return addedItems;
+    }
 
-    async function buildCartSummary(userId) {
-        const cartItems = await cartService.getCart(userId);
+async function buildCartSummary(userId) {
+    const cartItems = await cartService.getCart(userId);
 
-        const groupedItems = {};
+    const groupedItems = {};
 
-        cartItems.forEach((item) => {
-        const key = JSON.stringify({
-            name: item.name,
-            customization: item.customization || {},
-        });
+    cartItems.forEach((item) => {
+    const key = JSON.stringify({
+        name: item.name,
+        customization: item.customization || {},
+    });
 
-        if (!groupedItems[key]) {
-            groupedItems[key] = {
-            name: item.name,
-            quantity: 0,
-            total: 0,
-            };
-        }
-
-        groupedItems[key].quantity += Number(item.quantity || 1);
-        groupedItems[key].total += Number(item.lineTotal || 0);
-        });
-
-        const cartSummaryHtml = Object.values(groupedItems)
-        .map((item) => `${item.name} × ${item.quantity} - S$ ${item.total.toFixed(2)}`)
-        .join("<br>");
-
-        const cartTotal = cartItems.reduce(
-        (sum, item) => sum + Number(item.lineTotal || 0),
-        0
-        );
-
-        return {
-        cartItems,
-        cartSummaryHtml,
-        cartTotal,
+    if (!groupedItems[key]) {
+        groupedItems[key] = {
+        name: item.name,
+        quantity: 0,
+        total: 0,
         };
     }
 
-    async function handleChatMessage({ message, conversationId, userId }) {
-        const safeMessage = String(message || "").trim();
+    groupedItems[key].quantity += Number(item.quantity || 1);
+    groupedItems[key].total += Number(item.lineTotal || 0);
+    });
 
-        if (!safeMessage) {
-        return {
-            reply: "Please send a message.",
-            system_action: { ui_navigation: "none" },
-        };
-        }
+    const cartSummaryHtml = Object.values(groupedItems)
+    .map((item) => `${item.name} × ${item.quantity} - S$ ${item.total.toFixed(2)}`)
+    .join("<br>");
 
-        const history = getConversationHistory(conversationId || "default");
-
-        if (isViewCartRequest(safeMessage)) {
-        if (!userId) {
-            return {
-            reply: "Please log in first before viewing your cart.",
-            system_action: { ui_navigation: "none" },
-            };
-        }
-
-        const { cartItems, cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
-
-        if (!cartItems.length) {
-            return {
-            reply:
-            'Your cart is currently empty.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
-            system_action: { ui_navigation: "none" },
-            };
-        }
+    const cartTotal = cartItems.reduce(
+    (sum, item) => sum + Number(item.lineTotal || 0),
+    0
+    );
 
     return {
+    cartItems,
+    cartSummaryHtml,
+    cartTotal,
+    };
+}
+
+async function handleChatMessage({ message, conversationId, userId }) {
+    const safeMessage = String(message || "").trim();
+
+    if (!safeMessage) {
+    return {
+        reply: "Please send a message.",
+        system_action: { ui_navigation: "none" },
+    };
+    }
+
+    const activeConversationId = conversationId || `guest-${Date.now()}`;
+    const history = await ChatbotSession.getConversationHistory(activeConversationId);
+
+    if (isViewCartRequest(safeMessage)) {
+    if (!userId) {
+        return {
+        reply: "Please log in first before viewing your cart.",
+        system_action: { ui_navigation: "none" },
+        };
+    }
+
+    const { cartItems, cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
+
+    if (!cartItems.length) {
+        return {
+        reply:
+        'Your cart is currently empty.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
+        system_action: { ui_navigation: "none" },
+        };
+    }
+
+return {
         reply: `
 Your current cart:<br><br>
 ${cartSummaryHtml}<br><br>
@@ -230,7 +250,14 @@ Total: S$ ${cartTotal.toFixed(2)}<br><br>
         };
     }
 
-    const beverageId = await resolveBeverageId(safeMessage);
+    let beverageId = await resolveBeverageId(safeMessage);
+
+    if (!beverageId) {
+        const lastDrinkName = resolveLastDrinkFromHistory(history);
+        if (lastDrinkName) {
+            beverageId = await resolveBeverageId(lastDrinkName);
+        }
+    }
 
     if (!beverageId) {
         return {
@@ -309,8 +336,15 @@ Total: S$ ${cartTotal.toFixed(2)}<br><br>
     }
     }
 
-    appendToConversation(history, { role: "user", content: safeMessage });
-    appendToConversation(history, { role: "assistant", content: reply });
+    await ChatbotSession.appendToConversation(activeConversationId, userId, {
+        role: "user",
+        content: safeMessage,
+    });
+
+    await ChatbotSession.appendToConversation(activeConversationId, userId, {
+        role: "assistant",
+        content: reply,
+    });
 
     return {
     reply,

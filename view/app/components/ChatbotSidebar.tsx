@@ -48,6 +48,10 @@ interface ChatbotSidebarProps {
 // ===== CONSTANTS =====
 const STORAGE_KEY = "driptea_chatbot_messages";
 const CONVERSATION_ID_KEY = "driptea_chatbot_conversation_id";
+function getConversationKey(): string {
+  const user = getStoredUser();
+  return user?.id ? `${CONVERSATION_ID_KEY}_${user.id}` : CONVERSATION_ID_KEY;
+}
 const WELCOME_GREETINGS = [
   'Hello, how are you?',
   "What's the vibe for today?",
@@ -193,12 +197,12 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
 
   /** Initialize chat: restore conversation history or start fresh */
   useEffect(() => {
-    const savedConversationId = localStorage.getItem(CONVERSATION_ID_KEY);
+    const savedConversationId = localStorage.getItem(getConversationKey());
     if (savedConversationId) {
       setConversationId(savedConversationId);
     } else {
       const newConversationId = createConversationId();
-      localStorage.setItem(CONVERSATION_ID_KEY, newConversationId);
+      localStorage.setItem(getConversationKey(), newConversationId);
       setConversationId(newConversationId);
     }
 
@@ -688,7 +692,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         let convId = conversationId;
         if (!convId) {
           convId = createConversationId();
-          try { localStorage.setItem(CONVERSATION_ID_KEY, convId); } catch (e) {}
+          try { localStorage.setItem(getConversationKey(), convId); } catch (e) {}
           setConversationId(convId);
         }
         const apiBase = process.env.NODE_ENV === 'development'
@@ -727,7 +731,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
     let convId = conversationId;
     if (!convId) {
       convId = createConversationId();
-      try { localStorage.setItem(CONVERSATION_ID_KEY, convId); } catch (e) {}
+      try { localStorage.setItem(getConversationKey(), convId); } catch (e) {}
       setConversationId(convId);
       console.warn('[Chat] No conversationId present — created fallback:', convId);
     }
@@ -1062,6 +1066,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
         message: messageText,
+        conversationId: convId,
         userId: getCurrentUserId(),
       }),
       });
@@ -1184,7 +1189,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
     let convId = conversationId;
     if (!convId) {
       convId = createConversationId();
-      try { localStorage.setItem(CONVERSATION_ID_KEY, convId); } catch (e) {}
+      try { localStorage.setItem(getConversationKey(), convId); } catch (e) {}
       setConversationId(convId);
       console.warn('[Chat][Overlay] No conversationId present — created fallback:', convId);
     }
@@ -1283,7 +1288,7 @@ const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
     setConversationId(newConversationId);
     setMessages([greetingMsg]);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([greetingMsg]));
-    localStorage.setItem(CONVERSATION_ID_KEY, newConversationId);
+    localStorage.setItem(getConversationKey(), newConversationId);
   }
 
   useEffect(() => {
