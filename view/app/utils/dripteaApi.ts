@@ -293,6 +293,16 @@ export async function syncStoredCartFromBackend(userId: string) {
   return response.data || [];
 }
 
+export function updateCartItemQuantity(cartItemId: string, quantity: number) {
+  return requestJson<{ ok: boolean; data: DripTeaCartItem }>(
+    `/api/cart-items/${encodeURIComponent(cartItemId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ quantity }),
+    }
+  );
+}
+
 export function deleteCartItem(cartItemId: string) {
   return requestJson<{ ok: boolean; deletedId: string }>(`/api/cart-items/${encodeURIComponent(cartItemId)}`, {
     method: 'DELETE',

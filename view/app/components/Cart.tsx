@@ -2,15 +2,21 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCartItems } from "../utils/dripteaApi";
-import { getStoredUser } from "../utils/dripteaApi";
+import {
+  getCartItems,
+  getStoredUser,
+  deleteCartItem,
+  updateCartItemQuantity,
+} from "../utils/dripteaApi";
+import "./Cart.css";
 
 interface DripTeaCartItem {
   id?: string;
   _id?: string;
+  menuItemCode?: string;
+  drinkId?: string;
   name: string;
   image?: string;
-  category?: string;
   quantity?: number;
   unitPrice?: number;
   lineTotal?: number;
@@ -24,11 +30,19 @@ interface DripTeaCartItem {
 
 interface CartItem {
   backendId?: string;
+  drinkId?: string;
   name: string;
   details: string;
   price: number;
+  unitPrice: number;
   imageSrc?: string;
-  quantity?: number;
+  quantity: number;
+}
+
+function getCartItemImage(item: CartItem) {
+  if (item.imageSrc) return item.imageSrc;
+  if (item.drinkId) return `/img/${item.drinkId}.png`;
+  return "/img/b001.png";
 }
 
 export default function Cart() {
@@ -47,21 +61,23 @@ export default function Cart() {
       if (!user) {
         setCartItems([]);
         setTotal(0);
-        setIsLoading(false);
         return;
       }
-      
+
       const response = await getCartItems(user.id);
       const backendItems: DripTeaCartItem[] = response.data || [];
 
-      const grouped = new Map<string, CartItem>();
+      const parsedItems: CartItem[] = backendItems.map((item) => {
+        const quantity = Number(item.quantity || 1);
+        const lineTotal = Number(item.lineTotal || 0);
+        const unitPrice = Number(item.unitPrice || lineTotal / quantity || 0);
 
-      backendItems.forEach((item) => {
         const toppings = Array.isArray(item.customization?.toppings)
           ? item.customization.toppings.join(", ")
           : "";
 
         const details = [
+          `Qty ${quantity}`,
           item.customization?.size || "Regular",
           item.customization?.ice || "Normal Ice",
           item.customization?.sugar || "Normal Sweet",
@@ -70,37 +86,20 @@ export default function Cart() {
           .filter(Boolean)
           .join(" | ");
 
-        const key = JSON.stringify({
+        return {
+          backendId: item.id || item._id,
+          drinkId: item.menuItemCode || item.drinkId,
           name: item.name,
           details,
-        });
-
-        const quantity = Number(item.quantity || 1);
-        const lineTotal = Number(item.lineTotal || 0);
-
-        if (!grouped.has(key)) {
-          grouped.set(key, {
-            backendId: item.id || item._id,
-            name: item.name,
-            details: `Qty ${quantity} | ${details}`,
-            price: lineTotal,
-            imageSrc: item.image,
-            quantity,
-          });
-        } else {
-          const existing = grouped.get(key)!;
-          const newQuantity = Number(existing.quantity || 0) + quantity;
-          existing.quantity = newQuantity;
-          existing.price += lineTotal;
-          existing.details = `Qty ${newQuantity} | ${details}`;
-        }
+          price: lineTotal,
+          unitPrice,
+          imageSrc: item.image,
+          quantity,
+        };
       });
 
-      const parsedItems = Array.from(grouped.values());
-      const calculatedTotal = parsedItems.reduce((sum, item) => sum + item.price, 0);
-
       setCartItems(parsedItems);
-      setTotal(calculatedTotal);
+      setTotal(parsedItems.reduce((sum, item) => sum + item.price, 0));
     } catch (error) {
       console.error("[Cart] Failed to fetch cart items:", error);
       setCartItems([]);
@@ -108,6 +107,47 @@ export default function Cart() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function handleEditItem(item: CartItem) {
+    if (!item.drinkId) {
+      router.push("/buy-driptea");
+      return;
+    }
+
+    router.push(
+      `/buy-driptea?drinkId=${encodeURIComponent(
+        item.drinkId
+      )}&editCartItem=${encodeURIComponent(item.backendId || "")}`
+    );
+  }
+
+  async function handleIncrease(item: CartItem) {
+    if (!item.backendId) return;
+
+    const nextQuantity = item.quantity + 1;
+    await updateCartItemQuantity(item.backendId, nextQuantity);
+    await fetchCartData();
+  }
+
+  async function handleDecrease(item: CartItem) {
+    if (!item.backendId) return;
+
+    if (item.quantity <= 1) {
+      await handleRemove(item);
+      return;
+    }
+
+    const nextQuantity = item.quantity - 1;
+    await updateCartItemQuantity(item.backendId, nextQuantity);
+    await fetchCartData();
+  }
+
+  async function handleRemove(item: CartItem) {
+    if (!item.backendId) return;
+
+    await deleteCartItem(item.backendId);
+    await fetchCartData();
   }
 
   useEffect(() => {
@@ -125,96 +165,100 @@ export default function Cart() {
   }, []);
 
   return (
-    <main style={{ padding: "48px", maxWidth: "900px" }}>
+    <main className="cart-page">
       <button
         type="button"
+        className="back-menu-btn"
         onClick={() => router.push("/buy-driptea")}
-        style={{
-          border: "1px solid #4b2e1f",
-          borderRadius: "999px",
-          padding: "8px 18px",
-          background: "white",
-          cursor: "pointer",
-          marginBottom: "24px",
-        }}
       >
         ← Back to Menu
       </button>
 
-      <h1 style={{ fontSize: "34px", marginBottom: "18px" }}>Your Shopping Cart</h1>
+      <section className="cart-panel">
+        <h1 className="cart-title">Your Shopping Cart</h1>
 
-      <hr style={{ marginBottom: "28px" }} />
+        {isLoading ? (
+          <p className="cart-empty-text">Loading cart...</p>
+        ) : cartItems.length === 0 ? (
+          <p className="cart-empty-text">Your cart is empty.</p>
+        ) : (
+          <>
+            <div className="cart-list">
+              {cartItems.map((item, index) => (
+                <div key={item.backendId || `${item.name}-${index}`} className="cart-item-row">
+                  <div className="cart-item-main">
+                    <img
+                      src={getCartItemImage(item)}
+                      alt={item.name}
+                      className="cart-product-image"
+                    />
 
-      {isLoading ? (
-        <p>Loading cart...</p>
-      ) : cartItems.length === 0 ? (
-        <p>Your cart is empty.</p>
-      ) : (
-        <section>
-          {cartItems.map((item, index) => (
-            <div
-              key={`${item.name}-${index}`}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr auto auto",
-                alignItems: "center",
-                gap: "16px",
-                borderBottom: "1px solid #eee",
-                padding: "18px 0",
-              }}
-            >
-              <div>
-                <h3 style={{ margin: 0 }}>{item.name}</h3>
-                <p style={{ margin: "6px 0 0", color: "#555" }}>{item.details}</p>
-              </div>
+                    <div className="cart-item-text">
+                      <h3 className="cart-item-name">
+                        {index + 1}. {item.name}
+                      </h3>
 
-              <strong style={{ color: "#c9792b", fontSize: "20px" }}>
-                S$ {item.price.toFixed(2)}
-              </strong>
+                      <p className="cart-item-details">{item.details}</p>
 
-              <button
-                type="button"
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  border: "1px solid #ccc",
-                  cursor: "pointer",
-                }}
-                disabled
-              >
-                Remove
-              </button>
+                      <button
+                        type="button"
+                        className="edit-beverage-btn"
+                        onClick={() => handleEditItem(item)}
+                      >
+                        Edit Beverage
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="cart-item-actions">
+                    <button
+                      type="button"
+                      className="cart-action-btn"
+                      onClick={() => handleIncrease(item)}
+                    >
+                      +
+                    </button>
+
+                    <strong className="cart-price">
+                      S$ {item.price.toFixed(2)}
+                    </strong>
+
+                    <button
+                      type="button"
+                      className="cart-action-btn"
+                      onClick={() => handleDecrease(item)}
+                    >
+                      −
+                    </button>
+
+                    <button
+                      type="button"
+                      className="cart-delete-btn"
+                      onClick={() => handleRemove(item)}
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </section>
-      )}
 
-      <hr style={{ margin: "32px 0 24px" }} />
+            <div className="cart-total-section">
+              <h2>Total Price:</h2>
+              <strong>S$ {total.toFixed(2)}</strong>
+            </div>
+          </>
+        )}
+      </section>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h2>Total: S$ {total.toFixed(2)}</h2>
-
+      <div className="checkout-row">
         <button
           type="button"
+          className="checkout-btn"
           disabled={cartItems.length === 0}
           onClick={() => router.push("/checkout")}
-          style={{
-            padding: "14px 26px",
-            borderRadius: "12px",
-            border: "none",
-            background: cartItems.length === 0 ? "#ccc" : "#c9792b",
-            color: "white",
-            fontWeight: 700,
-            cursor: cartItems.length === 0 ? "not-allowed" : "pointer",
-          }}
         >
-          Proceed to Checkout
+          Proceed to checkout
         </button>
       </div>
     </main>
