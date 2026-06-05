@@ -126,6 +126,39 @@
 
 .badgeRed { background: #c0321d; }
 
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 320px;
+}
+
+.refreshBtn {
+  border: 1px solid rgba(141, 99, 63, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 250, 245, 0.95);
+  color: #4b311f;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+  white-space: nowrap;
+}
+
+.refreshBtn:hover {
+  background: rgba(141, 99, 63, 0.12);
+  transform: translateY(-1px);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Search */
 .searchWrap {
   position: relative;
@@ -171,6 +204,16 @@
   color: #7a5000;
   font-size: 0.88rem;
   font-weight: 500;
+}
+
+.syncBanner {
+  background: rgba(240, 253, 244, 0.95);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: #166534;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 /* ── Table card ───────────────────────────────────────────── */
@@ -332,6 +375,7 @@
 @media (max-width: 768px) {
   .statsRow { grid-template-columns: repeat(2, 1fr); }
   .tabsBar  { flex-direction: column; align-items: stretch; }
+  .toolbarRight { min-width: 0; width: 100%; justify-content: stretch; }
   .searchWrap { max-width: 100%; }
 }
 

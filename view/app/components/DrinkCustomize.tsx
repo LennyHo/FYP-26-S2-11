@@ -197,6 +197,7 @@ export default function DrinkCustomize() {
         logBackendCartSave(response);
       } catch (error) {
         console.error('[DripTea cart sync]', error);
+        throw error;
       }
     } else {
       logBackendCartSkipped();
@@ -284,8 +285,7 @@ export default function DrinkCustomize() {
   // CHANGED: Keep old version for checkout (needs to wait for backend before payment)
   async function handlePlaceOrderWithCartSave() {
     try {
-      await saveCartItemForSelectedDrink();
-      router.push('/checkout');
+      await handlePlaceOrder();
     } catch (error) {
       console.error('[DripTea place order]', error);
       alert('Unable to prepare checkout. Please try again.');
@@ -422,7 +422,7 @@ export default function DrinkCustomize() {
               {addedToCart ? '✓ ADDED!' : 'ADD TO CART'}
             </button>
             <button className={styles.placeOrderBtn} onClick={handlePlaceOrderWithCartSave}>
-              PLACE THE ORDER
+              BUY NOW
             </button>
           </div>
         </div>

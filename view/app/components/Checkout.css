@@ -153,6 +153,10 @@
   background: #bca891;
 }
 
+.progress-line.active {
+  background: #9a6a3d;
+}
+
 .order-status-content {
   display: grid;
   grid-template-columns: 420px 1fr;
@@ -163,8 +167,17 @@
 }
 
 .clock-visual {
-  font-size: 230px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: #fff7ed;
+  border: 10px solid #d7b995;
+  color: #5b351f;
+  font-size: 56px;
+  font-weight: 900;
   text-align: center;
+  display: grid;
+  place-items: center;
   filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15));
 }
 
@@ -221,7 +234,10 @@
   }
 
   .clock-visual {
-    font-size: 150px;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+    font-size: 40px;
   }
 
   .order-info h1 {

@@ -2,8 +2,10 @@
 
 import StaffHeader from '../components/StaffHeader';
 import styles from './page.module.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getOrders, updateOrderStatus, type DripTeaOrder } from '../utils/dripteaApi';
+
+type StaffTab = 'orders' | 'completed' | 'inventory';
 
 type StaffOrderRow = {
   id: string;
@@ -11,13 +13,9 @@ type StaffOrderRow = {
   customer: string;
   status: string;
   total: string;
+  totalAmount: number;
   itemSummary: string;
 };
-
-const fallbackOrders: StaffOrderRow[] = [
-  { id: 'mock-1', orderNo: 'ORD-1001', customer: 'Alice', status: 'preparing', total: 'S$ 8.50', itemSummary: '1 x Da Hong Pao, 1 x Honey Lemon' },
-  { id: 'mock-2', orderNo: 'ORD-1002', customer: 'Bob', status: 'ready', total: 'S$ 5.00', itemSummary: '1 x Matcha Latte' },
-];
 
 function formatStatus(status: string) {
   return status.charAt(0).toUpperCase() + status.slice(1);
@@ -30,54 +28,79 @@ function toStaffOrderRow(order: DripTeaOrder): StaffOrderRow {
     customer: order.customer,
     status: order.status,
     total: `S$ ${Number(order.totalAmount || 0).toFixed(2)}`,
+    totalAmount: Number(order.totalAmount || 0),
     itemSummary: order.items.map(i => `${i.quantity} x ${i.name}`).join(', ') || 'No items recorded',
   };
 }
 
 const STATUS_FLOW: Record<string, { next: string; label: string; cls: string }> = {
-  pending:    { next: 'preparing', label: 'Start Preparing', cls: 'btnPrepare' },
-  preparing:  { next: 'ready',     label: 'Mark Ready',      cls: 'btnReady'   },
-  ready:      { next: 'completed', label: 'Complete',         cls: 'btnComplete'},
+  pending: { next: 'preparing', label: 'Start Preparing', cls: 'btnPrepare' },
+  preparing: { next: 'ready', label: 'Mark Ready', cls: 'btnReady' },
+  ready: { next: 'completed', label: 'Complete', cls: 'btnComplete' },
 };
 
+const QUEUE_STATUSES = new Set(['pending', 'preparing', 'ready']);
+
+function matchesOrderSearch(order: StaffOrderRow, query: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return true;
+
+  return [order.orderNo, order.customer, order.itemSummary, order.status]
+    .some(value => value.toLowerCase().includes(normalizedQuery));
+}
+
 export default function StoreStaffDashboardPage() {
-  const [activeTab, setActiveTab] = useState('orders');
+  const [activeTab, setActiveTab] = useState<StaffTab>('orders');
   const [searchQuery, setSearchQuery] = useState('');
-  const [orders, setOrders] = useState<StaffOrderRow[]>(fallbackOrders);
+  const [orders, setOrders] = useState<StaffOrderRow[]>([]);
   const [ordersError, setOrdersError] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [inventory, setInventory] = useState([
-    { id: 1, name: 'Oolong Tea',      qty: 12, unit: 'bags' },
-    { id: 2, name: 'Tapioca Pearls',  qty: 4,  unit: 'kg'   },
-    { id: 3, name: 'Aloe Vera',       qty: 8,  unit: 'pcs'  },
-    { id: 4, name: 'Cheese Foam Mix', qty: 3,  unit: 'packs'},
-    { id: 5, name: 'Honey Syrup',     qty: 7,  unit: 'btl'  },
+    { id: 1, name: 'Oolong Tea', qty: 12, unit: 'bags' },
+    { id: 2, name: 'Tapioca Pearls', qty: 4, unit: 'kg' },
+    { id: 3, name: 'Aloe Vera', qty: 8, unit: 'pcs' },
+    { id: 4, name: 'Cheese Foam Mix', qty: 3, unit: 'packs' },
+    { id: 5, name: 'Honey Syrup', qty: 7, unit: 'btl' },
   ]);
 
   async function refreshOrders() {
+    setIsRefreshing(true);
+
     try {
       const response = await getOrders('all');
       setOrders(response.data.map(toStaffOrderRow));
       setOrdersError('');
-    } catch {
-      setOrdersError('Unable to load live orders — showing sample data.');
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('[Store staff orders]', error);
+      setOrdersError('Unable to load live orders from the backend.');
+    } finally {
+      setIsRefreshing(false);
     }
   }
 
   useEffect(() => {
     void refreshOrders();
-    const t = window.setInterval(() => void refreshOrders(), 5000);
-    return () => window.clearInterval(t);
+    const timer = window.setInterval(() => void refreshOrders(), 3000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const advanceStatus = async (row: StaffOrderRow) => {
     const flow = STATUS_FLOW[row.status.toLowerCase()];
     if (!flow) return;
+
     setUpdatingId(row.id);
+
     try {
-      if (!row.id.startsWith('mock-')) await updateOrderStatus(row.id, flow.next);
-      setOrders(prev => prev.map(o => o.id === row.id ? { ...o, status: flow.next } : o));
-    } catch {
+      await updateOrderStatus(row.id, flow.next);
+      setOrders(prev => prev.map(order => (
+        order.id === row.id ? { ...order, status: flow.next } : order
+      )));
+      void refreshOrders();
+    } catch (error) {
+      console.error('[Store staff order status]', error);
       setOrdersError('Failed to update order. Please try again.');
     } finally {
       setUpdatingId(null);
@@ -85,26 +108,43 @@ export default function StoreStaffDashboardPage() {
   };
 
   const adjustQty = (id: number, delta: number) =>
-    setInventory(prev => prev.map(it => it.id === id ? { ...it, qty: Math.max(0, it.qty + delta) } : it));
+    setInventory(prev => prev.map(item => (
+      item.id === id ? { ...item, qty: Math.max(0, item.qty + delta) } : item
+    )));
 
-  const filteredOrders = orders.filter(o =>
-    [o.orderNo, o.customer, o.itemSummary].some(v => v.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-  const filteredInventory = inventory.filter(i =>
-    i.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const queueOrders = useMemo(
+    () => orders.filter(order => QUEUE_STATUSES.has(order.status.toLowerCase())),
+    [orders]
   );
 
-  const openCount      = orders.filter(o => o.status !== 'completed').length;
-  const preparingCount = orders.filter(o => o.status === 'preparing').length;
-  const lowStockCount  = inventory.filter(i => i.qty <= 5).length;
+  const completedOrders = useMemo(
+    () => orders.filter(order => order.status.toLowerCase() === 'completed'),
+    [orders]
+  );
+
+  const visibleOrders = activeTab === 'completed' ? completedOrders : queueOrders;
+
+  const filteredOrders = visibleOrders.filter(order => matchesOrderSearch(order, searchQuery));
+  const filteredInventory = inventory.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
+  );
+
+  const openCount = queueOrders.length;
+  const completedCount = completedOrders.length;
+  const preparingCount = orders.filter(order => order.status.toLowerCase() === 'preparing').length;
+  const lowStockCount = inventory.filter(item => item.qty <= 5).length;
+
+  const searchPlaceholder = activeTab === 'inventory'
+    ? 'Search inventory...'
+    : activeTab === 'completed'
+      ? 'Search completed orders...'
+      : 'Search orders or customer...';
 
   return (
     <div className={styles.page}>
       <StaffHeader />
 
       <main className={styles.main}>
-
-        {/* Stats row */}
         <div className={styles.statsRow}>
           <div className={styles.statCard}>
             <div>
@@ -120,8 +160,8 @@ export default function StoreStaffDashboardPage() {
           </div>
           <div className={styles.statCard}>
             <div>
-              <span className={styles.statLabel}>Inventory Items</span>
-              <strong className={styles.statValue}>{inventory.length}</strong>
+              <span className={styles.statLabel}>Completed</span>
+              <strong className={styles.statValue}>{completedCount}</strong>
             </div>
           </div>
           <div className={`${styles.statCard} ${lowStockCount > 0 ? styles.statAlert : ''}`}>
@@ -132,12 +172,15 @@ export default function StoreStaffDashboardPage() {
           </div>
         </div>
 
-        {/* Tabs + Search */}
         <div className={styles.tabsBar}>
           <div className={styles.tabsNav}>
             <button type="button" className={`${styles.tab} ${activeTab === 'orders' ? styles.active : ''}`} onClick={() => setActiveTab('orders')}>
               Order Queue
               {openCount > 0 && <span className={styles.badge}>{openCount}</span>}
+            </button>
+            <button type="button" className={`${styles.tab} ${activeTab === 'completed' ? styles.active : ''}`} onClick={() => setActiveTab('completed')}>
+              Completed Orders
+              {completedCount > 0 && <span className={styles.badge}>{completedCount}</span>}
             </button>
             <button type="button" className={`${styles.tab} ${activeTab === 'inventory' ? styles.active : ''}`} onClick={() => setActiveTab('inventory')}>
               Inventory
@@ -145,23 +188,32 @@ export default function StoreStaffDashboardPage() {
             </button>
           </div>
 
-          <div className={styles.searchWrap}>
-            <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <input
-              type="text"
-              placeholder={activeTab === 'orders' ? 'Search orders or customer…' : 'Search inventory…'}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className={styles.searchInput}
-            />
+          <div className={styles.toolbarRight}>
+            <button type="button" className={styles.refreshBtn} onClick={() => void refreshOrders()} disabled={isRefreshing}>
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <div className={styles.searchWrap}>
+              <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                placeholder={searchPlaceholder}
+                value={searchQuery}
+                onChange={event => setSearchQuery(event.target.value)}
+                className={styles.searchInput}
+              />
+            </div>
           </div>
         </div>
 
+        {(ordersError || lastUpdated) && (
+          <div className={ordersError ? styles.errorBanner : styles.syncBanner}>
+            {ordersError || `Live orders refreshed ${lastUpdated?.toLocaleTimeString()}`}
+          </div>
+        )}
 
-        {/* Orders tab */}
-        {activeTab === 'orders' && (
+        {(activeTab === 'orders' || activeTab === 'completed') && (
           <div className={styles.tableCard}>
             <div className={styles.tableContainer}>
               <table className={styles.table}>
@@ -175,38 +227,44 @@ export default function StoreStaffDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOrders.length > 0 ? filteredOrders.map(ord => {
-                    const flow = STATUS_FLOW[ord.status.toLowerCase()];
+                  {filteredOrders.length > 0 ? filteredOrders.map(order => {
+                    const flow = STATUS_FLOW[order.status.toLowerCase()];
+                    const isCompleted = order.status.toLowerCase() === 'completed';
+
                     return (
-                      <tr key={ord.id} className={ord.status === 'completed' ? styles.rowDone : ''}>
-                        <td className={styles.orderNo}>{ord.orderNo}</td>
+                      <tr key={order.id} className={isCompleted ? styles.rowDone : ''}>
+                        <td className={styles.orderNo}>{order.orderNo}</td>
                         <td>
-                          <span className={styles.customerName}>{ord.customer}</span>
-                          <span className={styles.itemSummary}>{ord.itemSummary}</span>
+                          <span className={styles.customerName}>{order.customer}</span>
+                          <span className={styles.itemSummary}>{order.itemSummary}</span>
                         </td>
                         <td>
-                          <span className={`${styles.statusBadge} ${styles[ord.status.toLowerCase()]}`}>
-                            {formatStatus(ord.status)}
+                          <span className={`${styles.statusBadge} ${styles[order.status.toLowerCase()]}`}>
+                            {formatStatus(order.status)}
                           </span>
                         </td>
-                        <td className={styles.total}>{ord.total}</td>
+                        <td className={styles.total}>{order.total}</td>
                         <td>
-                          {flow ? (
+                          {flow && activeTab === 'orders' ? (
                             <button
                               className={`${styles.actionBtn} ${styles[flow.cls]}`}
-                              onClick={() => void advanceStatus(ord)}
-                              disabled={updatingId === ord.id}
+                              onClick={() => void advanceStatus(order)}
+                              disabled={updatingId === order.id}
                             >
-                              {updatingId === ord.id ? '…' : flow.label}
+                              {updatingId === order.id ? 'Updating...' : flow.label}
                             </button>
                           ) : (
-                            <span className={styles.doneLabel}>✓ Done</span>
+                            <span className={styles.doneLabel}>{isCompleted ? 'Completed' : '-'}</span>
                           )}
                         </td>
                       </tr>
                     );
                   }) : (
-                    <tr><td colSpan={5} className={styles.empty}>No orders found</td></tr>
+                    <tr>
+                      <td colSpan={5} className={styles.empty}>
+                        {activeTab === 'completed' ? 'No completed orders found' : 'No active orders found'}
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
@@ -214,7 +272,6 @@ export default function StoreStaffDashboardPage() {
           </div>
         )}
 
-        {/* Inventory tab */}
         {activeTab === 'inventory' && (
           <div className={styles.tableCard}>
             <div className={styles.tableContainer}>
@@ -238,7 +295,7 @@ export default function StoreStaffDashboardPage() {
                       <td className={styles.unitCell}>{item.unit}</td>
                       <td>
                         <div className={styles.qtyControls}>
-                          <button type="button" className={styles.qtyBtn} onClick={() => adjustQty(item.id, -1)} disabled={item.qty === 0}>−</button>
+                          <button type="button" className={styles.qtyBtn} onClick={() => adjustQty(item.id, -1)} disabled={item.qty === 0}>-</button>
                           <button type="button" className={`${styles.qtyBtn} ${styles.qtyBtnAdd}`} onClick={() => adjustQty(item.id, 1)}>+</button>
                         </div>
                       </td>
@@ -251,7 +308,6 @@ export default function StoreStaffDashboardPage() {
             </div>
           </div>
         )}
-
       </main>
     </div>
   );

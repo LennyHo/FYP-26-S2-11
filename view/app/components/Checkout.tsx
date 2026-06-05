@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Header from "./Header";
 import {
     checkoutCart,
+    getOrder,
     getCartItems,
     getStoredUser,
     parseLocalCartLine,
@@ -20,8 +21,9 @@ type CheckoutItem = {
 
 type Confirmation = {
     orderId: string;
-    displayOrderNo: string;
+    orderNo: string;
     paymentStatus: string;
+    status: string;
     total: number;
     details: string;
 };
@@ -96,6 +98,29 @@ function makeGuestOrderNo() {
   return String(Math.floor(Math.random() * 9000) + 1000).padStart(4, "0");
 }
 
+function getProgressStep(status: string) {
+    const normalized = status.toLowerCase();
+    if (normalized === "completed" || normalized === "ready") return 3;
+    if (normalized === "preparing") return 2;
+    if (normalized === "cancelled") return 0;
+    return 1;
+}
+
+function getCustomerStatusLabel(status: string) {
+    switch (status.toLowerCase()) {
+        case "preparing":
+            return "Drinks in progress";
+        case "ready":
+            return "Ready for collection";
+        case "completed":
+            return "Completed";
+        case "cancelled":
+            return "Cancelled";
+        default:
+            return "Order received";
+    }
+}
+
 export default function Checkout() {
     const router = useRouter();
 
@@ -128,6 +153,41 @@ export default function Checkout() {
     void loadCheckoutCart();
 }, []);
 
+    useEffect(() => {
+        if (!confirmation || confirmation.orderId.startsWith("GUEST-")) return;
+
+        let isActive = true;
+        const orderId = confirmation.orderId;
+
+        async function refreshOrderStatus() {
+            try {
+                const response = await getOrder(orderId);
+                if (!isActive) return;
+
+                setConfirmation(current => {
+                    if (!current) return current;
+
+                    return {
+                        ...current,
+                        orderNo: response.data.orderNo || current.orderNo,
+                        status: response.data.status || current.status,
+                        total: Number(response.data.totalAmount || current.total),
+                    };
+                });
+            } catch (error) {
+                console.error("[DripTea order status]", error);
+            }
+        }
+
+        void refreshOrderStatus();
+        const timer = window.setInterval(() => void refreshOrderStatus(), 3000);
+
+        return () => {
+            isActive = false;
+            window.clearInterval(timer);
+        };
+    }, [confirmation?.orderId]);
+
     async function handleFakePayment() {
         setStatusMessage("");
         setIsProcessing(true);
@@ -149,8 +209,9 @@ export default function Checkout() {
 
             setConfirmation({
             orderId: result.order.id,
-            displayOrderNo: result.order.displayOrderNo || "0001",
+            orderNo: result.order.orderNo || result.order.displayOrderNo || result.order.id,
             paymentStatus: result.payment.status,
+            status: result.order.status,
             total: result.order.totalAmount,
             details: orderDetails,
             });
@@ -166,8 +227,9 @@ export default function Checkout() {
 
     setConfirmation({
         orderId: fakeOrderId,
-        displayOrderNo: makeGuestOrderNo(),
+        orderNo: `GUEST-${makeGuestOrderNo()}`,
         paymentStatus: "paid",
+        status: "pending",
         total,
         details: orderDetails,
     });
@@ -189,38 +251,38 @@ return (
             className="checkout-back-btn"
             onClick={() => router.push("/cart")}
         >
-            ← Back to cart
+            Back to cart
         </button>
         )}
 
         {confirmation ? (
         <section className="order-status-page">
             <div className="order-progress">
-            <div className="progress-step active">
+            <div className={`progress-step ${getProgressStep(confirmation.status) >= 1 ? "active" : ""}`}>
                 <span>1</span>
                 <strong>Order sent!</strong>
             </div>
 
-            <div className="progress-line" />
+            <div className={`progress-line ${getProgressStep(confirmation.status) >= 2 ? "active" : ""}`} />
 
-            <div className="progress-step">
+            <div className={`progress-step ${getProgressStep(confirmation.status) >= 2 ? "active" : ""}`}>
                 <span>2</span>
                 <strong>Drinks in<br />progress..</strong>
             </div>
 
-            <div className="progress-line" />
+            <div className={`progress-line ${getProgressStep(confirmation.status) >= 3 ? "active" : ""}`} />
 
-            <div className="progress-step">
+            <div className={`progress-step ${getProgressStep(confirmation.status) >= 3 ? "active" : ""}`}>
                 <span>3</span>
                 <strong>Ready for<br />collection!</strong>
             </div>
             </div>
 
             <div className="order-status-content">
-            <div className="clock-visual">🕒</div>
+            <div className="clock-visual">10 min</div>
 
             <div className="order-info">
-                <h1>Order Number: #{confirmation.displayOrderNo}</h1>
+                <h1>Order Number: {confirmation.orderNo}</h1>
 
                 <p>
                 <strong>Customization:</strong> {confirmation.details}
@@ -235,7 +297,7 @@ return (
                 </p>
 
                 <p>
-                <strong>Status:</strong> Just started
+                <strong>Status:</strong> {getCustomerStatusLabel(confirmation.status)}
                 </p>
             </div>
             </div>

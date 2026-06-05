@@ -251,8 +251,11 @@ export function addCartItem(payload: Record<string, unknown>) {
   }, 'DripTea add to cart');
 }
 
-export async function getCartItems(userId: string) {
+export async function getCartItems(userId: string): Promise<{ ok: boolean; data: DripTeaCartItem[]; itemCount?: number }> {
   const res = await fetch(`http://localhost:5000/api/cart-items?userId=${encodeURIComponent(userId)}`);
+  if (!res.ok) {
+    throw new Error('Failed to load cart items.');
+  }
   return res.json();
 }
 
@@ -280,7 +283,7 @@ export function cartItemsToLocalCartData(items: DripTeaCartItem[]) {
     .join('\n');
 }
 
-export async function syncStoredCartFromBackend(userId: string) {
+export async function syncStoredCartFromBackend(userId: string): Promise<DripTeaCartItem[]> {
   const response = await getCartItems(userId);
   const cartData = cartItemsToLocalCartData(response.data || []);
 
@@ -315,7 +318,7 @@ export function checkoutCart(userId: string, paymentMethod: string, voucherCode?
 
   return requestJson<{
     ok: boolean;
-    order: { id: string; status: string; totalAmount: number; orderType: string };
+    order: { id: string; orderNo: string; displayOrderNo?: string; status: string; totalAmount: number; orderType: string };
     payment: { id: string; status: string; method: string };
   }>('/api/checkout', {
     method: 'POST',
@@ -326,6 +329,10 @@ export function checkoutCart(userId: string, paymentMethod: string, voucherCode?
 // done by "HDC" - staff order queue reads and updates real MongoDB orders.
 export function getOrders(status: string = 'all') {
   return requestJson<{ ok: boolean; data: DripTeaOrder[] }>(`/api/orders?status=${encodeURIComponent(status)}`);
+}
+
+export function getOrder(orderId: string) {
+  return requestJson<{ ok: boolean; data: DripTeaOrder }>(`/api/orders/${encodeURIComponent(orderId)}`);
 }
 
 export function updateOrderStatus(orderId: string, status: string) {
@@ -371,6 +378,18 @@ export function createMenuItem(payload: { name: string; category: string; price:
 export function getUsers(search: string = '') {
   const query = search ? `?search=${encodeURIComponent(search)}` : '';
   return requestJson<{ ok: boolean; data: DripTeaUser[] }>(`/api/users${query}`);
+}
+
+export async function checkEmailExists(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const response = await getUsers(normalizedEmail);
+  const exists = response.data.some(user => user.email.trim().toLowerCase() === normalizedEmail);
+
+  if (!exists) {
+    throw new Error('No account was found for that email address.');
+  }
+
+  return { ok: true };
 }
 
 export function createUser(payload: {
