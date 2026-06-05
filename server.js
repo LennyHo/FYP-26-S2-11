@@ -27,6 +27,9 @@ app.get("/api/health", (_req, res) => {
 const cartRoutes = require("./src/routes/cart.routes");
 app.use("/api", cartRoutes);
 
+// User Story 23: Checkout Cart
+const checkoutRoutes = require("./src/routes/checkout.routes");
+app.use("/api", checkoutRoutes);
 
 // Chatbot routes
 const chatbotRoutes = require("./src/routes/chatbot.routes");
