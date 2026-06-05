@@ -17,4 +17,23 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true, collection: "orders" }
 );
 
+// Static method to validate order before payment, in sequence diagram
+orderSchema.statics.validateOrder = async function validateOrder(orderId) {
+  const order = await this.findById(orderId).lean();
+
+  if (!order) {
+    throw new Error("Order not found.");
+  }
+
+  if (order.paymentStatus === "paid") {
+    throw new Error("Order has already been paid.");
+  }
+
+  if (Number(order.totalAmount || 0) <= 0) {
+    throw new Error("Invalid order amount.");
+  }
+
+  return order;
+};
+
 module.exports = mongoose.model("Order", orderSchema);

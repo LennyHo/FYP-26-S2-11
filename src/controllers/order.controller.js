@@ -95,7 +95,7 @@ function toPublicOrder(order, user, items, payment) {
     };
 }
 
-async function checkoutCart(req, res) {
+async function processPayment(req, res) {
     try {
     const { userId, paymentMethod, voucherCode } = req.body;
 
@@ -123,14 +123,13 @@ async function checkoutCart(req, res) {
     const order = await createOrderWithUniqueNumber({
         userId,
         orderNo: `DT-${Date.now()}`,
-        displayOrderNo: order.displayOrderNo,
         items: cartItems.map((item) => ({
-        menuItemId: item.menuItemId,
-        name: item.name,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        lineTotal: item.lineTotal,
-        customization: item.customization,
+            menuItemId: item.menuItemId,
+            name: item.name,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            lineTotal: item.lineTotal,
+            customization: item.customization,
         })),
         totalAmount,
         orderType: "online",

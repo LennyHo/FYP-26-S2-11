@@ -251,12 +251,16 @@ export function addCartItem(payload: Record<string, unknown>) {
   }, 'DripTea add to cart');
 }
 
-export async function getCartItems(userId: string): Promise<{ ok: boolean; data: DripTeaCartItem[]; itemCount?: number }> {
-  const res = await fetch(`http://localhost:5000/api/cart-items?userId=${encodeURIComponent(userId)}`);
-  if (!res.ok) {
-    throw new Error('Failed to load cart items.');
-  }
-  return res.json();
+export async function getCartItems(
+  userId: string
+): Promise<{
+  ok: boolean;
+  data: DripTeaCartItem[];
+  itemCount?: number;
+}> {
+  return requestJson(
+    `/api/cart-items?userId=${encodeURIComponent(userId)}`
+  );
 }
 
 export function cartItemsToLocalCartData(items: DripTeaCartItem[]) {
