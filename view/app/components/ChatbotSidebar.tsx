@@ -1630,8 +1630,25 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                 {msg.recommendedDrinks.map((drink) => (
                   <DrinkCard
                     key={drink.id}
+                    id={drink.id}
                     name={drink.name}
                     price={`S$ ${Number(drink.price).toFixed(2)}`}
+                    image={
+                      drink.image ||
+                      `/img/bubble_teas/${drink.id}.png`
+                    }
+                    categorySlug={
+                      drink.category
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")
+                    }
+                    accent={
+                      drink.category?.toLowerCase().includes("matcha")
+                        ? "green"
+                        : drink.category?.toLowerCase().includes("ice")
+                        ? "red"
+                        : "brown"
+                    }
                   />
                 ))}
               </div>
