@@ -194,15 +194,14 @@ export default function Cart() {
             <h2 className="cart-empty-title">Your cup is still empty!</h2>
             <p className="cart-empty-subtitle">
               Looks like you haven't added anything yet.<br />
-              Let's fix that — your perfect drink is waiting.
             </p>
-            <button
+            {/* <button
               type="button"
               className="cart-browse-btn"
               onClick={() => router.push("/buy-driptea")}
             >
               Browse Our Menu →
-            </button>
+            </button> */}
           </div>
         ) : (
           <>
