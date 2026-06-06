@@ -18,6 +18,15 @@ async function connectMongo() {
   });
 
   console.log(`Connected to MongoDB database "${dbName}"`);
+
+  try {
+    await mongoose.connection.db.collection('chatbot_sessions').dropIndex('sessionId_1');
+    console.log('[Mongo] Dropped stale sessionId_1 index from chatbot_sessions');
+  } catch (err) {
+    if (err.codeName !== 'IndexNotFound') {
+      console.warn('[Mongo] Could not drop stale sessionId_1 index:', err.message);
+    }
+  }
 }
 
 module.exports = { connectMongo };
