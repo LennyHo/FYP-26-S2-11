@@ -226,6 +226,8 @@ RULES:
 - No markdown.
 - No empty lines between drink details.
 - One drink occupies exactly three lines.
+- Do NOT ignore the <br>.
+
 
 ${langInstruction}
 `;

@@ -143,9 +143,6 @@ function fixMissingLineBreaks(reply) {
 
 async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
     const addedItems = [];
-    
-    // Test
-    console.log("[ChatbotService] userId for add cart:", userId);
 
     for (const hiddenItem of hiddenCartItems) {
     const drink = await findDrinkByName(hiddenItem.name);
@@ -162,11 +159,14 @@ async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
         customization,
     });
 
+    cartItem.drinkInfo = drink;
+    cartItem.menuItemCode = drink.itemId;
+
     addedItems.push(cartItem);
     }
 
     return addedItems;
-    }
+}
 
 async function buildCartSummary(userId) {
     const cartItems = await cartService.getCart(userId);
@@ -382,19 +382,79 @@ Added to your cart successfully.<br><br>
             reply = cleanAiReply(reply);
 
             if (addedItems.length > 0) {
-            const { cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
+                const { cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
 
-            reply += `
-<br><br>
-Added to your cart successfully.<br><br>
-Your current cart:<br>
-${cartSummaryHtml}<br><br>
-Total: S$ ${cartTotal.toFixed(2)}<br><br>
-<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>
-<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>
-`;
+                const ADDED_SUGAR_G = {
+                    "0%": 0,
+                    "25%": 10,
+                    "50%": 20,
+                    "100%": 40,
+                };
+
+                const orderLines = addedItems.map((item) => {
+                    console.log("[OrderSummary] drinkInfo:", item.drinkInfo);
+                    console.log("[OrderSummary] customization:", item.customization);
+                    const c = item.customization || {};
+                    const drink = item.drinkInfo || {};
+
+                    const toppings =
+                    Array.isArray(c.toppings) && c.toppings.length > 0
+                    ? c.toppings.join(", ")
+                    : "No toppings";
+
+                    const details = [c.size, c.ice, c.sugar, toppings]
+                    .filter(Boolean)
+                    .join(" · ");
+
+                    const sugarKey = String(c.sugar || "")
+                    .replace(/ sugar/i, "")
+                    .trim();
+                    const nutrition = drink.nutritionInfo || {};
+
+                    const baseSugar = Number(
+                    nutrition.baseSugarG ??
+                    drink.base_sugar_g ??
+                    0
+                    );
+                    const addedSugar = ADDED_SUGAR_G[sugarKey] ?? 0;
+                    const totalSugar = baseSugar + addedSugar;
+
+                    const calories = Number(
+                    nutrition.baseCalories ??
+                    drink.base_calories ??
+                    0
+                    );
+
+                    const nutriGrade =
+                    nutrition.nutriGrade ??
+                    drink.nutri_grade ??
+                    "N/A";
+
+                    return [
+                    `${item.name} - S$ ${Number(item.lineTotal || item.unitPrice || 0).toFixed(2)}`,
+                    details,
+                    `Sugar: ${totalSugar}g | Calories: ${calories} kcal | Nutri-Grade: ${nutriGrade}`,
+                    ].join("<br>");
+                    });
+
+                    const orderTotal = addedItems.reduce(
+                        (sum, item) => sum + Number(item.lineTotal || 0),
+                        0
+                    );
+
+                    reply =
+                    `Excellent choice!<br><br>` +
+                    `Here is your order summary:<br>` +
+                    `${orderLines.join("<br><br>")}<br><br>` +
+                    `Total Price: S$ ${orderTotal.toFixed(2)}<br><br>` +
+                    `Added to your cart successfully.<br><br>` +
+                    `Your current cart:<br>` +
+                    `${cartSummaryHtml}<br><br>` +
+                    `Total: S$ ${cartTotal.toFixed(2)}<br><br>` +
+                    `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>` +
+                    `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>`;
+                }
         }
-    }
     }
 
     await ChatbotSession.appendToConversation(activeConversationId, userId, {
