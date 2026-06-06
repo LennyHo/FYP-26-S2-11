@@ -1,6 +1,6 @@
-// CHANGED: Added 'use client' directive because component uses refs on video element
 'use client';
 
+import { useState } from "react";
 import Header from '../components/Header';
 import styles from './BuyDriptea.module.css';
 import Link from 'next/link';
@@ -13,10 +13,8 @@ const products = [
     note: 'Our signature premium black tea blended with rich milk.',
     tone: 'brown',
     image: '/img/bubble_teas/b001.png',
-    // done by "HDC" - featured cards now lead to actual add-to-cart flow.
     categorySlug: 'milk-tea',
     drinkId: 'b001',
-    // end done by "HDC"
   },
   {
     name: 'Strawberry Matcha Tea',
@@ -24,10 +22,8 @@ const products = [
     note: 'Fresh strawberry puree layered with premium matcha.',
     tone: 'red',
     image: '/img/bubble_teas/b007.png',
-    // done by "HDC" - featured cards now lead to actual add-to-cart flow.
     categorySlug: 'matcha-teas',
     drinkId: 'b007',
-    // end done by "HDC"
   },
   {
     name: 'Matcha Latte',
@@ -55,7 +51,51 @@ const customSteps = [
   { icon: '🧆', title: 'Add pearls or toppings', desc: 'Finish with tapioca pearls, grass jelly, or pudding.' },
 ];
 
+// #19 Helper Function
+function toCategorySlug(category: string) {
+  return category.toLowerCase().replace(/\s+/g, '-');
+}
+
 export default function BuyDripTeaPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  type MenuSearchItem = {
+    id: string;
+    name: string;
+    category: string;
+    price: number;
+    description: string;
+    image: string;
+  };
+  const [searchResults, setSearchResults] = useState<MenuSearchItem[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const handleSearch = async () => {
+    const keyword = searchTerm.trim();
+
+    setHasSearched(true);
+
+    if (!keyword) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/menu/search?q=${encodeURIComponent(keyword)}`
+      );
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        throw new Error(data.message || "Search failed.");
+      }
+
+      setSearchResults(data.data || []);
+    } catch (error) {
+      console.error("[Menu Search] Failed:", error);
+      setSearchResults([]);
+    }
+  };
   return (
     <div className={styles.page}>
       <Header />
@@ -177,7 +217,74 @@ export default function BuyDripTeaPage() {
             <p className={styles.sectionEyebrow}>Explore by Category</p>
             <h2>Our Menu</h2>
           </div>
+          <div className={styles.menuSearchRow}>
+            <input
+              type="text"
+              value={searchTerm}
+              placeholder="Search drinks..."
+              className={styles.menuSearchInput}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") handleSearch();
+              }}
+            />
 
+            <button
+              type="button"
+              className={styles.menuSearchButton}
+              onClick={handleSearch}
+            >
+              Search
+            </button>
+          </div>
+
+          {hasSearched && (
+            <div className={styles.searchResultBlock}>
+              <h3 className={styles.searchResultTitle}>Search Results</h3>
+
+              {searchResults.length === 0 ? (
+                <p className={styles.noSearchResult}>
+                  No drinks found. Try searching for milk tea, matcha, chocolate, taro, or Milo.
+                </p>
+              ) : (
+                <div className={styles.searchCardGrid}>
+                  {searchResults.map((drink) => (
+                    <article key={drink.id} className={styles.searchDrinkCard}>
+                      <div className={styles.searchDrinkTop}>
+                        <span className={styles.searchPriceTag}>
+                          S$ {Number(drink.price || 0).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className={styles.searchImageWrapper}>
+                        <img
+                          src={drink.image || `/img/bubble_teas/${drink.id}.png`}
+                          alt={drink.name}
+                          className={styles.searchDrinkImage}
+                          onError={(event) => {
+                            event.currentTarget.src = "/img/bubble_teas/b001.png";
+                          }}
+                        />
+                      </div>
+
+                      <div className={styles.searchDrinkInfo}>
+                        <p className={styles.searchDrinkCategory}>{drink.category}</p>
+                        <h3>{drink.name}</h3>
+                        <p>{drink.description}</p>
+                      </div>
+
+                      <Link
+                        href={`/menu/${toCategorySlug(drink.category)}/${drink.id}`}
+                        className={styles.searchAddButton}
+                      >
+                        Customize &amp; Add
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div className={styles.cardGrid}>
             {categories.map((cat) => (
               <Link

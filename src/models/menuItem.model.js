@@ -20,4 +20,24 @@ const menuItemSchema = new mongoose.Schema(
   { timestamps: true, collection: "menu_items" }
 );
 
+// User Story #19: Search beverages 
+menuItemSchema.statics.searchBeverage = async function searchBeverage(keyword) {
+  const searchText = String(keyword || "").trim();
+
+  const query = {
+    status: "active",
+  };
+
+  if (searchText) {
+    query.$or = [
+      { name: { $regex: searchText, $options: "i" } },
+      { category: { $regex: searchText, $options: "i" } },
+      { description: { $regex: searchText, $options: "i" } },
+      { tags: { $regex: searchText, $options: "i" } },
+    ];
+  }
+
+  return this.find(query).sort({ category: 1, name: 1 }).lean();
+};
+
 module.exports = mongoose.model("MenuItem", menuItemSchema);
