@@ -127,10 +127,18 @@ function cleanAiReply(reply) {
 
 function fixMissingLineBreaks(reply) {
     return String(reply || "")
-        // Add <br><br> after ? when followed directly by a letter or ( with no break already there
-        .replace(/\?(?!<br)([A-Za-z(])/g, "?<br><br>$1")
-        // Add <br><br> before "Please let me know" when preceded by a non-tag character
-        .replace(/([^>])\s*(Please let me know)/gi, "$1<br><br>$2");
+        .replace(/Here is your order summary:/gi, "Here is your order summary:<br>")
+        .replace(/(summary:)([A-Z])/gi, "$1<br>$2")
+        .replace(/(S\$[0-9.]+)(Regular|Large)/gi, "$1<br>$2")
+        .replace(/(No toppings|Cheese Foam|Aloe Vera|Pearls)(sugar:)/gi, "$1<br>$2")
+        .replace(/(Nutri-Grade:\s*[A-D])(Total Price:)/gi, "$1<br>$2")
+        .replace(/(Total Price:\s*S\$[0-9.]+)(Added to your cart)/gi, "$1<br><br>$2")
+        .replace(/(successfully\.)(Your current cart:)/gi, "$1<br><br>$2")
+        .replace(/(current cart:)([A-Z])/gi, "$1<br>$2")
+        .replace(/(x\s*\d+\s*-\s*S\$\s*[0-9.]+)([A-Z])/g, "$1<br>$2")
+        .replace(/(Total:\s*S\$\s*[0-9.]+)/gi, "<br>$1")
+        .replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>")
+        .trim();
 }
 
 async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {

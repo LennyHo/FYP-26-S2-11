@@ -73,7 +73,10 @@ export default function Cart() {
         return;
       }
 
-      const response = await getCartItems(user.id);
+      const userId = user?.id || "6a0d439f6dc5d154f7ab75a8";
+      const response = await getCartItems(userId);
+      console.log("[Cart] user:", user);
+      console.log("[Cart] response:", response);
       const backendItems: DripTeaCartItem[] = response.data || [];
 
       const parsedItems: CartItem[] = backendItems.map((item) => {

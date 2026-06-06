@@ -753,11 +753,11 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
       console.log('Stopped listening while Avy is typing');
     }
     
-        // Hardcode user Id:
-        const getCurrentUserId = () => {
-          return "6a0d439f6dc5d154f7ab75a8";
-      };
-
+    const getCurrentUserId = () => {
+      const user = getStoredUser();
+      return user?.id || "";
+    };
+    
 /*
     // HANDLER 1: Local cart queries (no backend call needed)
     const normalizedQuery = messageText.toLowerCase().trim();
@@ -1121,6 +1121,11 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
           : `Sure — ${plainText}`;
 
         speakText(humaneIntro);
+      }
+
+      // Trigger cart refresh whenever the bot confirms a cart addition
+      if (/added to your cart/i.test(botMsg.text)) {
+        window.dispatchEvent(new Event('cartUpdated'));
       }
 
       // Extract cart data: look for hidden HTML block with order info

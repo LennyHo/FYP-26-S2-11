@@ -176,17 +176,23 @@ async function requestJson<T>(path: string, init: RequestInit = {}, logLabel?: s
   throw new Error(lastMessage);
 }
 
-export function getStoredUser(): DripTeaUser | null {
-  if (typeof window === 'undefined') return null;
+export function getStoredUser() {
+  if (typeof window === "undefined") return null;
+
+  const raw =
+    localStorage.getItem(USER_STORAGE_KEY) ||
+    localStorage.getItem("dripteaUser") ||
+    localStorage.getItem("driptea_user") ||
+    localStorage.getItem("user");
+
+  if (!raw) return null;
 
   try {
-    const rawUser = window.localStorage.getItem(USER_STORAGE_KEY);
-    return rawUser ? JSON.parse(rawUser) as DripTeaUser : null;
+    return JSON.parse(raw);
   } catch {
     return null;
   }
 }
-
 export function storeUser(user: DripTeaUser, token?: string) {
   if (typeof window === "undefined") return;
 
