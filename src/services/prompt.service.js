@@ -18,18 +18,41 @@ function getLanguageInstruction() {
 async function isMenuRequest(message) {
   const msg = String(message || "").toLowerCase();
 
-  return (
+  const keywordMatch =
     msg.includes("menu") ||
     msg.includes("drink") ||
     msg.includes("recommend") ||
     msg.includes("order") ||
     msg.includes("milk tea") ||
     msg.includes("tea") ||
+    msg.includes("milo") ||
+    msg.includes("chocolate") ||
+    msg.includes("matcha") ||
+    msg.includes("frappe") ||
+    msg.includes("slush") ||
     msg.includes("饮料") ||
     msg.includes("菜单") ||
     msg.includes("推荐") ||
-    msg.includes("点")
-  );
+    msg.includes("点");
+
+  if (keywordMatch) return true;
+
+  const drinks = await MenuItem.find({ status: "active" }).select("name itemId tags").lean();
+
+  return drinks.some((drink) => {
+    const name = String(drink.name || "").toLowerCase();
+    const itemId = String(drink.itemId || "").toLowerCase();
+    const tags = Array.isArray(drink.tags)
+      ? drink.tags.join(" ").toLowerCase()
+      : "";
+
+    return (
+      msg.includes(name) ||
+      msg.includes(itemId) ||
+      name.includes(msg) ||
+      tags.includes(msg)
+    );
+  });
 }
 
 async function getMenuBeverages() {

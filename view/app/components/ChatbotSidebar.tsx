@@ -18,6 +18,7 @@ import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
 import avyLogo from '../../img/Group 2.svg';
 import menuData from '../../data/menu.json';
+import DrinkCard from "./DrinkCard";
 
 // ==== TYPE DEFINITIONS ====
 
@@ -35,7 +36,13 @@ interface Message {
   id: string;
   text: string;
   isUser: boolean;
-  sources?: MessageSource[];
+  recommendedDrinks?: {
+    id: string;
+    name: string;
+    category: string;
+    price: number;
+    image?: string;
+  }[];
 }
 
 interface ChatbotSidebarProps {
@@ -1090,6 +1097,9 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
       const data: unknown = await response.json();
       const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
       const rawReply = typeof payload.reply === 'string' ? payload.reply : 'Error connecting to backend';
+      const recommendedDrinks = Array.isArray(payload.recommendedDrinks)
+        ? (payload.recommendedDrinks as Message['recommendedDrinks'])
+        : [];
 
       // Clean up excessive line breaks:
       // Replaces 3 or more consecutive <br> tags with just two for a standard paragraph gap.
@@ -1099,6 +1109,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         id: (Date.now() + 1).toString(),
         text: sanitizedReply,
         isUser: false,
+        recommendedDrinks,
       };
       setMessages(prev => [...prev, botMsg]);
 
@@ -1613,7 +1624,19 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                 {/* Web source cards removed per request */}
               </div>
             </div>
-              
+
+            {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && (
+              <div className={styles.drinkCardList}>
+                {msg.recommendedDrinks.map((drink) => (
+                  <DrinkCard
+                    key={drink.id}
+                    name={drink.name}
+                    price={`S$ ${Number(drink.price).toFixed(2)}`}
+                  />
+                ))}
+              </div>
+            )}
+
               {!msg.isUser && (msg as any).showViewCart && (
                 <div className={styles.messageActionRow}>
                   <button
