@@ -199,6 +199,33 @@ async function buildCartSummary(userId) {
     };
 }
 
+// User Story #32: Recommend beverages based on user message
+function isRecommendationRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    return (
+        msg.includes("recommend") ||
+        msg.includes("recommendation") ||
+        msg.includes("suggest") ||
+        msg.includes("what should i drink") ||
+        msg.includes("i like")
+    );
+}
+
+function formatDrinkCards(drinks) {
+    return drinks.map((drink) => ({
+        id: drink.itemId,
+        name: drink.name,
+        category: drink.category,
+        price: drink.price,
+        description: drink.description,
+        image: drink.image || `/img/bubble_teas/${drink.itemId}.png`,
+        tags: drink.tags || [],
+}));
+}
+// End of User Story #32
+
+
 async function handleChatMessage({ message, conversationId, userId }) {
     const safeMessage = String(message || "").trim();
 
@@ -212,6 +239,31 @@ async function handleChatMessage({ message, conversationId, userId }) {
     const activeConversationId = conversationId || `guest-${Date.now()}`;
     const history = await ChatbotSession.getConversationHistory(activeConversationId);
 
+    // User Story #32: Recommend beverages based on user message
+    if (isRecommendationRequest(safeMessage)) {
+        const drinks = await MenuItem.recommendByMessage(safeMessage);
+
+        if (drinks.length > 0) {
+            const reply = "Here are some drinks you may like:";
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "user",
+                content: safeMessage,
+            });
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "assistant",
+                content: reply,
+            });
+
+            return {
+                reply,
+                recommendedDrinks: formatDrinkCards(drinks),
+                system_action: { ui_navigation: "none" },
+            };
+        }
+    }
+
     if (isViewCartRequest(safeMessage)) {
     if (!userId) {
         return {
@@ -220,6 +272,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
         };
     }
 
+    // User Story #200: View Cart Intent
     const { cartItems, cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
 
     if (!cartItems.length) {
@@ -346,11 +399,23 @@ Total: S$ ${cartTotal.toFixed(2)}<br><br>
         content: reply,
     });
 
+    // User Story #32: Attach drink cards when AI responds to a recommendation request
+    let recommendedDrinks = [];
+    if (isRecommendationRequest(safeMessage)) {
+        const drinks = await MenuItem.recommendByMessage(safeMessage);
+        if (drinks.length > 0) {
+            recommendedDrinks = formatDrinkCards(drinks);
+        }
+    }
+
     return {
     reply,
+    ...(recommendedDrinks.length > 0 && { recommendedDrinks }),
     system_action: { ui_navigation: "none" },
     };
 }
+
+
 
 module.exports = {
     handleChatMessage,
