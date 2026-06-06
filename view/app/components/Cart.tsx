@@ -186,9 +186,24 @@ export default function Cart() {
         <h1 className="cart-title">Your Shopping Cart</h1>
 
         {isLoading ? (
-          <p className="cart-empty-text">Loading cart...</p>
+          <div className="cart-empty-state">
+            <p className="cart-empty-title">Fetching your cart…</p>
+          </div>
         ) : cartItems.length === 0 ? (
-          <p className="cart-empty-text">Your cart is empty.</p>
+          <div className="cart-empty-state">
+            <h2 className="cart-empty-title">Your cup is still empty!</h2>
+            <p className="cart-empty-subtitle">
+              Looks like you haven't added anything yet.<br />
+              Let's fix that — your perfect drink is waiting.
+            </p>
+            <button
+              type="button"
+              className="cart-browse-btn"
+              onClick={() => router.push("/buy-driptea")}
+            >
+              Browse Our Menu →
+            </button>
+          </div>
         ) : (
           <>
             <div className="cart-list">
