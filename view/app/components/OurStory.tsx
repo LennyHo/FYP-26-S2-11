@@ -1,9 +1,14 @@
 "use client";
 
+"use client";
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './OurStory.module.css';
 
 export default function OurStory() {
+  const router = useRouter();
+
   return (
     <div className={styles.container}>
       {/* Hero Section */}
@@ -135,7 +140,9 @@ export default function OurStory() {
       <section className={styles.ctaSection}>
         <h2 className={styles.ctaTitle}>Join Our Story</h2>
         <p className={styles.ctaText}>Experience the DripTea difference today. Every cup tells a story.</p>
-        <button className={styles.ctaButton}>Explore Our Menu</button>
+        <button type="button" className={styles.ctaButton} onClick={() => router.push('/buy-driptea')}>
+          Explore Our Menu
+        </button>
       </section>
     </div>
   );

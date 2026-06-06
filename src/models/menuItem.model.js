@@ -12,10 +12,11 @@ const menuItemSchema = new mongoose.Schema(
     tags: [String],
     customizationOptions: [mongoose.Schema.Types.Mixed],
     nutritionInfo: {
-      baseCalories: Number,
-      baseSugarG: Number,
-      baseVolumeMl: Number,
-    },
+    baseCalories: Number,
+    baseSugarG: Number,
+    baseVolumeMl: Number,
+    nutriGrade: String,
+  },
   },
   { timestamps: true, collection: "menu_items" }
 );

@@ -59,7 +59,67 @@ function publicUser(user) {
         email: user.email,
         role: user.role,
         status: user.status,
+        profilePic: user.profilePic || "",
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
     };
+}
+
+async function resetPassword({ email, newPassword }) {
+    email = normalizeEmail(email);
+    const password = String(newPassword || "");
+
+    if (!email || password.length < 6) {
+        const error = new Error("Email and a new password of at least 6 characters are required.");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+        { email },
+        { $set: createPasswordRecord(password) },
+        { new: true }
+    ).lean();
+
+    if (!updatedUser) {
+        const error = new Error("No account was found for that email address.");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return publicUser(updatedUser);
+}
+
+async function changePassword({ userId, currentPassword, newPassword }) {
+    const password = String(newPassword || "");
+
+    if (!userId || !currentPassword || password.length < 6) {
+        const error = new Error("Current password and a new password of at least 6 characters are required.");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        const error = new Error("User account was not found.");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    if (!verifyPassword(currentPassword, user)) {
+        const error = new Error("Current password is incorrect.");
+        error.statusCode = 401;
+        throw error;
+    }
+
+    // Save a new salted password hash after the current password is checked.
+    const passwordRecord = createPasswordRecord(password);
+    user.passwordHash = passwordRecord.passwordHash;
+    user.passwordSalt = passwordRecord.passwordSalt;
+    await user.save();
+
+    return publicUser(user);
 }
 
 async function register({ fullName, email, password }) {
@@ -68,15 +128,19 @@ async function register({ fullName, email, password }) {
     password = String(password || "");
 
     if (!fullName || !email || password.length < 6) {
-    throw new Error(
+    const error = new Error(
         "Full name, valid email, and password of at least 6 characters are required."
     );
+    error.statusCode = 400;
+    throw error;
     }
 
     const existingUser = await User.findOne({ email }).lean();
 
     if (existingUser) {
-        throw new Error("An account with this email already exists.");
+        const error = new Error("An account with this email already exists.");
+        error.statusCode = 409;
+        throw error;
     }
 
     const user = await User.create({
@@ -100,11 +164,15 @@ async function login({ email, password }) {
     const user = await User.findOne({ email }).lean();
 
     if (!user || !verifyPassword(password, user)) {
-    throw new Error("Invalid email or password.");
+    const error = new Error("Invalid email or password.");
+    error.statusCode = 401;
+    throw error;
     }
 
     if (user.status === "suspended") {
-    throw new Error("This account is suspended.");
+    const error = new Error("This account is suspended.");
+    error.statusCode = 403;
+    throw error;
     }
 
     return {
@@ -138,5 +206,7 @@ async function initializeSeedUsers() {
 module.exports = {
     register,
     login,
+    resetPassword,
+    changePassword,
     initializeSeedUsers,
 };

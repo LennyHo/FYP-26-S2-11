@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './Profile.module.css';
-import { getStoredUser } from '../utils/dripteaApi';
+import { getStoredUser, storeUser, updateUser } from '../utils/dripteaApi';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -30,16 +30,20 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const user = getStoredUser();
     if (user) {
-      const updated = { ...user, profilePic, fullName: name, email };
-      window.localStorage.setItem('dripTeaCurrentUser', JSON.stringify(updated));
-      window.dispatchEvent(new Event('profileUpdated'));
-      window.dispatchEvent(new Event('authUpdated'));
-      setStatus("Profile updated!");
-      setTimeout(() => setStatus(""), 2500);
+      try {
+        // Save profile changes in MongoDB, then refresh the local user copy.
+        const response = await updateUser(user.id, { profilePic, fullName: name, email });
+        storeUser(response.data);
+        window.dispatchEvent(new Event('profileUpdated'));
+        setStatus("Profile updated!");
+        setTimeout(() => setStatus(""), 2500);
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : "Profile update failed.");
+      }
     }
   }
 
