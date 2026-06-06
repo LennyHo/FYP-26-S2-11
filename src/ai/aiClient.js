@@ -14,22 +14,13 @@ function hasConfiguredApiKey(value) {
   );
 }
 
-const geminiKeys = process.env.GEMINI_API_KEY
-  ? process.env.GEMINI_API_KEY.split(",").map((k) => k.trim()).filter(hasConfiguredApiKey)
-  : [];
-
 let currentGeminiKeyIndex = 0;
 
-const hasGroqKey = hasConfiguredApiKey(process.env.GROQ_API_KEY);
-
-const groqClient = axios.create({
-  baseURL: "https://api.groq.com/openai/v1",
-  timeout: 15000,
-  headers: {
-    Authorization: `Bearer ${process.env.GROQ_API_KEY || ""}`,
-    "Content-Type": "application/json",
-  },
-});
+function getGeminiKeys() {
+  return process.env.GEMINI_API_KEY
+    ? process.env.GEMINI_API_KEY.split(",").map((k) => k.trim()).filter(hasConfiguredApiKey)
+    : [];
+}
 
 async function generateText(userMessage, history = [], systemPrompt = "") {
   try {
@@ -37,15 +28,22 @@ async function generateText(userMessage, history = [], systemPrompt = "") {
   } catch (geminiError) {
     console.warn("[AI] Gemini failed. Falling back to Groq:", geminiError.message);
 
-    if (!hasGroqKey) {
+    if (!hasConfiguredApiKey(process.env.GROQ_API_KEY)) {
       throw geminiError;
     }
 
-    return callGroqText(userMessage, history, systemPrompt);
+    try {
+      return await callGroqText(userMessage, history, systemPrompt);
+    } catch (groqError) {
+      console.error("[AI] Groq fallback failed:", groqError.response?.data || groqError.message);
+      throw groqError;
+    }
   }
 }
 
 async function callGeminiTextWithRotation(userMessage, history, systemPrompt) {
+  const geminiKeys = getGeminiKeys();
+
   if (geminiKeys.length === 0) {
     throw new Error("No Gemini keys available.");
   }
@@ -86,15 +84,30 @@ async function callGeminiTextWithRotation(userMessage, history, systemPrompt) {
 }
 
 async function callGroqText(userMessage, history, systemPrompt) {
-  const response = await groqClient.post("/chat/completions", {
-    model: "llama-3.1-8b-instant",
-    temperature: 0.7,
-    messages: [
-      { role: "system", content: systemPrompt },
-      ...history,
-      { role: "user", content: userMessage },
-    ],
-  });
+  const cleanHistory = history.map((msg) => ({
+    role: msg.role === "assistant" ? "assistant" : "user",
+    content: String(msg.content || ""),
+  }));
+
+  const response = await axios.post(
+    "https://api.groq.com/openai/v1/chat/completions",
+    {
+      model: "llama-3.1-8b-instant",
+      temperature: 0.7,
+      messages: [
+        { role: "system", content: String(systemPrompt || "") },
+        ...cleanHistory,
+        { role: "user", content: String(userMessage || "") },
+      ],
+    },
+    {
+      timeout: 15000,
+      headers: {
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   return response.data.choices[0].message.content;
 }

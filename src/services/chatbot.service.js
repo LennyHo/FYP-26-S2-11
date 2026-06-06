@@ -369,7 +369,7 @@ Added to your cart successfully.<br><br>
         );
 
     reply = fixMissingLineBreaks(reply);
-
+    console.log("[AI REPLY BEFORE EXTRACT]", reply);
     const hiddenCartItems = extractHiddenCartData(reply);
 
     if (hiddenCartItems.length > 0) {
@@ -457,6 +457,8 @@ Added to your cart successfully.<br><br>
         }
     }
 
+    console.log("[hiddenCartItems]", hiddenCartItems);
+    
     await ChatbotSession.appendToConversation(activeConversationId, userId, {
         role: "user",
         content: safeMessage,
