@@ -2,25 +2,22 @@ const mongoose = require("mongoose");
 
 const menuItemSchema = new mongoose.Schema(
   {
-    itemId: { type: String, required: true, unique: true },
-    name: { type: String, required: true },
-    image: String,
-    category: String,
-    description: String,
+    itemId: { type: String, required: true, unique: true, trim: true },
+    name: { type: String, required: true, trim: true },
+    category: { type: String, required: true, trim: true },
     price: { type: Number, required: true },
+    description: { type: String, default: "" },
+    image: { type: String, default: "" },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
-    tags: [String],
-    customizationOptions: [mongoose.Schema.Types.Mixed],
-    nutritionInfo: {
-      baseCalories: Number,
-      baseSugarG: Number,
-      baseVolumeMl: Number,
-    },
+    tags: { type: [String], default: [] },
+    base_calories: { type: Number, default: 0 },
+    base_sugar_g: { type: Number, default: 0 },
+    nutri_grade: { type: String, default: "B" },
   },
   { timestamps: true, collection: "menu_items" }
 );
 
-// User Story #19: Search beverages 
+// User Story #19 search for beverages by keyword
 menuItemSchema.statics.searchBeverage = async function searchBeverage(keyword) {
   const searchText = String(keyword || "").trim();
 
@@ -40,13 +37,26 @@ menuItemSchema.statics.searchBeverage = async function searchBeverage(keyword) {
   return this.find(query).sort({ category: 1, name: 1 }).lean();
 };
 
-// User Story #32: Recommend beverages based on user message
+// User Story #32 recommend beverages based on user message
 menuItemSchema.statics.recommendByMessage = async function recommendByMessage(message) {
   const text = String(message || "").toLowerCase();
 
   const stopWords = [
-    "any", "recommendations", "recommendation", "today", "like", "have",
-    "drink", "drinks", "i", "to", "a", "the", "for", "please"
+    "any",
+    "recommendations",
+    "recommendation",
+    "recommend",
+    "today",
+    "like",
+    "have",
+    "drink",
+    "drinks",
+    "i",
+    "to",
+    "a",
+    "the",
+    "for",
+    "please",
   ];
 
   const keywords = text

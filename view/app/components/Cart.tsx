@@ -45,6 +45,15 @@ function getCartItemImage(item: CartItem) {
   return "/img/b001.png";
 }
 
+function getCategorySlugByDrinkId(drinkId?: string) {
+  // Student note: this lets Edit Beverage open the real drink customisation page.
+  if (["b001", "b002", "b003", "b004", "b005"].includes(drinkId || "")) return "milk-tea";
+  if (["b006", "b007", "b008", "b009"].includes(drinkId || "")) return "matcha-teas";
+  if (["b010", "b012"].includes(drinkId || "")) return "ice-blended";
+  if (drinkId === "b011") return "local-favourites";
+  return "milk-tea";
+}
+
 export default function Cart() {
   const router = useRouter();
 
@@ -115,11 +124,7 @@ export default function Cart() {
       return;
     }
 
-    router.push(
-      `/buy-driptea?drinkId=${encodeURIComponent(
-        item.drinkId
-      )}&editCartItem=${encodeURIComponent(item.backendId || "")}`
-    );
+    router.push(`/menu/${getCategorySlugByDrinkId(item.drinkId)}/${encodeURIComponent(item.drinkId)}`);
   }
 
   async function handleIncrease(item: CartItem) {

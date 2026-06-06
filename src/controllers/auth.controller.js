@@ -34,7 +34,41 @@ async function login(req, res) {
     }
 }
 
+async function resetPassword(req, res) {
+    try {
+        await authService.resetPassword(req.body);
+
+        res.json({
+            ok: true,
+            message: "Password has been reset.",
+        });
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            ok: false,
+            message: error.message,
+        });
+    }
+}
+
+async function changePassword(req, res) {
+    try {
+        await authService.changePassword(req.body);
+
+        res.json({
+            ok: true,
+            message: "Password changed successfully.",
+        });
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            ok: false,
+            message: error.message,
+        });
+    }
+}
+
 module.exports = {
     register,
     login,
+    resetPassword,
+    changePassword,
 };

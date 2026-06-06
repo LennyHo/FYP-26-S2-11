@@ -10,5 +10,8 @@ router.get("/auth/test", (req, res) => {
 
 router.post("/auth/register", authController.register);
 router.post("/auth/login", authController.login);
+// Student note: these two routes connect the forgot/change password buttons to MongoDB.
+router.post("/auth/reset-password", authController.resetPassword);
+router.patch("/auth/change-password", authController.changePassword);
 
 module.exports = router;

@@ -698,7 +698,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         const apiBase = process.env.NODE_ENV === 'development'
           ? 'http://localhost:5000'
           : ((process.env.NEXT_PUBLIC_DRIPTEA_API_BASE && process.env.NEXT_PUBLIC_DRIPTEA_API_BASE.trim()) || 'https://driptea-trrn.onrender.com');
-        const res = await fetch(`${apiBase}/chat`, {
+        const res = await fetch(`${apiBase}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

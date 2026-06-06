@@ -212,7 +212,7 @@ export async function POST(request: Request) {
 
     for (const backendBase of backendBases) {
       try {
-        backendResponse = await fetch(`${backendBase}/chat`, {
+        backendResponse = await fetch(`${backendBase}/api/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
