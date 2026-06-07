@@ -91,7 +91,7 @@
   z-index: 100;
   flex-direction: column;
   padding: 8px 0;
-  animation: fadeInProfileDropdown 0.18s ease;
+  animation: fadeInProfileDropdown 0.35s ease;
 }
 
 .profileDropdownItem {
