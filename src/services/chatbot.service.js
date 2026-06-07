@@ -1,7 +1,7 @@
 const {
-    isAddToCartRequest,
+    //isAddToCartRequest,
     extractBeverageId,
-    isViewCartRequest,
+    //isViewCartRequest,
 } = require("../utils/chatIntent.util");
 
 const aiClient = require("../ai/aiClient");
@@ -23,8 +23,24 @@ async function findDrinkByName(message) {
     msg.includes(String(drink.name || "").toLowerCase())
     );
 }
+// User Story #25: Chat with Chatbot
+async function getConversationHistory(conversationId) {
+    return ChatbotSession.getConversationHistory(conversationId);
+}
+// End of User Story #25
 
 // User Story #199: Add to Cart Intent
+function isAddToCartRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    return (
+    /add.*cart/.test(msg) ||
+    /put.*cart/.test(msg) ||
+    /order.*this/.test(msg) ||
+    /add\s+[a-z]\d{3}/i.test(msg)
+    );
+}
+
 async function resolveBeverageId(message) {
     let beverageId = extractBeverageId(message);
 
@@ -60,8 +76,89 @@ function resolveLastDrinkFromHistory(history) {
     }
     return null;
 }
+
+async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
+    const addedItems = [];
+
+    for (const hiddenItem of hiddenCartItems) {
+    const drink = await findDrinkByName(hiddenItem.name);
+
+    if (!drink) {
+        console.warn("[ChatbotService] Hidden cart drink not found:", hiddenItem.name);
+        continue;
+    }
+
+    const customization = parseCustomization(hiddenItem.details);
+
+    const cartItem = await cartService.addToCart(userId, drink.itemId, {
+        quantity: 1,
+        customization,
+    });
+
+    cartItem.drinkInfo = drink;
+    cartItem.menuItemCode = drink.itemId;
+
+    addedItems.push(cartItem);
+    }
+
+    return addedItems;
+}
 // End of User Story #199
 
+// User Story #200: View Cart
+function isViewCartRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    return (
+        msg.includes("view cart") ||
+        msg.includes("check cart") ||
+        msg.includes("show cart") ||
+        msg.includes("my cart") ||
+        msg.includes("cart items") ||
+        msg.includes("what is in my cart") ||
+        msg.includes("what's in my cart")
+    );
+}
+
+async function buildCartSummary(userId) {
+    const cartItems = await cartService.getCart(userId);
+
+    const groupedItems = {};
+
+    cartItems.forEach((item) => {
+    const key = JSON.stringify({
+        name: item.name,
+        customization: item.customization || {},
+    });
+
+    if (!groupedItems[key]) {
+        groupedItems[key] = {
+        name: item.name,
+        quantity: 0,
+        total: 0,
+        };
+    }
+
+    groupedItems[key].quantity += Number(item.quantity || 1);
+    groupedItems[key].total += Number(item.lineTotal || 0);
+    });
+
+    const cartSummaryHtml = Object.values(groupedItems)
+    .map((item) => `${item.name} × ${item.quantity} - S$ ${item.total.toFixed(2)}`)
+    .join("<br>");
+
+    const cartTotal = cartItems.reduce(
+    (sum, item) => sum + Number(item.lineTotal || 0),
+    0
+    );
+
+    return {
+    cartItems,
+    cartSummaryHtml,
+    cartTotal,
+    };
+}
+// End of User Story #200
 
 function extractHiddenCartData(reply) {
     const match = String(reply || "").match(
@@ -183,71 +280,6 @@ function fixMissingLineBreaks(reply) {
         .trim();
 }
 
-async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
-    const addedItems = [];
-
-    for (const hiddenItem of hiddenCartItems) {
-    const drink = await findDrinkByName(hiddenItem.name);
-
-    if (!drink) {
-        console.warn("[ChatbotService] Hidden cart drink not found:", hiddenItem.name);
-        continue;
-    }
-
-    const customization = parseCustomization(hiddenItem.details);
-
-    const cartItem = await cartService.addToCart(userId, drink.itemId, {
-        quantity: 1,
-        customization,
-    });
-
-    cartItem.drinkInfo = drink;
-    cartItem.menuItemCode = drink.itemId;
-
-    addedItems.push(cartItem);
-    }
-
-    return addedItems;
-}
-
-async function buildCartSummary(userId) {
-    const cartItems = await cartService.getCart(userId);
-
-    const groupedItems = {};
-
-    cartItems.forEach((item) => {
-    const key = JSON.stringify({
-        name: item.name,
-        customization: item.customization || {},
-    });
-
-    if (!groupedItems[key]) {
-        groupedItems[key] = {
-        name: item.name,
-        quantity: 0,
-        total: 0,
-        };
-    }
-
-    groupedItems[key].quantity += Number(item.quantity || 1);
-    groupedItems[key].total += Number(item.lineTotal || 0);
-    });
-
-    const cartSummaryHtml = Object.values(groupedItems)
-    .map((item) => `${item.name} × ${item.quantity} - S$ ${item.total.toFixed(2)}`)
-    .join("<br>");
-
-    const cartTotal = cartItems.reduce(
-    (sum, item) => sum + Number(item.lineTotal || 0),
-    0
-    );
-
-    return {
-    cartItems,
-    cartSummaryHtml,
-    cartTotal,
-    };
-}
 
 // User Story #198: View Purchase History
 function isPurchaseHistoryRequest(message) {

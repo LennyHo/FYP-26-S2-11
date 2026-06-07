@@ -17,7 +17,8 @@ const menuItemSchema = new mongoose.Schema(
   { timestamps: true, collection: "menu_items" }
 );
 
-// User Story #19 search for beverages by keyword
+// User Story #21: search for beverages by keyword
+// User Story #27: search for beverages via chatbot
 menuItemSchema.statics.searchBeverage = async function searchBeverage(keyword) {
   const searchText = String(keyword || "").trim();
 

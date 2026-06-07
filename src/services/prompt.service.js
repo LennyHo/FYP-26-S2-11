@@ -11,10 +11,10 @@ function getLanguageInstruction() {
   if (USE_MATCHED_LANGUAGE) {
     return "Reply in the same language as the user's latest message.";
   }
-
   return "Reply in UK English only.";
 }
 
+  // User Story #27: Search Beverages
 async function isMenuRequest(message) {
   const msg = String(message || "").toLowerCase();
 
@@ -81,6 +81,7 @@ function filterMenu(beverages, message) {
 
   return matched.length ? matched : beverages.slice(0, 8);
 }
+// End of User Story #27
 
 async function buildSystemPrompt(userMessage, extraContext = "") {
   const langInstruction = USE_MATCHED_LANGUAGE

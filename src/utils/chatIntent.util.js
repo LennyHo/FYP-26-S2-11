@@ -19,23 +19,9 @@ function extractBeverageId(message) {
   return match ? match[0].toLowerCase() : null;
 }
 
-function isViewCartRequest(message) {
-  const msg = String(message || "").toLowerCase();
-
-  return (
-    msg.includes("view cart") ||
-    msg.includes("check cart") ||
-    msg.includes("show cart") ||
-    msg.includes("my cart") ||
-    msg.includes("cart items") ||
-    msg.includes("what is in my cart") ||
-    msg.includes("what's in my cart")
-  );
-}
-
 module.exports = {
   isCartQuery,
-  isAddToCartRequest,
+  //isAddToCartRequest,
   extractBeverageId,
-  isViewCartRequest,
+  //isViewCartRequest,
 };

@@ -1,5 +1,6 @@
 const chatbotService = require("../services/chatbot.service");
 
+// Fallback system for entire chatbot
 async function handleChat(req, res) {
     try {
     const { message, conversationId, userId } = req.body || {};
