@@ -303,19 +303,26 @@ function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
     action();
   }
 
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
   return (
-    <div
-      className={styles.profileMenuWrapper}
-      ref={menuRef}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
+    <div className={styles.profileMenuWrapper} ref={menuRef}>
       <button
         type="button"
         className={styles.profilePicBtn}
         tabIndex={0}
         aria-haspopup="true"
         aria-expanded={open}
+        onClick={() => setOpen(v => !v)}
       >
         <img src={profilePic} alt="Profile" className={styles.profilePic} />
       </button>
