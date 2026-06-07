@@ -151,10 +151,15 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
       router.push("/buy-driptea");
     };
 
+    (window as any).handlePurchaseHistory = () => {
+      router.push("/purchase-history");
+    };
+
     return () => {
       delete (window as any).handleCart;
       delete (window as any).handleCheckout;
       delete (window as any).handleMenu;
+      delete (window as any).handlePurchaseHistory;
     };
   }, [router]);
 
@@ -1590,89 +1595,86 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
         {visibleMessages.map((msg, index) => (
           <React.Fragment key={msg.id}>
             <div className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
-            {!msg.isUser && (
-              <div className={styles.botMeta}>
-                <Image
-                  src={avyLogo}
-                  alt="Avy"
-                  width={18}
-                  height={18}
-                  className={styles.messageAvatar}
-                />
+              {!msg.isUser && (
+                <div className={styles.botMeta}>
+                  <Image
+                    src={avyLogo}
+                    alt="Avy"
+                    width={18}
+                    height={18}
+                    className={styles.messageAvatar}
+                  />
                   <span className={styles.assistantLabel}>Avy</span>
-                <span className={styles.metaDivider}>•</span>
-                <time className={styles.messageTime}>{formatMessageTime(msg.id)}</time>
-              </div>
-            )}
-            <div
-              className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}
-              onClick={handleChatClick}
-            >
-              <div className={styles.bubbleText}>
-              {!msg.isUser && msg.text.includes('<img') && msg.text.includes('startOrder') ? (
-                  <DrinkRecCards
-                    // Wrap msg.text here!
-                    msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, '')}
-                    flippedCard={flippedCard}
-                    setFlippedCard={setFlippedCard}
-                  />
-                ) : (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: msg.isUser
-                        ? convertDrinkNamesToLinks(msg.text)
-                        // Wrap the final output here!
-                        : sanitizeExcessiveBreaks(applyGlossaryTooltips(convertDrinkNamesToLinks(msg.text)).trim())
-                    }}
-                  />
-                )}
-                {/* Web source cards removed per request */}
-              </div>
-            </div>
+                  <span className={styles.metaDivider}>•</span>
+                  <time className={styles.messageTime}>{formatMessageTime(msg.id)}</time>
+                </div>
+              )}
 
-            {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && (
-              <div className={styles.drinkCardList}>
-                {msg.recommendedDrinks.map((drink) => (
-                  <DrinkCard
-                    key={drink.id}
-                    id={drink.id}
-                    name={drink.name}
-                    price={`S$ ${Number(drink.price).toFixed(2)}`}
-                    image={
-                      drink.image ||
-                      `/img/bubble_teas/${drink.id}.png`
-                    }
-                    categorySlug={
-                      drink.category
-                        .toLowerCase()
-                        .replace(/\s+/g, "-")
-                    }
-                    accent={
-                      drink.category?.toLowerCase().includes("matcha")
-                        ? "green"
-                        : drink.category?.toLowerCase().includes("ice")
-                        ? "red"
-                        : "brown"
-                    }
-                  />
-                ))}
+              <div
+                className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}
+                onClick={handleChatClick}
+              >
+                <div className={styles.bubbleText}>
+                  {!msg.isUser && msg.text.includes("<img") && msg.text.includes("startOrder") ? (
+                    <DrinkRecCards
+                      msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
+                      flippedCard={flippedCard}
+                      setFlippedCard={setFlippedCard}
+                    />
+                  ) : (
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: msg.isUser
+                          ? convertDrinkNamesToLinks(msg.text)
+                          : sanitizeExcessiveBreaks(msg.text),
+                      }}
+                    />
+                  )}
+
+                  {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && (
+                    <div className={styles.drinkCardList}>
+                      {msg.recommendedDrinks.map((drink) => (
+                        <DrinkCard
+                          key={drink.id}
+                          id={drink.id}
+                          name={drink.name}
+                          price={`S$ ${Number(drink.price).toFixed(2)}`}
+                          image={drink.image}
+                          categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
+                          accent={
+                            drink.category?.toLowerCase().includes("matcha")
+                              ? "green"
+                              : drink.category?.toLowerCase().includes("ice")
+                              ? "red"
+                              : "brown"
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
 
               {!msg.isUser && (msg as any).showViewCart && (
                 <div className={styles.messageActionRow}>
                   <button
                     type="button"
                     className={styles.messageActionBtn}
-                    onClick={() => { if (onOpenCart) onOpenCart(); else router.push('/cart'); }}
+                    onClick={() => {
+                      if (onOpenCart) onOpenCart();
+                      else router.push("/cart");
+                    }}
                   >
                     View cart
                   </button>
+
                   {(msg as any).showCustomizeLink && (
                     <button
                       type="button"
                       className={`${styles.messageActionBtn} ${styles.messageActionBtnSecondary}`}
-                      onClick={() => router.push(`/menu/${(msg as any).customizeCategory}/${(msg as any).customizeDrinkId}`)}
+                      onClick={() =>
+                        router.push(`/menu/${(msg as any).customizeCategory}/${(msg as any).customizeDrinkId}`)
+                      }
                     >
                       Customize in detail
                     </button>
@@ -1683,7 +1685,9 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
 
             {isInitialized && !normalizedSearchQuery && !hasUserMessage && index === 0 && !msg.isUser && (
               <div className={styles.welcomeIntroCard}>
-                <p key={welcomeAnimationKey} className={styles.welcomeGreeting}>{welcomeGreeting}</p>
+                <p key={welcomeAnimationKey} className={styles.welcomeGreeting}>
+                  {welcomeGreeting}
+                </p>
               </div>
             )}
           </React.Fragment>
@@ -1919,3 +1923,4 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
     </aside>
   );
 }
+

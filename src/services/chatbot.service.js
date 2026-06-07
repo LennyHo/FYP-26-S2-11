@@ -10,6 +10,7 @@ const ChatbotSession = require("../models/chatbotSession.model");
 const { buildSystemPrompt } = require("./prompt.service");
 const cartService = require("./cart.service");
 const MenuItem = require("../models/menuItem.model");
+const purchaseHistoryService = require("./purchaseHistory.service");
 
 async function findDrinkByName(message) {
     const msg = String(message || "").toLowerCase();
@@ -23,6 +24,7 @@ async function findDrinkByName(message) {
     );
 }
 
+// User Story #199: Add to Cart Intent
 async function resolveBeverageId(message) {
     let beverageId = extractBeverageId(message);
 
@@ -36,6 +38,30 @@ async function resolveBeverageId(message) {
 
     return beverageId;
 }
+
+function resolveLastDrinkFromHistory(history) {
+    if (!Array.isArray(history)) return null;
+    for (let i = history.length - 1; i >= 0; i--) {
+        const msg = history[i];
+        if (msg.role !== "assistant") continue;
+        const content = String(msg.content || "");
+        // Check hidden-cart-data first (most reliable)
+        const cartMatch = content.match(/<div class=['"]hidden-cart-data['"][^>]*>([\s\S]*?)<\/div>/i);
+        if (cartMatch) {
+            const name = cartMatch[1].split("|")[0].trim();
+            if (name) return name;
+        }
+        // Fall back to order summary pattern: "[Drink Name] - S$[price]"
+        const summaryMatch = content.match(/Here is your order summary:(?:<br>)?\s*([^<\n\-]+?)\s*-\s*S\$/i);
+        if (summaryMatch) {
+            const name = summaryMatch[1].trim();
+            if (name) return name;
+        }
+    }
+    return null;
+}
+// End of User Story #199
+
 
 function extractHiddenCartData(reply) {
     const match = String(reply || "").match(
@@ -129,27 +155,7 @@ function parseOrderDetails(message) {
     return { size, ice, sugar, toppings };
 }
 
-function resolveLastDrinkFromHistory(history) {
-    if (!Array.isArray(history)) return null;
-    for (let i = history.length - 1; i >= 0; i--) {
-        const msg = history[i];
-        if (msg.role !== "assistant") continue;
-        const content = String(msg.content || "");
-        // Check hidden-cart-data first (most reliable)
-        const cartMatch = content.match(/<div class=['"]hidden-cart-data['"][^>]*>([\s\S]*?)<\/div>/i);
-        if (cartMatch) {
-            const name = cartMatch[1].split("|")[0].trim();
-            if (name) return name;
-        }
-        // Fall back to order summary pattern: "[Drink Name] - S$[price]"
-        const summaryMatch = content.match(/Here is your order summary:(?:<br>)?\s*([^<\n\-]+?)\s*-\s*S\$/i);
-        if (summaryMatch) {
-            const name = summaryMatch[1].trim();
-            if (name) return name;
-        }
-    }
-    return null;
-}
+
 
 function cleanAiReply(reply) {
     return String(reply || "")
@@ -243,6 +249,21 @@ async function buildCartSummary(userId) {
     };
 }
 
+// User Story #198: View Purchase History
+function isPurchaseHistoryRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    return (
+        msg.includes("purchase history") ||
+        msg.includes("order history") ||
+        msg.includes("latest order") ||
+        msg.includes("last order") ||
+        msg.includes("my purchases") ||
+        msg.includes("my orders")
+    );
+}
+// End of User Story #198
+
 // User Story #32: Recommend beverages based on user message
 function isRecommendationRequest(message) {
     const msg = String(message || "").toLowerCase();
@@ -269,15 +290,15 @@ function formatDrinkCards(drinks) {
 }
 // End of User Story #32
 
-
+// Main chatbot message handler
 async function handleChatMessage({ message, conversationId, userId }) {
     const safeMessage = String(message || "").trim();
 
     if (!safeMessage) {
-    return {
-        reply: "Please send a message.",
-        system_action: { ui_navigation: "none" },
-    };
+        return {
+            reply: "Please send a message.",
+            system_action: { ui_navigation: "none" },
+        };
     }
 
     const activeConversationId = conversationId || `guest-${Date.now()}`;
@@ -308,108 +329,174 @@ async function handleChatMessage({ message, conversationId, userId }) {
         }
     }
 
-    if (isViewCartRequest(safeMessage)) {
-    if (!userId) {
+    // User Story #198: View Purchase History
+    if (isPurchaseHistoryRequest(safeMessage)) {
+        if (!userId) {
+            return {
+                reply: "Please log in first before viewing your purchase history.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const purchaseHistory = await purchaseHistoryService.getPurchaseHistory(userId);
+        const latestOrder = purchaseHistory[0];
+
+        if (!latestOrder) {
+            return {
+                reply:
+                    'You have no purchase history yet.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const itemsHtml = latestOrder.items
+            .map((item) => {
+                const c = item.customization || {};
+                const toppings =
+                    Array.isArray(c.toppings) && c.toppings.length > 0
+                        ? c.toppings.join(", ")
+                        : "No toppings";
+
+                const details = [c.size, c.ice, c.sugar, toppings]
+                    .filter(Boolean)
+                    .join(" · ");
+
+                return `${item.name} × ${item.quantity}  <br>${details}  <br>S$ ${Number(item.lineTotal || 0).toFixed(2)}`;
+            })
+            .join("<br><br>");
+
+        const reply =
+            `🍓 <strong>Your Most Recent Order</strong><br><br>` +
+            `Order #${latestOrder.displayOrderNo || latestOrder.orderNo} <br><br>` +
+            `<p>           </p>` + 
+            `Order Status: ${latestOrder.status}<br>` +
+            `<p>           </p>` +
+            `Payment Status: ${latestOrder.paymentStatus || "Paid"}<br><br>` +
+            `<p>           </p>` + 
+            `<strong>Items Ordered</strong><br>` +
+            `${itemsHtml}<br><br>` +
+            `<p>           </p>` + 
+            `<strong>Total Paid:</strong> S$ ${Number(latestOrder.totalAmount || 0).toFixed(2)}<br><br>` +
+            `<button class="chat-nav-btn-compact" onclick="handlePurchaseHistory()">View Full Purchase History</button>`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "user",
+            content: safeMessage,
+        });
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "assistant",
+            content: reply,
+        });
+
         return {
-        reply: "Please log in first before viewing your cart.",
-        system_action: { ui_navigation: "none" },
+            reply,
+            system_action: { ui_navigation: "none" },
+        };
+    }
+
+    // User Story #199: Add to Cart Intent
+    if (isAddToCartRequest(safeMessage)) {
+        if (!userId) {
+            return {
+                reply: "Please log in first before adding items to your cart.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        let beverageId = await resolveBeverageId(safeMessage);
+
+        if (!beverageId) {
+            const lastDrinkName = resolveLastDrinkFromHistory(history);
+            if (lastDrinkName) {
+                beverageId = await resolveBeverageId(lastDrinkName);
+            }
+        }
+
+        if (!beverageId) {
+            return {
+                reply:
+                    "Which drink would you like me to add? You can say something like 'add Classic Milk Tea to my cart'.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const cartItem = await cartService.addToCart(userId, beverageId, {
+            quantity: 1,
+            customization: {
+                size: "Regular",
+                ice: "Normal Ice",
+                sugar: "Normal Sweet",
+                toppings: [],
+            },
+        });
+
+        const reply =
+            `${cartItem.name} has been added to your cart.<br><br>` +
+            `Added to your cart successfully.<br><br>` +
+            `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>` +
+            `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "user",
+            content: safeMessage,
+        });
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "assistant",
+            content: reply,
+        });
+
+        return {
+            reply,
+            system_action: { ui_navigation: "none" },
         };
     }
 
     // User Story #200: View Cart Intent
-    const { cartItems, cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
-
-    if (!cartItems.length) {
-        return {
-        reply:
-        'Your cart is currently empty.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
-        system_action: { ui_navigation: "none" },
-        };
-    }
-
-return {
-        reply: `
-Your current cart:<br><br>
-${cartSummaryHtml}<br><br>
-Total: S$ ${cartTotal.toFixed(2)}<br><br>
-<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>
-<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>
-        `,
-        system_action: { ui_navigation: "none" },
-    };
-    }
-
-    if (isAddToCartRequest(safeMessage)) {
-    if (!userId) {
-        return {
-        reply: "Please log in first before adding items to your cart.",
-        system_action: { ui_navigation: "none" },
-        };
-    }
-
-    let beverageId = await resolveBeverageId(safeMessage);
-
-    if (!beverageId) {
-        const lastDrinkName = resolveLastDrinkFromHistory(history);
-        if (lastDrinkName) {
-            beverageId = await resolveBeverageId(lastDrinkName);
+    if (isViewCartRequest(safeMessage)) {
+        if (!userId) {
+            return {
+                reply: "Please log in first before viewing your cart.",
+                system_action: { ui_navigation: "none" },
+            };
         }
-    }
 
-    if (!beverageId) {
+        const { cartItems, cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
+
+        if (!cartItems.length) {
+            return {
+                reply:
+                    'Your cart is currently empty.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
         return {
-        reply:
-            "Which drink would you like me to add? You can say something like 'add Classic Milk Tea to my cart'.",
-        system_action: { ui_navigation: "none" },
+            reply:
+                `Your current cart:<br><br>` +
+                `${cartSummaryHtml}<br><br>` +
+                `Total: S$ ${cartTotal.toFixed(2)}<br><br>` +
+                `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>` +
+                `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>`,
+            system_action: { ui_navigation: "none" },
         };
     }
 
-    const cartItem = await cartService.addToCart(userId, beverageId, {
-        quantity: 1,
-        customization: {
-        size: "Regular",
-        ice: "Normal Ice",
-        sugar: "Normal Sweet",
-        toppings: [],
-        },
-    });
-
-    const { cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
-
-    let reply = `${cartItem.name} has been added to your cart.`;
-
-    reply = cleanAiReply(reply);
-
-reply += `
-<br><br>
-Added to your cart successfully.<br><br>
-<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button>
-<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>
-`;
-
-    appendToConversation(history, { role: "user", content: safeMessage });
-    appendToConversation(history, { role: "assistant", content: reply });
-
-    return {
-        reply,
-        system_action: { ui_navigation: "none" },
-    };
-    }
-
+    // Default AI response
     const systemPrompt = await buildSystemPrompt(safeMessage);
 
     let reply = await aiClient.generateText(
         safeMessage,
         history,
         systemPrompt
-        );
+    );
 
     reply = fixMissingLineBreaks(reply);
-    console.log("[AI REPLY BEFORE EXTRACT]", reply);
+
     const hiddenCartItems = extractHiddenCartData(reply);
 
     if (hiddenCartItems.length > 0) {
-        console.log("[ChatbotService] hiddenCartItems:", hiddenCartItems);
         if (!userId) {
             reply = cleanAiReply(reply);
             reply += `<br><br>Please log in first before I add this to your cart.`;
@@ -428,59 +515,58 @@ Added to your cart successfully.<br><br>
                 };
 
                 const orderLines = addedItems.map((item) => {
-                    console.log("[OrderSummary] drinkInfo:", item.drinkInfo);
-                    console.log("[OrderSummary] customization:", item.customization);
                     const c = item.customization || {};
                     const drink = item.drinkInfo || {};
-
-                    const toppings =
-                    Array.isArray(c.toppings) && c.toppings.length > 0
-                    ? c.toppings.join(", ")
-                    : "No toppings";
-
-                    const details = [c.size, c.ice, c.sugar, toppings]
-                    .filter(Boolean)
-                    .join(" · ");
-
-                    const sugarKey = String(c.sugar || "")
-                    .replace(/ sugar/i, "")
-                    .trim();
                     const nutrition = drink.nutritionInfo || {};
 
+                    const toppings =
+                        Array.isArray(c.toppings) && c.toppings.length > 0
+                            ? c.toppings.join(", ")
+                            : "No toppings";
+
+                    const details = [c.size, c.ice, c.sugar, toppings]
+                        .filter(Boolean)
+                        .join(" · ");
+
+                    const sugarKey = String(c.sugar || "")
+                        .replace(/ sugar/i, "")
+                        .trim();
+
                     const baseSugar = Number(
-                    nutrition.baseSugarG ??
-                    drink.base_sugar_g ??
-                    0
+                        nutrition.baseSugarG ??
+                        drink.base_sugar_g ??
+                        0
                     );
+
                     const addedSugar = ADDED_SUGAR_G[sugarKey] ?? 0;
                     const totalSugar = baseSugar + addedSugar;
 
                     const calories = Number(
-                    nutrition.baseCalories ??
-                    drink.base_calories ??
-                    0
-                    );
-
-                    const nutriGrade =
-                    nutrition.nutriGrade ??
-                    drink.nutri_grade ??
-                    "N/A";
-
-                    return [
-                    `${item.name} - S$ ${Number(item.lineTotal || item.unitPrice || 0).toFixed(2)}`,
-                    details,
-                    `Sugar: ${totalSugar}g | Calories: ${calories} kcal | Nutri-Grade: ${nutriGrade}`,
-                    ].join("<br>");
-                    });
-
-                    const orderTotal = addedItems.reduce(
-                        (sum, item) => sum + Number(item.lineTotal || 0),
+                        nutrition.baseCalories ??
+                        drink.base_calories ??
                         0
                     );
 
-                    reply =
+                    const nutriGrade =
+                        nutrition.nutriGrade ??
+                        drink.nutri_grade ??
+                        "N/A";
+
+                    return [
+                        `${item.name} - S$ ${Number(item.lineTotal || item.unitPrice || 0).toFixed(2)}`,
+                        details,
+                        `Sugar: ${totalSugar}g | Calories: ${calories} kcal | Nutri-Grade: ${nutriGrade}`,
+                    ].join("<br>");
+                });
+
+                const orderTotal = addedItems.reduce(
+                    (sum, item) => sum + Number(item.lineTotal || 0),
+                    0
+                );
+
+                reply =
                     `Excellent choice!<br><br>` +
-                    `Here is your order summary:<br>` +
+                    `Here is your order summary:<br><br>` +
                     `${orderLines.join("<br><br>")}<br><br>` +
                     `Total Price: S$ ${orderTotal.toFixed(2)}<br><br>` +
                     `Added to your cart successfully.<br><br>` +
@@ -489,12 +575,12 @@ Added to your cart successfully.<br><br>
                     `Total: S$ ${cartTotal.toFixed(2)}<br><br>` +
                     `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>` +
                     `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>`;
-                }
+            }
         }
     }
 
-    console.log("[hiddenCartItems]", hiddenCartItems);
-    
+    reply = fixMissingLineBreaks(reply);
+
     await ChatbotSession.appendToConversation(activeConversationId, userId, {
         role: "user",
         content: safeMessage,
@@ -505,19 +591,9 @@ Added to your cart successfully.<br><br>
         content: reply,
     });
 
-    // User Story #32: Attach drink cards when AI responds to a recommendation request
-    let recommendedDrinks = [];
-    if (isRecommendationRequest(safeMessage)) {
-        const drinks = await MenuItem.recommendByMessage(safeMessage);
-        if (drinks.length > 0) {
-            recommendedDrinks = formatDrinkCards(drinks);
-        }
-    }
-
     return {
-    reply,
-    ...(recommendedDrinks.length > 0 && { recommendedDrinks }),
-    system_action: { ui_navigation: "none" },
+        reply,
+        system_action: { ui_navigation: "none" },
     };
 }
 

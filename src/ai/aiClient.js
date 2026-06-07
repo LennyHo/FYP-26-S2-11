@@ -86,7 +86,7 @@ async function callGeminiTextWithRotation(userMessage, history, systemPrompt) {
 async function callGroqText(userMessage, history, systemPrompt) {
   const cleanHistory = history.map((msg) => ({
     role: msg.role === "assistant" ? "assistant" : "user",
-    content: String(msg.content || ""),
+    content: String(msg.content || "").slice(0, 1000),
   }));
 
   const response = await axios.post(
@@ -94,6 +94,7 @@ async function callGroqText(userMessage, history, systemPrompt) {
     {
       model: "llama-3.1-8b-instant",
       temperature: 0.7,
+      max_tokens: 500,
       messages: [
         { role: "system", content: String(systemPrompt || "") },
         ...cleanHistory,
