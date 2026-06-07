@@ -1780,31 +1780,27 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               rows={1}
               style={{resize: 'none', overflow: 'hidden'}}
             />
-            {/* Conditional Rendering: Show Send if typing, else show Mic/Speak */}
             <div className={styles.chatActionRow}>
-              {input.trim() ? (
-                <button
-                  type="button"
-                  className={styles.sendBtn}
-                  onClick={() => sendMessage()}
-                  disabled={isLoading}
-                  title="Send message"
-                  aria-label="Send message"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 19V5" />
-                    <path d="M5 12l7-7 7 7" />
-                  </svg>
-                </button>
-              ) : (
-                <SpeechControls
-                  isListening={isListening}
-                  isLoading={isLoading}
-                  onMicClick={handleMicrophoneClick}
-                  onSpeakClick={handleSpeakClick}
-                  isSpeakMode={isSpeakMode}
-                />
-              )}
+              <button
+                type="button"
+                className={styles.sendBtn}
+                onClick={() => sendMessage()}
+                disabled={isLoading}
+                title="Send message"
+                aria-label="Send message"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 19V5" />
+                  <path d="M5 12l7-7 7 7" />
+                </svg>
+              </button>
+              {/* <SpeechControls
+                isListening={isListening}
+                isLoading={isLoading}
+                onMicClick={handleMicrophoneClick}
+                onSpeakClick={handleSpeakClick}
+                isSpeakMode={isSpeakMode}
+              /> */}
             </div>
           </div>
         </div>
