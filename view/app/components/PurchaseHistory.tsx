@@ -29,7 +29,7 @@ function formatCustomization(customization?: Record<string, unknown>) {
     ? customization.toppings.join(", ")
     : "";
 
-  return [
+  const text = [
     customization.size,
     customization.ice,
     customization.sugar,
@@ -37,6 +37,18 @@ function formatCustomization(customization?: Record<string, unknown>) {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  return text || "No customization";
+}
+
+function formatStatus(status?: string) {
+  if (!status) return "Pending";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function formatPaymentStatus(status?: string) {
+  if (!status) return "Paid";
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 export default function PurchaseHistory() {
@@ -58,7 +70,11 @@ export default function PurchaseHistory() {
         const response = await getPurchaseHistory(user.id);
         setOrders(response.data || []);
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Unable to load purchase history.");
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Unable to load purchase history."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -90,35 +106,55 @@ export default function PurchaseHistory() {
                 <article key={order.id} className="purchase-order">
                   <div className="purchase-order-top">
                     <div>
-                      <h2>
-                        Order #{order.displayOrderNo || "0001"}
-                      </h2>
+                      <h2>Order #{order.displayOrderNo || "0001"}</h2>
                       <p>{formatDate(order.createdAt)}</p>
                     </div>
 
                     <div className="purchase-status">
-                      <span>{order.status}</span>
-                      <strong>S$ {Number(order.totalAmount || 0).toFixed(2)}</strong>
+                      <span>{formatStatus(order.status)}</span>
+                      <strong>
+                        S$ {Number(order.totalAmount || 0).toFixed(2)}
+                      </strong>
                     </div>
                   </div>
 
-                  <div className="purchase-items">
-                    {order.items.map((item, index) => (
-                      <div key={`${item.name}-${index}`} className="purchase-item">
-                        <div>
-                          <strong>
-                            {item.name} × {item.quantity}
-                          </strong>
-                          <p>{formatCustomization(item.customization)}</p>
-                        </div>
+                  <div className="purchase-divider" />
 
-                        <span>S$ {Number(item.lineTotal || 0).toFixed(2)}</span>
-                      </div>
-                    ))}
+                  <div className="purchase-items">
+                    {order.items && order.items.length > 0 ? (
+                      order.items.map((item, index) => (
+                        <div
+                          key={`${order.id}-${item.name}-${index}`}
+                          className="purchase-item"
+                        >
+                          <img
+                            src={item.image || "/img/no-image.png"}
+                            alt={item.name}
+                            className="purchase-item-image"
+                          />
+
+                          <div className="purchase-item-info">
+                            <strong>
+                              {item.name} × {item.quantity}
+                            </strong>
+                            <p>{formatCustomization(item.customization)}</p>
+                          </div>
+
+                          <span className="purchase-item-price">
+                            S$ {Number(item.lineTotal || 0).toFixed(2)}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="purchase-message">
+                        No purchased items recorded for this order.
+                      </p>
+                    )}
                   </div>
 
                   <div className="purchase-payment">
-                    Payment status: <strong>{order.paymentStatus || "Paid"}</strong>
+                    Payment status:{" "}
+                    <strong>{formatPaymentStatus(order.paymentStatus)}</strong>
                   </div>
                 </article>
               ))}

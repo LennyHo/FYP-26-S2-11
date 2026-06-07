@@ -2,7 +2,7 @@ const purchaseHistoryService = require("../services/purchaseHistory.service");
 
 async function getPurchaseHistory(req, res) {
   try {
-    const { userId } = req.query;
+    const userId = req.query.userId || req.params.userId;
 
     if (!userId) {
       return res.status(400).json({
@@ -11,24 +11,16 @@ async function getPurchaseHistory(req, res) {
       });
     }
 
-    const orders = await purchaseHistoryService.getPurchaseHistory(userId);
+    const history = await purchaseHistoryService.getPurchaseHistory(userId);
 
-    res.json({
+    return res.json({
       ok: true,
-      data: orders.map((order) => ({
-        id: order._id.toString(),
-        orderNo: order.orderNo,
-        displayOrderNo: order.displayOrderNo,
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        totalAmount: order.totalAmount,
-        createdAt: order.createdAt,
-        items: order.items || [],
-      })),
+      data: history,
     });
   } catch (error) {
-    console.error("[PurchaseHistoryController] Failed:", error);
-    res.status(500).json({
+    console.error("[PurchaseHistoryController] getPurchaseHistory failed:", error);
+
+    return res.status(500).json({
       ok: false,
       message: "Unable to load purchase history.",
     });

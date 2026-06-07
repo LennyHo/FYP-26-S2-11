@@ -101,6 +101,7 @@ export type DripTeaOrder = {
     name: string;
     quantity: number;
     lineTotal: number;
+    image: string;
     customization: Record<string, unknown>;
   }>;
 };
@@ -447,7 +448,9 @@ export type DripTeaPurchaseHistoryItem = {
   totalAmount: number;
   createdAt?: string;
   items: Array<{
+    id?: string;
     name: string;
+    image?: string;
     quantity: number;
     unitPrice: number;
     lineTotal: number;

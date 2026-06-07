@@ -97,6 +97,38 @@ function parseCustomization(details) {
     };
 }
 
+function parseOrderDetails(message) {
+    const msg = String(message || "").toLowerCase();
+
+    let size = null;
+    if (/\b(large|big|l)\b/.test(msg)) size = "Large";
+    else if (/\b(medium|regular|normal|m)\b/.test(msg)) size = "Regular";
+
+    let ice = null;
+    if (/no ice|without ice/.test(msg)) ice = "No Ice";
+    else if (/less ice|little ice/.test(msg)) ice = "Less Ice";
+    else if (/hot|warm/.test(msg)) ice = "Hot";
+    else if (/normal ice|regular ice/.test(msg)) ice = "Normal Ice";
+
+    let sugar = null;
+    if (/no sugar|zero sugar|0\s*%|unsweetened/.test(msg)) sugar = "0%";
+    else if (/less sugar|low sugar|少糖|25\s*%/.test(msg)) sugar = "25%";
+    else if (/half sugar|medium sugar|50\s*%/.test(msg)) sugar = "50%";
+    else if (/normal sugar|full sugar|100\s*%/.test(msg)) sugar = "100%";
+
+    let toppings = null;
+    if (/no topping|no toppings|none|without topping/.test(msg)) toppings = [];
+    else {
+    const found = [];
+        if (/pearl|pearls|tapioca/.test(msg)) found.push("Pearls");
+        if (/aloe/.test(msg)) found.push("Aloe Vera");
+        if (/cheese foam|foam/.test(msg)) found.push("Cheese Foam");
+        if (found.length > 0) toppings = found;
+        }
+
+    return { size, ice, sugar, toppings };
+}
+
 function resolveLastDrinkFromHistory(history) {
     if (!Array.isArray(history)) return null;
     for (let i = history.length - 1; i >= 0; i--) {
@@ -138,6 +170,10 @@ function fixMissingLineBreaks(reply) {
         .replace(/(x\s*\d+\s*-\s*S\$\s*[0-9.]+)([A-Z])/g, "$1<br>$2")
         .replace(/(Total:\s*S\$\s*[0-9.]+)/gi, "<br>$1")
         .replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>")
+        // NEW: fix "?Regular" → "?<br><br>Regular"
+        .replace(/\?(Regular|Large)/gi, "?<br><br>$1")
+        // NEW: fix "Large (+S$1.50)Please" → "Large (+S$1.50)<br><br>Please"
+        .replace(/(\+S\$[0-9.]+\))(Please|Let|Kindly)/gi, "$1<br><br>$2")
         .trim();
 }
 

@@ -6,6 +6,28 @@ function toObjectId(id) {
     return mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
 }
 
+function calculateCustomizedPrice(basePrice, customization = {}) {
+    let price = Number(basePrice || 0);
+
+    if (String(customization.size || "").toLowerCase() === "large") {
+        price += 1.5;
+    }
+
+    const toppings = Array.isArray(customization.toppings)
+        ? customization.toppings
+        : [];
+
+    toppings.forEach((topping) => {
+    const name = String(topping).toLowerCase();
+
+    if (name.includes("pearl")) price += 1.0;
+    else if (name.includes("aloe")) price += 1.0;
+    else if (name.includes("cheese")) price += 1.5;
+    });
+
+    return price;
+}
+
 async function addToCart(customerId, beverageId, options = {}) {
     const userObjectId = toObjectId(customerId);
     const beverageObjectId = toObjectId(beverageId);
@@ -27,7 +49,7 @@ async function addToCart(customerId, beverageId, options = {}) {
     }
 
     const quantity = Number(options.quantity || 1);
-    const unitPrice = Number(menuItem.price);
+    const unitPrice = calculateCustomizedPrice(menuItem.price, options.customization);
     const lineTotal = unitPrice * quantity;
 
     const cartItem = await CartItem.create({

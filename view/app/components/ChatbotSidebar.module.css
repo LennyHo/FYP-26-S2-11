@@ -624,7 +624,6 @@
 }
 
 .compactContent {
-  display: flex;
   align-items: flex-start;
   gap: 8px;
   line-height: 1.65;
@@ -634,18 +633,14 @@
 }
 
 .bubbleText {
-  /* flex: 1; */
-  min-width: auto;
-  display: flex;
-  flex-direction: column;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  white-space: pre-line;
-  font-size: 1.08rem;
-  line-height: 1.6;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  white-space: pre-line;
+  white-space: normal;
+  line-height: 1.5;
+}
+
+.bubbleText br {
+  display: block;
+  content: "";
+  margin-bottom: 6px;
 }
 
 .sourceSection {
@@ -843,10 +838,6 @@
 .drinkRecOtherText {
   margin-bottom: 10px;
   line-height: 1.45;
-}
-
-.drinkRecOtherText:empty {
-
 }
 
 .drinkRecCardsWrap {
