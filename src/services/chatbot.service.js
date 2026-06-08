@@ -29,6 +29,103 @@ async function getConversationHistory(conversationId) {
 }
 // End of User Story #25
 
+// User Story #29: Get Health Advice from Chatbot
+function calculateNutrition(drink, sugarLevel, toppings = []) {
+    const sugarMap = {
+        "0%": 0,
+        "25%": 10,
+        "50%": 20,
+        "100%": 40,
+    };
+
+    let sugar =
+        Number(drink.base_sugar_g || 0) +
+        (sugarMap[sugarLevel] || 0);
+
+    let calories = Number(drink.base_calories || 0);
+
+    if (toppings.includes("Pearls")) {
+        sugar += 8;
+        calories += 60;
+    }
+
+    if (toppings.includes("Aloe Vera")) {
+        sugar += 4;
+        calories += 20;
+    }
+
+    if (toppings.includes("Cheese Foam")) {
+        sugar += 10;
+        calories += 90;
+    }
+
+    let grade = "A";
+
+    if (sugar > 5) grade = "B";
+    if (sugar > 10) grade = "C";
+    if (sugar > 15) grade = "D";
+
+    return {
+        sugar,
+        calories,
+        grade,
+    };
+}
+// End of User Story #29
+
+// User Story #31: Ask About Nutri-Grade
+function isNutriGradeQuestion(message) {
+    const msg = String(message || "").toLowerCase();
+
+    return (
+        msg.includes("nutri grade") ||
+        msg.includes("nutri-grade") ||
+        msg.includes("nutrition grade")
+    );
+}
+// End of User Story #31
+
+// User Story #32: Recommend beverages based on user message
+function isRecommendationRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    return (
+        msg.includes("recommend") ||
+        msg.includes("recommendation") ||
+        msg.includes("suggest") ||
+        msg.includes("what should i drink") ||
+        msg.includes("i like")
+    );
+}
+
+function formatDrinkCards(drinks) {
+    return drinks.map((drink) => ({
+        id: drink.itemId,
+        name: drink.name,
+        category: drink.category,
+        price: drink.price,
+        description: drink.description,
+        image: drink.image || `/img/bubble_teas/${drink.itemId}.png`,
+        tags: drink.tags || [],
+}));
+}
+// End of User Story #32
+
+// User Story #198: View Purchase History
+function isPurchaseHistoryRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    return (
+        msg.includes("purchase history") ||
+        msg.includes("order history") ||
+        msg.includes("latest order") ||
+        msg.includes("last order") ||
+        msg.includes("my purchases") ||
+        msg.includes("my orders")
+    );
+}
+// End of User Story #198
+
 // User Story #199: Add to Cart Intent
 function isAddToCartRequest(message) {
     const msg = String(message || "").toLowerCase();
@@ -280,92 +377,6 @@ function fixMissingLineBreaks(reply) {
         .trim();
 }
 
-
-// User Story #198: View Purchase History
-function isPurchaseHistoryRequest(message) {
-    const msg = String(message || "").toLowerCase();
-
-    return (
-        msg.includes("purchase history") ||
-        msg.includes("order history") ||
-        msg.includes("latest order") ||
-        msg.includes("last order") ||
-        msg.includes("my purchases") ||
-        msg.includes("my orders")
-    );
-}
-// End of User Story #198
-
-// User Story #29: Get Health Advice from Chatbot
-function calculateNutrition(drink, sugarLevel, toppings = []) {
-    const sugarMap = {
-        "0%": 0,
-        "25%": 10,
-        "50%": 20,
-        "100%": 40,
-    };
-
-    let sugar =
-        Number(drink.base_sugar_g || 0) +
-        (sugarMap[sugarLevel] || 0);
-
-    let calories = Number(drink.base_calories || 0);
-
-    if (toppings.includes("Pearls")) {
-        sugar += 8;
-        calories += 60;
-    }
-
-    if (toppings.includes("Aloe Vera")) {
-        sugar += 4;
-        calories += 20;
-    }
-
-    if (toppings.includes("Cheese Foam")) {
-        sugar += 10;
-        calories += 90;
-    }
-
-    let grade = "A";
-
-    if (sugar > 5) grade = "B";
-    if (sugar > 10) grade = "C";
-    if (sugar > 15) grade = "D";
-
-    return {
-        sugar,
-        calories,
-        grade,
-    };
-}
-// End of User Story #29
-
-// User Story #32: Recommend beverages based on user message
-function isRecommendationRequest(message) {
-    const msg = String(message || "").toLowerCase();
-
-    return (
-        msg.includes("recommend") ||
-        msg.includes("recommendation") ||
-        msg.includes("suggest") ||
-        msg.includes("what should i drink") ||
-        msg.includes("i like")
-    );
-}
-
-function formatDrinkCards(drinks) {
-    return drinks.map((drink) => ({
-        id: drink.itemId,
-        name: drink.name,
-        category: drink.category,
-        price: drink.price,
-        description: drink.description,
-        image: drink.image || `/img/bubble_teas/${drink.itemId}.png`,
-        tags: drink.tags || [],
-}));
-}
-// End of User Story #32
-
 // Main chatbot message handler
 async function handleChatMessage({ message, conversationId, userId }) {
     const safeMessage = String(message || "").trim();
@@ -379,6 +390,61 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
     const activeConversationId = conversationId || `guest-${Date.now()}`;
     const history = await ChatbotSession.getConversationHistory(activeConversationId);
+
+    // User Story #31: Ask About Nutri-Grade via chatbot
+    if (isNutriGradeQuestion(safeMessage)) {
+        const drink = await findDrinkByName(safeMessage);
+        const orderDetails = parseOrderDetails(safeMessage);
+
+        if (!drink) {
+            const reply =
+                "I do not have official nutrition data for that drink, so I cannot calculate the exact Nutri-Grade.<br><br>" +
+                "If no sugar is added, it may be a healthier choice, but the final Nutri-Grade still depends on the drink's base sugar, milk, powder, and other ingredients.";
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "user",
+                content: safeMessage,
+            });
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "assistant",
+                content: reply,
+            });
+
+            return {
+                reply,
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const nutrition = calculateNutrition(
+            drink,
+            orderDetails.sugar || "100%",
+            orderDetails.toppings || []
+        );
+
+        const reply =
+            `${drink.name} with ${orderDetails.sugar || "100%"} sugar has an estimated Nutri-Grade of ${nutrition.grade}.<br>` +
+            `Sugar: ${nutrition.sugar}g | Calories: ${nutrition.calories} kcal<br><br>` +
+            `<p>           </p>` +
+            `0% or 25% sugar is a healthier option.`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "user",
+            content: safeMessage,
+        });
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "assistant",
+            content: reply,
+        });
+
+        return {
+            reply,
+            system_action: { ui_navigation: "none" },
+        };
+    }
+    // End of User Story #31
 
     // User Story #32: Recommend beverages based on user message
     if (isRecommendationRequest(safeMessage)) {
@@ -442,7 +508,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
             .join("<br><br>");
 
         const reply =
-            `🍓 <strong>Your Most Recent Order</strong><br><br>` +
+            `<strong>Your Most Recent Order</strong><br><br>` +
             `Order #${latestOrder.displayOrderNo || latestOrder.orderNo} <br><br>` +
             `<p>           </p>` + 
             `Order Status: ${latestOrder.status}<br>` +
