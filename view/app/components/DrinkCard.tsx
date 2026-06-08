@@ -10,6 +10,10 @@ type DrinkCardProps = {
   categorySlug: string;
   active?: boolean;
   accent?: "green" | "brown" | "red";
+
+  nutriGrade?: string;
+  sugar?: number;
+  calories?: number;
 };
 
 export default function DrinkCard({
@@ -20,6 +24,9 @@ export default function DrinkCard({
   categorySlug,
   active,
   accent,
+  nutriGrade,
+  sugar,
+  calories,
 }: DrinkCardProps) {
   const accentClass =
     accent === "green"
@@ -44,6 +51,11 @@ export default function DrinkCard({
       />
       <div className={styles.name}>{name}</div>
       <div className={styles.price}>{price}</div>
+      <div className={styles.nutrition}>
+        Nutri-Grade: {nutriGrade || "N/A"}<br />
+        Sugar: {sugar ?? "N/A"}g<br />
+        Calories: {calories ?? "N/A"} kcal
+      </div>
       <div className={styles.rating}>⭐⭐⭐⭐☆</div>
       <Link
         href={`/menu/${categorySlug}/${id}`}

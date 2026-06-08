@@ -296,6 +296,50 @@ function isPurchaseHistoryRequest(message) {
 }
 // End of User Story #198
 
+// User Story #29: Get Health Advice from Chatbot
+function calculateNutrition(drink, sugarLevel, toppings = []) {
+    const sugarMap = {
+        "0%": 0,
+        "25%": 10,
+        "50%": 20,
+        "100%": 40,
+    };
+
+    let sugar =
+        Number(drink.base_sugar_g || 0) +
+        (sugarMap[sugarLevel] || 0);
+
+    let calories = Number(drink.base_calories || 0);
+
+    if (toppings.includes("Pearls")) {
+        sugar += 8;
+        calories += 60;
+    }
+
+    if (toppings.includes("Aloe Vera")) {
+        sugar += 4;
+        calories += 20;
+    }
+
+    if (toppings.includes("Cheese Foam")) {
+        sugar += 10;
+        calories += 90;
+    }
+
+    let grade = "A";
+
+    if (sugar > 5) grade = "B";
+    if (sugar > 10) grade = "C";
+    if (sugar > 15) grade = "D";
+
+    return {
+        sugar,
+        calories,
+        grade,
+    };
+}
+// End of User Story #29
+
 // User Story #32: Recommend beverages based on user message
 function isRecommendationRequest(message) {
     const msg = String(message || "").toLowerCase();
@@ -519,7 +563,54 @@ async function handleChatMessage({ message, conversationId, userId }) {
     }
 
     // Default AI response
-    const systemPrompt = await buildSystemPrompt(safeMessage);
+    const orderDetails = parseOrderDetails(safeMessage);
+
+    // User Story #29: Show health advice
+    let nutritionContext = "";
+
+    if (orderDetails.sugar || orderDetails.toppings) {
+        const lastDrinkName = resolveLastDrinkFromHistory(history);
+        let drink = null;
+
+        if (lastDrinkName) {
+            drink = await findDrinkByName(lastDrinkName);
+        }
+
+        if (!drink) {
+            drink = await findDrinkByName(safeMessage);
+        }
+
+        if (drink) {
+            const nutrition = calculateNutrition(
+                drink,
+                orderDetails.sugar || "100%",
+                orderDetails.toppings || []
+            );
+
+            nutritionContext = `
+    UPDATED HEALTH CONTEXT:
+    The customer selected sugar or toppings.
+
+    Drink: ${drink.name}
+    Selected Sugar Level: ${orderDetails.sugar || "Not detected"}
+    Selected Toppings: ${
+                Array.isArray(orderDetails.toppings) && orderDetails.toppings.length > 0
+                    ? orderDetails.toppings.join(", ")
+                    : "No toppings"
+            }
+
+    Updated Sugar: ${nutrition.sugar}g
+    Updated Calories: ${nutrition.calories} kcal
+    Updated Nutri-Grade: ${nutrition.grade}
+
+    Give a gentle health suggestion only.
+    Do NOT force the customer to change.
+    Use <br> tags between lines.
+    `;
+        }
+    }
+
+    const systemPrompt = await buildSystemPrompt(safeMessage, nutritionContext);
 
     let reply = await aiClient.generateText(
         safeMessage,
