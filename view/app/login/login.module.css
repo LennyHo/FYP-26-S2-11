@@ -48,22 +48,20 @@
 
 .brandTop {
   display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .brandMark {
   display: inline-flex;
   align-items: center;
-  width: fit-content;
-  padding: 4px 0 0;
 }
 
 .logoFrame {
   display: inline-flex;
   align-items: center;
-  width: 126px;
+  width: 72px;
   max-width: 100%;
 }
 
@@ -76,24 +74,23 @@
 .heroCopy {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   max-width: 26rem;
 }
 
 .title {
-  color: #17110f;
-  font-size: clamp(1.5rem, 2.5vw, 2rem);
-  line-height: 1;
-  letter-spacing: -0.06em;
+  color: #3b2714;
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
   font-weight: 800;
-  white-space: nowrap;
 }
 
 .subtitle {
   max-width: 24rem;
-  color: #7f7067;
-  font-size: 0.88rem;
-  line-height: 1.45;
+  color: #9d8878;
+  font-size: 0.875rem;
+  line-height: 1.55;
 }
 
 .form {
@@ -317,6 +314,16 @@
   height: 100%;
 }
 
+.avyImage {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 160px;
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 @media (max-width: 1080px) {
   .card {
     grid-template-columns: 1fr;
@@ -350,13 +357,11 @@
   }
 
   .brandTop {
-    gap: 12px;
-    margin-bottom: 4px;
+    gap: 8px;
   }
 
   .logoFrame {
-    width: 100px;
-    flex-shrink: 0;
+    width: 64px;
   }
 
   .title {
@@ -435,13 +440,11 @@
   }
 
   .brandTop {
-    gap: 10px;
-    flex-direction: column;
-    align-items: flex-start;
+    gap: 8px;
   }
 
   .logoFrame {
-    width: 90px;
+    width: 60px;
   }
 
   .title {
