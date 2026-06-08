@@ -324,14 +324,6 @@
   pointer-events: none;
 }
 
-.avyStaring {
-  width: 72px;
-  height: auto;
-  object-fit: contain;
-  flex-shrink: 0;
-  pointer-events: none;
-}
-
 @media (max-width: 1080px) {
   .card {
     grid-template-columns: 1fr;
