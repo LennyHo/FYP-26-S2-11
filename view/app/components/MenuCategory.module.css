@@ -122,3 +122,16 @@
     grid-template-columns: 1fr;
   }
 }
+
+.statusText {
+  color: var(--muted, #9d948d);
+}
+
+.errorText {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.emptyText {
+  color: var(--muted, #9d948d);
+}

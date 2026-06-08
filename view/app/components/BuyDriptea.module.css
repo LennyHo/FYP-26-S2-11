@@ -484,71 +484,105 @@
 .categoryCard {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border-radius: 26px;
-  border: 1px solid rgba(220, 199, 180, 0.85);
-  background: rgba(255, 250, 245, 0.88);
-  box-shadow: 0 14px 30px rgba(59, 39, 26, 0.08);
+  border-radius: 24px;
+  border: 1px solid rgba(220, 199, 180, 0.65);
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(59, 39, 26, 0.06);
   text-decoration: none;
   overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .categoryCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 24px 48px rgba(59, 39, 26, 0.14);
+  transform: translateY(-7px);
+  box-shadow: 0 22px 48px rgba(59, 39, 26, 0.14);
 }
 
 .categoryVisual {
-  height: 160px;
+  position: relative;
+  height: 190px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.categoryVisual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 55%, rgba(255, 255, 255, 0.22) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+.categoryDrinkImage {
+  object-fit: contain;
+  padding: 18px;
   transition: transform 0.4s ease;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.12));
 }
 
-.categoryCard:hover .categoryVisual {
-  transform: scale(1.04);
-}
-
-.categoryEmoji {
-  font-size: 4rem;
-  line-height: 1;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.12));
+.categoryCard:hover .categoryDrinkImage {
+  transform: scale(1.08);
 }
 
 .categoryFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 22px;
-  border-top: 1px solid rgba(220, 199, 180, 0.6);
+  gap: 12px;
+  padding: 18px 22px;
+  border-top: 1px solid rgba(220, 199, 180, 0.5);
+  background: #fff;
+}
+
+.categoryFooterText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .categoryCard h3 {
   color: var(--foreground);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 800;
   margin: 0;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+}
+
+.categoryDesc {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin: 0;
 }
 
 .categoryArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(91, 53, 31, 0.07);
   color: var(--accent-brown);
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 700;
-  transition: transform 0.2s ease;
+  transition: transform 0.22s ease, background 0.22s ease, color 0.22s ease;
 }
 
 .categoryCard:hover .categoryArrow {
-  transform: translateX(4px);
+  transform: translateX(3px);
+  background: var(--accent-brown);
+  color: #fff;
 }
 
 /* Category tone backgrounds */
-.catBrown .categoryVisual { background: linear-gradient(135deg, #fff3e0, #f5d6a8); }
-.catGreen .categoryVisual  { background: linear-gradient(135deg, #f0fce8, #c8e6b0); }
-.catBlue .categoryVisual   { background: linear-gradient(135deg, #e8f4fd, #b3d9f5); }
-.catGold .categoryVisual   { background: linear-gradient(135deg, #fffbe6, #f5e08a); }
+.catBrown .categoryVisual { background: linear-gradient(145deg, #fef4e4 0%, #f5d8aa 60%, #e8be85 100%); }
+.catGreen .categoryVisual  { background: linear-gradient(145deg, #f2fce6 0%, #cce8b0 60%, #afd992 100%); }
+.catBlue .categoryVisual   { background: linear-gradient(145deg, #eaf5fd 0%, #b8dcf5 60%, #92c8ee 100%); }
+.catGold .categoryVisual   { background: linear-gradient(145deg, #fffbe6 0%, #f5e280 60%, #e8ca50 100%); }
 
 /* Offer panel badge */
 .offerBadge {
@@ -618,6 +652,12 @@
   margin: 0 0 24px;
   color: #6f625c;
   font-weight: 700;
+}
+
+.searchError {
+  margin: 0 0 24px;
+  color: #b42318;
+  font-weight: 600;
 }
 
 .searchCardGrid {
