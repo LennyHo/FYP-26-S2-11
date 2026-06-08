@@ -507,8 +507,11 @@ async function handleChatMessage({ message, conversationId, userId }) {
         return {
             reply:
                 `Your current cart:<br><br>` +
+                `<p>           </p>` +
                 `${cartSummaryHtml}<br><br>` +
+                `<p>           </p>` +
                 `Total: S$ ${cartTotal.toFixed(2)}<br><br>` +
+                `<p>           </p>` +
                 `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>` +
                 `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>`,
             system_action: { ui_navigation: "none" },
@@ -598,13 +601,21 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
                 reply =
                     `Excellent choice!<br><br>` +
+                    `<p>           </p>` +
                     `Here is your order summary:<br><br>` +
+                    `<p>           </p>` +
                     `${orderLines.join("<br><br>")}<br><br>` +
+                    `<p>           </p>` +
                     `Total Price: S$ ${orderTotal.toFixed(2)}<br><br>` +
+                    `<p>           </p>` +
                     `Added to your cart successfully.<br><br>` +
+                    `<p>           </p>` +
                     `Your current cart:<br>` +
+                    `<p>           </p>` +
                     `${cartSummaryHtml}<br><br>` +
+                    `<p>           </p>` +
                     `Total: S$ ${cartTotal.toFixed(2)}<br><br>` +
+                    `<p>           </p>` +
                     `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>` +
                     `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>`;
             }
