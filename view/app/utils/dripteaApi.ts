@@ -371,6 +371,10 @@ export function getMenuItems(status: string = 'all') {
   return requestJson<{ ok: boolean; data: DripTeaMenuItem[] }>(`/api/menu-items?status=${encodeURIComponent(status)}`);
 }
 
+export function searchBeverage(keyword: string) {
+  return requestJson<{ ok: boolean; data: DripTeaMenuItem[] }>(`/api/menu/search?q=${encodeURIComponent(keyword)}`);
+}
+
 export function updateMenuItemStatus(id: string, status: string) {
   return requestJson<{ ok: boolean; data: { id: string; mongoId: string; status: string } }>(`/api/menu-items/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',

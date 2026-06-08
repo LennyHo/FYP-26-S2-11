@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import styles from './BuyDriptea.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
+import { searchBeverage } from '../utils/dripteaApi';
 
 const categories = [
   { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b001.png', desc: 'Creamy & classic' },
@@ -44,16 +45,7 @@ export default function BuyDripTeaPage() {
     }
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/menu/search?q=${encodeURIComponent(keyword)}`
-      );
-
-      const data = await res.json();
-
-      if (!data.ok) {
-        throw new Error(data.message || "Search failed.");
-      }
-
+      const data = await searchBeverage(keyword);
       setSearchResults(data.data || []);
     } catch {
       setSearchError('Unable to search beverages. Please try again later.');
