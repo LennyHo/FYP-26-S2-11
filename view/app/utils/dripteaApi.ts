@@ -407,7 +407,7 @@ export async function checkEmailExists(email: string) {
   return { ok: true };
 }
 
-export function createUser(payload: {
+export function createUserAccount(payload: {
   fullName: string;
   email: string;
   password: string;
@@ -424,6 +424,13 @@ export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'f
   return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
+  });
+}
+
+export function suspendUser(userId: string) {
+  return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'suspended' }),
   });
 }
 

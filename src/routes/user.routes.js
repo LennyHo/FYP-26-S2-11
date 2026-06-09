@@ -83,8 +83,7 @@ router.post("/users", async (req, res) => {
       });
     }
 
-    // This is used by the admin dashboard create-user button.
-    const user = await User.create({
+    const user = await User.createUserAccount({
       fullName,
       email,
       role,
@@ -146,11 +145,10 @@ router.patch("/users/:id", async (req, res) => {
       return res.status(400).json({ ok: false, message: "No changes were submitted." });
     }
 
-    // This route powers edit profile, suspend/activate, and admin edit buttons.
-    const user = await User.findByIdAndUpdate(req.params.id, update, {
-      new: true,
-      runValidators: true,
-    });
+    const isSuspendOnly = Object.keys(update).length === 1 && update.status === 'suspended';
+    const user = isSuspendOnly
+      ? await User.suspendUser(req.params.id)
+      : await User.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true });
 
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found." });

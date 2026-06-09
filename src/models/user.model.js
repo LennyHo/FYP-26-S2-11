@@ -13,7 +13,11 @@ const userSchema = new mongoose.Schema(
   { timestamps: true, collection: "users" }
 );
 
-userSchema.statics.saveUserAccount = async function saveUserAccount(userData) {
+userSchema.statics.suspendUser = async function suspendUser(userId) {
+  return this.findByIdAndUpdate(userId, { status: 'suspended' }, { new: true, runValidators: true });
+};
+
+userSchema.statics.createUserAccount = async function createUserAccount(userData) {
   const email = String(userData.email || "").toLowerCase();
 
   let role = userData.role || "customer";

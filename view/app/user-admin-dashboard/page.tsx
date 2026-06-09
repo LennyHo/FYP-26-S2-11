@@ -6,8 +6,9 @@ import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaTimes } from 'react-icons/fa';
 import AdminHeader from '../components/AdminHeader';
 import {
   clearStoredUser,
-  createUser,
+  createUserAccount,
   getUsers,
+  suspendUser,
   updateUser,
   type DripTeaUser,
 } from '../utils/dripteaApi';
@@ -155,7 +156,7 @@ export default function UserAdminDashboardPage() {
 
     try {
       if (formMode === 'create') {
-        const response = await createUser(formData);
+        const response = await createUserAccount(formData);
         setUsers(current => [...current, response.data].sort((a, b) => a.fullName.localeCompare(b.fullName)));
         setMessage('User created.');
       } else if (formMode === 'edit' && editingUser) {
@@ -179,11 +180,12 @@ export default function UserAdminDashboardPage() {
   }
 
   async function toggleUserStatus(user: DripTeaUser) {
-    const nextStatus = user.status === 'active' ? 'suspended' : 'active';
     setMessage('');
 
     try {
-      const response = await updateUser(user.id, { status: nextStatus });
+      const response = user.status === 'active'
+        ? await suspendUser(user.id)
+        : await updateUser(user.id, { status: 'active' });
       setUsers(current => current.map(row => (row.id === response.data.id ? response.data : row)));
     } catch (error) {
       console.error('[DripTea toggle user status]', error);
