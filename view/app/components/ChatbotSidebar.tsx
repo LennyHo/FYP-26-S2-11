@@ -48,6 +48,11 @@ interface Message {
     base_sugar_g?: number | null;
     base_calories?: number | null;
   }[];
+  healthCard?: {
+    currentSugar: number;
+    recommendedSugar: number;
+    recommendedGrade: string;
+  } | null;
 }
 
 interface ChatbotSidebarProps {
@@ -1112,6 +1117,10 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         ? (payload.recommendedDrinks as Message['recommendedDrinks'])
         : [];
 
+      const healthCard = payload.healthCard && typeof payload.healthCard === 'object'
+        ? (payload.healthCard as Message['healthCard'])
+        : null;
+
       // Clean up excessive line breaks:
       // Replaces 3 or more consecutive <br> tags with just two for a standard paragraph gap.
       const sanitizedReply = rawReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
@@ -1121,6 +1130,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         text: sanitizedReply,
         isUser: false,
         recommendedDrinks,
+        healthCard,
       };
       setMessages(prev => [...prev, botMsg]);
 
@@ -1634,7 +1644,26 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                       flippedCard={flippedCard}
                       setFlippedCard={setFlippedCard}
                     />
-                  ) : (
+                  ) : !msg.isUser && /Nutri-Grade of [ABCD]/i.test(msg.text) ? (() => {
+                    const gradeMatch = msg.text.match(/Nutri-Grade of ([ABCD])/i)!;
+                    const grade = gradeMatch[1].toUpperCase();
+                    const parts = msg.text.split(/<br\s*\/?>/i);
+                    const before = parts[0] || '';
+                    const after = parts.slice(1).join('<br>').replace(/^(\s*<br\s*\/?>)*\s*/gi, '').replace(/(<br\s*\/?>\s*){2,}/gi, '<br>');
+                    return (
+                      <>
+                        <div dangerouslySetInnerHTML={{ __html: applyIngredientKeywords(sanitizeExcessiveBreaks(before)) }} />
+                        <Image
+                          src={`/grade_nutri_${grade.toLowerCase()}.png`}
+                          alt={`Nutri-Grade ${grade}`}
+                          width={72}
+                          height={72}
+                          style={{ display: 'block', margin: '10px 0 6px' }}
+                        />
+                        {after && <div dangerouslySetInnerHTML={{ __html: applyIngredientKeywords(sanitizeExcessiveBreaks(after)) }} />}
+                      </>
+                    );
+                  })() : (
                     <div
                       dangerouslySetInnerHTML={{
                         __html: msg.isUser
@@ -1642,6 +1671,24 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                           : applyIngredientKeywords(sanitizeExcessiveBreaks(msg.text)),
                       }}
                     />
+                  )}
+
+                  {!msg.isUser && msg.healthCard && (
+                    <div className={styles.healthCard}>
+                      <div className={styles.healthCardTitle}>Reduce to less sugar!</div>
+                      <div className={styles.healthCardSugars}>
+                        <span className={styles.healthCardCurrentSugar}>{msg.healthCard.currentSugar}g</span>
+                        <span className={styles.healthCardArrow}>→</span>
+                        <span className={styles.healthCardRecommendedSugar}>{msg.healthCard.recommendedSugar}g</span>
+                      </div>
+                      <Image
+                        src={`/grade_nutri_${msg.healthCard.recommendedGrade.toLowerCase()}.png`}
+                        alt={`Nutri-Grade ${msg.healthCard.recommendedGrade}`}
+                        width={80}
+                        height={80}
+                        className={styles.healthCardBadge}
+                      />
+                    </div>
                   )}
 
                   {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && (

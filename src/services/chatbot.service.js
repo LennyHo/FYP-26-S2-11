@@ -338,10 +338,10 @@ function parseOrderDetails(message) {
     else if (/normal ice|regular ice/.test(msg)) ice = "Normal Ice";
 
     let sugar = null;
-    if (/no sugar|zero sugar|0\s*%|unsweetened/.test(msg)) sugar = "0%";
-    else if (/less sugar|low sugar|少糖|25\s*%/.test(msg)) sugar = "25%";
+    if (/normal sugar|full sugar|100\s*%/.test(msg)) sugar = "100%";
     else if (/half sugar|medium sugar|50\s*%/.test(msg)) sugar = "50%";
-    else if (/normal sugar|full sugar|100\s*%/.test(msg)) sugar = "100%";
+    else if (/less sugar|low sugar|少糖|25\s*%/.test(msg)) sugar = "25%";
+    else if (/no sugar|zero sugar|(?<!\d)0\s*%|unsweetened/.test(msg)) sugar = "0%";
 
     let toppings = null;
     if (/no topping|no toppings|none|without topping/.test(msg)) toppings = [];
@@ -433,7 +433,6 @@ async function handleChatMessage({ message, conversationId, userId }) {
         const reply =
             `${drink.name} with ${orderDetails.sugar || "100%"} sugar has an estimated Nutri-Grade of ${nutrition.grade}.<br>` +
             `Sugar: ${nutrition.sugar}g | Calories: ${nutrition.calories} kcal<br><br>` +
-            `<p>           </p>` +
             `0% or 25% sugar is a healthier option.`;
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, {
@@ -640,6 +639,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
     // User Story #29: Show health advice
     let nutritionContext = "";
+    let healthCardData = null;
 
     if (orderDetails.sugar || orderDetails.toppings) {
         const lastDrinkName = resolveLastDrinkFromHistory(history);
@@ -659,6 +659,15 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 orderDetails.sugar || "100%",
                 orderDetails.toppings || []
             );
+
+            if (nutrition.grade === "C" || nutrition.grade === "D") {
+                const recommended = calculateNutrition(drink, "25%", orderDetails.toppings || []);
+                healthCardData = {
+                    currentSugar: nutrition.sugar,
+                    recommendedSugar: recommended.sugar,
+                    recommendedGrade: recommended.grade,
+                };
+            }
 
             nutritionContext = `
     UPDATED HEALTH CONTEXT:
@@ -789,6 +798,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
     return {
         reply,
         system_action: { ui_navigation: "none" },
+        healthCard: healthCardData,
     };
 }
 
