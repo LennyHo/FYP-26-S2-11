@@ -11,9 +11,12 @@ function publicMenuItem(item) {
     category: item.category,
     price: item.price,
     description: item.description,
-    image: item.image || `/img/bubble_teas/${item.itemId}.png`,
+    image: item.image || `/img/bubble_teas/${item.itemId}.jpg`,
     status: item.status,
     tags: item.tags || [],
+    base_calories: item.base_calories ?? 0,
+    base_sugar_g: item.base_sugar_g ?? 0,
+    nutri_grade: item.nutri_grade || 'B',
     customizationOptions: item.customizationOptions || [],
     nutritionInfo: item.nutritionInfo || {},
   };

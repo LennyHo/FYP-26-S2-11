@@ -281,3 +281,69 @@ export function applyGlossaryTooltips(html: string): string {
   });
   return result;
 }
+
+// Ingredient keywords that open the detail modal in the chatbot
+const INGREDIENT_KEYWORD_MAP: { pattern: string; key: string }[] = [
+  // multi-word first (longest match wins)
+  { pattern: 'tapioca starch', key: 'tapioca starch' },
+  { pattern: 'tapioca pearls', key: 'pearl' },
+  { pattern: 'tapioca pearl', key: 'pearl' },
+  { pattern: 'cassava root', key: 'tapioca starch' },
+  { pattern: 'boba pearl', key: 'pearl' },
+  { pattern: 'cheese foam', key: 'cheese foam' },
+  { pattern: 'cream cheese', key: 'cheese foam' },
+  { pattern: 'aloe vera', key: 'aloe vera' },
+  // single-word fallbacks
+  { pattern: 'tapioca', key: 'tapioca starch' },
+  { pattern: 'cassava', key: 'tapioca starch' },
+  { pattern: 'boba', key: 'pearl' },
+  { pattern: 'pearl', key: 'pearl' },
+].sort((a, b) => b.pattern.length - a.pattern.length); // longest match first
+
+export function applyIngredientKeywords(html: string): string {
+  // Split into alternating text / tag segments; only process text segments (even indices)
+  const segments = html.split(/(<[^>]*>)/g);
+  return segments
+    .map((seg, i) => (i % 2 === 0 ? _highlightKeywordsInText(seg) : seg))
+    .join('');
+}
+
+function _highlightKeywordsInText(text: string): string {
+  if (!text) return text;
+
+  // Collect all non-overlapping matches across every pattern
+  type Match = { start: number; end: number; key: string; match: string };
+  const found: Match[] = [];
+
+  INGREDIENT_KEYWORD_MAP.forEach(({ pattern, key }) => {
+    const re = new RegExp(`(?<![a-zA-Z])(${pattern})(?![a-zA-Z])`, 'gi');
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      found.push({ start: m.index, end: m.index + m[0].length, key, match: m[0] });
+    }
+  });
+
+  if (found.length === 0) return text;
+
+  // Sort: earlier position first; for ties, longer match wins
+  found.sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start));
+
+  // Remove overlapping entries (greedy, keep first/longest)
+  const kept: Match[] = [];
+  let cursor = 0;
+  for (const m of found) {
+    if (m.start >= cursor) {
+      kept.push(m);
+      cursor = m.end;
+    }
+  }
+
+  // Build result right-to-left so indices stay valid
+  let result = text;
+  for (let i = kept.length - 1; i >= 0; i--) {
+    const { start, end, key, match } = kept[i];
+    const span = `<span class="chat-keyword" data-keyword="${key}" style="border-bottom:2px dotted rgba(255,255,255,0.8);color:#ffffff;font-weight:700;cursor:pointer;white-space:nowrap;text-underline-offset:3px;">${match}</span>`;
+    result = result.slice(0, start) + span + result.slice(end);
+  }
+  return result;
+}

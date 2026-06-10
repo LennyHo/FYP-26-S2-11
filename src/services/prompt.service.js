@@ -30,6 +30,18 @@ async function isMenuRequest(message) {
     msg.includes("matcha") ||
     msg.includes("frappe") ||
     msg.includes("slush") ||
+    msg.includes("pearl") ||
+    msg.includes("pearls") ||
+    msg.includes("boba") ||
+    msg.includes("tapioca") ||
+    msg.includes("aloe") ||
+    msg.includes("cheese foam") ||
+    msg.includes("topping") ||
+    msg.includes("ingredient") ||
+    msg.includes("made of") ||
+    msg.includes("made from") ||
+    msg.includes("what is in") ||
+    msg.includes("what's in") ||
     msg.includes("饮料") ||
     msg.includes("菜单") ||
     msg.includes("推荐") ||
@@ -107,7 +119,7 @@ async function buildSystemPrompt(userMessage, extraContext = "") {
       sugar: parseNum(item.base_sugar_g),
       nutri_grade: item.nutri_grade,
       tags: item.tags,
-      image: item.image || `/img/${item.itemId}.png`,
+      image: item.image || `/img/bubble_teas/${item.itemId}.jpg`,
     }));
 
     drinkContext = `AVAILABLE DRINKS CONTEXT:
@@ -123,6 +135,37 @@ You are Avy, the DripTea Health Advisor. You are a helpful, human-like customer 
 ${drinkContext}
 
 ${extraContext}
+
+DRIPTEA TOPPINGS & INGREDIENTS:
+Tapioca Pearls (also called Pearl or Boba):
+- Made from tapioca starch, which is extracted from the cassava root (Manihot esculenta).
+- The starch is mixed with water and brown sugar, shaped into balls, then boiled until soft and chewy.
+- Calories: ~150 kcal per serving | Carbs: ~37g | Fat: 0g | Protein: 0g
+- Texture: Soft and chewy (QQ texture). Price: +S$1.20
+
+Cheese Foam:
+- Made from cream cheese, fresh milk, whipped cream, and a pinch of sea salt.
+- Blended until light and airy. Recommended to drink through the foam to enjoy the creamy, lightly salty flavour with the tea.
+- Calories: ~120 kcal per serving | Carbs: ~8g | Fat: ~10g | Protein: ~2g
+- Price: +S$1.50
+
+Aloe Vera:
+- Made from the inner gel of aloe vera (Aloe barbadensis) leaves, cut into jelly cubes.
+- Mild in flavour, refreshing with a slight crunch. Naturally hydrating. Contains vitamins A, C, and E.
+- Calories: ~30 kcal per serving | Carbs: ~7g | Fat: 0g | Fibre: ~0.5g
+- Price: +S$1.00
+
+Tapioca Starch:
+- A fine white starch extracted from cassava root. The primary ingredient that gives tapioca pearls their signature chewy (QQ) texture.
+- Calories: ~358 kcal per 100g | Carbs: ~88g per 100g | Fat: ~0g | Protein: ~0.2g
+- Naturally gluten-free and vegan-friendly.
+
+INGREDIENT QUESTION RULES:
+If the customer asks what a topping or ingredient is made of, what is in it, its calories, carbs, or any nutrition details:
+- Answer using the DRIPTEA TOPPINGS & INGREDIENTS section above.
+- Keep the answer short (2-3 sentences), friendly, and relevant to DripTea.
+- Do NOT trigger the fallback rule for ingredient or topping questions.
+- After answering, you may ask if they would like to add it to their drink.
 
 NUTRI-GRADE MATH:
 Base Volume is 500ml. Added Sugar: 0%=0g | 25%=10g | 50%=20g | 100%=40g.
@@ -199,7 +242,7 @@ Do not omit this block.
 Backend order processing depends on this block.
 
 FALLBACK RULE:
-If the user's message is unrelated to DripTea, greetings, ordering drinks, menu, cart, checkout, payment, nutrition, store help, or customer support, reply exactly:
+If the user's message is unrelated to DripTea, greetings, ordering drinks, menu, cart, checkout, payment, nutrition, toppings, ingredients, store help, or customer support, reply exactly:
 
 I'm sorry, I haven't learned about this yet.
 <p>           </p>

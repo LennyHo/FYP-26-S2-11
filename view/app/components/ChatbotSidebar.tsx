@@ -11,7 +11,9 @@ import {
   createConversationId,
   convertDrinkNamesToLinks,
   applyGlossaryTooltips,
+  applyIngredientKeywords,
 } from '../utils/chatHelpers';
+import { KeywordModal } from './KeywordInfo';
 // import ImageUploadButton from './ImageUploadButton';
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
@@ -116,6 +118,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
   // ===== REFS (NON-STATE VALUES) =====
   // Speech API references
   const recognitionRef = useRef<any>(null);
@@ -1331,7 +1334,14 @@ const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
   /** Handle clicks in chat window for navigation and button interactions */
   const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    
+
+    // Handle ingredient keyword clicks
+    if (target.classList.contains('chat-keyword')) {
+      const keyword = target.getAttribute('data-keyword');
+      if (keyword) setActiveKeyword(keyword);
+      return;
+    }
+
     // Handle drink links
     if (target.classList.contains('chat-drink-link') && target instanceof HTMLAnchorElement) {
       e.preventDefault();
@@ -1626,7 +1636,7 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                       dangerouslySetInnerHTML={{
                         __html: msg.isUser
                           ? convertDrinkNamesToLinks(msg.text)
-                          : sanitizeExcessiveBreaks(msg.text),
+                          : applyIngredientKeywords(sanitizeExcessiveBreaks(msg.text)),
                       }}
                     />
                   )}
@@ -1867,6 +1877,11 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                   </div>
                 </div>
               )}
+
+      {/* Ingredient keyword detail modal */}
+      {activeKeyword && (
+        <KeywordModal keyword={activeKeyword} onClose={() => setActiveKeyword(null)} />
+      )}
 
       {/* Full-screen image preview modal with arrow navigation */}
       {previewIndex !== null && pendingImages[previewIndex] && (

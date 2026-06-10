@@ -1,8 +1,36 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './ChatbotSidebar.module.css';
 import { drinkData, DRINK_INFO, parseDrinkFromHtml } from '../utils/chatHelpers';
+
+interface MenuBeverage {
+  id: string;
+  base_calories: number;
+  base_sugar_g: number;
+  nutri_grade: string;
+}
+
+// Module-level cache — fetch once per browser session
+let cachedMenu: MenuBeverage[] | null = null;
+
+function getApiBase() {
+  if (process.env.NODE_ENV === 'development') return 'http://localhost:5000';
+  return (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE || '').replace(/\/$/, '');
+}
+
+async function fetchMenuBeverages(): Promise<MenuBeverage[]> {
+  if (cachedMenu) return cachedMenu;
+  try {
+    const res = await fetch(`${getApiBase()}/api/menu-items`);
+    const data = await res.json();
+    if (data.ok && Array.isArray(data.data)) {
+      cachedMenu = data.data as MenuBeverage[];
+      return cachedMenu;
+    }
+  } catch {}
+  return [];
+}
 
 interface DrinkRecommendation {
   id: string;
@@ -21,8 +49,19 @@ interface Props {
 
 export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: Props) {
   const router = useRouter();
+  const [menuMap, setMenuMap] = useState<Record<string, MenuBeverage>>({});
 
-  const drinkHtmlBlocks = msgText.split(/(<img[^>]*>[\s\S]*?(?:<\/button>|<br\s*\/?>\s*<br\s*\/?>))/im).filter(Boolean);
+  useEffect(() => {
+    fetchMenuBeverages().then(items => {
+      const map: Record<string, MenuBeverage> = {};
+      items.forEach(item => { map[item.id] = item; });
+      setMenuMap(map);
+    });
+  }, []);
+
+  const drinkHtmlBlocks = msgText
+    .split(/(<img[^>]*>[\s\S]*?(?:<\/button>|<br\s*\/?>\s*<br\s*\/?>))/im)
+    .filter(Boolean);
   const drinks: DrinkRecommendation[] = [];
   const otherText: string[] = [];
 
@@ -37,7 +76,6 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/\n/g, '<br>')
         .trim();
-
       if (cleanedText) otherText.push(cleanedText);
     }
   });
@@ -45,32 +83,47 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
   return (
     <div className={styles.drinkRecResponse}>
       {otherText.length > 0 && (
-        <div className={styles.drinkRecOtherText} dangerouslySetInnerHTML={{ __html: otherText.join('').trim() }} />
+        <div
+          className={styles.drinkRecOtherText}
+          dangerouslySetInnerHTML={{ __html: otherText.join('').trim() }}
+        />
       )}
       {drinks.length > 0 && (
         <div className={styles.drinkRecCardsWrap}>
           {drinks.map((drink, i) => {
             const drinkInfo = Object.entries(drinkData).find(([name]) => name === drink.name);
             const category = drinkInfo ? drinkInfo[1].category : 'milk-tea';
+            const isFlipped = flippedCard === drink.id;
+
+            // Use MongoDB data if loaded; fall back to Gemini-parsed values
+            const mongoData = menuMap[drink.id];
+            const displayGrade = mongoData?.nutri_grade ?? drink.grade;
+            const displaySugar = mongoData != null ? mongoData.base_sugar_g : drink.sugar;
+            const displayCal   = mongoData != null ? mongoData.base_calories : drink.calories;
+
             return (
               <div key={`drink-${i}`}>
                 <button
                   type="button"
-                  className={flippedCard === drink.id ? `${styles.drinkFlipCard} ${styles.drinkFlipCardFlipped}` : styles.drinkFlipCard}
-                  onClick={() => setFlippedCard(flippedCard === drink.id ? null : drink.id)}
-                  aria-label={`${flippedCard === drink.id ? 'Hide' : 'Show'} details for ${drink.name}`}
-                  aria-pressed={flippedCard === drink.id}
+                  className={isFlipped ? `${styles.drinkFlipCard} ${styles.drinkFlipCardFlipped}` : styles.drinkFlipCard}
+                  onClick={() => setFlippedCard(isFlipped ? null : drink.id)}
+                  aria-label={`${isFlipped ? 'Hide' : 'Show'} details for ${drink.name}`}
+                  aria-pressed={isFlipped ? 'true' : 'false'}
                 >
                   <div className={styles.drinkFlipCardInner}>
                     {/* Front */}
                     <div className={styles.drinkFlipCardFront}>
                       <div className={styles.drinkFlipCardImgWrap}>
-                        <img src={`/img/bubble_teas/${drink.id}.png`} alt={drink.name} className={styles.drinkFlipCardImg} />
+                        <img
+                          src={`/img/bubble_teas/${drink.id}.jpg`}
+                          alt={drink.name}
+                          className={styles.drinkFlipCardImg}
+                        />
                       </div>
                       <div className={styles.drinkFlipCardName}>{drink.name}</div>
-                      <div className={styles.drinkFlipCardNutrition}>Grade: {drink.grade}</div>
-                      <div className={styles.drinkFlipCardNutrition}>Sugar: {drink.sugar}</div>
-                      <div className={styles.drinkFlipCardNutrition}>Cal: {drink.calories}</div>
+                      <div className={styles.drinkFlipCardNutrition}>Grade: {displayGrade}</div>
+                      <div className={styles.drinkFlipCardNutrition}>Sugar: {displaySugar}g</div>
+                      <div className={styles.drinkFlipCardNutrition}>Cal: {displayCal} kcal</div>
                       <div className={styles.drinkFlipCardFlipHint}>Click to flip -&gt;</div>
                     </div>
 
@@ -96,7 +149,9 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                           </div>
                         </>
                       ) : (
-                        <div className={styles.drinkFlipCardBackText}>No detailed info available. Click to flip back -&gt;</div>
+                        <div className={styles.drinkFlipCardBackText}>
+                          No detailed info available. Click to flip back -&gt;
+                        </div>
                       )}
                     </div>
                   </div>
@@ -105,7 +160,7 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                 <a
                   href={`/menu/${category}/${drink.id}`}
                   className={styles.customizeLink}
-                  onClick={(e) => { e.preventDefault(); router.push(`/menu/${category}/${drink.id}`); }}
+                  onClick={e => { e.preventDefault(); router.push(`/menu/${category}/${drink.id}`); }}
                 >
                   Customize
                 </a>

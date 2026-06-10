@@ -1,0 +1,179 @@
+/* ── Full-screen overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 17, 15, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal card ── */
+.modal {
+  background: #fff8f2;
+  border-radius: 20px;
+  padding: 24px 22px 20px;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: 0 12px 48px rgba(86, 55, 39, 0.22);
+  border: 1px solid rgba(200, 121, 65, 0.2);
+  position: relative;
+  animation: slideUp 0.18s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.closeBtn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: rgba(141, 99, 63, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #8d633f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.closeBtn:hover {
+  background: rgba(141, 99, 63, 0.22);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-right: 28px;
+}
+
+.emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.modalTitle {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #17110f;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.modalDesc {
+  font-size: 0.82rem;
+  color: #6b5a4e;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+/* ── Nutrition / detail table ── */
+.detailsTable {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(220, 199, 180, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  background: #fff;
+}
+
+.detailRow:nth-child(odd) {
+  background: rgba(247, 239, 228, 0.6);
+}
+
+.detailLabel {
+  color: #8d633f;
+  font-weight: 700;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.detailValue {
+  color: #17110f;
+  font-weight: 500;
+  text-align: right;
+}
+
+/* ── ⓘ info icon button (inside topping cards) ── */
+.infoBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(200, 121, 65, 0.14);
+  color: #c87941;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 4px;
+  vertical-align: middle;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.infoBtn:hover {
+  background: rgba(200, 121, 65, 0.28);
+  color: #a0602e;
+}
+
+/* ── Keyword chip (glossary section) ── */
+.keywordChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(200, 121, 65, 0.08);
+  border: 1.5px solid rgba(200, 121, 65, 0.3);
+  border-radius: 999px;
+  padding: 6px 12px 6px 10px;
+  color: #c87941;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  user-select: none;
+  letter-spacing: 0.01em;
+}
+
+.keywordChip:hover {
+  background: rgba(200, 121, 65, 0.18);
+  border-color: rgba(200, 121, 65, 0.55);
+  color: #a0602e;
+}
+
+.chipArrow {
+  font-size: 0.9rem;
+  opacity: 0.65;
+}
