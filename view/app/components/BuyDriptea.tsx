@@ -11,6 +11,7 @@ const categories = [
   { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b001.jpg', desc: 'Creamy & classic' },
   { name: 'Matcha Teas', slug: 'matcha-teas', tone: 'catGreen', image: '/img/bubble_teas/b006.jpg', desc: 'Earthy & bold' },
   { name: 'Ice Blended', slug: 'ice-blended', tone: 'catBlue', image: '/img/bubble_teas/b010.jpg', desc: 'Cool & refreshing' },
+  { name: 'Local Favourites', slug: 'local-favorites', tone: 'catGold', image: '/img/bubble_teas/b011.jpg', desc: 'Taste of home' },
 ];
 
 // #19 Helper Function
@@ -184,7 +185,7 @@ export default function BuyDripTeaPage() {
               )}
             </div>
           )}
-          <div className={styles.cardGrid}>
+          {!searchTerm.trim() && <div className={styles.cardGrid}>
             {categories.map((cat) => (
               <Link
                 href={`/menu/${cat.slug}`}
@@ -209,7 +210,7 @@ export default function BuyDripTeaPage() {
                 </div>
               </Link>
             ))}
-          </div>
+          </div>}
         </section>
 
         {/*

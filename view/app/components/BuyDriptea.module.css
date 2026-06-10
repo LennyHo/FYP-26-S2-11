@@ -577,6 +577,10 @@
 .catBlue .categoryFooter { border-top-color: rgba(30, 110, 195, 0.28); }
 .catBlue .categoryArrow  { background: #1860a8; color: #fff; }
 
+.catGold .categoryVisual { background: linear-gradient(145deg, #fffad8 0%, #f5d840 60%, #d8b010 100%); }
+.catGold .categoryFooter { border-top-color: rgba(188, 138, 10, 0.28); }
+.catGold .categoryArrow  { background: #a07008; color: #fff; }
+
 /* Offer panel badge */
 .offerBadge {
   width: fit-content;

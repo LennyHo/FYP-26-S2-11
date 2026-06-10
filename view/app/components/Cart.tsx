@@ -40,17 +40,16 @@ interface CartItem {
 }
 
 function getCartItemImage(item: CartItem) {
+  if (item.drinkId) return `/img/bubble_teas/${item.drinkId}.jpg`;
   if (item.imageSrc) return item.imageSrc;
-  if (item.drinkId) return `/img/${item.drinkId}.png`;
-  return "/img/b001.png";
+  return "/img/bubble_teas/b001.jpg";
 }
 
 function getCategorySlugByDrinkId(drinkId?: string) {
-  // Student note: this lets Edit Beverage open the real drink customisation page.
   if (["b001", "b002", "b003", "b004", "b005"].includes(drinkId || "")) return "milk-tea";
   if (["b006", "b007", "b008", "b009"].includes(drinkId || "")) return "matcha-teas";
   if (["b010", "b012"].includes(drinkId || "")) return "ice-blended";
-  if (drinkId === "b011") return "local-favourites";
+  if (drinkId === "b011") return "local-favorites";
   return "milk-tea";
 }
 
