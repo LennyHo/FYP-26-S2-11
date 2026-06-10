@@ -110,6 +110,16 @@ export default function UserAdminDashboardPage() {
     void refreshUsers();
   }, []);
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      if (formMode) closeFormModal();
+      else if (viewingUser) setViewingUser(null);
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [formMode, viewingUser]);
+
   const filteredUsers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return users;
@@ -408,34 +418,41 @@ export default function UserAdminDashboardPage() {
       {viewingUser && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="view-user-title">
           <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h2 id="view-user-title">User Details</h2>
-              <button type="button" className={styles.iconButton} onClick={() => setViewingUser(null)} aria-label="Close">
-                <FaTimes />
-              </button>
-            </div>
-            <dl className={styles.detailList}>
-              <div><dt>Name</dt><dd>{viewingUser.fullName}</dd></div>
-              <div><dt>Email</dt><dd>{viewingUser.email}</dd></div>
-              <div><dt>User Type</dt><dd>{roleLabel(viewingUser.role)}</dd></div>
-              <div><dt>Status</dt><dd>{statusLabel(viewingUser.status)}</dd></div>
-              <div><dt>Created</dt><dd>{formatDate(viewingUser.createdAt)}</dd></div>
-              <div><dt>Last Updated</dt><dd>{formatDate(viewingUser.updatedAt)}</dd></div>
-            </dl>
-            <div className={styles.modalActions}>
-              <button type="button" className={styles.secondaryButton} onClick={() => setViewingUser(null)}>
-                Close
-              </button>
-              <button
-                type="button"
-                className={styles.primaryButton}
-                onClick={() => {
-                  setViewingUser(null);
-                  openEditModal(viewingUser);
-                }}
-              >
-                Edit User
-              </button>
+            <div className={styles.modalAccent} />
+            <div className={styles.modalBody}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalAvatar}>👤</div>
+                <div className={styles.modalHeaderText}>
+                  <h2 id="view-user-title">User Details</h2>
+                  <p>{viewingUser.email}</p>
+                </div>
+                <button type="button" className={styles.iconButton} onClick={() => setViewingUser(null)} aria-label="Close">
+                  <FaTimes />
+                </button>
+              </div>
+              <dl className={styles.detailList}>
+                <div><dt>Name</dt><dd>{viewingUser.fullName}</dd></div>
+                <div><dt>Email</dt><dd>{viewingUser.email}</dd></div>
+                <div><dt>User Type</dt><dd>{roleLabel(viewingUser.role)}</dd></div>
+                <div><dt>Status</dt><dd>{statusLabel(viewingUser.status)}</dd></div>
+                <div><dt>Created</dt><dd>{formatDate(viewingUser.createdAt)}</dd></div>
+                <div><dt>Last Updated</dt><dd>{formatDate(viewingUser.updatedAt)}</dd></div>
+              </dl>
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.secondaryButton} onClick={() => setViewingUser(null)}>
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={() => {
+                    setViewingUser(null);
+                    openEditModal(viewingUser);
+                  }}
+                >
+                  Edit User
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -444,68 +461,80 @@ export default function UserAdminDashboardPage() {
       {formMode && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="edit-user-title">
           <form className={styles.modal} onSubmit={handleFormSubmit}>
-            <div className={styles.modalHeader}>
-              <h2 id="edit-user-title">{formMode === 'create' ? 'Create User' : 'Edit User'}</h2>
-              <button type="button" className={styles.iconButton} onClick={closeFormModal} aria-label="Close">
-                <FaTimes />
-              </button>
-            </div>
+            <div className={styles.modalAccent} />
+            <div className={styles.modalBody}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalAvatar}>
+                  {formMode === 'create' ? '➕' : '✏️'}
+                </div>
+                <div className={styles.modalHeaderText}>
+                  <h2 id="edit-user-title">{formMode === 'create' ? 'Create User' : 'Edit User'}</h2>
+                  <p>{formMode === 'create' ? 'Fill in the details below' : `Editing ${editingUser?.fullName ?? ''}`}</p>
+                </div>
+                <button type="button" className={styles.iconButton} onClick={closeFormModal} aria-label="Close">
+                  <FaTimes />
+                </button>
+              </div>
 
-            <div className={styles.formGrid}>
-              <label>
-                Name
-                <input
-                  value={formData.fullName}
-                  onChange={(event) => updateFormField('fullName', event.target.value)}
-                  required
-                />
-              </label>
-              <label>
-                Email
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(event) => updateFormField('email', event.target.value)}
-                  required
-                />
-              </label>
-              {formMode === 'create' && (
+              <div className={styles.formGrid}>
                 <label>
-                  Password
+                  Name
                   <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(event) => updateFormField('password', event.target.value)}
-                    minLength={6}
+                    value={formData.fullName}
+                    onChange={(event) => updateFormField('fullName', event.target.value)}
+                    placeholder="Full name"
                     required
                   />
                 </label>
-              )}
-              <label>
-                User Type
-                <select value={formData.role} onChange={(event) => updateFormField('role', event.target.value)}>
-                  {roleOptions.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Status
-                <select value={formData.status} onChange={(event) => updateFormField('status', event.target.value)}>
-                  {statusOptions.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(event) => updateFormField('email', event.target.value)}
+                    placeholder="email@example.com"
+                    required
+                  />
+                </label>
+                {formMode === 'create' && (
+                  <label>
+                    Password
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(event) => updateFormField('password', event.target.value)}
+                      placeholder="Minimum 6 characters"
+                      minLength={6}
+                      required
+                    />
+                  </label>
+                )}
+                <label>
+                  User Type
+                  <select value={formData.role} onChange={(event) => updateFormField('role', event.target.value)}>
+                    {roleOptions.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Status
+                  <select value={formData.status} onChange={(event) => updateFormField('status', event.target.value)}>
+                    {statusOptions.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
 
-            <div className={styles.modalActions}>
-              <button type="button" className={styles.secondaryButton} onClick={closeFormModal}>
-                Cancel
-              </button>
-              <button type="submit" className={styles.primaryButton} disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Save User'}
-              </button>
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.secondaryButton} onClick={closeFormModal}>
+                  Cancel
+                </button>
+                <button type="submit" className={styles.primaryButton} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save User'}
+                </button>
+              </div>
             </div>
           </form>
         </div>

@@ -943,6 +943,33 @@
   margin-bottom: 4px;
 }
 
+/* ── Star rating ── */
+.drinkFlipCardRating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.drinkStars {
+  display: flex;
+  gap: 1px;
+}
+
+.drinkStar {
+  font-size: 0.85rem;
+  color: #e8a020;
+  line-height: 1;
+}
+
+.drinkRatingNum {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7f5a3a;
+  letter-spacing: 0.01em;
+}
+
 /* ── Stats strip ── */
 .drinkFlipCardStats {
   display: flex;

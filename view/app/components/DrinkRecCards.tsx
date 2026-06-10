@@ -4,6 +4,39 @@ import { useRouter } from 'next/navigation';
 import styles from './ChatbotSidebar.module.css';
 import { drinkData, DRINK_INFO, parseDrinkFromHtml } from '../utils/chatHelpers';
 
+const DRINK_RATINGS: Record<string, number> = {
+  b001: 4.5, // Classic Milk Tea
+  b002: 4.3, // Jasmine Green Tea
+  b003: 4.2, // Oolong Milk Tea
+  b004: 4.0, // Osmanthus Milk Tea
+  b005: 4.4, // Da Hong Bao Milk Tea
+  b006: 4.6, // Matcha Latte
+  b007: 4.7, // Strawberry Matcha Tea
+  b008: 4.1, // Cranberry Matcha Tea
+  b009: 4.5, // Jasmine Matcha Tea
+  b010: 4.8, // Double Chocolate Frappe
+  b011: 4.9, // Milo Dinosaur
+  b012: 4.3, // Taro Slush
+};
+
+function StarRating({ rating }: { rating: number }) {
+  const stars = Array.from({ length: 5 }, (_, i) => {
+    const filled = rating >= i + 1;
+    const half = !filled && rating >= i + 0.5;
+    return (
+      <span key={i} className={styles.drinkStar}>
+        {filled ? '★' : half ? '⯨' : '☆'}
+      </span>
+    );
+  });
+  return (
+    <div className={styles.drinkFlipCardRating}>
+      <span className={styles.drinkStars}>{stars}</span>
+      <span className={styles.drinkRatingNum}>{rating.toFixed(1)}</span>
+    </div>
+  );
+}
+
 interface MenuBeverage {
   id: string;
   base_calories: number;
@@ -122,6 +155,7 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                         />
                       </div>
                       <div className={styles.drinkFlipCardName}>{drink.name}</div>
+                      <StarRating rating={DRINK_RATINGS[drink.id] ?? 4.0} />
                       <div className={styles.drinkFlipCardStats}>
                         <div className={styles.drinkFlipCardStatItem}>
                           <span className={styles.drinkFlipCardStatLabel}>Grade</span>
