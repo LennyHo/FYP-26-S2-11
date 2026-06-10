@@ -8,6 +8,7 @@ import {
   deleteCartItem,
   updateCartItemQuantity,
 } from "../utils/dripteaApi";
+import Header from "./Header";
 import "./Cart.css";
 
 interface DripTeaCartItem {
@@ -173,6 +174,7 @@ export default function Cart() {
 
   return (
     <main className="cart-page">
+      <Header />
       <button
         type="button"
         className="back-menu-btn"

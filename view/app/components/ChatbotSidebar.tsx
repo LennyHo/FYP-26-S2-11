@@ -1109,7 +1109,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
 
       const data: unknown = await response.json();
       const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-      const rawReply = typeof payload.reply === 'string' ? payload.reply : 'Error connecting to backend';
+      const rawReply = typeof payload.reply === 'string' ? payload.reply : "I'm so sorry for the inconvenience! Our server seems to be taking a short break. Please try again in a moment, or feel free to visit us in store and our baristas will be happy to help.";
       const recommendedDrinks = Array.isArray(payload.recommendedDrinks)
         ? (payload.recommendedDrinks as Message['recommendedDrinks'])
         : [];
@@ -1202,7 +1202,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
     } catch (error) {
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Error connecting to server.',
+        text: "I'm so sorry for the inconvenience! It looks like our server is currently unavailable. Please try again shortly, or visit us in store and our friendly baristas will be glad to assist you.",
         isUser: false,
       };
       setMessages(prev => [...prev, botMsg]);
@@ -1251,7 +1251,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
 
       const data: unknown = await response.json();
       const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
-      const rawReply = typeof payload.reply === 'string' ? payload.reply : 'I am having trouble connecting right now.';
+      const rawReply = typeof payload.reply === 'string' ? payload.reply : "I'm so sorry for the inconvenience! Our server seems to be taking a short break. Please try again in a moment.";
       const sanitizedReply = rawReply.replace(/(<br\s*\/?>(\s|&nbsp;)*){3,}/gi, '<br><br>');
 
       const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false };
@@ -1262,8 +1262,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
         speakText(plainText);
       }
     } catch (err) {
-      // CRITICAL FIX: Handle the backend error and speak it out loud to prevent freezing!
-      const errorText = "I'm having trouble connecting to the server. Please check your connection.";
+      const errorText = "I'm so sorry for the inconvenience! Our server seems to be unavailable right now. Please try again in a moment.";
       const botMsg: Message = { id: (Date.now() + 1).toString(), text: errorText, isUser: false };
       setOverlayMessages(prev => [...prev, botMsg]);
 

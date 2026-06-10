@@ -141,6 +141,8 @@ export default function Header() {
   // Listen for the custom "cartUpdated" event triggered by the AI
   useEffect(() => {
     const handleCartUpdated = () => {
+      // Read localStorage immediately for instant badge update, then reconcile with backend
+      updateCartDisplayFromLocalStorage();
       void updateCartDisplay();
     };
 

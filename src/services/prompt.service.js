@@ -42,6 +42,9 @@ async function isMenuRequest(message) {
     msg.includes("made from") ||
     msg.includes("what is in") ||
     msg.includes("what's in") ||
+    msg.includes("what is") ||
+    msg.includes("what are") ||
+    msg.includes("tell me about") ||
     msg.includes("饮料") ||
     msg.includes("菜单") ||
     msg.includes("推荐") ||
@@ -139,36 +142,31 @@ ${drinkContext}
 
 ${extraContext}
 
-DRIPTEA TOPPINGS & INGREDIENTS:
-Tapioca Pearls (also called Pearl or Boba):
-- Made from tapioca starch, which is extracted from the cassava root (Manihot esculenta).
-- The starch is mixed with water and brown sugar, shaped into balls, then boiled until soft and chewy.
-- Calories: ~150 kcal per serving | Carbs: ~37g | Fat: 0g | Protein: 0g
-- Texture: Soft and chewy (QQ texture). Price: +S$1.20
+DRIPTEA TOPPINGS (prices):
+- Tapioca Pearls / Boba / Pearl: +S$1.20
+- Cheese Foam: +S$1.50
+- Aloe Vera: +S$1.00
 
-Cheese Foam:
-- Made from cream cheese, fresh milk, whipped cream, and a pinch of sea salt.
-- Blended until light and airy. Recommended to drink through the foam to enjoy the creamy, lightly salty flavour with the tea.
-- Calories: ~120 kcal per serving | Carbs: ~8g | Fat: ~10g | Protein: ~2g
-- Price: +S$1.50
-
-Aloe Vera:
-- Made from the inner gel of aloe vera (Aloe barbadensis) leaves, cut into jelly cubes.
-- Mild in flavour, refreshing with a slight crunch. Naturally hydrating. Contains vitamins A, C, and E.
-- Calories: ~30 kcal per serving | Carbs: ~7g | Fat: 0g | Fibre: ~0.5g
-- Price: +S$1.00
-
-Tapioca Starch:
-- A fine white starch extracted from cassava root. The primary ingredient that gives tapioca pearls their signature chewy (QQ) texture.
-- Calories: ~358 kcal per 100g | Carbs: ~88g per 100g | Fat: ~0g | Protein: ~0.2g
-- Naturally gluten-free and vegan-friendly.
+DRIPTEA DRINKS AND THEIR KEY INGREDIENTS:
+- Classic Milk Tea: black tea, fresh milk, brown sugar syrup, optional pearls
+- Jasmine Green Tea: jasmine-scented green tea, milk, sugar syrup
+- Oolong Milk Tea: oolong tea, fresh milk, sugar syrup
+- Osmanthus Milk Tea: osmanthus flower-infused tea, milk, sugar syrup
+- Da Hong Bao Milk Tea: premium Wuyi rock oolong, milk, sugar syrup
+- Matcha Latte: matcha powder, fresh milk, sugar syrup
+- Strawberry Matcha Tea: matcha powder, strawberry puree, milk
+- Cranberry Matcha Tea: matcha powder, cranberry, milk
+- Jasmine Matcha Tea: matcha powder, jasmine green tea, milk
+- Double Chocolate Frappe: cocoa powder, chocolate syrup, milk, ice
+- Taro Slush: taro, milk, ice, sugar syrup
+- Milo Dinosaur: Milo chocolate-malt powder, fresh milk, ice
 
 INGREDIENT QUESTION RULES:
-If the customer asks what a topping or ingredient is made of, what is in it, its calories, carbs, or any nutrition details:
-- Answer using the DRIPTEA TOPPINGS & INGREDIENTS section above.
-- Keep the answer short (2-3 sentences), friendly, and relevant to DripTea.
-- Do NOT trigger the fallback rule for ingredient or topping questions.
-- After answering, you may ask if they would like to add it to their drink.
+If the customer asks what an ingredient, flavour, or food item is — such as "what is matcha powder", "what is taro", "what is oolong", "what is Milo", etc.:
+- Use your own knowledge as Gemini to give a short, accurate, friendly explanation (2-3 sentences).
+- Relate it back to DripTea where possible (e.g. "At DripTea, matcha powder is used in our Matcha Latte and matcha tea range.").
+- Do NOT trigger the fallback rule for ingredient or food questions.
+- After answering, you may suggest a drink that features that ingredient.
 
 NUTRI-GRADE MATH:
 Base Volume is 500ml. Added Sugar: 0%=0g | 25%=10g | 50%=20g | 100%=40g.
