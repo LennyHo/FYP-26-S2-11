@@ -120,10 +120,21 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                         />
                       </div>
                       <div className={styles.drinkFlipCardName}>{drink.name}</div>
-                      <div className={styles.drinkFlipCardNutrition}>Grade: {displayGrade}</div>
-                      <div className={styles.drinkFlipCardNutrition}>Sugar: {displaySugar}g</div>
-                      <div className={styles.drinkFlipCardNutrition}>Cal: {displayCal} kcal</div>
-                      <div className={styles.drinkFlipCardFlipHint}>Click to flip -&gt;</div>
+                      <div className={styles.drinkFlipCardStats}>
+                        <div className={styles.drinkFlipCardStatItem}>
+                          <span className={styles.drinkFlipCardStatLabel}>Grade</span>
+                          <span className={styles.drinkFlipCardStatValue}>{displayGrade}</span>
+                        </div>
+                        <div className={styles.drinkFlipCardStatItem}>
+                          <span className={styles.drinkFlipCardStatLabel}>Sugar</span>
+                          <span className={styles.drinkFlipCardStatValue}>{displaySugar}<span className={styles.drinkFlipCardStatUnit}>g</span></span>
+                        </div>
+                        <div className={styles.drinkFlipCardStatItem}>
+                          <span className={styles.drinkFlipCardStatLabel}>Cal</span>
+                          <span className={styles.drinkFlipCardStatValue}>{displayCal}<span className={styles.drinkFlipCardStatUnit}> kcal</span></span>
+                        </div>
+                      </div>
+                      <div className={styles.drinkFlipCardFlipHint}>Tap for details ↺</div>
                     </div>
 
                     {/* Back */}

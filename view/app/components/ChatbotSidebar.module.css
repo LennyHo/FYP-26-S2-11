@@ -894,25 +894,25 @@
   flex-direction: column;
   gap: 6px;
   min-height: 40px;
-  padding: 18px 16px 16px 16px;
+  padding: 14px 14px 12px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #fff7ef 0%, #f1d5b8 100%);
   color: #3d1c1c;
-  box-shadow: 0 10px 28px rgba(171, 28, 110, 0.13), 0 2px 8px rgba(160, 116, 77, 0.10);
-  border: 2.5px solid #AB1C6E;
+  box-shadow: 0 8px 28px rgba(140, 30, 100, 0.14), 0 2px 8px rgba(100, 40, 130, 0.07);
+  border: 1.5px solid rgba(171, 28, 110, 0.18);
   backface-visibility: hidden;
   overflow: hidden;
   transition: background 0.3s, color 0.3s;
 }
 
 .drinkFlipCardFront {
-  background: linear-gradient(135deg, #ffe0f7 0%, #c6e6ff 100%);
-  color: #3d1c1c;
+  background: linear-gradient(150deg, #fce8f5 0%, #ede8ff 100%);
+  gap: 4px;
 }
 
 .drinkFlipCardBack {
-  background: linear-gradient(135deg, #AB1C6E 0%, #A55EA3 100%);
+  background: linear-gradient(140deg, #7b1457 0%, #9b52a0 100%);
   color: #fff;
+  border-color: transparent;
 }
 
 .drinkFlipCardBack {
@@ -922,51 +922,106 @@
 
 .drinkFlipCardImg {
   width: 100%;
-  max-height: 150px;
+  max-height: 148px;
   object-fit: cover;
-  border-radius: 16px;
-  background: #fff6f6;
-  box-shadow: 0 4px 16px rgba(171, 28, 110, 0.10);
-  margin-bottom: 8px;
-  border: 2px solid #A55EA3;
+  border-radius: 10px;
+  background: #f9eef7;
+  box-shadow: 0 2px 10px rgba(120, 30, 90, 0.10);
+  margin-bottom: 4px;
+  border: none;
 }
 
 .drinkFlipCardName {
   font-weight: 800;
-  line-height: 1.25;
-  font-size: 1.05rem;
-  color: #AB1C6E;
-  margin-bottom: 2px;
+  font-size: 1rem;
+  line-height: 1.2;
+  color: #8b1260;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
 }
 
-.drinkFlipCardNutrition,
-.drinkFlipCardFlipHint,
-.drinkFlipCardBackText,
-.drinkFlipCardBackList {
-  font-size: 1.01rem;
-  line-height: 1.35;
+/* ── Stats strip ── */
+.drinkFlipCardStats {
+  display: flex;
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.62);
+  border-radius: 10px;
+  border: 1px solid rgba(139, 80, 160, 0.16);
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.drinkFlipCardStatItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 4px 6px;
+  gap: 1px;
+}
+
+.drinkFlipCardStatItem + .drinkFlipCardStatItem {
+  border-left: 1px solid rgba(139, 80, 160, 0.14);
+}
+
+.drinkFlipCardStatLabel {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8b50a0;
+}
+
+.drinkFlipCardStatValue {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1e0e2e;
+  line-height: 1.1;
+}
+
+.drinkFlipCardStatUnit {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #7a5a8a;
 }
 
 .drinkFlipCardFlipHint {
   margin-top: auto;
-  font-weight: 700;
-  color: #A55EA3;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #8b50a0;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.drinkFlipCardBackText,
+.drinkFlipCardBackList {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .drinkFlipCardBackSection {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .drinkFlipCardBackTitle {
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 220, 245, 0.85);
+  line-height: 1.2;
 }
 
 .drinkFlipCardBackList {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 16px;
 }
 
 .messageActionRow {

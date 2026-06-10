@@ -10,9 +10,12 @@ const menuItemSchema = new mongoose.Schema(
     image: { type: String, default: "" },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
     tags: { type: [String], default: [] },
-    base_calories: { type: Number, default: 0 },
-    base_sugar_g: { type: Number, default: 0 },
-    nutri_grade: { type: String, default: "B" },
+    nutritionInfo: {
+      baseVolumeMl: { type: Number, default: 500 },
+      baseCalories: { type: Number, default: 0 },
+      baseSugarG:   { type: Number, default: 0 },
+      nutriGrade:   { type: String, default: "B" },
+    },
   },
   { timestamps: true, collection: "menu_items" }
 );

@@ -15,9 +15,9 @@ function publicMenuItem(item) {
     image: item.image || `/img/bubble_teas/${item.itemId}.jpg`,
     status: item.status,
     tags: item.tags || [],
-    base_calories: item.base_calories || nutrition.baseCalories || 0,
-    base_sugar_g: item.base_sugar_g || nutrition.baseSugarG || 0,
-    nutri_grade: item.nutri_grade || nutrition.nutriGrade || 'B',
+    base_calories: nutrition.baseCalories ?? 0,
+    base_sugar_g: nutrition.baseSugarG ?? 0,
+    nutri_grade: nutrition.nutriGrade || 'B',
     customizationOptions: item.customizationOptions || [],
     nutritionInfo: nutrition,
   };

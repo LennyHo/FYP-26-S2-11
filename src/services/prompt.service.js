@@ -117,9 +117,9 @@ async function buildSystemPrompt(userMessage, extraContext = "") {
         id: item.itemId || item.id || item._id,
         name: item.name,
         price: item.price,
-        calories: parseNum(item.base_calories || nutrition.baseCalories),
-        sugar: parseNum(item.base_sugar_g || nutrition.baseSugarG),
-        nutri_grade: item.nutri_grade || nutrition.nutriGrade,
+        calories: parseNum(nutrition.baseCalories),
+        sugar: parseNum(nutrition.baseSugarG),
+        nutri_grade: nutrition.nutriGrade,
         tags: item.tags,
         image: item.image || `/img/bubble_teas/${item.itemId}.jpg`,
       };

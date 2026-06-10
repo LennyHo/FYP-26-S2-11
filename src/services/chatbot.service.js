@@ -38,11 +38,12 @@ function calculateNutrition(drink, sugarLevel, toppings = []) {
         "100%": 40,
     };
 
+    const nutrition = drink.nutritionInfo || {};
     let sugar =
-        Number(drink.base_sugar_g || 0) +
+        Number(nutrition.baseSugarG ?? drink.base_sugar_g ?? 0) +
         (sugarMap[sugarLevel] || 0);
 
-    let calories = Number(drink.base_calories || 0);
+    let calories = Number(nutrition.baseCalories ?? drink.base_calories ?? 0);
 
     if (toppings.includes("Pearls")) {
         sugar += 8;
@@ -109,9 +110,9 @@ function formatDrinkCards(drinks) {
             description: drink.description,
             image: drink.image || `/img/bubble_teas/${drink.itemId}.png`,
             tags: drink.tags || [],
-            nutri_grade: drink.nutri_grade || nutrition.nutriGrade || null,
-            base_sugar_g: drink.base_sugar_g || nutrition.baseSugarG || null,
-            base_calories: drink.base_calories || nutrition.baseCalories || null,
+            nutri_grade: nutrition.nutriGrade || null,
+            base_sugar_g: nutrition.baseSugarG ?? null,
+            base_calories: nutrition.baseCalories ?? null,
         };
     });
 }
@@ -730,25 +731,13 @@ async function handleChatMessage({ message, conversationId, userId }) {
                         .replace(/ sugar/i, "")
                         .trim();
 
-                    const baseSugar = Number(
-                        nutrition.baseSugarG ??
-                        drink.base_sugar_g ??
-                        0
-                    );
-
+                    const baseSugar = Number(nutrition.baseSugarG ?? 0);
                     const addedSugar = ADDED_SUGAR_G[sugarKey] ?? 0;
                     const totalSugar = baseSugar + addedSugar;
 
-                    const calories = Number(
-                        nutrition.baseCalories ??
-                        drink.base_calories ??
-                        0
-                    );
+                    const calories = Number(nutrition.baseCalories ?? 0);
 
-                    const nutriGrade =
-                        nutrition.nutriGrade ??
-                        drink.nutri_grade ??
-                        "N/A";
+                    const nutriGrade = nutrition.nutriGrade ?? "N/A";
 
                     return [
                         `${item.name} - S$ ${Number(item.lineTotal || item.unitPrice || 0).toFixed(2)}`,
