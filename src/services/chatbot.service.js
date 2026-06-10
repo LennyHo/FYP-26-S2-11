@@ -99,15 +99,21 @@ function isRecommendationRequest(message) {
 }
 
 function formatDrinkCards(drinks) {
-    return drinks.map((drink) => ({
-        id: drink.itemId,
-        name: drink.name,
-        category: drink.category,
-        price: drink.price,
-        description: drink.description,
-        image: drink.image || `/img/bubble_teas/${drink.itemId}.png`,
-        tags: drink.tags || [],
-}));
+    return drinks.map((drink) => {
+        const nutrition = drink.nutritionInfo || {};
+        return {
+            id: drink.itemId,
+            name: drink.name,
+            category: drink.category,
+            price: drink.price,
+            description: drink.description,
+            image: drink.image || `/img/bubble_teas/${drink.itemId}.png`,
+            tags: drink.tags || [],
+            nutri_grade: drink.nutri_grade || nutrition.nutriGrade || null,
+            base_sugar_g: drink.base_sugar_g || nutrition.baseSugarG || null,
+            base_calories: drink.base_calories || nutrition.baseCalories || null,
+        };
+    });
 }
 // End of User Story #32
 

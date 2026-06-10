@@ -111,16 +111,19 @@ async function buildSystemPrompt(userMessage, extraContext = "") {
       return isNaN(n) ? null : n;
     };
 
-    const structuredData = filtered.map((item) => ({
-      id: item.itemId || item.id || item._id,
-      name: item.name,
-      price: item.price,
-      calories: parseNum(item.base_calories),
-      sugar: parseNum(item.base_sugar_g),
-      nutri_grade: item.nutri_grade,
-      tags: item.tags,
-      image: item.image || `/img/bubble_teas/${item.itemId}.jpg`,
-    }));
+    const structuredData = filtered.map((item) => {
+      const nutrition = item.nutritionInfo || {};
+      return {
+        id: item.itemId || item.id || item._id,
+        name: item.name,
+        price: item.price,
+        calories: parseNum(item.base_calories || nutrition.baseCalories),
+        sugar: parseNum(item.base_sugar_g || nutrition.baseSugarG),
+        nutri_grade: item.nutri_grade || nutrition.nutriGrade,
+        tags: item.tags,
+        image: item.image || `/img/bubble_teas/${item.itemId}.jpg`,
+      };
+    });
 
     drinkContext = `AVAILABLE DRINKS CONTEXT:
 ${JSON.stringify(structuredData, null, 2)}`;

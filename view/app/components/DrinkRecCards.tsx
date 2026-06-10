@@ -98,8 +98,8 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
             // Use MongoDB data if loaded; fall back to Gemini-parsed values
             const mongoData = menuMap[drink.id];
             const displayGrade = mongoData?.nutri_grade ?? drink.grade;
-            const displaySugar = mongoData != null ? mongoData.base_sugar_g : drink.sugar;
-            const displayCal   = mongoData != null ? mongoData.base_calories : drink.calories;
+            const displaySugar = mongoData?.base_sugar_g ?? drink.sugar;
+            const displayCal   = mongoData?.base_calories ?? drink.calories;
 
             return (
               <div key={`drink-${i}`}>
@@ -108,7 +108,6 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                   className={isFlipped ? `${styles.drinkFlipCard} ${styles.drinkFlipCardFlipped}` : styles.drinkFlipCard}
                   onClick={() => setFlippedCard(isFlipped ? null : drink.id)}
                   aria-label={`${isFlipped ? 'Hide' : 'Show'} details for ${drink.name}`}
-                  aria-pressed={isFlipped ? 'true' : 'false'}
                 >
                   <div className={styles.drinkFlipCardInner}>
                     {/* Front */}

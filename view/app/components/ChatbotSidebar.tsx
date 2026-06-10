@@ -44,6 +44,9 @@ interface Message {
     category: string;
     price: number;
     image?: string;
+    nutri_grade?: string | null;
+    base_sugar_g?: number | null;
+    base_calories?: number | null;
   }[];
 }
 
@@ -1651,6 +1654,9 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                           price={`S$ ${Number(drink.price).toFixed(2)}`}
                           image={drink.image}
                           categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
+                          nutriGrade={drink.nutri_grade ?? undefined}
+                          sugar={drink.base_sugar_g ?? undefined}
+                          calories={drink.base_calories ?? undefined}
                           accent={
                             drink.category?.toLowerCase().includes("matcha")
                               ? "green"
