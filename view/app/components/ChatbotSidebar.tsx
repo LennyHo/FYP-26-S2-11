@@ -11,9 +11,7 @@ import {
   createConversationId,
   convertDrinkNamesToLinks,
   applyGlossaryTooltips,
-  applyIngredientKeywords,
 } from '../utils/chatHelpers';
-import { KeywordModal } from './KeywordInfo';
 // import ImageUploadButton from './ImageUploadButton';
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
@@ -126,7 +124,6 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
   // ===== REFS (NON-STATE VALUES) =====
   // Speech API references
   const recognitionRef = useRef<any>(null);
@@ -1348,12 +1345,6 @@ const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
   const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
 
-    // Handle ingredient keyword clicks
-    if (target.classList.contains('chat-keyword')) {
-      const keyword = target.getAttribute('data-keyword');
-      if (keyword) setActiveKeyword(keyword);
-      return;
-    }
 
     // Handle drink links
     if (target.classList.contains('chat-drink-link') && target instanceof HTMLAnchorElement) {
@@ -1652,7 +1643,7 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                     const after = parts.slice(1).join('<br>').replace(/^(\s*<br\s*\/?>)*\s*/gi, '').replace(/(<br\s*\/?>\s*){2,}/gi, '<br>');
                     return (
                       <>
-                        <div dangerouslySetInnerHTML={{ __html: applyIngredientKeywords(sanitizeExcessiveBreaks(before)) }} />
+                        <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(before) }} />
                         <Image
                           src={`/grade_nutri_${grade.toLowerCase()}.png`}
                           alt={`Nutri-Grade ${grade}`}
@@ -1660,7 +1651,7 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                           height={72}
                           style={{ display: 'block', margin: '10px 0 6px' }}
                         />
-                        {after && <div dangerouslySetInnerHTML={{ __html: applyIngredientKeywords(sanitizeExcessiveBreaks(after)) }} />}
+                        {after && <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(after) }} />}
                       </>
                     );
                   })() : (
@@ -1668,7 +1659,7 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                       dangerouslySetInnerHTML={{
                         __html: msg.isUser
                           ? convertDrinkNamesToLinks(msg.text)
-                          : applyIngredientKeywords(sanitizeExcessiveBreaks(msg.text)),
+                          : sanitizeExcessiveBreaks(msg.text),
                       }}
                     />
                   )}
@@ -1931,10 +1922,6 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                 </div>
               )}
 
-      {/* Ingredient keyword detail modal */}
-      {activeKeyword && (
-        <KeywordModal keyword={activeKeyword} onClose={() => setActiveKeyword(null)} />
-      )}
 
       {/* Full-screen image preview modal with arrow navigation */}
       {previewIndex !== null && pendingImages[previewIndex] && (
