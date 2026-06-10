@@ -970,6 +970,11 @@
   letter-spacing: 0.01em;
 }
 
+.nutriGradeImg {
+  display: block;
+  margin: 10px 0 6px;
+}
+
 /* ── Stats strip ── */
 .drinkFlipCardStats {
   display: flex;
@@ -1079,6 +1084,21 @@
   background: transparent;
   box-shadow: none;
   padding: 6px 0 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slowHint {
+  font-size: 0.72rem;
+  color: #a07850;
+  font-style: italic;
+  animation: slowHintFadeIn 0.5s ease-out;
+}
+
+@keyframes slowHintFadeIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .typingIndicator {

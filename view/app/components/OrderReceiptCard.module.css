@@ -1,0 +1,203 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 310px;
+  filter: drop-shadow(0 4px 18px rgba(0,0,0,0.22));
+}
+
+/* ── Perforated edges ── */
+.perfTop,
+.perfBottom {
+  height: 12px;
+  background: radial-gradient(circle at 50% 100%, #f5f0e8 6px, transparent 7px),
+              radial-gradient(circle at 50% 0%,   #2a1a3e 6px, transparent 7px);
+  background-size: 18px 12px;
+  background-color: #2a1a3e;
+}
+
+.perfBottom {
+  background: radial-gradient(circle at 50% 0%, #f5f0e8 6px, transparent 7px),
+              radial-gradient(circle at 50% 100%, #2a1a3e 6px, transparent 7px);
+  background-size: 18px 12px;
+  background-color: #2a1a3e;
+}
+
+/* ── Paper receipt body ── */
+.receipt {
+  background: #f5f0e8;
+  padding: 18px 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #1a1008;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-bottom: 4px;
+}
+
+.storeName {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #3b1f0a;
+}
+
+.tagline {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7a5c3a;
+}
+
+/* ── Dividers ── */
+.dividerDash {
+  border: none;
+  border-top: 1.5px dashed #b89a70;
+  margin: 0;
+}
+
+.dividerSolid {
+  border: none;
+  border-top: 2px solid #3b1f0a;
+  margin: 0;
+}
+
+/* ── Section ── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sectionLabel {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7a5c3a;
+  margin-bottom: 2px;
+}
+
+/* ── Order item ── */
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.itemName {
+  font-size: 0.88rem;
+  font-weight: 700;
+  flex: 1;
+}
+
+.itemPrice {
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.itemCustom {
+  font-size: 0.7rem;
+  color: #5a4020;
+  padding-left: 2px;
+}
+
+.nutriRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.65rem;
+  color: #5a4020;
+  padding-left: 2px;
+  margin-top: 2px;
+}
+
+.gradeChip {
+  background: #3b1f0a;
+  color: #f5f0e8;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-weight: 700;
+}
+
+/* ── Cart rows ── */
+.cartRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #3b2810;
+}
+
+/* ── Total ── */
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.totalAmount {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #3b1f0a;
+}
+
+/* ── Thank-you line ── */
+.thanks {
+  text-align: center;
+  font-size: 0.7rem;
+  color: #7a5c3a;
+  letter-spacing: 0.04em;
+}
+
+/* ── Buttons ── */
+.btnRow {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.btnPrimary,
+.btnSecondary {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.btnPrimary {
+  background: #3b1f0a;
+  color: #f5f0e8;
+}
+
+.btnSecondary {
+  background: transparent;
+  color: #3b1f0a;
+  border: 1.5px solid #3b1f0a;
+}
+
+.btnPrimary:hover,
+.btnSecondary:hover {
+  opacity: 0.8;
+}

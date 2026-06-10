@@ -16,6 +16,7 @@ import {
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
+import OrderReceiptCard from './OrderReceiptCard';
 import avyLogo from '../../img/Group 2.svg';
 import menuData from '../../data/menu.json';
 import DrinkCard from "./DrinkCard";
@@ -124,6 +125,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [slowHintIndex, setSlowHintIndex] = useState(-1);
   // ===== REFS (NON-STATE VALUES) =====
   // Speech API references
   const recognitionRef = useRef<any>(null);
@@ -185,6 +187,30 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
       setWelcomeAnimationKey(key => key + 1);
     }
   }, [isOpen]);
+
+  const SLOW_HINTS = [
+    'Our barista is still brewing... ☕',
+    'Good things take a little time 🧋',
+    'Avy is thinking hard for you!',
+    'Almost there, hang tight...',
+    'Stirring in some extra magic ✨',
+  ];
+
+  useEffect(() => {
+    if (!isLoading) { setSlowHintIndex(-1); return; }
+    const interval = setInterval(() => {
+      setSlowHintIndex(i => (i + 1) % SLOW_HINTS.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && isOpen) onClose?.();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   /** Keyboard navigation for image preview (Arrow keys to navigate, Escape to close) */
   useEffect(() => {
@@ -1628,7 +1654,9 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                 onClick={handleChatClick}
               >
                 <div className={styles.bubbleText}>
-                  {!msg.isUser && msg.text.includes("<img") && msg.text.includes("startOrder") ? (
+                  {!msg.isUser && /added to your cart successfully/i.test(msg.text) && /here is your order summary/i.test(msg.text) ? (
+                    <OrderReceiptCard msgText={msg.text} />
+                  ) : !msg.isUser && msg.text.includes("<img") && msg.text.includes("startOrder") ? (
                     <DrinkRecCards
                       msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
                       flippedCard={flippedCard}
@@ -1648,7 +1676,7 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                           alt={`Nutri-Grade ${grade}`}
                           width={72}
                           height={72}
-                          style={{ display: 'block', margin: '10px 0 6px' }}
+                          className={styles.nutriGradeImg}
                         />
                         {after && <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(after) }} />}
                       </>
@@ -1763,6 +1791,9 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
               <span className={styles.typingIndicator}>
                 <span></span><span></span><span></span>
               </span>
+              {slowHintIndex >= 0 && (
+                <span className={styles.slowHint}>{SLOW_HINTS[slowHintIndex]}</span>
+              )}
             </div>
           </div>
         )}
