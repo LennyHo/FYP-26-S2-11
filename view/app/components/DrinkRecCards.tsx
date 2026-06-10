@@ -11,8 +11,9 @@ interface MenuBeverage {
   nutri_grade: string;
 }
 
-// Module-level cache — fetch once per browser session
+const CACHE_TTL_MS = 60_000; // 60 s — changes in MongoDB appear within a minute
 let cachedMenu: MenuBeverage[] | null = null;
+let cacheExpiry = 0;
 
 function getApiBase() {
   if (process.env.NODE_ENV === 'development') return 'http://localhost:5000';
@@ -20,12 +21,13 @@ function getApiBase() {
 }
 
 async function fetchMenuBeverages(): Promise<MenuBeverage[]> {
-  if (cachedMenu) return cachedMenu;
+  if (cachedMenu && Date.now() < cacheExpiry) return cachedMenu;
   try {
     const res = await fetch(`${getApiBase()}/api/menu-items`);
     const data = await res.json();
     if (data.ok && Array.isArray(data.data)) {
       cachedMenu = data.data as MenuBeverage[];
+      cacheExpiry = Date.now() + CACHE_TTL_MS;
       return cachedMenu;
     }
   } catch {}

@@ -8,20 +8,17 @@ import styles from './DrinkCustomize.module.css';
 import { addCartItem, formatLocalCartLine, getDripTeaApiBase, getStoredUser } from '../utils/dripteaApi';
 // end done by "HDC"
 
-const menuData = [
-  { id: "b001", name: "Classic Milk Tea", image: "/img/bubble_teas/b001.png", category: "Milk Tea", price: 4.50, description: "Our signature premium black tea blended with rich milk.", nutriGrade: "B", sugarG: 8, calories: 150 },
-  { id: "b002", name: "Jasmine Green Tea", image: "/img/bubble_teas/b002.png", category: "Milk Tea", price: 4.20, description: "Light and refreshing jasmine green tea with subtle floral aroma.", nutriGrade: "A", sugarG: 4, calories: 90 },
-  { id: "b003", name: "Oolong Milk Tea", image: "/img/bubble_teas/b003.png", category: "Milk Tea", price: 4.80, description: "Smooth oolong tea with a roasted aroma blended with milk.", nutriGrade: "B", sugarG: 8, calories: 160 },
-  { id: "b004", name: "Osmanthus Milk Tea", image: "/img/bubble_teas/b004.png", category: "Milk Tea", price: 5.00, description: "Fragrant osmanthus-infused milk tea with a floral finish.", nutriGrade: "B", sugarG: 10, calories: 170 },
-  { id: "b005", name: "Da Hong Bao Milk Tea", image: "/img/bubble_teas/b005.png", category: "Milk Tea", price: 5.20, description: "Premium Da Hong Bao oolong tea with deep, complex flavor.", nutriGrade: "B", sugarG: 8, calories: 155 },
-  { id: "b006", name: "Matcha Latte", image: "/img/bubble_teas/b006.png", category: "Matcha Teas", price: 5.50, description: "Ceremonial grade Uji matcha layered with fresh milk.", nutriGrade: "B", sugarG: 10, calories: 180 },
-  { id: "b007", name: "Strawberry Matcha Tea", image: "/img/bubble_teas/b007.png", category: "Matcha Teas", price: 6.00, description: "Fresh strawberry puree layered with premium matcha.", nutriGrade: "B", sugarG: 12, calories: 200 },
-  { id: "b008", name: "Cranberry Matcha Tea", image: "/img/bubble_teas/b008.png", category: "Matcha Teas", price: 6.00, description: "Tangy cranberry paired with smooth matcha.", nutriGrade: "B", sugarG: 10, calories: 190 },
-  { id: "b009", name: "Jasmine Matcha Tea", image: "/img/bubble_teas/b009.png", category: "Matcha Teas", price: 5.80, description: "Floral jasmine tea blended with rich matcha.", nutriGrade: "A", sugarG: 6, calories: 140 },
-  { id: "b010", name: "Double Chocolate Frappe", image: "/img/bubble_teas/b010.png", category: "Ice Blended", price: 6.50, description: "Rich dark chocolate blended with ice and milk.", nutriGrade: "C", sugarG: 20, calories: 280 },
-  { id: "b012", name: "Taro Slush", image: "/img/bubble_teas/b012.png", category: "Ice Blended", price: 6.00, description: "Creamy taro blended into a refreshing slush.", nutriGrade: "B", sugarG: 14, calories: 210 },
-  { id: "b011", name: "Milo Dinosaur", image: "/img/bubble_teas/b011.png", category: "Local Favourites", price: 5.00, description: "Classic iced Milo topped with a mountain of Milo powder.", nutriGrade: "C", sugarG: 18, calories: 250 },
-];
+interface DrinkData {
+  id: string;
+  name: string;
+  image: string;
+  category: string;
+  price: number;
+  description: string;
+  nutriGrade: string;
+  sugarG: number;
+  calories: number;
+}
 
 const sizes = [
   { label: 'Regular', surcharge: 0 },
@@ -70,8 +67,9 @@ export default function DrinkCustomize() {
   const router = useRouter();
 
   const drinkId = params.drinkId as string;
-  const drink = menuData.find(d => d.id === drinkId || toDrinkSlug(d.name) === drinkId);
 
+  const [drink, setDrink] = useState<DrinkData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [size, setSize] = useState(sizes[0]);
   const [ice, setIce] = useState(iceOptions[0]);
   const [sweetness, setSweetness] = useState(sweetnessOptions[0]);
@@ -81,8 +79,33 @@ export default function DrinkCustomize() {
   const [imageSrc, setImageSrc] = useState('');
 
   useEffect(() => {
-    setImageSrc(drink?.image || '');
-  }, [drink?.image]);
+    setLoading(true);
+    fetch(`${getDripTeaApiBase()}/api/menu-items`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok && Array.isArray(data.data)) {
+          const item = data.data.find(
+            (d: any) => d.id === drinkId || toDrinkSlug(d.name) === drinkId
+          );
+          if (item) {
+            setDrink({
+              id: item.id,
+              name: item.name,
+              image: item.image,
+              category: item.category,
+              price: item.price,
+              description: item.description,
+              nutriGrade: item.nutri_grade || 'B',
+              sugarG: item.base_sugar_g ?? 0,
+              calories: item.base_calories ?? 0,
+            });
+            setImageSrc(item.image || '');
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [drinkId]);
 
   // Pre-fill form from chat customization
   useEffect(() => {
@@ -108,6 +131,17 @@ export default function DrinkCustomize() {
       }
     }
   }, [drinkId]);
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <Header />
+        <main className={styles.main}>
+          <p className={styles.emptyState}>Loading…</p>
+        </main>
+      </div>
+    );
+  }
 
   if (!drink) {
     return (
@@ -302,20 +336,21 @@ export default function DrinkCustomize() {
         <div className={styles.topSection}>
           <div className={styles.imageWrapper}>
             <img
-              src={imageSrc || '/buy_dripTea_cover.png'}
+              src={imageSrc || '/buy_dripTea_cover.jpg'}
               alt={selectedDrink.name}
               className={styles.drinkImage}
               onError={() => {
-                if (imageSrc !== '/buy_dripTea_cover.png') {
-                  setImageSrc('/buy_dripTea_cover.png');
+                if (imageSrc !== '/buy_dripTea_cover.jpg') {
+                  setImageSrc('/buy_dripTea_cover.jpg');
                 }
               }}
             />
           </div>
 
           <div className={styles.info}>
-            <button className={styles.backBtn} onClick={() => router.back()}>
-              ← Back to Category
+            <button type="button" className={styles.backBtn} onClick={() => router.push('/buy-driptea')}>
+              <span className={styles.backBtnArrow}>‹</span>
+              Back to Category
             </button>
             <h1 className={styles.drinkName}>{selectedDrink.name}</h1>
             <p className={styles.drinkDesc}>{selectedDrink.description}</p>
@@ -339,6 +374,7 @@ export default function DrinkCustomize() {
           <div className={styles.optionGrid}>
             {sizes.map(s => (
               <button
+                type="button"
                 key={s.label}
                 className={`${styles.optionBtn} ${size.label === s.label ? styles.selected : ''}`}
                 onClick={() => setSize(s)}
@@ -356,6 +392,7 @@ export default function DrinkCustomize() {
           <div className={styles.optionGrid}>
             {iceOptions.map(opt => (
               <button
+                type="button"
                 key={opt}
                 className={`${styles.optionBtn} ${ice === opt ? styles.selected : ''}`}
                 onClick={() => setIce(opt)}
@@ -372,6 +409,7 @@ export default function DrinkCustomize() {
           <div className={styles.optionGrid}>
             {sweetnessOptions.map(opt => (
               <button
+                type="button"
                 key={opt.label}
                 className={`${styles.optionBtn} ${sweetness.label === opt.label ? styles.selected : ''}`}
                 onClick={() => setSweetness(opt)}
@@ -389,6 +427,7 @@ export default function DrinkCustomize() {
           <div className={styles.optionGrid}>
             {toppingOptions.map(opt => (
               <button
+                type="button"
                 key={opt.key}
                 className={`${styles.optionBtn} ${topping.key === opt.key ? styles.selected : ''}`}
                 onClick={() => setTopping(opt)}
@@ -409,19 +448,20 @@ export default function DrinkCustomize() {
           <div className={styles.footerTop}>
             <span className={styles.totalPrice}>S$ {totalPrice.toFixed(2)}</span>
             <div className={styles.quantityRow}>
-              <button className={styles.qtyBtn} onClick={() => setQuantity(q => Math.max(1, q - 1))}>−</button>
+              <button type="button" className={styles.qtyBtn} onClick={() => setQuantity(q => Math.max(1, q - 1))}>−</button>
               <span className={styles.qtyValue}>{quantity}</span>
-              <button className={styles.qtyBtn} onClick={() => setQuantity(q => q + 1)}>+</button>
+              <button type="button" className={styles.qtyBtn} onClick={() => setQuantity(q => q + 1)}>+</button>
             </div>
           </div>
           <div className={styles.actionRow}>
             <button
+              type="button"
               className={`${styles.addToCartBtn} ${addedToCart ? styles.addedConfirm : ''}`}
               onClick={handleAddToCartAndReturnToMenu}
             >
               {addedToCart ? '✓ ADDED!' : 'ADD TO CART'}
             </button>
-            <button className={styles.placeOrderBtn} onClick={handlePlaceOrderWithCartSave}>
+            <button type="button" className={styles.placeOrderBtn} onClick={handlePlaceOrderWithCartSave}>
               BUY NOW
             </button>
           </div>

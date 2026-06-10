@@ -49,22 +49,34 @@
 }
 
 .backBtn {
-  background: none;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(200, 121, 65, 0.08);
+  border: 1.5px solid rgba(200, 121, 65, 0.28);
+  border-radius: 999px;
   color: #c87941;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  padding: 0;
-  text-align: left;
+  padding: 6px 14px 6px 10px;
   width: fit-content;
-  letter-spacing: 0.01em;
-  transition: color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
 }
 
 .backBtn:hover {
+  background: rgba(200, 121, 65, 0.16);
+  border-color: rgba(200, 121, 65, 0.5);
   color: #a0602e;
-  text-decoration: underline;
+  transform: translateX(-2px);
+}
+
+.backBtnArrow {
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 400;
+  margin-top: -1px;
 }
 
 .drinkName {

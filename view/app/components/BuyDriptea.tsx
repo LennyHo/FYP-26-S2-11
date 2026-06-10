@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from '../components/Header';
 import styles from './BuyDriptea.module.css';
 import Link from 'next/link';
@@ -8,10 +8,9 @@ import Image from 'next/image';
 import { searchBeverage } from '../utils/dripteaApi';
 
 const categories = [
-  { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b001.png', desc: 'Creamy & classic' },
-  { name: 'Matcha Teas', slug: 'matcha-teas', tone: 'catGreen', image: '/img/bubble_teas/b006.png', desc: 'Earthy & bold' },
-  { name: 'Ice Blended', slug: 'ice-blended', tone: 'catBlue', image: '/img/bubble_teas/b010.png', desc: 'Cool & refreshing' },
-  { name: 'Local Favourites', slug: 'local-favourites', tone: 'catGold', image: '/img/bubble_teas/b011.png', desc: 'Taste of home' },
+  { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b001.jpg', desc: 'Creamy & classic' },
+  { name: 'Matcha Teas', slug: 'matcha-teas', tone: 'catGreen', image: '/img/bubble_teas/b006.jpg', desc: 'Earthy & bold' },
+  { name: 'Ice Blended', slug: 'ice-blended', tone: 'catBlue', image: '/img/bubble_teas/b010.jpg', desc: 'Cool & refreshing' },
 ];
 
 // #19 Helper Function
@@ -35,15 +34,12 @@ export default function BuyDripTeaPage() {
 
   const handleSearch = async () => {
     const keyword = searchTerm.trim();
-
     setHasSearched(true);
     setSearchError('');
-
     if (!keyword) {
       setSearchResults([]);
       return;
     }
-
     try {
       const data = await searchBeverage(keyword);
       setSearchResults(data.data || []);
@@ -52,6 +48,28 @@ export default function BuyDripTeaPage() {
       setSearchResults([]);
     }
   };
+
+  // Auto-filter: debounce 300 ms after each keystroke
+  useEffect(() => {
+    const keyword = searchTerm.trim();
+    if (!keyword) {
+      setSearchResults([]);
+      setHasSearched(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setHasSearched(true);
+      setSearchError('');
+      try {
+        const data = await searchBeverage(keyword);
+        setSearchResults(data.data || []);
+      } catch {
+        setSearchError('Unable to search beverages. Please try again later.');
+        setSearchResults([]);
+      }
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
   return (
     <div className={styles.page}>
       <Header />
@@ -187,7 +205,7 @@ export default function BuyDripTeaPage() {
                     <h3>{cat.name}</h3>
                     <p className={styles.categoryDesc}>{cat.desc}</p>
                   </div>
-                  <span className={styles.categoryArrow}>→</span>
+                  <span className={styles.categoryArrow}>Browse <span className={styles.categoryArrowIcon}>›</span></span>
                 </div>
               </Link>
             ))}
