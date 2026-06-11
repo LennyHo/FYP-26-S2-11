@@ -18,7 +18,8 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 10. [Default Seed Accounts](#default-seed-accounts)
 11. [Essential API Endpoints](#essential-api-endpoints)
 12. [Frontend Pages & Features](#frontend-pages--features)
-13. [Chatbot Test Prompts](#chatbot-test-prompts)
+13. [Recent Changes](#recent-changes)
+14. [Chatbot Test Prompts](#chatbot-test-prompts)
 
 ---
 
@@ -77,18 +78,18 @@ This project follows the **MVC (Model-View-Controller)** architectural pattern:
 FYP-26-S2-11/
 ├── view/              ← (V) Next.js app — View layer (port 3000)
 │   ├── app/           ← Next.js App Router pages & components
-│   ├── public/        ← Static assets
+│   ├── public/        ← Static assets (images, videos, nutri-grade images)
 │   └── package.json
 ├── src/
 │   ├── config/        ← env.js, mongo.js (DB connection)
 │   ├── models/        ← (M) Mongoose models — Model layer
 │   ├── routes/        ← Express route files
 │   └── Controllers/   ← (C) Business logic — Controller layer
-├── data/
-│   └── menu.json      ← Beverage catalogue used by the chatbot
 ├── server.js          ← Backend entry point (port 5000)
 └── package.json
 ```
+
+> **Note:** `data/menu.json` and `data/nutriCalculator.js` have been removed. All menu data is now served exclusively from MongoDB via the `/api/menu-items` endpoint.
 
 ---
 
@@ -360,25 +361,64 @@ All backend routes are prefixed with `/api` except the chatbot.
 
 ## Frontend Pages & Features
 
-| URL Path                  | Description                              |
-|---------------------------|------------------------------------------|
-| `/`                       | Landing page with AI chatbot widget      |
-| `/buy-driptea`            | Full ordering page                       |
-| `/menu`                   | Browse the full drink menu               |
-| `/menu/[category]`        | Filtered menu view by category           |
-| `/cart`                   | Shopping cart                            |
-| `/checkout`               | Order & payment                          |
-| `/login`                  | Customer login                           |
-| `/register`               | Customer registration                    |
-| `/forgot-password`        | Password reset                           |
-| `/profile`                | Customer profile                         |
-| `/contact`                | Contact / enquiry page                   |
-| `/global-stores`          | Global store locator                     |
-| `/our-story`              | Brand story page                         |
-| `/store-staff`            | Store staff login                        |
-| `/store-staff-dashboard`  | Order queue management (staff)           |
-| `/user-admin`             | Admin login                              |
-| `/user-admin-dashboard`   | User & menu management (admin)           |
+| URL Path                       | Description                                           |
+|--------------------------------|-------------------------------------------------------|
+| `/`                            | Landing page — Hero, About, Avy highlight, MeetTheCrew|
+| `/buy-driptea`                 | Category browse + instant client-side search          |
+| `/menu/[category]`             | Drink listing by category                             |
+| `/menu/[category]/[drinkId]`   | Drink detail — customise size, ice, sugar, toppings   |
+| `/cart`                        | Shopping cart                                         |
+| `/checkout`                    | Order & payment                                       |
+| `/login`                       | Customer login                                        |
+| `/register`                    | Customer registration                                 |
+| `/forgot-password`             | Password reset                                        |
+| `/profile`                     | Customer profile                                      |
+| `/contact`                     | Contact / enquiry page                                |
+| `/global-stores`               | Global store locator                                  |
+| `/our-story`                   | Brand story page                                      |
+| `/store-staff`                 | Store staff login                                     |
+| `/store-staff-dashboard`       | Order queue management (staff)                        |
+| `/user-admin`                  | Admin login                                           |
+| `/user-admin-dashboard`        | User & menu management (admin)                        |
+
+---
+
+## Recent Changes
+
+### UI & Frontend Improvements
+
+**Landing Page (`/`)**
+- Replaced the old "Meet the Crew" section with a full-width video banner (`buy_driptea_3.mp4`) with a CTA overlay
+- Added conditional marketing section below the video: perk cards + registration CTA for guests; member benefits grid for logged-in users
+- Added new **Avy Section** between About Us and Meet the Crew — highlights chatbot features with a "CHAT WITH AVY" button that opens the sidebar directly via a custom browser event (no URL param side effects)
+- "Join the Crew" eyebrow uses Dancing Script font
+
+**Buy DripTea Page (`/buy-driptea`)**
+- Updated category card images: Milk Tea → b004, Matcha Teas → b007, Ice Blended → b012, Local Favourites → b011
+- Redesigned category cards: full-bleed image, frosted-glass price badge overlay, consistent brown Browse button (hover → secondary blue `#0257AD`)
+- Search now loads all menu items once on page mount and filters client-side — instant results with no API delay per keystroke
+
+**Drink Listing Page (`/menu/[category]`)**
+- Redesigned drink cards to match category card style: full-bleed image, price badge overlay, full-width "Customize & Add" button
+- "Back to Categories" button styled as white pill to match "VIEW ALL DRIPS" button
+
+**Drink Detail Page (`/menu/[category]/[drinkId]`)**
+- Replaced coloured letter nutri-grade badge with official `grade_nutri_X_full.png` image (A/B/C/D), displayed below the Sugar and kcal pills, left-aligned
+- "Back to Category" now calls `router.back()` instead of always going to `/buy-driptea`
+- Removed hover zoom on drink image
+
+**Chatbot Sidebar**
+- Improved message entrance animations: spring easing (`cubic-bezier(0.16, 1, 0.3, 1)`), 380ms duration, slide + subtle scale for a natural pop-in feel
+- Improved typing indicator: dots now scale up at bounce peak for a livelier pulse
+- Fixed `AvyQueryListener` bug where `?avy=open` in the URL prevented the chatbot from being closed — URL param is now cleared immediately after opening
+
+**Store Staff Dashboard**
+- Removed "Live orders refreshed HH:MM:SS" timer banner; errors still display when they occur
+
+### Data & Code Cleanup
+- Removed `data/menu.json` and `data/nutriCalculator.js` — all menu data is served from MongoDB
+- Removed unused imports and dead code from `ChatbotSidebar.tsx`: `menuData`, `applyGlossaryTooltips`, `MessageSource`, `TRUSTED_SOURCE_HOSTS`, `narrationVoiceRef`, `inputRef`, `pickNarrationVoice`, `resumeSpeakModeListening`
+- Removed pill/rounded-rectangle backgrounds from chip labels site-wide for a cleaner look
 
 ---
 
