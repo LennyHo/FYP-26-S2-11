@@ -1,4 +1,3 @@
-const cartService = require("../services/cart.service");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 const Order = require("../models/order.model");
@@ -106,7 +105,7 @@ async function processPayment(req, res) {
         });
     }
 
-    const cartItems = await cartService.getCart(userId);
+    const cartItems = await CartItem.getCart(userId);
 
     if (!cartItems.length) {
         return res.status(400).json({
