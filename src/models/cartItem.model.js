@@ -151,9 +151,18 @@ cartItemSchema.statics.updateCartItem = async function updateCartItem(cartItemId
 
   if (payload.lineTotal !== undefined) {
     updateData.lineTotal = Number(payload.lineTotal);
+  } else if (payload.quantity !== undefined) {
+    // lineTotal not supplied — recalculate from the stored unitPrice so the
+    // displayed price stays correct when only the quantity changes.
+    const existing = await this.findById(itemObjectId).select('unitPrice').lean();
+    if (existing?.unitPrice) {
+      updateData.lineTotal = Number(existing.unitPrice) * Number(payload.quantity);
+    }
   }
 
-  return this.findByIdAndUpdate(itemObjectId, updateData, {
+  // Use $set so only the specified fields are updated — a plain object in
+  // Mongoose 7+ is treated as a replacement document and drops all other fields.
+  return this.findByIdAndUpdate(itemObjectId, { $set: updateData }, {
     new: true,
   }).lean();
 };
