@@ -78,13 +78,11 @@ This project follows the **MVC (Model-View-Controller)** architectural pattern:
 FYP-26-S2-11/
 ├── view/              ← (V) Next.js app — View layer (port 3000)
 │   ├── app/           ← Next.js App Router pages & components
-│   │   ├── api/       ← Next.js API route handlers
+│   │   ├── api/chat/  ← Next.js proxy route — forwards chat requests to Express backend + enriches sources
 │   │   ├── components/← Shared UI components
 │   │   ├── locales/   ← i18n translation files (react-i18next)
 │   │   ├── providers/ ← Redux / context providers
 │   │   └── utils/     ← Frontend utility functions
-│   ├── data/          ← Static data files
-│   ├── img/           ← Logo and brand images
 │   ├── public/        ← Static assets (images, videos, nutri-grade images)
 │   └── package.json
 ├── src/
