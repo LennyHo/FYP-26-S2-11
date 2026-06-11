@@ -8,9 +8,9 @@ import Image from 'next/image';
 import { searchBeverage } from '../utils/dripteaApi';
 
 const categories = [
-  { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b001.jpg', desc: 'Creamy & classic' },
-  { name: 'Matcha Teas', slug: 'matcha-teas', tone: 'catGreen', image: '/img/bubble_teas/b006.jpg', desc: 'Earthy & bold' },
-  { name: 'Ice Blended', slug: 'ice-blended', tone: 'catBlue', image: '/img/bubble_teas/b010.jpg', desc: 'Cool & refreshing' },
+  { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b004.jpg', desc: 'Creamy & classic' },
+  { name: 'Matcha Teas', slug: 'matcha-teas', tone: 'catGreen', image: '/img/bubble_teas/b007.jpg', desc: 'Earthy & bold' },
+  { name: 'Ice Blended', slug: 'ice-blended', tone: 'catBlue', image: '/img/bubble_teas/b012.jpg', desc: 'Cool & refreshing' },
   { name: 'Local Favourites', slug: 'local-favorites', tone: 'catGold', image: '/img/bubble_teas/b011.jpg', desc: 'Taste of home' },
 ];
 

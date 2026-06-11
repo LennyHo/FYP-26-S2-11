@@ -109,23 +109,17 @@
   margin-top: 4px;
 }
 
-.nutriBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  color: #fff;
-  font-weight: 900;
-  font-size: 0.95rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+.nutriGradeWrapper {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
 }
 
-.gradeA { background: linear-gradient(135deg, #2e7d32, #43a047); }
-.gradeB { background: linear-gradient(135deg, #1565c0, #1976d2); }
-.gradeC { background: linear-gradient(135deg, #e65100, #f4511e); }
-.gradeD { background: linear-gradient(135deg, #b71c1c, #c62828); }
+.nutriGradeImg {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+}
 
 .nutriDetail {
   font-size: 0.78rem;

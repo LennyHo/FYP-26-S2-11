@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Header from './Header';
 import styles from './DrinkCustomize.module.css';
 import {
@@ -47,18 +48,11 @@ const toppingOptions = [
   { key: 'cheese', name: 'Cheese Foam', price: 1.50, sugarG: 8, calories: 120 },
 ];
 
-const nutriGradeColor: Record<string, string> = {
-  A: '#2e7d32',
-  B: '#1565c0',
-  C: '#e65100',
-  D: '#b71c1c',
-};
-
-const nutriGradeClass: Record<string, string> = {
-  A: styles.gradeA,
-  B: styles.gradeB,
-  C: styles.gradeC,
-  D: styles.gradeD,
+const nutriGradeImage: Record<string, string> = {
+  A: '/grade_nutri_a_full.png',
+  B: '/grade_nutri_b_full.png',
+  C: '/grade_nutri_c_full.png',
+  D: '/grade_nutri_d_full.png',
 };
 
 function toDrinkSlug(value: string) {
@@ -442,7 +436,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
             <button
               type="button"
               className={styles.backBtn}
-              onClick={() => router.push(isEditMode ? '/cart' : '/buy-driptea')}
+              onClick={() => isEditMode ? router.push('/cart') : router.back()}
             >
               <span className={styles.backBtnArrow}>‹</span>
               {isEditMode ? "Back to Cart" : "Back to Category"}
@@ -452,14 +446,20 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
 
             {/* Live nutri info */}
             <div className={styles.nutriRow}>
-              <span
-                className={`${styles.nutriBadge} ${nutriGradeClass[selectedDrink.nutriGrade] || ''}`}
-              >
-                {selectedDrink.nutriGrade}
-              </span>
               <span className={styles.nutriDetail}>Sugar: {totalSugarG}g</span>
               <span className={styles.nutriDetail}>{totalCalories} kcal</span>
             </div>
+            {nutriGradeImage[selectedDrink.nutriGrade] && (
+              <div className={styles.nutriGradeWrapper}>
+                <Image
+                  src={nutriGradeImage[selectedDrink.nutriGrade]}
+                  alt={`Nutri-Grade ${selectedDrink.nutriGrade}`}
+                  width={160}
+                  height={80}
+                  className={styles.nutriGradeImg}
+                />
+              </div>
+            )}
           </div>
         </div>
 
