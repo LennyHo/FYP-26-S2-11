@@ -393,6 +393,41 @@ All backend routes are prefixed with `/api` except the chatbot.
 
 ## Recent Changes
 
+### Cart Badge Fix
+- Fixed a race condition in `Header.tsx` where the navbar cart badge count was reverting to the old count after adding a drink
+- Root cause: `syncStoredCartFromBackend` (a backend GET) was racing with `addCartItem` (backend POST) — the GET completed first, returned stale data, and overwrote localStorage before the new item was saved
+- Fix: `cartUpdated` event handler now only reads from localStorage (which is already updated before the event fires); backend sync is reserved for initial page load and `authUpdated` (login/logout) where no concurrent POST exists
+
+### Cart Page — UI & Routing Fix
+- Moved `cart/edit/[cartItemId]/page.tsx` from `view/app/components/cart/edit/...` to the correct Next.js App Router path `view/app/cart/edit/[cartItemId]/page.tsx` — it was previously unreachable as a route
+- Improved cart page layout: added `.cart-content` wrapper (`max-width: 1000px; margin: 0 auto`) so only content below the header is constrained, keeping the navbar full-width and consistent with other pages
+- Back to Menu button: `align-self: flex-start` and proper spacing so it no longer appears cramped or centered
+- Checkout button: `justify-content: flex-end` on `.checkout-row` with no extra padding — right-aligned cleanly with the cart panel
+
+### Drink Info & Ratings — Moved from Hardcoded to MongoDB
+- Added `drinkInfo` (`ingredients`, `diabeticAdvice`, `insulinImpact`) and `rating` fields to the `menuItem` Mongoose schema (`src/models/menuItem.model.js`)
+- Both fields are included in the public menu API response (`src/controllers/menu.controller.js`)
+- Removed hardcoded `DRINK_INFO` and `DRINK_RATINGS` constants from `DrinkCard.tsx` and `DrinkRecCards.tsx`; components now receive values as props or read from the API response
+- `ChatbotSidebar.tsx` builds a `menuById` lookup (keyed by item ID) so it can pass `rating` and `drinkInfo` as props to `DrinkCard` when rendering chatbot drink recommendations
+
+### API Documentation — `dripteaApi.ts`
+- Added a single-line comment above every exported function in `view/app/utils/dripteaApi.ts` describing its purpose and the full backend file chain (route → controller → service)
+- Removed all `// done by "HDC"` / `// end done by "HDC"` markers from the file
+
+### Code Cleanup — `view/app/components/`
+- Deleted `KeywordInfo.tsx` and `KeywordInfo.module.css` — component had no callers
+- Deleted `ORGANIZATION.md` — documentation file mixed in with source components
+- Deleted all barrel `index.ts` re-export files (`components/index.ts`, `drink/index.ts`, `layout/index.ts`, `chatbot/index.ts`, `pages/index.ts`, `ui/index.ts`, `cart/index.ts`) — none were imported by real code
+- Removed the now-empty subdirectories: `chatbot/`, `drink/`, `layout/`, `pages/`, `ui/`
+
+### Login Page — Migrated to TypeScript
+- `view/app/login/page.js` converted to `page.tsx`
+- Added TypeScript types: `LoginCredentials`, `LoginPayload` interfaces; typed `useRef<HTMLInputElement>`, form event handler, and helper function parameters
+- Removed unused `storeUser` import
+
+### Footer Social Links Fix
+- Replaced placeholder external URLs with `#` and removed `target="_blank"` / `rel="noreferrer"` from social links to eliminate browser security warnings
+
 ### UI & Frontend Improvements
 
 **Landing Page (`/`)**

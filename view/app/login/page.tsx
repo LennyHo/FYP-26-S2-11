@@ -4,8 +4,17 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import styles from './login.module.css';
 import { useRouter } from 'next/navigation';
-import { syncStoredCartFromBackend, storeUser } from '../utils/dripteaApi';
+import { syncStoredCartFromBackend } from '../utils/dripteaApi';
 
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+interface LoginPayload {
+  user: { id: string; role: string; profilePic?: string };
+  token: string;
+}
 
 const DRIPTEA_API_BASES = [
   'http://localhost:5000',
@@ -13,10 +22,10 @@ const DRIPTEA_API_BASES = [
   'https://driptea-trrn.onrender.com',
 ]
   .filter(Boolean)
-  .map((value) => value.replace(/\/$/, ''))
+  .map((value) => (value as string).replace(/\/$/, ''))
   .filter((value, index, values) => values.indexOf(value) === index);
 
-async function loginAgainstAvailableBackend(credentials) {
+async function loginAgainstAvailableBackend(credentials: LoginCredentials): Promise<LoginPayload> {
   let lastMessage = 'Login failed.';
 
   for (const apiBase of DRIPTEA_API_BASES) {
@@ -31,7 +40,7 @@ async function loginAgainstAvailableBackend(credentials) {
       const payload = await response.json().catch(() => ({}));
 
       if (response.ok) {
-        return payload;
+        return payload as LoginPayload;
       }
 
       lastMessage = payload.message || 'Login failed.';
@@ -55,8 +64,8 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
-  const emailRef = useRef(null);
-  const passwordRef = useRef(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   const testCredentials = {
     admin: { email: 'yiyuanzhuan@driptea.com', password: 'Admin@123' },
@@ -64,7 +73,7 @@ export default function LoginPage() {
     customer: { email: 'customer@gmail.com', password: 'Customer@123' },
   };
 
-  const fillTestCredentials = (role) => {
+  const fillTestCredentials = (role: 'admin' | 'staff' | 'customer') => {
     const creds = testCredentials[role];
     if (emailRef.current && passwordRef.current) {
       emailRef.current.value = creds.email;
@@ -94,11 +103,11 @@ export default function LoginPage() {
     return !newErrors.email && !newErrors.password;
   };
 
-  const clearFieldError = (field) => {
+  const clearFieldError = (field: 'email' | 'password') => {
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handleLogin = async (event) => {
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStatusMessage('');
 
@@ -132,7 +141,7 @@ export default function LoginPage() {
       } else if (payload.user.role === 'store_staff') {
         router.push('/store-staff-dashboard');
       } else {
-        router.push('/'); // Redirect customer to landing page
+        router.push('/');
       }
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : 'Login failed.');

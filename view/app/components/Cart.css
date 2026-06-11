@@ -1,12 +1,22 @@
 /* Full-viewport flex column — outer page never scrolls */
 .cart-page {
-  height: 100vh;
+  min-height: 100vh;
   background: #fbf7f1;
-  padding: 32px 56px 24px;
   font-family: Arial, Helvetica, sans-serif;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+.cart-content {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 64px 48px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   box-sizing: border-box;
 }
 
@@ -17,12 +27,13 @@
   color: #fff;
   border: none;
   border-radius: 12px;
-  padding: 10px 22px;
+  padding: 12px 28px;
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(60, 35, 20, 0.28);
-  margin-bottom: 20px;
+  margin-top: 24px;
+  margin-bottom: 24px;
   transition: transform 0.15s ease, background 0.2s ease;
 }
 
@@ -271,6 +282,7 @@
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
+  padding-bottom: 8px;
 }
 
 .checkout-btn {
@@ -301,7 +313,7 @@
 /* Tablet (641px – 1024px) */
 @media (max-width: 1024px) and (min-width: 641px) {
   .cart-page {
-    padding: 28px 32px 20px;
+    padding: 32px 36px 24px;
   }
   .cart-panel {
     padding: 22px 28px 16px;

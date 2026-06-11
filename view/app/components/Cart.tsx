@@ -170,6 +170,7 @@ export default function Cart() {
   return (
     <main className="cart-page">
       <Header />
+      <div className="cart-content">
       <button
         type="button"
         className="back-menu-btn"
@@ -278,6 +279,7 @@ export default function Cart() {
         >
           Proceed to checkout
         </button>
+      </div>
       </div>
     </main>
   );
