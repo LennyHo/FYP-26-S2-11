@@ -307,6 +307,13 @@ export async function syncStoredCartFromBackend(userId: string): Promise<DripTea
   return response.data || [];
 }
 
+export function getCartItem(cartItemId: string) {
+  return requestJson<{
+    ok: boolean;
+    data: DripTeaCartItem;
+  }>(`/api/cart-items/${encodeURIComponent(cartItemId)}`);
+}
+
 export function updateCartItemQuantity(cartItemId: string, quantity: number) {
   return requestJson<{ ok: boolean; data: DripTeaCartItem }>(
     `/api/cart-items/${encodeURIComponent(cartItemId)}`,
@@ -321,6 +328,16 @@ export function deleteCartItem(cartItemId: string) {
   return requestJson<{ ok: boolean; deletedId: string }>(`/api/cart-items/${encodeURIComponent(cartItemId)}`, {
     method: 'DELETE',
   });
+}
+
+export function updateCartItem(cartItemId: string, payload: Record<string, unknown>) {
+  return requestJson<{ ok: boolean; data: DripTeaCartItem }>(
+    `/api/cart-items/${encodeURIComponent(cartItemId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }
+  );
 }
 
 export function checkoutCart(userId: string, paymentMethod: string, voucherCode?: string) {

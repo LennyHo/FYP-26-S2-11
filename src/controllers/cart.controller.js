@@ -1,4 +1,4 @@
-const cartService = require("../services/cart.service");
+const CartItem = require("../models/cartItem.model");
 
 async function addToCart(req, res) {
   try {
@@ -7,7 +7,7 @@ async function addToCart(req, res) {
     const finalCustomerId = customerId || userId;
     const finalBeverageId = beverageId || menuItemId;
 
-    const cartItem = await cartService.addToCart(finalCustomerId, finalBeverageId, {
+    const cartItem = await CartItem.addToCart(finalCustomerId, finalBeverageId, {
       quantity,
       customization,
     });
@@ -31,7 +31,7 @@ async function getCart(req, res) {
   try {
     const customerId = req.query.customerId || req.query.userId;
 
-    const cartItems = await cartService.getCart(customerId);
+    const cartItems = await CartItem.getCart(customerId);
 
     return res.json({
       ok: true,
@@ -48,9 +48,32 @@ async function getCart(req, res) {
   }
 }
 
+async function getCartItem(req, res) {
+  try {
+    const item = await CartItem.getCartItemById(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({
+        ok: false,
+        message: "Cart item not found.",
+      });
+    }
+
+    return res.json({
+      ok: true,
+      data: item,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      ok: false,
+      message: "Failed to load cart item.",
+    });
+  }
+}
+
 async function removeFromCart(req, res) {
   try {
-    const deletedItem = await cartService.removeFromCart(req.params.id);
+    const deletedItem = await CartItem.removeFromCart(req.params.id);
 
     return res.json({
       ok: true,
@@ -67,8 +90,42 @@ async function removeFromCart(req, res) {
   }
 }
 
+// User Story #17: Edit cart items
+async function updateCartItem(req, res) {
+  try {
+    const updatedItem = await CartItem.updateCartItem(req.params.id, {
+      quantity: req.body.quantity,
+      customization: req.body.customization,
+      unitPrice: req.body.unitPrice,
+      lineTotal: req.body.lineTotal,
+    });
+
+    if (!updatedItem) {
+      return res.status(404).json({
+        ok: false,
+        message: "Cart item not found.",
+      });
+    }
+
+    return res.json({
+      ok: true,
+      message: "Cart item updated.",
+      data: updatedItem,
+    });
+  } catch (error) {
+    console.error("[CartController] updateCartItem error:", error.message);
+
+    return res.status(400).json({
+      ok: false,
+      message: error.message || "Failed to update cart item.",
+    });
+  }
+}
+
 module.exports = {
   addToCart,
   getCart,
+  getCartItem,
   removeFromCart,
+  updateCartItem,
 };

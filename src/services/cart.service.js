@@ -1,3 +1,4 @@
+/*
 const mongoose = require("mongoose");
 const CartItem = require("../models/cartItem.model");
 const MenuItem = require("../models/menuItem.model");
@@ -98,4 +99,4 @@ module.exports = {
     addToCart,
     getCart,
     removeFromCart,
-};
+};*/

@@ -59,7 +59,7 @@
 
 .cardTop {
   display: flex;
-  justify-content: flex-end; /* Moves price to the right since badge is gone */
+  justify-content: flex-end;
 }
 
 .priceTag {

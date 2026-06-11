@@ -4,9 +4,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from './Header';
 import styles from './DrinkCustomize.module.css';
-// done by "HDC" - sends Add to Cart actions to backend cart_items for logged-in users.
-import { addCartItem, formatLocalCartLine, getDripTeaApiBase, getStoredUser } from '../utils/dripteaApi';
-// end done by "HDC"
+import {
+  addCartItem,
+  updateCartItem,
+  getCartItem,
+  formatLocalCartLine,
+  getDripTeaApiBase,
+  getMenuItems,
+  getStoredUser,
+} from '../utils/dripteaApi';
 
 interface DrinkData {
   id: string;
@@ -62,12 +68,17 @@ function toDrinkSlug(value: string) {
     .replace(/^-+|-+$/g, '');
 }
 
-export default function DrinkCustomize() {
+type DrinkCustomizeProps = {
+  mode?: "add" | "edit";
+};
+
+export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
   const params = useParams();
   const router = useRouter();
 
   const drinkId = params.drinkId as string;
-
+  const cartItemId = params.cartItemId as string;
+  const isEditMode = mode === "edit";
   const [drink, setDrink] = useState<DrinkData | null>(null);
   const [loading, setLoading] = useState(true);
   const [size, setSize] = useState(sizes[0]);
@@ -80,13 +91,58 @@ export default function DrinkCustomize() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${getDripTeaApiBase()}/api/menu-items`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.ok && Array.isArray(data.data)) {
-          const item = data.data.find(
-            (d: any) => d.id === drinkId || toDrinkSlug(d.name) === drinkId
+
+    async function loadDrinkAndCartItem() {
+      try {
+        let targetDrinkId = drinkId;
+
+        if (isEditMode && cartItemId) {
+          const cartResponse = await getCartItem(cartItemId);
+
+          if (cartResponse.ok && cartResponse.data) {
+            const cartItem = cartResponse.data;
+
+            targetDrinkId =
+              cartItem.menuItemCode ||
+              String(cartItem.menuItemId || "");
+
+            setQuantity(cartItem.quantity || 1);
+
+            const selectedSize = sizes.find(
+              (s) => s.label === cartItem.customization?.size
+            );
+            if (selectedSize) setSize(selectedSize);
+
+            if (cartItem.customization?.ice) {
+              setIce(cartItem.customization.ice as string);
+            }
+
+            const selectedSweetness = sweetnessOptions.find(
+              (s) => s.label === cartItem.customization?.sugar
+            );
+            if (selectedSweetness) setSweetness(selectedSweetness);
+
+            const toppingName = Array.isArray(cartItem.customization?.toppings)
+              ? cartItem.customization.toppings[0]
+              : null;
+
+            const selectedTopping = toppingOptions.find(
+              (t) => t.name === toppingName
+            );
+            if (selectedTopping) setTopping(selectedTopping);
+          }
+        }
+
+        const menuResponse = await getMenuItems("active");
+
+        if (menuResponse.ok && Array.isArray(menuResponse.data)) {
+          const item = (menuResponse.data as any[]).find(
+            (d: any) =>
+              d.id === targetDrinkId ||
+              d.mongoId === targetDrinkId ||
+              toDrinkSlug(d.name) === targetDrinkId
           );
+
           if (item) {
             setDrink({
               id: item.id,
@@ -95,42 +151,43 @@ export default function DrinkCustomize() {
               category: item.category,
               price: item.price,
               description: item.description,
-              nutriGrade: item.nutri_grade || 'B',
+              nutriGrade: item.nutri_grade || "B",
               sugarG: item.base_sugar_g ?? 0,
               calories: item.base_calories ?? 0,
             });
-            setImageSrc(item.image || '');
+
+            setImageSrc(item.image || "");
           }
         }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [drinkId]);
+      } catch (error) {
+        console.error("[DrinkCustomize] Failed to load drink:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDrinkAndCartItem();
+  }, [drinkId, cartItemId, isEditMode]);
 
   // Pre-fill form from chat customization
   useEffect(() => {
-    const customizationData = sessionStorage.getItem('chatCustomization');
+    if (isEditMode) return;
+  const customizationData = sessionStorage.getItem('chatCustomization');
+
     if (customizationData) {
       try {
         const data = JSON.parse(customizationData);
-        // Only pre-fill if it matches the current drink
         if (data.drinkId === drinkId) {
-          // Find and set size
           const sizeObj = sizes.find(s => s.label === data.size);
           if (sizeObj) setSize(sizeObj);
-          // Set ice
           setIce(data.ice);
-          // Find and set sweetness
           const sweetnessObj = sweetnessOptions.find(s => s.label === data.sugar);
           if (sweetnessObj) setSweetness(sweetnessObj);
-          // Clear the stored data after using it
           sessionStorage.removeItem('chatCustomization');
         }
-      } catch (e) {
-        // Ignore parsing errors
-      }
+      } catch (e) {}
     }
-  }, [drinkId]);
+  }, [drinkId, isEditMode]);
 
   if (loading) {
     return (
@@ -327,6 +384,40 @@ export default function DrinkCustomize() {
   }
   // end done by "HDC"
 
+  // User Story #17: Edit cart items
+  async function handleUpdateCartItem() {
+    try {
+      if (!cartItemId) {
+        alert("Cart item ID is missing.");
+        return;
+      }
+
+      await updateCartItem(cartItemId, {
+        quantity,
+        unitPrice: selectedDrink.price + size.surcharge + topping.price,
+        lineTotal: totalPrice,
+        customization: {
+          size: size.label,
+          ice,
+          sugar: sweetness.label,
+          sugarPercent: sweetness.pct,
+          toppings: topping.key === "none" ? [] : [topping.name],
+          nutritionInfo: {
+            sugarG: totalSugarG,
+            calories: totalCalories,
+            nutriGrade: selectedDrink.nutriGrade,
+          },
+        },
+      });
+
+      window.dispatchEvent(new Event("cartUpdated"));
+      router.push("/cart");
+    } catch (error) {
+      console.error("[DripTea cart update]", error);
+      alert("Unable to update this drink. Please try again.");
+    }
+  }
+
   return (
     <div className={styles.page}>
       <Header />
@@ -348,9 +439,13 @@ export default function DrinkCustomize() {
           </div>
 
           <div className={styles.info}>
-            <button type="button" className={styles.backBtn} onClick={() => router.push('/buy-driptea')}>
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={() => router.push(isEditMode ? '/cart' : '/buy-driptea')}
+            >
               <span className={styles.backBtnArrow}>‹</span>
-              Back to Category
+              {isEditMode ? "Back to Cart" : "Back to Category"}
             </button>
             <h1 className={styles.drinkName}>{selectedDrink.name}</h1>
             <p className={styles.drinkDesc}>{selectedDrink.description}</p>
@@ -457,13 +552,15 @@ export default function DrinkCustomize() {
             <button
               type="button"
               className={`${styles.addToCartBtn} ${addedToCart ? styles.addedConfirm : ''}`}
-              onClick={handleAddToCartAndReturnToMenu}
+              onClick={isEditMode ? handleUpdateCartItem : handleAddToCartAndReturnToMenu}
             >
-              {addedToCart ? '✓ ADDED!' : 'ADD TO CART'}
+              {isEditMode ? "UPDATE" : addedToCart ? "✓ ADDED!" : "ADD TO CART"}
             </button>
+            {!isEditMode && (
             <button type="button" className={styles.placeOrderBtn} onClick={handlePlaceOrderWithCartSave}>
               BUY NOW
             </button>
+            )}
           </div>
         </div>
       </div>

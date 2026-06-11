@@ -122,12 +122,7 @@ export default function Cart() {
   }
 
   function handleEditItem(item: CartItem) {
-    if (!item.drinkId) {
-      router.push("/buy-driptea");
-      return;
-    }
-
-    router.push(`/menu/${getCategorySlugByDrinkId(item.drinkId)}/${encodeURIComponent(item.drinkId)}`);
+    router.push(`/cart/edit/${item.backendId}`);
   }
 
   async function handleIncrease(item: CartItem) {
