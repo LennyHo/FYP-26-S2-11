@@ -3,6 +3,321 @@
   width: 100%;
 }
 
+.videoWrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(30, 10, 0, 0.22), 0 6px 16px rgba(30, 10, 0, 0.12);
+}
+
+.meetVideo {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  max-height: 340px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 36px 40px;
+  background: linear-gradient(
+    to top,
+    rgba(20, 10, 5, 0.72) 0%,
+    rgba(20, 10, 5, 0.3) 50%,
+    transparent 100%
+  );
+}
+
+.eyebrow {
+  margin-bottom: 10px;
+  color: rgba(255, 220, 180, 0.9);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.headline {
+  margin-bottom: 24px;
+  color: #fff;
+  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a0a00;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.ctaButton:hover {
+  background: var(--color-secondary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(2, 87, 173, 0.35);
+}
+
+.ctaButton:active {
+  transform: translateY(0);
+}
+
+.perksRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.perkCard {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  overflow: hidden;
+  background: rgba(255, 250, 245, 0.9);
+  border: 1px solid rgba(220, 199, 180, 0.9);
+  border-radius: 22px;
+  box-shadow: 0 12px 24px rgba(59, 39, 26, 0.07);
+  min-height: 140px;
+}
+
+
+.perkVisual {
+  flex-shrink: 0;
+  width: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.perkVisualBrew {
+  background: linear-gradient(160deg, #fff3e0 0%, #f1c89a 100%);
+}
+
+.perkVisualAvy {
+  background: linear-gradient(160deg, #f3e8ff 0%, #c9a8e8 100%);
+}
+
+.perkVisualEmoji {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.perkAvyImg {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.perkContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px;
+}
+
+.perkChip {
+  color: #9b6d4a;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.perkTitle {
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.perkDesc {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.perkCardBrew {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  min-height: 140px;
+  border: 1px solid rgba(220, 170, 100, 0.3);
+  box-shadow: 0 16px 36px rgba(59, 39, 26, 0.14), 0 4px 12px rgba(59, 39, 26, 0.08);
+}
+
+.perkBrewImg {
+  object-fit: cover;
+  object-position: center;
+}
+
+.perkCardAvy {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  min-height: 140px;
+  background: linear-gradient(135deg, #2a0a3a 0%, #5b1a6e 100%);
+  border: 1px solid rgba(140, 80, 180, 0.3);
+  box-shadow: 0 16px 36px rgba(59, 39, 26, 0.14), 0 4px 12px rgba(59, 39, 26, 0.08);
+}
+
+
+.perkAvyImg {
+  position: absolute;
+  right: 16px;
+  bottom: 0;
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  object-position: bottom;
+  filter: drop-shadow(0 6px 16px rgba(80, 30, 100, 0.35));
+}
+
+.perkAvyOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 18px 20px;
+  background: linear-gradient(
+    to top,
+    rgba(20, 8, 5, 0.82) 0%,
+    rgba(20, 8, 5, 0.4) 55%,
+    transparent 100%
+  );
+}
+
+.perkChipLight {
+  color: rgba(255, 210, 160, 0.9);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.perkTitleLight {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 2px;
+}
+
+.perkDescLight {
+  color: rgba(255, 240, 225, 0.8);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.ctaBanner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 48px 40px;
+  background: linear-gradient(135deg, #1e0a00 0%, #4a1a08 50%, #2a0a3a 100%);
+  border-radius: 22px;
+  box-shadow: 0 20px 50px rgba(30, 10, 0, 0.22);
+}
+
+.ctaBannerEyebrow {
+  color: rgba(255, 210, 160, 0.9);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ctaBannerHeadline {
+  color: #fff;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.ctaBannerSub {
+  color: rgba(255, 235, 210, 0.7);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 520px;
+}
+
+.ctaBannerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: #1e0a00;
+  border-radius: 999px;
+  padding: 14px 32px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  margin-top: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.ctaBannerBtn:hover {
+  background: var(--color-secondary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(2, 87, 173, 0.35);
+}
+
+@media (max-width: 600px) {
+  .overlay {
+    padding: 24px 20px;
+  }
+
+  .meetVideo {
+    max-height: 240px;
+  }
+
+  .perksRow {
+    grid-template-columns: 1fr;
+  }
+
+  .perkCard {
+    min-height: 120px;
+  }
+
+  .perkVisual {
+    width: 90px;
+  }
+
+  .ctaBanner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .meetHeader {
   display: flex;
   align-items: center;

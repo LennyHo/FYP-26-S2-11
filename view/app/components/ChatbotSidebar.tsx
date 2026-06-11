@@ -10,7 +10,6 @@ import {
   QUICK_PROMPTS,
   createConversationId,
   convertDrinkNamesToLinks,
-  applyGlossaryTooltips,
 } from '../utils/chatHelpers';
 // import ImageUploadButton from './ImageUploadButton';
 import SpeechControls from './SpeechControls';
@@ -18,19 +17,9 @@ import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
 import OrderReceiptCard from './OrderReceiptCard';
 import avyLogo from '../../img/Group 2.svg';
-import menuData from '../../data/menu.json';
 import DrinkCard from "./DrinkCard";
 
 // ==== TYPE DEFINITIONS ====
-
-/** Metadata for sources cited in bot responses */
-interface MessageSource {
-  title: string;
-  url: string;
-  snippet?: string;
-  sourceName?: string;
-  favicon?: string;
-}
 
 /** Represents a single message in the chat */
 interface Message {
@@ -90,18 +79,6 @@ const getRandomGreeting = () => {
   return WELCOME_GREETINGS[index];
 };
 
-/** List of trusted health/news sources for filtering reliable information */
-const TRUSTED_SOURCE_HOSTS = [
-  'hpb.gov.sg',
-  'moh.gov.sg',
-  'nus.edu.sg',
-  'ntu.edu.sg',
-  'sph.com.sg',
-  'channelnewsasia.com',
-  'todayonline.com',
-  'straitstimes.com',
-];
-
 export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout }: ChatbotSidebarProps) {
   // ===== STATE MANAGEMENT =====
   // Chat state
@@ -133,8 +110,6 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
   const voiceConversationRef = useRef(false);
   const isListeningRef = useRef(false);
   const isRecognitionStartingRef = useRef(false);
-  const narrationVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
-  const inputRef = useRef('');
   const lastSentRef = useRef('');
   /** Tracks drink customization flow (step-by-step: size → ice → sugar → topping) */
   const [pendingDrinkForCustomization, setPendingDrinkForCustomization] = useState<{
@@ -298,11 +273,6 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
   useEffect(() => {
     speakModeRef.current = isSpeakMode;
   }, [isSpeakMode]);
-
-  /** Sync input state with ref for access in event handlers */
-  useEffect(() => {
-    inputRef.current = input;
-  }, [input]);
 
   /** Auto-send message in speak mode when user stops speaking and input updates */
   useEffect(() => {
@@ -524,25 +494,6 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
     }
   };
 
-  const resumeSpeakModeListening = () => {
-    if (!voiceConversationRef.current || !recognitionRef.current) {
-      return;
-    }
-
-    setIsSpeakMode(true);
-    speakModeRef.current = true;
-
-    if (isListeningRef.current) return;
-
-    setTimeout(() => {
-      if (!voiceConversationRef.current || !recognitionRef.current || isListeningRef.current || isRecognitionStartingRef.current) {
-        return;
-      }
-
-      requestRecognitionStart();
-    }, 120);
-  };
-
   const stopNarrationAndListen = () => {
     const synth = window.speechSynthesis;
     if (synth.speaking || synth.pending) {
@@ -575,39 +526,6 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
 
     return () => clearTimeout(t);
   }, [isSpeakMode]);
-
-  /** Select best available TTS voice with preference for natural/neural voices */
-  const pickNarrationVoice = () => {
-    if (narrationVoiceRef.current) {
-      return narrationVoiceRef.current;
-    }
-
-    const synth = window.speechSynthesis;
-    const voices = synth.getVoices();
-    if (!voices.length) {
-      return null;
-    }
-
-    const preferredVoiceMatchers = [
-      /microsoft .*online/i,
-      /google .*male|google .*female/i,
-      /natural/i,
-      /premium/i,
-      /neural/i,
-      /samantha/i,
-      /karen/i,
-    ];
-
-    const preferredLangVoices = voices.filter(voice => voice.lang?.toLowerCase().startsWith('en'));
-    const candidateVoices = preferredLangVoices.length > 0 ? preferredLangVoices : voices;
-
-    const matchedVoice = candidateVoices.find(voice =>
-      preferredVoiceMatchers.some(pattern => pattern.test(voice.name))
-    );
-
-    narrationVoiceRef.current = matchedVoice || candidateVoices[0] || voices[0] || null;
-    return narrationVoiceRef.current;
-  };
 
   /** Text-to-speech using Web Speech API with selected voice, rate, pitch, and volume */
 // --- NARRATIVE AUDIO HELPER ---
