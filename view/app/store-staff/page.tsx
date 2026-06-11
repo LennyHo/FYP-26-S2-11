@@ -1,6 +1,6 @@
 'use client';
 
-import StaffHeader from '../components/StaffHeader';
+import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';

@@ -1,12 +1,12 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from "react";
-import Header from "./Header";
+import Header from "../layout/Header";
 import {
   getPurchaseHistory,
   getStoredUser,
   type DripTeaPurchaseHistoryItem,
-} from "../utils/dripteaApi";
+} from "../../utils/dripteaApi";
 import "./PurchaseHistory.css";
 
 function formatDate(value?: string) {

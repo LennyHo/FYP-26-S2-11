@@ -1,22 +1,22 @@
-"use client";
+﻿"use client";
 
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import styles from './ChatbotSidebar.module.css';
-import { getStoredUser, getMenuItems, type DripTeaMenuItem } from "../utils/dripteaApi";
+import { getStoredUser, getMenuItems, type DripTeaMenuItem } from "../../utils/dripteaApi";
 import {
   QUICK_PROMPTS,
   createConversationId,
   convertDrinkNamesToLinks,
-} from '../utils/chatHelpers';
+} from '../../utils/chatHelpers';
 // import ImageUploadButton from './ImageUploadButton';
 import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
-import DrinkRecCards from './DrinkRecCards';
-import OrderReceiptCard from './OrderReceiptCard';
+import DrinkRecCards from '../menu/DrinkRecCards';
+import OrderReceiptCard from '../ui/OrderReceiptCard';
 const avyLogo = '/img/Group 2.svg';
-import DrinkCard from "./DrinkCard";
+import DrinkCard from "../menu/DrinkCard";
 
 // ==== TYPE DEFINITIONS ====
 

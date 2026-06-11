@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,8 +7,9 @@ import {
   getStoredUser,
   deleteCartItem,
   updateCartItemQuantity,
-} from "../utils/dripteaApi";
-import Header from "./Header";
+  parseLocalCartLine,
+} from "../../utils/dripteaApi";
+import Header from "../layout/Header";
 import "./Cart.css";
 
 interface DripTeaCartItem {
@@ -68,8 +69,34 @@ export default function Cart() {
       const user = getStoredUser();
 
       if (!user) {
-        setCartItems([]);
-        setTotal(0);
+        // Guest: show items from localStorage so the badge count matches the cart page
+        const localData = localStorage.getItem("dripTeaCartData");
+        if (!localData) {
+          setCartItems([]);
+          setTotal(0);
+          return;
+        }
+        const guestItems: CartItem[] = localData
+          .split("\n")
+          .filter((l) => l.trim())
+          .map((line) => {
+            const parsed = parseLocalCartLine(line);
+            if (!parsed) return null;
+            const qtyMatch = parsed.details.match(/Qty\s+(\d+)/i);
+            const quantity = qtyMatch ? Number(qtyMatch[1]) : 1;
+            const unitPrice = quantity > 0 ? parsed.price / quantity : parsed.price;
+            return {
+              name: parsed.name,
+              details: parsed.details,
+              price: parsed.price,
+              unitPrice,
+              imageSrc: parsed.imageSrc,
+              quantity,
+            } satisfies CartItem;
+          })
+          .filter((item): item is CartItem => item !== null);
+        setCartItems(guestItems);
+        setTotal(guestItems.reduce((sum, item) => sum + item.price, 0));
         return;
       }
 

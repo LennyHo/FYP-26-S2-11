@@ -3,7 +3,7 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaTimes } from 'react-icons/fa';
-import AdminHeader from '../components/AdminHeader';
+import AdminHeader from '../components/layout/AdminHeader';
 import {
   clearStoredUser,
   createUserAccount,

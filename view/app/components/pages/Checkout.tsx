@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "./Header";
+import Header from "../layout/Header";
 import {
     checkoutCart,
     getOrder,
@@ -10,7 +10,7 @@ import {
     getStoredUser,
     parseLocalCartLine,
     type DripTeaCartItem,
-} from "../utils/dripteaApi";
+} from "../../utils/dripteaApi";
 import "./Checkout.css";
 
 type CheckoutItem = {

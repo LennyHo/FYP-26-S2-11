@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 import Link from 'next/link';
 // done by "HDC" - reads backend-auth user stored by login so the header can show Log out.
-import { clearStoredUser, getStoredUser, parseLocalCartLine, syncStoredCartFromBackend, type DripTeaUser } from '../utils/dripteaApi';
+import { clearStoredUser, getStoredUser, parseLocalCartLine, syncStoredCartFromBackend, type DripTeaUser } from '../../utils/dripteaApi';
 // end done by "HDC"
 
 // Inline SVG for the brand logo to avoid bundler import issues and ensure consistent rendering

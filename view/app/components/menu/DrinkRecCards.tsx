@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from './ChatbotSidebar.module.css';
-import { parseDrinkFromHtml } from '../utils/chatHelpers';
+import styles from '../chatbot/ChatbotSidebar.module.css';
+import { parseDrinkFromHtml } from '../../utils/chatHelpers';
 
 
 function StarRating({ rating }: { rating: number }) {

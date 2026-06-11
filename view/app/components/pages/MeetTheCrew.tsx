@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Dancing_Script } from 'next/font/google';
-import { getStoredUser } from '../utils/dripteaApi';
+import { getStoredUser } from '../../utils/dripteaApi';
 import styles from './MeetTheCrew.module.css';
 
 const dancingScript = Dancing_Script({ subsets: ['latin'], weight: '700' });

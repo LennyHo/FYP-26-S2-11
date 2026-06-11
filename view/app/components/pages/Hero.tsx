@@ -1,7 +1,7 @@
-
+﻿
 import React from 'react';
 import styles from './Hero.module.css';
-import InteractiveBubbles from './InteractiveBubbles';
+import InteractiveBubbles from '../ui/InteractiveBubbles';
 
 // Inline SVG for the brand logo
 const mainLogoSvg = `

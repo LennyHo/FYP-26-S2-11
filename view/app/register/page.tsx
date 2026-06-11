@@ -6,7 +6,7 @@ import { useState } from 'react';
 import styles from './register.module.css';
 import { registerCustomer } from '../utils/dripteaApi';
 
-function EyeIcon({ open }) {
+function EyeIcon({ open }: { open: boolean }) {
   return open ? (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
@@ -21,9 +21,16 @@ function EyeIcon({ open }) {
   );
 }
 
+interface FormData {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
     password: '',
@@ -35,11 +42,11 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  function updateField(field, value) {
+  function updateField(field: keyof FormData, value: string) {
     setFormData(current => ({ ...current, [field]: value }));
   }
 
-  async function handleRegister(event) {
+  async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatusMessage('');
     setIsError(false);

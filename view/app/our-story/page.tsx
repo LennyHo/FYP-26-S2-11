@@ -1,7 +1,7 @@
 "use client";
 
-import Header from '../components/Header';
-import OurStory from '../components/OurStory';
+import Header from '../components/layout/Header';
+import OurStory from '../components/pages/OurStory';
 import styles from './our-story.module.css';
 
 export default function OurStoryPage() {

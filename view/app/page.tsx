@@ -1,11 +1,11 @@
 "use client";
 
-import Header from './components/Header';
-import Hero from './components/Hero';
-import MeetTheCrew from './components/MeetTheCrew';
-import AboutUs from './components/AboutUs';
-import AvySection from './components/AvySection';
-// import FAQ from './components/FAQ';
+import Header from './components/layout/Header';
+import Hero from './components/pages/Hero';
+import MeetTheCrew from './components/pages/MeetTheCrew';
+import AboutUs from './components/pages/AboutUs';
+import AvySection from './components/pages/AvySection';
+// import FAQ from './components/pages/FAQ';
 import styles from './page.module.css';
 
 export default function Home() {

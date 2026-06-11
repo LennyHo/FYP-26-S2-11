@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from "react";
-import Header from '../components/Header';
+import Header from '../layout/Header';
 import styles from './BuyDriptea.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getMenuItems } from '../utils/dripteaApi';
+import { getMenuItems } from '../../utils/dripteaApi';
 
 const categories = [
   { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b004.jpg', desc: 'Creamy & classic' },

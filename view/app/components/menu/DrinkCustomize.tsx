@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Header from './Header';
+import Header from '../layout/Header';
 import styles from './DrinkCustomize.module.css';
 import {
   addCartItem,
@@ -13,7 +13,7 @@ import {
   getDripTeaApiBase,
   getMenuItems,
   getStoredUser,
-} from '../utils/dripteaApi';
+} from '../../utils/dripteaApi';
 
 interface DrinkData {
   id: string;

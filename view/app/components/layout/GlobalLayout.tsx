@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
-import ChatbotSidebar from './ChatbotSidebar';
+import ChatbotSidebar from '../chatbot/ChatbotSidebar';
 import Footer from './Footer';
-import styles from '../layout.module.css';
+import styles from '../../layout.module.css';
 
 // --- 1. TINY HELPER COMPONENT ---
 function AvyQueryListener({ onOpen }: { onOpen: () => void }) {

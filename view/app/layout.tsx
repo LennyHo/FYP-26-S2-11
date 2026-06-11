@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import GlobalLayout from "./components/GlobalLayout"; // 1. Import our custom split-screen layout
+import GlobalLayout from "./components/layout/GlobalLayout"; // 1. Import our custom split-screen layout
 import "./globals.css";
 import styles from "./layout.module.css";
 import type { Viewport } from 'next'
