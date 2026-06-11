@@ -39,11 +39,13 @@ function calculateNutrition(drink, sugarLevel, toppings = []) {
     };
 
     const nutrition = drink.nutritionInfo || {};
+
     let sugar =
         Number(nutrition.baseSugarG ?? drink.base_sugar_g ?? 0) +
         (sugarMap[sugarLevel] || 0);
 
-    let calories = Number(nutrition.baseCalories ?? drink.base_calories ?? 0);
+    let calories =
+        Number(nutrition.baseCalories ?? drink.base_calories ?? 0);
 
     if (toppings.includes("Pearls")) {
         sugar += 8;
@@ -60,15 +62,19 @@ function calculateNutrition(drink, sugarLevel, toppings = []) {
         calories += 90;
     }
 
+    // Nutri-Grade calculation based on sugar per 100ml
+    const sugarPer100ml = (sugar / 500) * 100;
+
     let grade = "A";
 
-    if (sugar > 5) grade = "B";
-    if (sugar > 10) grade = "C";
-    if (sugar > 15) grade = "D";
+    if (sugarPer100ml > 1) grade = "B";
+    if (sugarPer100ml > 5) grade = "C";
+    if (sugarPer100ml > 10) grade = "D";
 
     return {
         sugar,
         calories,
+        sugarPer100ml: Number(sugarPer100ml.toFixed(2)),
         grade,
     };
 }
