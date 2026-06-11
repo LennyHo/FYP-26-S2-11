@@ -9,20 +9,30 @@ import styles from '../layout.module.css';
 // --- 1. TINY HELPER COMPONENT ---
 function AvyQueryListener({ onOpen }: { onOpen: () => void }) {
   const searchParams = useSearchParams();
-  
+  const router = useRouter();
+
   useEffect(() => {
     if (searchParams.get('avy') === 'open') {
       onOpen();
+      // Clear the query param immediately so closing works
+      router.replace(window.location.pathname);
     }
-  }, [searchParams, onOpen]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
-  return null; // This component is invisible!
+  return null;
 }
 
 export default function GlobalLayout({ children }: { children: React.ReactNode }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter(); // 2. INITIALIZE ROUTER
+
+  useEffect(() => {
+    const handler = () => setIsChatOpen(true);
+    window.addEventListener('openAvyChat', handler);
+    return () => window.removeEventListener('openAvyChat', handler);
+  }, []);
 
   const hideChatbot =
     pathname.startsWith('/user-admin') ||

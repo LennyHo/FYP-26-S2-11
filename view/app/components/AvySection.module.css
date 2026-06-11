@@ -1,0 +1,157 @@
+.section {
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1e0a00, #2a0a3a, #0d1a3a);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  align-items: center;
+  gap: 40px;
+  padding: 60px 56px;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.eyebrow {
+  color: #c9a8ff;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.headline {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.sub {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 480px;
+  margin: 0;
+}
+
+.featureList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.featureDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c9a8ff;
+  margin-top: 6px;
+}
+
+.featureLabel {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0 0 2px;
+}
+
+.featureDesc {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #1a1a1a;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  padding: 13px 28px;
+  border-radius: 999px;
+  text-decoration: none;
+  width: fit-content;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.cta:hover {
+  background: #0257AD;
+  color: #fff;
+}
+
+.visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avyGlow {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(180, 130, 255, 0.3) 0%, transparent 70%);
+  filter: blur(40px);
+}
+
+.avyImg {
+  position: relative;
+  z-index: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 40px rgba(150, 100, 255, 0.3));
+}
+
+@media (max-width: 860px) {
+  .inner {
+    grid-template-columns: 1fr;
+    padding: 40px 28px;
+    text-align: center;
+  }
+
+  .sub {
+    max-width: 100%;
+  }
+
+  .featureItem {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .cta {
+    align-self: center;
+  }
+
+  .visual {
+    order: -1;
+  }
+
+  .avyImg {
+    width: 200px;
+    height: auto;
+  }
+}
