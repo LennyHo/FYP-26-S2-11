@@ -8,7 +8,7 @@ const aiClient = require("../ai/aiClient");
 const ChatbotSession = require("../models/chatbotSession.model");
 
 const { buildSystemPrompt } = require("./prompt.service");
-const cartService = require("./cart.service");
+const CartItem = require("../models/cartItem.model");
 const MenuItem = require("../models/menuItem.model");
 const purchaseHistoryService = require("./purchaseHistory.service");
 
@@ -30,6 +30,7 @@ async function getConversationHistory(conversationId) {
 // End of User Story #25
 
 // User Story #29: Get Health Advice from Chatbot
+// User Story #31: Ask About Nutri-Grade
 function calculateNutrition(drink, sugarLevel, toppings = []) {
     const sugarMap = {
         "0%": 0,
@@ -200,7 +201,7 @@ async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
 
     const customization = parseCustomization(hiddenItem.details);
 
-    const cartItem = await cartService.addToCart(userId, drink.itemId, {
+    const cartItem = await CartItem.addToCart(userId, drink.itemId, {
         quantity: 1,
         customization,
     });
@@ -231,7 +232,7 @@ function isViewCartRequest(message) {
 }
 
 async function buildCartSummary(userId) {
-    const cartItems = await cartService.getCart(userId);
+    const cartItems = await CartItem.getCart(userId);
 
     const groupedItems = {};
 
@@ -622,7 +623,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
             };
         }
 
-        const cartItem = await cartService.addToCart(userId, beverageId, {
+        const cartItem = await CartItem.addToCart(userId, beverageId, {
             quantity: 1,
             customization: {
                 size: "Regular",
