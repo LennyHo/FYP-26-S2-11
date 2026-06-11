@@ -36,9 +36,6 @@
   transition: transform 0.3s ease;
 }
 
-.drinkImage:hover {
-  transform: scale(1.04);
-}
 
 .info {
   flex: 1;
