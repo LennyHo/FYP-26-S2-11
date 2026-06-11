@@ -53,7 +53,7 @@ export default function MenuCategory() {
       <main className={styles.main}>
         <section className={styles.section}>
           <button onClick={() => router.back()} className={styles.backAction}>
-            ← Back to Categories
+            Back to Categories
           </button>
 
           <div className={styles.sectionHeading}>
@@ -72,12 +72,9 @@ export default function MenuCategory() {
               ) : (
                 beverages.map((drink) => (
                   <article key={drink.id} className={styles.beverageCard}>
-                    <div className={styles.cardTop}>
-                      <span className={styles.priceTag}>S$ {drink.price.toFixed(2)}</span>
-                    </div>
-
                     <div className={styles.imageWrapper}>
                       <img src={drink.image} alt={drink.name} className={styles.beverageImage} />
+                      <span className={styles.priceTag}>S$ {drink.price.toFixed(2)}</span>
                     </div>
 
                     <div className={styles.beverageInfo}>
@@ -85,13 +82,15 @@ export default function MenuCategory() {
                       <p>{drink.description}</p>
                     </div>
 
-                    <button
-                      type="button"
-                      className={styles.addButton}
-                      onClick={() => router.push(`/menu/${categorySlug}/${drink.id}`)}
-                    >
-                      Customize & Add
-                    </button>
+                    <div className={styles.cardFooter}>
+                      <button
+                        type="button"
+                        className={styles.addButton}
+                        onClick={() => router.push(`/menu/${categorySlug}/${drink.id}`)}
+                      >
+                        Customize & Add
+                      </button>
+                    </div>
                   </article>
                 ))
               )}

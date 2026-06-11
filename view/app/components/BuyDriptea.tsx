@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import styles from './BuyDriptea.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
-import { searchBeverage } from '../utils/dripteaApi';
+import { getMenuItems } from '../utils/dripteaApi';
 
 const categories = [
   { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b004.jpg', desc: 'Creamy & classic' },
@@ -19,58 +19,38 @@ function toCategorySlug(category: string) {
   return category.toLowerCase().replace(/\s+/g, '-');
 }
 
+type MenuSearchItem = {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  description: string;
+  image: string;
+};
+
 export default function BuyDripTeaPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  type MenuSearchItem = {
-    id: string;
-    name: string;
-    category: string;
-    price: number;
-    description: string;
-    image: string;
-  };
-  const [searchResults, setSearchResults] = useState<MenuSearchItem[]>([]);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [allItems, setAllItems] = useState<MenuSearchItem[]>([]);
   const [searchError, setSearchError] = useState('');
 
-  const handleSearch = async () => {
-    const keyword = searchTerm.trim();
-    setHasSearched(true);
-    setSearchError('');
-    if (!keyword) {
-      setSearchResults([]);
-      return;
-    }
-    try {
-      const data = await searchBeverage(keyword);
-      setSearchResults(data.data || []);
-    } catch {
-      setSearchError('Unable to search beverages. Please try again later.');
-      setSearchResults([]);
-    }
-  };
-
-  // Auto-filter: debounce 300 ms after each keystroke
+  // Load all menu items once on mount for instant client-side search
   useEffect(() => {
-    const keyword = searchTerm.trim();
-    if (!keyword) {
-      setSearchResults([]);
-      setHasSearched(false);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      setHasSearched(true);
-      setSearchError('');
-      try {
-        const data = await searchBeverage(keyword);
-        setSearchResults(data.data || []);
-      } catch {
-        setSearchError('Unable to search beverages. Please try again later.');
-        setSearchResults([]);
-      }
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+    getMenuItems('active')
+      .then(res => setAllItems((res.data as MenuSearchItem[]) || []))
+      .catch(() => setSearchError('Unable to load menu. Please try again later.'));
+  }, []);
+
+  const keyword = searchTerm.trim().toLowerCase();
+  const hasSearched = keyword.length > 0;
+  const searchResults = hasSearched
+    ? allItems.filter(d =>
+        d.name.toLowerCase().includes(keyword) ||
+        d.category.toLowerCase().includes(keyword) ||
+        (d.description || '').toLowerCase().includes(keyword)
+      )
+    : [];
+
+  const handleSearch = () => {};
   return (
     <div className={styles.page}>
       <Header />
@@ -126,7 +106,6 @@ export default function BuyDripTeaPage() {
                 if (event.key === "Enter") handleSearch();
               }}
             />
-
             <button
               type="button"
               className={styles.menuSearchButton}
@@ -135,6 +114,7 @@ export default function BuyDripTeaPage() {
               Search
             </button>
           </div>
+
 
           {hasSearched && (
             <div className={styles.searchResultBlock}>
@@ -150,12 +130,6 @@ export default function BuyDripTeaPage() {
                 <div className={styles.searchCardGrid}>
                   {searchResults.map((drink) => (
                     <article key={drink.id} className={styles.searchDrinkCard}>
-                      <div className={styles.searchDrinkTop}>
-                        <span className={styles.searchPriceTag}>
-                          S$ {Number(drink.price || 0).toFixed(2)}
-                        </span>
-                      </div>
-
                       <div className={styles.searchImageWrapper}>
                         <img
                           src={drink.image || `/img/bubble_teas/${drink.id}.png`}
@@ -165,20 +139,24 @@ export default function BuyDripTeaPage() {
                             event.currentTarget.src = "/img/bubble_teas/b001.png";
                           }}
                         />
+                        <span className={styles.searchPriceTag}>
+                          S$ {Number(drink.price || 0).toFixed(2)}
+                        </span>
                       </div>
 
                       <div className={styles.searchDrinkInfo}>
-                        <p className={styles.searchDrinkCategory}>{drink.category}</p>
                         <h3>{drink.name}</h3>
                         <p>{drink.description}</p>
                       </div>
 
-                      <Link
-                        href={`/menu/${toCategorySlug(drink.category)}/${drink.id}`}
-                        className={styles.searchAddButton}
-                      >
-                        Customize &amp; Add
-                      </Link>
+                      <div className={styles.searchCardFooter}>
+                        <Link
+                          href={`/menu/${toCategorySlug(drink.category)}/${drink.id}`}
+                          className={styles.searchAddButton}
+                        >
+                          Customize &amp; Add
+                        </Link>
+                      </div>
                     </article>
                   ))}
                 </div>
