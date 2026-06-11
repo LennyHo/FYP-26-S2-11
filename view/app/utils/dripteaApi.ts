@@ -1,4 +1,4 @@
-// done by "HDC" - small frontend bridge to the backend routes for auth, cart, and payment testing.
+// Frontend API bridge — all fetch calls to the Express backend go through this file.
 export type DripTeaUser = {
   id: string;
   fullName: string;
@@ -44,7 +44,7 @@ export type DripTeaCartItemResponse = {
   };
 };
 
-// done by "HDC" - shared local cart parser handles item details that contain pipe characters.
+// Parses a pipe-delimited cart line string back into a structured cart item object.
 export type DripTeaLocalCartItem = {
   name: string;
   details: string;
@@ -83,9 +83,8 @@ export function formatLocalCartLine(item: DripTeaLocalCartItem) {
   const safeDetails = item.details.replace(/\s*\|\s*/g, ' / ');
   return `${item.name}|${safeDetails}|S$ ${item.price.toFixed(2)}${item.imageSrc ? `|${item.imageSrc}` : ''}`;
 }
-// end done by "HDC"
 
-// done by "HDC" - staff panel order queue type from backend orders collection.
+// Order type used by the store staff dashboard to display and manage the order queue.
 export type DripTeaOrder = {
   id: string;
   orderNo: string;
@@ -105,7 +104,6 @@ export type DripTeaOrder = {
     customization: Record<string, unknown>;
   }>;
 };
-// end done by "HDC"
 
 const API_BASES = [
   'http://localhost:5000',
@@ -115,7 +113,6 @@ const API_BASES = [
   .filter((value): value is string => Boolean(value))
   .map((value) => value.replace(/\/$/, ''))
   .filter((value, index, values) => values.indexOf(value) === index);
-// end done by "HDC"
 const USER_STORAGE_KEY = 'dripTeaCurrentUser';
 const TOKEN_STORAGE_KEY = 'dripTeaAuthToken';
 
@@ -212,6 +209,7 @@ export function clearStoredUser() {
   window.dispatchEvent(new Event('authUpdated'));
 }
 
+// Registers a new customer account. POST /api/auth/register → auth.routes.js → auth.service.js
 export async function registerCustomer(payload: {
   fullName: string;
   email: string;
@@ -232,6 +230,7 @@ export async function registerCustomer(payload: {
   return response;
 }
 
+// Logs in an existing user and stores the session. POST /api/auth/login → auth.routes.js → auth.service.js
 export async function loginCustomer(payload: {
   email: string;
   password: string;
@@ -251,6 +250,7 @@ export async function loginCustomer(payload: {
   return response;
 }
 
+// Adds a customised drink to the cart. POST /api/cart-items → cart.routes.js → cart.controller.js
 export function addCartItem(payload: Record<string, unknown>) {
   return requestJson<DripTeaCartItemResponse>('/api/cart-items', {
     method: 'POST',
@@ -258,6 +258,7 @@ export function addCartItem(payload: Record<string, unknown>) {
   }, 'DripTea add to cart');
 }
 
+// Fetches all cart items for a user. GET /api/cart-items?userId → cart.routes.js → cart.controller.js
 export async function getCartItems(
   userId: string
 ): Promise<{
@@ -294,6 +295,7 @@ export function cartItemsToLocalCartData(items: DripTeaCartItem[]) {
     .join('\n');
 }
 
+// Syncs the backend cart to localStorage so the cart page can read it offline. Uses getCartItems.
 export async function syncStoredCartFromBackend(userId: string): Promise<DripTeaCartItem[]> {
   const response = await getCartItems(userId);
   const cartData = cartItemsToLocalCartData(response.data || []);
@@ -307,6 +309,7 @@ export async function syncStoredCartFromBackend(userId: string): Promise<DripTea
   return response.data || [];
 }
 
+// Fetches a single cart item by ID. GET /api/cart-items/:id → cart.routes.js → cart.controller.js
 export function getCartItem(cartItemId: string) {
   return requestJson<{
     ok: boolean;
@@ -314,6 +317,7 @@ export function getCartItem(cartItemId: string) {
   }>(`/api/cart-items/${encodeURIComponent(cartItemId)}`);
 }
 
+// Updates the quantity of a cart item. PATCH /api/cart-items/:id → cart.routes.js → cart.controller.js
 export function updateCartItemQuantity(cartItemId: string, quantity: number) {
   return requestJson<{ ok: boolean; data: DripTeaCartItem }>(
     `/api/cart-items/${encodeURIComponent(cartItemId)}`,
@@ -324,12 +328,14 @@ export function updateCartItemQuantity(cartItemId: string, quantity: number) {
   );
 }
 
+// Removes a cart item. DELETE /api/cart-items/:id → cart.routes.js → cart.controller.js
 export function deleteCartItem(cartItemId: string) {
   return requestJson<{ ok: boolean; deletedId: string }>(`/api/cart-items/${encodeURIComponent(cartItemId)}`, {
     method: 'DELETE',
   });
 }
 
+// Updates customisation details (size, ice, sugar, toppings) on a cart item. PATCH /api/cart-items/:id → cart.routes.js → cart.controller.js
 export function updateCartItem(cartItemId: string, payload: Record<string, unknown>) {
   return requestJson<{ ok: boolean; data: DripTeaCartItem }>(
     `/api/cart-items/${encodeURIComponent(cartItemId)}`,
@@ -340,6 +346,7 @@ export function updateCartItem(cartItemId: string, payload: Record<string, unkno
   );
 }
 
+// Submits the cart as an order and records a payment. POST /api/checkout → checkout.routes.js → checkout.controller.js
 export function checkoutCart(userId: string, paymentMethod: string, voucherCode?: string) {
   const payload: Record<string, unknown> = { userId, paymentMethod };
   if (voucherCode) payload.voucherCode = voucherCode;
@@ -354,24 +361,23 @@ export function checkoutCart(userId: string, paymentMethod: string, voucherCode?
   });
 }
 
-// done by "HDC" - staff order queue reads and updates real MongoDB orders.
+// Fetches all orders filtered by status, used by the store staff dashboard. GET /api/orders → checkout.routes.js → order.controller.js
 export function getOrders(status: string = 'all') {
   return requestJson<{ ok: boolean; data: DripTeaOrder[] }>(`/api/orders?status=${encodeURIComponent(status)}`);
 }
 
+// Fetches a single order by ID for the staff order detail view. GET /api/orders/:id → checkout.routes.js → order.controller.js
 export function getOrder(orderId: string) {
   return requestJson<{ ok: boolean; data: DripTeaOrder }>(`/api/orders/${encodeURIComponent(orderId)}`);
 }
 
+// Updates an order status (e.g. pending → preparing → ready). PATCH /api/orders/:id/status → checkout.routes.js → order.controller.js
 export function updateOrderStatus(orderId: string, status: string) {
   return requestJson<{ ok: boolean; data: { id: string; status: string } }>(`/api/orders/${encodeURIComponent(orderId)}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   });
 }
-// end done by "HDC"
-
-// done by "HDC" - menu item management for store-staff panel
 export type DripTeaMenuItem = {
   id: string;
   mongoId: string;
@@ -382,16 +388,25 @@ export type DripTeaMenuItem = {
   price: number;
   description?: string;
   status: string;
+  drinkInfo?: {
+    ingredients: string[];
+    diabeticAdvice: string;
+    insulinImpact: string;
+  };
+  rating?: number;
 };
 
+// Fetches menu items, optionally filtered by status. Used by menu pages, chatbot, and admin panel. GET /api/menu-items → menu.routes.js → menu.controller.js → menu.service.js
 export function getMenuItems(status: string = 'all') {
   return requestJson<{ ok: boolean; data: DripTeaMenuItem[] }>(`/api/menu-items?status=${encodeURIComponent(status)}`);
 }
 
+// Searches menu items by keyword (name, category, description). GET /api/menu/search → menu.routes.js → menu.controller.js
 export function searchBeverage(keyword: string) {
   return requestJson<{ ok: boolean; data: DripTeaMenuItem[] }>(`/api/menu/search?q=${encodeURIComponent(keyword)}`);
 }
 
+// Toggles a menu item between active and inactive, used by the admin panel. PATCH /api/menu-items/:id/status → menu.routes.js → menu.controller.js
 export function updateMenuItemStatus(id: string, status: string) {
   return requestJson<{ ok: boolean; data: { id: string; mongoId: string; status: string } }>(`/api/menu-items/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',
@@ -399,19 +414,21 @@ export function updateMenuItemStatus(id: string, status: string) {
   });
 }
 
+// Creates a new menu item, used by the admin panel. POST /api/menu-items → menu.routes.js → menu.controller.js
 export function createMenuItem(payload: { name: string; category: string; price: number; description?: string; tags?: string[]; status?: string }) {
   return requestJson<{ ok: boolean; data: DripTeaMenuItem }>('/api/menu-items', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 }
-// end done by "HDC"
 
+// Fetches all users, optionally filtered by search keyword. Used by the admin user management panel. GET /api/users → user.routes.js → user.controller.js
 export function getUsers(search: string = '') {
   const query = search ? `?search=${encodeURIComponent(search)}` : '';
   return requestJson<{ ok: boolean; data: DripTeaUser[] }>(`/api/users${query}`);
 }
 
+// Checks if an email is registered before allowing a password reset. Uses getUsers internally.
 export async function checkEmailExists(email: string) {
   const normalizedEmail = email.trim().toLowerCase();
   const response = await getUsers(normalizedEmail);
@@ -424,6 +441,7 @@ export async function checkEmailExists(email: string) {
   return { ok: true };
 }
 
+// Creates a new user account (any role), used by the admin panel. POST /api/users → user.routes.js → user.controller.js
 export function createUserAccount(payload: {
   fullName: string;
   email: string;
@@ -437,6 +455,7 @@ export function createUserAccount(payload: {
   });
 }
 
+// Updates a user's profile fields (name, email, role, status, profile picture). PATCH /api/users/:id → user.routes.js → user.controller.js
 export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'fullName' | 'email' | 'role' | 'status' | 'profilePic'>>) {
   return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}`, {
     method: 'PATCH',
@@ -444,6 +463,7 @@ export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'f
   });
 }
 
+// Suspends a user account, preventing login. PATCH /api/users/:id → user.routes.js → user.controller.js
 export function suspendUser(userId: string) {
   return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}`, {
     method: 'PATCH',
@@ -451,6 +471,7 @@ export function suspendUser(userId: string) {
   });
 }
 
+// Resets a user's password by email, used on the forgot password page. POST /api/auth/reset-password → auth.routes.js → auth.service.js
 export function resetPassword(email: string, newPassword: string) {
   return requestJson<{ ok: boolean; message: string }>('/api/auth/reset-password', {
     method: 'POST',
@@ -458,13 +479,13 @@ export function resetPassword(email: string, newPassword: string) {
   });
 }
 
+// Changes a logged-in user's password after verifying the current one. PATCH /api/auth/change-password → auth.routes.js → auth.service.js
 export function changePassword(userId: string, currentPassword: string, newPassword: string) {
   return requestJson<{ ok: boolean; message: string }>('/api/auth/change-password', {
     method: 'PATCH',
     body: JSON.stringify({ userId, currentPassword, newPassword }),
   });
 }
-// end done by "HDC"
 
 // Purchase History API
 export type DripTeaPurchaseHistoryItem = {
@@ -486,6 +507,7 @@ export type DripTeaPurchaseHistoryItem = {
   }>;
 };
 
+// Fetches a customer's past orders for the purchase history page. GET /api/purchase-history → purchaseHistory.routes.js → purchaseHistory.controller.js
 export function getPurchaseHistory(userId: string) {
   return requestJson<{ ok: boolean; data: DripTeaPurchaseHistoryItem[] }>(
     `/api/purchase-history?userId=${encodeURIComponent(userId)}`

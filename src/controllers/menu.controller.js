@@ -20,6 +20,8 @@ function publicMenuItem(item) {
     nutri_grade: nutrition.nutriGrade || 'B',
     customizationOptions: item.customizationOptions || [],
     nutritionInfo: nutrition,
+    drinkInfo: item.drinkInfo || { ingredients: [], diabeticAdvice: '', insulinImpact: '' },
+    rating: item.rating || 0,
   };
 }
 

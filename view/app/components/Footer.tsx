@@ -36,9 +36,9 @@ export default function Footer() {
               Freshly brewed. Brightly layered. Premium bubble tea crafted with passion.
             </p>
             <div className={styles.socialLinks}>
-              <a href="https://www.facebook.com" target="_blank" rel="noreferrer" className={styles.socialLink} aria-label="Facebook">f</a>
-              <a href="https://www.instagram.com" target="_blank" rel="noreferrer" className={styles.socialLink} aria-label="Instagram">IG</a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className={styles.socialLink} aria-label="Twitter">X</a>
+              <a href="#" className={styles.socialLink} aria-label="Facebook">f</a>
+              <a href="#" className={styles.socialLink} aria-label="Instagram">IG</a>
+              <a href="#" className={styles.socialLink} aria-label="Twitter">X</a>
             </div>
           </div>
 

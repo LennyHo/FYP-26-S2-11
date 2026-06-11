@@ -3,22 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import styles from "./DrinkCard.module.css";
-import { DRINK_INFO } from "../utils/chatHelpers";
 
-const DRINK_RATINGS: Record<string, number> = {
-  b001: 4.5,
-  b002: 4.3,
-  b003: 4.2,
-  b004: 4.0,
-  b005: 4.4,
-  b006: 4.6,
-  b007: 4.7,
-  b008: 4.1,
-  b009: 4.5,
-  b010: 4.8,
-  b011: 4.9,
-  b012: 4.3,
-};
 
 
 type DrinkCardProps = {
@@ -32,6 +17,12 @@ type DrinkCardProps = {
   nutriGrade?: string;
   sugar?: number;
   calories?: number;
+  rating?: number;
+  drinkInfo?: {
+    ingredients: string[];
+    diabeticAdvice: string;
+    insulinImpact: string;
+  };
 };
 
 function StarRating({ rating }: { rating: number }) {
@@ -60,14 +51,15 @@ export default function DrinkCard({
   nutriGrade,
   sugar,
   calories,
+  rating = 0,
+  drinkInfo,
 }: DrinkCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const accentClass =
     accent === "green" ? styles.green : accent === "red" ? styles.red : styles.brown;
 
-  const rating = DRINK_RATINGS[id] ?? 4.0;
-  const info = DRINK_INFO[id];
+  const info = drinkInfo;
 
   return (
     <div className={`${styles.cardWrap} ${accentClass} ${active ? styles.active : ""}`}>

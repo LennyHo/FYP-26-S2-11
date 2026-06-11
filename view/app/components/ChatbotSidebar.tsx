@@ -4,9 +4,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import styles from './ChatbotSidebar.module.css';
-import { getStoredUser } from "../utils/dripteaApi";
+import { getStoredUser, getMenuItems, type DripTeaMenuItem } from "../utils/dripteaApi";
 import {
-  drinkData,
   QUICK_PROMPTS,
   createConversationId,
   convertDrinkNamesToLinks,
@@ -16,7 +15,7 @@ import SpeechControls from './SpeechControls';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from './DrinkRecCards';
 import OrderReceiptCard from './OrderReceiptCard';
-import avyLogo from '../../img/Group 2.svg';
+const avyLogo = '/img/Group 2.svg';
 import DrinkCard from "./DrinkCard";
 
 // ==== TYPE DEFINITIONS ====
@@ -103,6 +102,8 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
   const [searchQuery, setSearchQuery] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [slowHintIndex, setSlowHintIndex] = useState(-1);
+  const [menuLookup, setMenuLookup] = useState<Record<string, { id: string; category: string }>>({});
+  const [menuById, setMenuById] = useState<Record<string, DripTeaMenuItem>>({});
   // ===== REFS (NON-STATE VALUES) =====
   // Speech API references
   const recognitionRef = useRef<any>(null);
@@ -155,6 +156,19 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
   };
 
   // ===== EFFECTS =====
+
+  useEffect(() => {
+    getMenuItems('active').then(res => {
+      const lookup: Record<string, { id: string; category: string }> = {};
+      const byId: Record<string, DripTeaMenuItem> = {};
+      (res.data || []).forEach(item => {
+        lookup[item.name] = { id: item.id, category: item.category };
+        byId[item.id] = item;
+      });
+      setMenuLookup(lookup);
+      setMenuById(byId);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -956,7 +970,7 @@ export default function ChatbotSidebar({ isOpen, onClose, onOpenCart, onCheckout
           setTimeout(() => setAddedIds(prev => prev.filter(id => id !== pendingDrinkForCustomization.id)), 2500);
 
           // Store customization data in sessionStorage for the customize page
-          const drinkDataEntry = drinkData[pendingDrinkForCustomization.name];
+          const drinkDataEntry = menuLookup[pendingDrinkForCustomization.name];
           if (drinkDataEntry) {
             sessionStorage.setItem('chatCustomization', JSON.stringify({
               drinkId: pendingDrinkForCustomization.id,
@@ -1603,7 +1617,7 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                     <div
                       dangerouslySetInnerHTML={{
                         __html: msg.isUser
-                          ? convertDrinkNamesToLinks(msg.text)
+                          ? convertDrinkNamesToLinks(msg.text, menuLookup)
                           : sanitizeExcessiveBreaks(msg.text),
                       }}
                     />
@@ -1640,6 +1654,8 @@ const sanitizeExcessiveBreaks = (htmlString: string) => {
                           nutriGrade={drink.nutri_grade ?? undefined}
                           sugar={drink.base_sugar_g ?? undefined}
                           calories={drink.base_calories ?? undefined}
+                          rating={menuById[drink.id]?.rating}
+                          drinkInfo={menuById[drink.id]?.drinkInfo}
                           accent={
                             drink.category?.toLowerCase().includes("matcha")
                               ? "green"

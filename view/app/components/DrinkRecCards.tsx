@@ -2,22 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './ChatbotSidebar.module.css';
-import { drinkData, DRINK_INFO, parseDrinkFromHtml } from '../utils/chatHelpers';
+import { parseDrinkFromHtml } from '../utils/chatHelpers';
 
-const DRINK_RATINGS: Record<string, number> = {
-  b001: 4.5, // Classic Milk Tea
-  b002: 4.3, // Jasmine Green Tea
-  b003: 4.2, // Oolong Milk Tea
-  b004: 4.0, // Osmanthus Milk Tea
-  b005: 4.4, // Da Hong Bao Milk Tea
-  b006: 4.6, // Matcha Latte
-  b007: 4.7, // Strawberry Matcha Tea
-  b008: 4.1, // Cranberry Matcha Tea
-  b009: 4.5, // Jasmine Matcha Tea
-  b010: 4.8, // Double Chocolate Frappe
-  b011: 4.9, // Milo Dinosaur
-  b012: 4.3, // Taro Slush
-};
 
 function StarRating({ rating }: { rating: number }) {
   const stars = Array.from({ length: 5 }, (_, i) => {
@@ -39,9 +25,17 @@ function StarRating({ rating }: { rating: number }) {
 
 interface MenuBeverage {
   id: string;
+  name: string;
+  category: string;
   base_calories: number;
   base_sugar_g: number;
   nutri_grade: string;
+  rating?: number;
+  drinkInfo?: {
+    ingredients: string[];
+    diabeticAdvice: string;
+    insulinImpact: string;
+  };
 }
 
 const CACHE_TTL_MS = 60_000; // 60 s — changes in MongoDB appear within a minute
@@ -85,12 +79,18 @@ interface Props {
 export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: Props) {
   const router = useRouter();
   const [menuMap, setMenuMap] = useState<Record<string, MenuBeverage>>({});
+  const [nameMap, setNameMap] = useState<Record<string, MenuBeverage>>({});
 
   useEffect(() => {
     fetchMenuBeverages().then(items => {
-      const map: Record<string, MenuBeverage> = {};
-      items.forEach(item => { map[item.id] = item; });
-      setMenuMap(map);
+      const byId: Record<string, MenuBeverage> = {};
+      const byName: Record<string, MenuBeverage> = {};
+      items.forEach(item => {
+        byId[item.id] = item;
+        byName[item.name] = item;
+      });
+      setMenuMap(byId);
+      setNameMap(byName);
     });
   }, []);
 
@@ -126,11 +126,9 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
       {drinks.length > 0 && (
         <div className={styles.drinkRecCardsWrap}>
           {drinks.map((drink, i) => {
-            const drinkInfo = Object.entries(drinkData).find(([name]) => name === drink.name);
-            const category = drinkInfo ? drinkInfo[1].category : 'milk-tea';
-            // Prefer the hardcoded drinkData ID over the AI-extracted ID — Gemini sometimes
-            // puts the drink name (e.g. "Classic Milk Tea") instead of the DB id (e.g. "b001")
-            const resolvedId = drinkInfo ? drinkInfo[1].id : drink.id;
+            const menuItem = nameMap[drink.name];
+            const category = menuItem?.category ?? 'milk-tea';
+            const resolvedId = menuItem?.id ?? drink.id;
             const isFlipped = flippedCard === resolvedId;
 
             // Use MongoDB data if loaded; fall back to Gemini-parsed values
@@ -158,7 +156,7 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                         />
                       </div>
                       <div className={styles.drinkFlipCardName}>{drink.name}</div>
-                      <StarRating rating={DRINK_RATINGS[resolvedId] ?? 4.0} />
+                      <StarRating rating={mongoData?.rating ?? 0} />
                       <div className={styles.drinkFlipCardStats}>
                         <div className={styles.drinkFlipCardStatItem}>
                           <span className={styles.drinkFlipCardStatLabel}>Grade</span>
@@ -178,23 +176,23 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
 
                     {/* Back */}
                     <div className={styles.drinkFlipCardBack}>
-                      {DRINK_INFO[resolvedId] ? (
+                      {menuMap[resolvedId]?.drinkInfo?.ingredients?.length ? (
                         <>
                           <div className={styles.drinkFlipCardBackSection}>
                             <div className={styles.drinkFlipCardBackTitle}>Ingredients:</div>
                             <ul className={styles.drinkFlipCardBackList}>
-                              {DRINK_INFO[resolvedId].ingredients.map((ing, j) => (
+                              {menuMap[resolvedId].drinkInfo!.ingredients.map((ing, j) => (
                                 <li key={j}>{ing}</li>
                               ))}
                             </ul>
                           </div>
                           <div className={styles.drinkFlipCardBackSection}>
                             <div className={styles.drinkFlipCardBackTitle}>For Diabetics:</div>
-                            <div className={styles.drinkFlipCardBackText}>{DRINK_INFO[resolvedId].diabeticAdvice}</div>
+                            <div className={styles.drinkFlipCardBackText}>{menuMap[resolvedId].drinkInfo!.diabeticAdvice}</div>
                           </div>
                           <div className={styles.drinkFlipCardBackSection}>
                             <div className={styles.drinkFlipCardBackTitle}>Insulin Impact:</div>
-                            <div className={styles.drinkFlipCardBackText}>{DRINK_INFO[resolvedId].insulinImpact}</div>
+                            <div className={styles.drinkFlipCardBackText}>{menuMap[resolvedId].drinkInfo!.insulinImpact}</div>
                           </div>
                         </>
                       ) : (

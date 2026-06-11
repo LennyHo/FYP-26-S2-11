@@ -16,6 +16,12 @@ const menuItemSchema = new mongoose.Schema(
       baseSugarG:   { type: Number, default: 0 },
       nutriGrade:   { type: String, default: "B" },
     },
+    drinkInfo: {
+      ingredients:    { type: [String], default: [] },
+      diabeticAdvice: { type: String, default: "" },
+      insulinImpact:  { type: String, default: "" },
+    },
+    rating: { type: Number, default: 0 },
   },
   { timestamps: true, collection: "menu_items" }
 );
