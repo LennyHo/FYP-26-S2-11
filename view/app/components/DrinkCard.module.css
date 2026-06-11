@@ -1,92 +1,264 @@
-.card {
+/* ── Outer wrapper ── */
+
+.cardWrap {
   position: relative;
   width: 100%;
   max-width: 260px;
-  height: 360px;
   margin: 0 auto;
-  padding: 18px;
-  border-radius: 26px;
-  border: none;
-  background: rgba(255, 250, 245, 0.9);
-  text-align: center;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  box-shadow: 0 12px 24px rgba(2, 23, 46, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  overflow: hidden;
+  gap: 0;
 }
 
-.card:hover {
-  transform: translateY(-2px);
+/* ── Flip button ── */
+
+.card {
+  display: block;
+  width: 100%;
+  min-height: 320px;
+  border: 0;
+  padding: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  perspective: 900px;
+}
+
+.card:focus { outline: none; }
+.card:focus-visible { outline: none; }
+
+/* ── 3-D inner ── */
+
+.cardInner {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  transition: transform 0.55s ease;
+  transform-style: preserve-3d;
+}
+
+.flipped .cardInner {
+  transform: rotateY(180deg);
+}
+
+/* ── Shared face styles ── */
+
+.cardFront,
+.cardBack {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 0 10px;
+  border-radius: 18px;
+  backface-visibility: hidden;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(140, 30, 100, 0.14), 0 2px 8px rgba(100, 40, 130, 0.07);
+  border: 1.5px solid rgba(171, 28, 110, 0.18);
+}
+
+.cardFront {
+  background: linear-gradient(150deg, #fce8f5 0%, #ede8ff 100%);
+}
+
+.cardBack {
+  background: linear-gradient(140deg, #7b1457 0%, #9b52a0 100%);
+  color: #fff;
+  border-color: transparent;
+  transform: rotateY(180deg);
+  overflow-y: auto;
+  padding: 14px;
+  gap: 10px;
+}
+
+/* ── Image ── */
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--accent-bg);
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;
 }
 
 .image {
   width: 100%;
-  height: 140px;
-  margin: 0 auto 14px;
-  border-radius: 12px;
-  border: none;
-  object-fit: contain;
-  background: var(--accent-bg);
-  box-shadow: 0 4px 12px rgba(2, 23, 46, 0.06);
-  flex: 0 0 auto;
+  height: 100%;
+  object-fit: cover;
 }
 
+
+/* ── Name ── */
+
 .name {
-  margin-bottom: 4px;
-  color: var(--foreground);
-  font-size: 17px;
+  padding: 10px 14px 0;
+  color: #8b1260;
+  font-size: 15px;
   font-weight: 800;
-  min-height: 44px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* ── Star rating ── */
+
+.rating {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
+  padding: 2px 14px 6px;
 }
 
-.price {
-  margin-bottom: 8px;
-  color: var(--accent-color);
+.stars {
+  display: flex;
+  gap: 1px;
+}
+
+.star {
+  font-size: 0.85rem;
+  color: #e8a020;
+  line-height: 1;
+}
+
+.ratingValue {
+  font-size: 0.72rem;
   font-weight: 700;
+  color: #7f5a3a;
 }
 
-.rating {
-  margin-top: auto;
-  color: var(--muted);
-  font-size: 13px;
+/* ── Stat pills ── */
+
+.stats {
+  display: flex;
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.62);
+  border-radius: 10px;
+  border: 1px solid rgba(139, 80, 160, 0.16);
+  overflow: hidden;
+  margin: 0 12px;
+  backdrop-filter: blur(6px);
 }
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 4px 6px;
+  gap: 1px;
+}
+
+.stat + .stat {
+  border-left: 1px solid rgba(139, 80, 160, 0.14);
+}
+
+.statLabel {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8b50a0;
+}
+
+.statValue {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1e0e2e;
+  line-height: 1.1;
+}
+
+.statValue small {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #7a5a8a;
+}
+
+/* ── Tap hint (front) ── */
+
+.tapHint {
+  margin-top: auto;
+  padding: 6px 14px 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #8b50a0;
+  text-align: center;
+  opacity: 0.85;
+}
+
+/* ── Back face content ── */
+
+.backSection {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.backTitle {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 220, 245, 0.85);
+}
+
+.backText,
+.backList {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.backList {
+  margin: 0;
+  padding-left: 16px;
+}
+
+/* ── Customize link (below card) ── */
+
+.tapLink {
+  display: block;
+  padding: 8px 0 0;
+  color: #8b6ab5;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+}
+
+.tapLink:hover {
+  color: #6a4a9a;
+  text-decoration: underline;
+}
+
+/* ── Active / badge ── */
 
 .badge {
   position: absolute;
   top: 12px;
-  right: 12px;
+  left: 12px;
   border-radius: 999px;
-  padding: 7px 10px;
+  padding: 5px 10px;
   background: var(--accent-color);
-  color: #fff7ef;
+  color: #fff;
   font-size: 11px;
   font-weight: 800;
-  box-shadow: 0 10px 18px rgba(59, 39, 26, 0.12);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
 }
 
-.active {
-  box-shadow: 0 18px 34px rgba(59, 39, 26, 0.12), 0 0 0 2px var(--accent-color);
+.active .card {
+  box-shadow: 0 0 0 2px var(--accent-color);
 }
 
-.red {
-  --accent-color: #de6447;
-  --accent-bg: linear-gradient(180deg, #fdeae3 0%, #efb7a8 100%);
-}
-
-.green {
-  --accent-color: #7ba86a;
-  --accent-bg: linear-gradient(180deg, #eff7e8 0%, #cfe2bc 100%);
-}
-
-.brown {
-  --accent-color: #9b6d4a;
-  --accent-bg: linear-gradient(180deg, #fff7ef 0%, #f1d5b8 100%);
-}
+.red   { --accent-color: #de6447; --accent-bg: linear-gradient(180deg, #fdeae3 0%, #efb7a8 100%); }
+.green { --accent-color: #7ba86a; --accent-bg: linear-gradient(180deg, #eff7e8 0%, #cfe2bc 100%); }
+.brown { --accent-color: #9b6d4a; --accent-bg: linear-gradient(180deg, #fff7ef 0%, #f1d5b8 100%); }
 
 .menuSearchRow {
   display: flex;
@@ -242,18 +414,3 @@
   }
 }
 
-.exploreButton {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 8px 14px;
-  background: #8d633f;
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.exploreButton:hover {
-  opacity: 0.9;
-}

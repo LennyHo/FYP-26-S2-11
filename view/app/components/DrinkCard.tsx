@@ -1,6 +1,25 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
 import styles from "./DrinkCard.module.css";
+import { DRINK_INFO } from "../utils/chatHelpers";
+
+const DRINK_RATINGS: Record<string, number> = {
+  b001: 4.5,
+  b002: 4.3,
+  b003: 4.2,
+  b004: 4.0,
+  b005: 4.4,
+  b006: 4.6,
+  b007: 4.7,
+  b008: 4.1,
+  b009: 4.5,
+  b010: 4.8,
+  b011: 4.9,
+  b012: 4.3,
+};
+
 
 type DrinkCardProps = {
   id: string;
@@ -10,11 +29,25 @@ type DrinkCardProps = {
   categorySlug: string;
   active?: boolean;
   accent?: "green" | "brown" | "red";
-
   nutriGrade?: string;
   sugar?: number;
   calories?: number;
 };
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div className={styles.rating}>
+      <span className={styles.stars}>
+        {Array.from({ length: 5 }, (_, i) => {
+          if (rating >= i + 1) return <span key={i} className={styles.star}>★</span>;
+          if (rating >= i + 0.5) return <span key={i} className={styles.star}>⯨</span>;
+          return <span key={i} className={styles.star}>☆</span>;
+        })}
+      </span>
+      <span className={styles.ratingValue}>{rating.toFixed(1)}</span>
+    </div>
+  );
+}
 
 export default function DrinkCard({
   id,
@@ -28,61 +61,100 @@ export default function DrinkCard({
   sugar,
   calories,
 }: DrinkCardProps) {
+  const [isFlipped, setIsFlipped] = useState(false);
+
   const accentClass =
-    accent === "green"
-      ? styles.green
-      : accent === "red"
-      ? styles.red
-      : styles.brown;
+    accent === "green" ? styles.green : accent === "red" ? styles.red : styles.brown;
+
+  const rating = DRINK_RATINGS[id] ?? 4.0;
+  const info = DRINK_INFO[id];
 
   return (
-    <div
-      className={`${styles.card} ${accentClass} ${
-        active ? styles.active : ""
-      }`}
-    >
-      <img
-        src={image}
-        alt={name}
-        className={styles.image}
-        onError={(e) => {
-          e.currentTarget.src = "/img/bubble_teas/b001.png";
-        }}
-      />
-      <div className={styles.name}>{name}</div>
-      <div className={styles.price}>{price}</div>
-      <div className={styles.nutrition}>
-        Nutri-Grade: {nutriGrade || "N/A"}<br />
-        Sugar: {sugar ?? "N/A"}g<br />
-        Calories: {calories ?? "N/A"} kcal
-      </div>
-      <div className={styles.rating}>⭐⭐⭐⭐☆</div>
+    <div className={`${styles.cardWrap} ${accentClass} ${active ? styles.active : ""}`}>
+      <button
+        type="button"
+        className={`${styles.card} ${isFlipped ? styles.flipped : ""}`}
+        onClick={() => setIsFlipped((f) => !f)}
+        aria-label={`${isFlipped ? "Hide" : "Show"} details for ${name}`}
+      >
+        <div className={styles.cardInner}>
+          {/* Front */}
+          <div className={styles.cardFront}>
+            <div className={styles.imageWrapper}>
+              <img
+                src={image}
+                alt={name}
+                className={styles.image}
+                onError={(e) => {
+                  e.currentTarget.src = "/img/bubble_teas/b001.png";
+                }}
+              />
+            </div>
+
+            <div className={styles.name}>{name}</div>
+            <StarRating rating={rating} />
+
+            <div className={styles.stats}>
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>GRADE</span>
+                <span className={styles.statValue}>{nutriGrade || "N/A"}</span>
+              </div>
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>SUGAR</span>
+                <span className={styles.statValue}>
+                  {sugar ?? "N/A"}
+                  <small>g</small>
+                </span>
+              </div>
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>CAL</span>
+                <span className={styles.statValue}>
+                  {calories ?? "N/A"}
+                  <small> kcal</small>
+                </span>
+              </div>
+            </div>
+
+            <div className={styles.tapHint}>Tap for details ↺</div>
+          </div>
+
+          {/* Back */}
+          <div className={styles.cardBack}>
+            {info ? (
+              <>
+                <div className={styles.backSection}>
+                  <div className={styles.backTitle}>Ingredients:</div>
+                  <ul className={styles.backList}>
+                    {info.ingredients.map((ing, i) => (
+                      <li key={i}>{ing}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className={styles.backSection}>
+                  <div className={styles.backTitle}>For Diabetics:</div>
+                  <div className={styles.backText}>{info.diabeticAdvice}</div>
+                </div>
+                <div className={styles.backSection}>
+                  <div className={styles.backTitle}>Insulin Impact:</div>
+                  <div className={styles.backText}>{info.insulinImpact}</div>
+                </div>
+              </>
+            ) : (
+              <div className={styles.backText}>No detailed info available.</div>
+            )}
+          </div>
+        </div>
+      </button>
+
       <Link
         href={`/menu/${categorySlug}/${id}`}
-        className={styles.exploreButton}
+        className={styles.tapLink}
+        onClick={(e) => e.stopPropagation()}
       >
-        Explore
+        Customize →
       </Link>
 
       {active && <div className={styles.badge}>EXPLORE</div>}
     </div>
   );
 }
-
-
-/*
-import React from 'react';
-import styles from './DrinkCard.module.css';
-
-export default function DrinkCard({ name, price, active, accent }: { name: string, price: string, active?: boolean, accent?: 'green' | 'brown' | 'red' }) {
-  const accentClass = accent === 'green' ? styles.green : accent === 'red' ? styles.red : styles.brown;
-  return (
-    <div className={`${styles.card} ${accentClass} ${active ? styles.active : ''}`}>
-      <div className={styles.image} />
-      <div className={styles.name}>{name}</div>
-      <div className={styles.price}>{price}</div>
-      <div className={styles.rating}>⭐⭐⭐⭐☆</div>
-      {active && <div className={styles.badge}>EXPLORE</div>}
-    </div>
-  );
-}*/
