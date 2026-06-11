@@ -552,8 +552,8 @@
   overflow-wrap: break-word;
   white-space: pre-line;
   font-size: 1.08rem;
-  animation-duration: 260ms;
-  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-duration: 380ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   animation-fill-mode: both;
 }
 
@@ -574,22 +574,22 @@
 @keyframes messageInLeft {
   from {
     opacity: 0;
-    transform: translateX(-10px) translateY(4px);
+    transform: translateX(-16px) translateY(8px) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: translateX(0) translateY(0);
+    transform: translateX(0) translateY(0) scale(1);
   }
 }
 
 @keyframes messageInRight {
   from {
     opacity: 0;
-    transform: translateX(10px) translateY(4px);
+    transform: translateX(16px) translateY(8px) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: translateX(0) translateY(0);
+    transform: translateX(0) translateY(0) scale(1);
   }
 }
 
@@ -1120,29 +1120,29 @@
 }
 
 .typingIndicator span {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #a0744d;
-  animation: bounce 1.4s infinite;
+  animation: typingBounce 1.2s ease-in-out infinite;
 }
 
 .typingIndicator span:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: 0.18s;
 }
 
 .typingIndicator span:nth-child(3) {
-  animation-delay: 0.4s;
+  animation-delay: 0.36s;
 }
 
-@keyframes bounce {
+@keyframes typingBounce {
   0%, 60%, 100% {
-    opacity: 0.4;
-    transform: translateY(0);
+    opacity: 0.3;
+    transform: translateY(0) scale(1);
   }
   30% {
     opacity: 1;
-    transform: translateY(-6px);
+    transform: translateY(-7px) scale(1.2);
   }
 }
 

@@ -207,9 +207,9 @@ export default function StoreStaffDashboardPage() {
           </div>
         </div>
 
-        {(ordersError || lastUpdated) && (
-          <div className={ordersError ? styles.errorBanner : styles.syncBanner}>
-            {ordersError || `Live orders refreshed ${lastUpdated?.toLocaleTimeString()}`}
+        {ordersError && (
+          <div className={styles.errorBanner}>
+            {ordersError}
           </div>
         )}
 
