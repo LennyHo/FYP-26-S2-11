@@ -78,9 +78,17 @@ This project follows the **MVC (Model-View-Controller)** architectural pattern:
 FYP-26-S2-11/
 ├── view/              ← (V) Next.js app — View layer (port 3000)
 │   ├── app/           ← Next.js App Router pages & components
+│   │   ├── api/       ← Next.js API route handlers
+│   │   ├── components/← Shared UI components
+│   │   ├── locales/   ← i18n translation files (react-i18next)
+│   │   ├── providers/ ← Redux / context providers
+│   │   └── utils/     ← Frontend utility functions
+│   ├── data/          ← Static data files
+│   ├── img/           ← Logo and brand images
 │   ├── public/        ← Static assets (images, videos, nutri-grade images)
 │   └── package.json
 ├── src/
+│   ├── ai/            ← AI client — Gemini key rotation + Groq fallback
 │   ├── config/        ← env.js, mongo.js (DB connection)
 │   ├── models/        ← (M) Mongoose models — Model layer
 │   ├── routes/        ← Express route files
@@ -108,7 +116,7 @@ GEMINI_API_KEY=your_gemini_key_1,your_gemini_key_2
 
 # ── MongoDB ───────────────────────────────────────────────
 MONGODB_URI=mongodb+srv://justcode1234_db_user:PQTZYHCE3MsGGVOS@fyp-chatbot.8mob6wy.mongodb.net/?appName=fyp-chatbot
-MONGODB_DB_NAME=fyp-chatbot
+MONGODB_DB_NAME=driptea_vs1
 MONGODB_AUTOCONNECT=true
 
 # ── Optional ──────────────────────────────────────────────
@@ -140,7 +148,7 @@ The project already has a shared MongoDB Atlas cluster. Use the credentials belo
 | Field         | Value                                      |
 |---------------|--------------------------------------------|
 | Host          | fyp-chatbot.8mob6wy.mongodb.net            |
-| Database name | fyp-chatbot                                |
+| Database name | driptea_vs1                                |
 | Username      | justcode1234_db_user                       |
 | Password      | PQTZYHCE3MsGGVOS                           |
 
@@ -148,7 +156,7 @@ Copy these three lines into your root `.env` file exactly as shown:
 
 ```env
 MONGODB_URI=mongodb+srv://justcode1234_db_user:PQTZYHCE3MsGGVOS@fyp-chatbot.8mob6wy.mongodb.net/?appName=fyp-chatbot
-MONGODB_DB_NAME=fyp-chatbot
+MONGODB_DB_NAME=driptea_vs1
 MONGODB_AUTOCONNECT=true
 ```
 
@@ -216,8 +224,8 @@ The server starts on **port 5000**.
 You should see in the terminal:
 
 ```
-DripTea running on http://localhost:5000
-Connected to MongoDB database "fyp-chatbot" using Mongoose.
+DripTea backend running on http://localhost:5000
+Connected to MongoDB database "driptea_vs1"
 ```
 
 ---
@@ -279,7 +287,7 @@ If `connected` is `false`, check `MONGODB_URI` in your `.env` and ensure your IP
 ### 3. AI (Gemini / Groq) is working
 
 ```
-POST http://localhost:5000/chat
+POST http://localhost:5000/api/chat
 Content-Type: application/json
 
 { "message": "Hello" }
@@ -355,7 +363,7 @@ All backend routes are prefixed with `/api` except the chatbot.
 
 | Method | Endpoint | Body fields                              |
 |--------|----------|------------------------------------------|
-| POST   | `/chat`  | `message`, `conversationId`, `image` (optional base64) |
+| POST   | `/api/chat`  | `message`, `conversationId`, `image` (optional base64) |
 
 ---
 
@@ -372,7 +380,9 @@ All backend routes are prefixed with `/api` except the chatbot.
 | `/login`                       | Customer login                                        |
 | `/register`                    | Customer registration                                 |
 | `/forgot-password`             | Password reset                                        |
+| `/change-password`             | Change password (authenticated)                       |
 | `/profile`                     | Customer profile                                      |
+| `/purchase-history`            | Customer order history                                |
 | `/contact`                     | Contact / enquiry page                                |
 | `/global-stores`               | Global store locator                                  |
 | `/our-story`                   | Brand story page                                      |
