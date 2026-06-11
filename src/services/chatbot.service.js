@@ -454,7 +454,34 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
     // User Story #32: Recommend beverages based on user message
     if (isRecommendationRequest(safeMessage)) {
-        const drinks = await MenuItem.recommendByMessage(safeMessage);
+        let drinks = await MenuItem.recommendByMessage(safeMessage);
+
+        const msg = safeMessage.toLowerCase();
+
+        const isChocolateRequest =
+            msg.includes("choco") ||
+            msg.includes("chocolate") ||
+            msg.includes("cocoa");
+
+        if (isChocolateRequest) {
+            drinks = drinks.filter((drink) => {
+                const searchable = [
+                    drink.name,
+                    drink.category,
+                    drink.description,
+                    ...(Array.isArray(drink.tags) ? drink.tags : []),
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
+
+                return (
+                    searchable.includes("choco") ||
+                    searchable.includes("chocolate") ||
+                    searchable.includes("cocoa")
+                );
+            });
+        }
 
         if (drinks.length > 0) {
             const reply = "Here are some drinks you may like:";
@@ -472,6 +499,26 @@ async function handleChatMessage({ message, conversationId, userId }) {
             return {
                 reply,
                 recommendedDrinks: formatDrinkCards(drinks),
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        if (isChocolateRequest) {
+            const reply = "Sorry, I could not find any chocolate drinks right now.";
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "user",
+                content: safeMessage,
+            });
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "assistant",
+                content: reply,
+            });
+
+            return {
+                reply,
+                recommendedDrinks: [],
                 system_action: { ui_navigation: "none" },
             };
         }

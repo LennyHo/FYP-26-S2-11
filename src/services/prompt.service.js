@@ -79,19 +79,59 @@ function filterMenu(beverages, message) {
 
   if (!msg.trim()) return beverages.slice(0, 8);
 
-  const matched = beverages.filter((item) => {
-    const name = String(item.name || "").toLowerCase();
-    const category = String(item.category || "").toLowerCase();
-    const tags = Array.isArray(item.tags)
-      ? item.tags.join(" ").toLowerCase()
-      : "";
+  const flavorKeywords = {
+    chocolate: ["choco", "chocolate", "cocoa"],
+    matcha: ["matcha"],
+    taro: ["taro"],
+    jasmine: ["jasmine"],
+    milk: ["milk tea", "milktea"],
+    coffee: ["coffee", "latte"],
+    fruit: ["fruit", "strawberry", "mango", "peach", "lychee"],
+  };
 
-    return (
-      msg.includes(name) ||
-      name.includes(msg) ||
-      msg.includes(category) ||
-      tags.split(" ").some((tag) => tag && msg.includes(tag))
-    );
+  let requestedFlavour = null;
+
+  for (const [flavour, keywords] of Object.entries(flavorKeywords)) {
+    if (keywords.some((keyword) => msg.includes(keyword))) {
+      requestedFlavour = flavour;
+      break;
+    }
+  }
+
+  if (requestedFlavour) {
+    const keywords = flavorKeywords[requestedFlavour];
+
+    const flavourMatches = beverages.filter((item) => {
+      const searchable = [
+        item.name,
+        item.category,
+        item.description,
+        ...(Array.isArray(item.tags) ? item.tags : []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return keywords.some((keyword) => searchable.includes(keyword));
+    });
+
+    return flavourMatches;
+  }
+
+  const matched = beverages.filter((item) => {
+    const searchable = [
+      item.name,
+      item.category,
+      item.description,
+      ...(Array.isArray(item.tags) ? item.tags : []),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return msg
+      .split(/\s+/)
+      .some((word) => word.length > 2 && searchable.includes(word));
   });
 
   return matched.length ? matched : beverages.slice(0, 8);
