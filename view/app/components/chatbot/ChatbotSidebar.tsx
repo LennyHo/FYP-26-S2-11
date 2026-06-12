@@ -9,7 +9,7 @@
 import React from 'react';
 import Image from 'next/image';
 import styles from './ChatbotSidebar.module.css';
-import { QUICK_PROMPTS, convertDrinkNamesToLinks } from '../../utils/chatHelpers';
+import { QUICK_PROMPTS, convertDrinkNamesToLinks, extractOrderingOptions, getOrderStep, convertMarkdownBold } from '../../utils/chatHelpers';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from '../menu/DrinkRecCards';
 import OrderReceiptCard from '../ui/OrderReceiptCard';
@@ -63,6 +63,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     closeOverlay,
     handleOverlayMicClick,
   } = useChatbotState(props);
+
+  const [dismissedMsgId, setDismissedMsgId] = React.useState<string | null>(null);
 
   return (
     <aside className={styles.chatbotSidebar}>
@@ -208,7 +210,15 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
         {normalizedSearchQuery && visibleMessages.length === 0 && (
           <div className={styles.noSearchResults}>No messages found</div>
         )}
-        {visibleMessages.map((msg, index) => (
+        {(() => {
+          const lastBotIdx = visibleMessages.reduce((last, m, i) => !m.isUser ? i : last, -1);
+          return visibleMessages.map((msg, index) => {
+            const isLatestBot = !msg.isUser && index === lastBotIdx && !isLoading;
+            const isDrinkCardMsg = msg.text.includes('startOrder');
+            const { cleanHtml, options, question } = (isLatestBot && !isDrinkCardMsg)
+              ? extractOrderingOptions(sanitizeExcessiveBreaks(msg.text))
+              : { cleanHtml: '', options: [], question: '' };
+            return (
           <React.Fragment key={msg.id}>
             <div className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
               {!msg.isUser && (
@@ -247,7 +257,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                     const after = parts.slice(1).join('<br>').replace(/^(\s*<br\s*\/?>)*\s*/gi, '').replace(/(<br\s*\/?>\s*){2,}/gi, '<br>');
                     return (
                       <>
-                        <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(before) }} />
+                        <div dangerouslySetInnerHTML={{ __html: convertMarkdownBold(sanitizeExcessiveBreaks(before)) }} />
                         <Image
                           src={`/grade_nutri_${grade.toLowerCase()}.png`}
                           alt={`Nutri-Grade ${grade}`}
@@ -255,7 +265,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                           height={72}
                           className={styles.nutriGradeImg}
                         />
-                        {after && <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(after) }} />}
+                        {after && <div dangerouslySetInnerHTML={{ __html: convertMarkdownBold(sanitizeExcessiveBreaks(after)) }} />}
                       </>
                     );
                   })() : (
@@ -263,7 +273,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       dangerouslySetInnerHTML={{
                         __html: msg.isUser
                           ? convertDrinkNamesToLinks(msg.text, menuLookup)
-                          : sanitizeExcessiveBreaks(msg.text),
+                          : convertMarkdownBold(isLatestBot && cleanHtml ? cleanHtml : sanitizeExcessiveBreaks(msg.text)),
                       }}
                     />
                   )}
@@ -312,6 +322,26 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       ))}
                     </div>
                   )}
+
+                  {isLatestBot && options.length > 0 && msg.id !== dismissedMsgId && (
+                    <div className={styles.inlineOptions}>
+                      <div className={styles.inlineOptionsHeader}>
+                        <span className={styles.inlineOptionsStep}>Step {getOrderStep(options)} of 4</span>
+                      </div>
+                      {options.map((opt, i) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          className={styles.inlineOptionBtn}
+                          onClick={() => sendMessage(opt)}
+                        >
+                          <span className={styles.inlineOptionNum}>{i + 1}</span>
+                          <span className={styles.inlineOptionText}>{opt}</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -343,6 +373,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               )}
             </div>
 
+
             {isInitialized && !normalizedSearchQuery && !hasUserMessage && index === 0 && !msg.isUser && (
               <div className={styles.welcomeIntroCard}>
                 <p key={welcomeAnimationKey} className={styles.welcomeGreeting}>
@@ -351,7 +382,9 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               </div>
             )}
           </React.Fragment>
-        ))}
+            );
+          });
+        })()}
         {isLoading && (
           <div className={`${styles.message} ${styles.botMessage}`}>
             <div className={styles.botMeta}>

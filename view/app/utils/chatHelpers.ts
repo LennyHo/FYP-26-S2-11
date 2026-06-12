@@ -30,6 +30,71 @@ export function convertDrinkNamesToLinks(text: string, menuLookup: Record<string
   return result;
 }
 
+export function extractOrderingOptions(html: string): {
+  cleanHtml: string;
+  options: string[];
+  question: string;
+} {
+  // Normalize <p> spacers the AI uses (from system prompt) into <br> separators
+  const normalized = html
+    .replace(/<\/p>/gi, '<br>')
+    .replace(/<p[^>]*>/gi, '');
+  const lines = normalized.split(/<br\s*\/?>/gi);
+  const options: string[] = [];
+  const cleanLines: string[] = [];
+  let optionLineIdx = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const text = lines[i].replace(/<[^>]*>/g, '').trim();
+    if (text.length > 0) {
+      const parts = text.split(/\s*\/\s*/);
+      if (
+        parts.length >= 2 &&
+        parts.every(p => p.trim().length > 0 && p.trim().length <= 55) &&
+        !text.includes('http')
+      ) {
+        options.push(...parts.map(p => p.trim()));
+        optionLineIdx = i;
+        continue;
+      }
+    }
+    cleanLines.push(lines[i]);
+  }
+
+  if (options.length === 0) return { cleanHtml: html, options: [], question: '' };
+
+  // Find the question line closest before the option line
+  let question = '';
+  for (let i = optionLineIdx - 1; i >= 0; i--) {
+    const text = lines[i].replace(/<[^>]*>/g, '').trim();
+    if (text.endsWith('?')) { question = text; break; }
+  }
+
+  // Strip trailing filler ("Just let me know!", "Please let me know...")
+  while (cleanLines.length > 0) {
+    const tail = cleanLines[cleanLines.length - 1].replace(/<[^>]*>/g, '').trim().toLowerCase();
+    if (!tail || /just let me know|please let me know|let me know/i.test(tail)) {
+      cleanLines.pop();
+    } else break;
+  }
+
+  return { cleanHtml: cleanLines.join('<br>'), options, question };
+}
+
+export function getOrderStep(options: string[]): number {
+  const text = options.join(' ').toLowerCase();
+  if (text.includes('regular') || text.includes('large')) return 1;
+  if (text.includes('ice') || text.includes('hot')) return 2;
+  if (options.some(o => /^\d+%$/.test(o.trim()))) return 3;
+  return 4;
+}
+
+export function convertMarkdownBold(html: string): string {
+  return html
+    .replace(/\*\*\*([^*\n]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+}
+
 export function parseDrinkFromHtml(html: string) {
   try {
     const imageMatch = html.match(/<img[^>]+src=['"]([^'"]+)['"][^>]*>/i);
