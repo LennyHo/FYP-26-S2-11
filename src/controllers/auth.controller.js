@@ -1,8 +1,8 @@
-const authService = require("../services/auth.service");
+const User = require("../models/user.model");
 
 async function register(req, res) {
     try {
-        const result = await authService.register(req.body);
+        const result = await User.register(req.body);
 
         res.status(201).json({
             ok: true,
@@ -19,7 +19,7 @@ async function register(req, res) {
 
 async function login(req, res) {
     try {
-        const result = await authService.login(req.body);
+        const result = await User.login(req.body);
 
     res.json({
         ok: true,
@@ -36,7 +36,7 @@ async function login(req, res) {
 
 async function resetPassword(req, res) {
     try {
-        await authService.resetPassword(req.body);
+        await User.resetPassword(req.body);
 
         res.json({
             ok: true,
@@ -52,7 +52,7 @@ async function resetPassword(req, res) {
 
 async function changePassword(req, res) {
     try {
-        await authService.changePassword(req.body);
+        await User.changePassword(req.body);
 
         res.json({
             ok: true,

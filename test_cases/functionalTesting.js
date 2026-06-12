@@ -5,8 +5,8 @@ const { expect } = require("chai");
 const mongoose = require("mongoose");
 
 const menuController = require("../src/controllers/menu.controller");
-const authService = require("../src/services/auth.service");
-const cartService = require("../src/services/cart.service");
+const User = require("../models/user.model");
+const CartItem = require("../models/cartItem.model");
 const Order = require("../src/models/order.model");
 
 // This helper creates a fake Express response object for controller tests.
@@ -79,7 +79,7 @@ describe("functional testing", function () {
   it("rejects register when password is shorter than 6 characters", async function () {
     await expectRejectsWith(
       () =>
-        authService.register({
+        User.register({
           fullName: "Test User",
           email: "test@example.com",
           password: "123",
@@ -92,7 +92,7 @@ describe("functional testing", function () {
   // Test 4: Cart functions should reject an invalid customer id.
   it("rejects add to cart when customer id is invalid", async function () {
     await expectRejectsWith(
-      () => cartService.addToCart("not-an-id", "b001"),
+      () => CartItem.addToCart("not-an-id", "b001"),
       "Invalid customerId."
     );
   });

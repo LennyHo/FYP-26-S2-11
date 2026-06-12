@@ -1,4 +1,4 @@
-const crypto = require("crypto");
+/*const crypto = require("crypto");
 const User = require("../models/user.model");
 
 // Seed users that match the test credentials in the login page
@@ -209,4 +209,4 @@ module.exports = {
     resetPassword,
     changePassword,
     initializeSeedUsers,
-};
+};*/
