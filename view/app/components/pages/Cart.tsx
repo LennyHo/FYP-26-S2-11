@@ -94,7 +94,7 @@ export default function Cart() {
               quantity,
             } satisfies CartItem;
           })
-          .filter((item): item is CartItem => item !== null);
+          .filter((item): item is NonNullable<typeof item> => item !== null) as CartItem[];
         setCartItems(guestItems);
         setTotal(guestItems.reduce((sum, item) => sum + item.price, 0));
         return;
