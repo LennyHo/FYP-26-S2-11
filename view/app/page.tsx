@@ -15,8 +15,8 @@ export default function Home() {
       <main className={styles.main}>
         <Hero />
         <AboutUs />
-        <AvySection />
-        <MeetTheCrew />
+        {/* <AvySection />
+        <MeetTheCrew /> */}
         {/* <FAQ /> */}
       </main>
     </div>
