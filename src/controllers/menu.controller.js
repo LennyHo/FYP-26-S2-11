@@ -1,4 +1,3 @@
-const menuService = require("../services/menu.service");
 const MenuItem = require("../models/menuItem.model");
 const mongoose = require("mongoose");
 
@@ -27,7 +26,7 @@ function publicMenuItem(item) {
 
 async function getMenu(req, res, next) {
   try {
-    const menuItems = await menuService.getMenu(req.query.status);
+    const menuItems = await MenuItem.getMenu(req.query.status);
 
     return res.json({
       ok: true,

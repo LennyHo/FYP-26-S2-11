@@ -26,6 +26,16 @@ const menuItemSchema = new mongoose.Schema(
   { timestamps: true, collection: "menu_items" }
 );
 
+// User Story #13: View Menu
+menuItemSchema.statics.getMenu = async function getMenu(status = "active") {
+  const selectedStatus = String(status || "active").toLowerCase();
+  const query = selectedStatus === "all" ? {} : { status: selectedStatus };
+
+  return this.find(query)
+    .sort({ category: 1, name: 1 })
+    .lean();
+};
+
 // User Story #21: search for beverages by keyword
 // User Story #27: search for beverages via chatbot
 menuItemSchema.statics.searchBeverage = async function searchBeverage(keyword) {
