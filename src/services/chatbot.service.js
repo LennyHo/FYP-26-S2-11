@@ -102,10 +102,6 @@ function isRecommendationRequest(message) {
         msg.includes("recommendation") ||
         msg.includes("suggest") ||
         msg.includes("what should i drink") ||
-        msg.includes("i like") ||
-        msg.includes("i want") ||
-        msg.includes("i'd like") ||
-        msg.includes("i would like") ||
         msg.includes("give me") ||
         msg.includes("show me") ||
         msg.includes("i'm in the mood") ||
@@ -114,6 +110,8 @@ function isRecommendationRequest(message) {
         msg.includes("looking for") ||
         msg.includes("craving") ||
         msg.includes("any good") ||
+        msg.includes("any drinks") ||
+        msg.includes("any recommendations") ||
         msg.includes("what do you have")
     );
 }
