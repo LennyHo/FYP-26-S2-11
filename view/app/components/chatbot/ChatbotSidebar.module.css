@@ -1863,175 +1863,81 @@
   }
 }
 
-/* Speak overlay styles */
+/* ===== Speak mode overlay ===== */
 .speakOverlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
   background: #ffffff;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   z-index: 1400;
   opacity: 0;
   animation: speakFadeIn 300ms ease forwards;
 }
-.speakOverlayInner {
-  width: 100%;
-  height: 100%;
+
+/* Header row: close btn (left) + status label (centered) */
+.speakOverlayHeader {
+  flex-shrink: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-.speakOverlayText {
-  color: #666666;
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-.speakOverlayControls {
-  position: fixed;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.speakStopBtn {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: none;
-  background: #111111;
-  color: #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.16);
-  cursor: pointer;
-}
-.speakStopBtn svg {
-  width: 20px;
-  height: 20px;
-  stroke: #fff;
-}
-.speakStopPill {
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.08);
-  padding: 10px 18px;
-  border-radius: 999px;
-  font-weight: 600;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  cursor: pointer;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(171, 28, 110, 0.08);
+  position: relative;
+  min-height: 52px;
 }
 
-/* X close button — top-left of the overlay */
 .overlayCloseBtn {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  width: 40px;
-  height: 40px;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.07);
-  color: #444;
-  font-size: 1.1rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: transparent;
+  color: #666;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 10;
-  transition: background 0.2s;
+  transition: background 0.15s;
 }
+
 .overlayCloseBtn:hover {
-  background: rgba(0, 0, 0, 0.13);
+  background: rgba(0, 0, 0, 0.05);
 }
 
-/* Single mic button inside the overlay */
-.overlayMicBtn {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.35);
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-.overlayMicBtn:hover:not(:disabled) {
-  transform: scale(1.06);
-  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.45);
-}
-.overlayMicBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.overlayMicBtnListening {
-  animation: pulse 1.4s ease-in-out infinite;
-  box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.5);
+.speakOverlayText {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(171, 28, 110, 0.55);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-/* 1. Container — fills space between header label and mic button */
-.speakTranscript {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 80px;
-  bottom: 120px;
-  max-width: 640px;
-  width: 92%;
+/* Scrollable message area — same gap/padding as main .chatWindow */
+.speakMsgArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 104px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 12px;
-  overflow-y: auto;
-  padding-bottom: 12px;
+  gap: 14px;
 }
 
-/* 2. User bubble */
-.speakUserMsg {
-  align-self: flex-end;
-  background: #f4f4f4;
-  color: #333333;
-  padding: 10px 16px;
-  border-radius: 20px 20px 4px 20px;
-  max-width: 85%;
-  font-weight: 500;
-  font-size: 1rem;
-  font-family: inherit;
-  opacity: 0;
-  animation: voiceFadeIn 0.3s ease forwards;
+.speakMsgArea::-webkit-scrollbar { width: 6px; }
+.speakMsgArea::-webkit-scrollbar-track { background: transparent; }
+.speakMsgArea::-webkit-scrollbar-thumb {
+  background: rgba(160, 116, 77, 0.32);
+  border-radius: 999px;
 }
 
-/* 3. Bot message */
-.speakBotMsg {
-  align-self: flex-start;
-  background: transparent;
-  color: #111111;
-  padding: 6px 0;
-  max-width: 95%;
-  font-weight: 500;
-  font-size: 1rem;
-  font-family: inherit;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-  opacity: 0;
-  animation: voiceFadeIn 0.5s ease forwards;
-}
-
-/* 4. Fade-in animation */
-@keyframes voiceFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* 5. Live transcript line (interim speech result) */
+/* Live interim transcript line */
 .speakLineContainer {
   width: 100%;
   text-align: right;
@@ -2046,49 +1952,49 @@
   font-size: 1.05rem;
 }
 
-/* 6. Status label at the top */
-.speakOverlayText {
+/* Mic button centred at bottom */
+.speakOverlayControls {
   position: absolute;
-  top: 40px;
-  color: #888;
-  font-size: 1.05rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-
-.speakWordsContainer {
-  position: absolute;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 110px;
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.overlayMicBtn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #AB1C6E 0%, #A55EA3 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 12px 14px;
-  pointer-events: none;
-  max-width: 92%;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(171, 28, 110, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.speakWord {
-  display: inline-block;
-  color: #888;
-  font-style: italic;
-  font-weight: 600;
-  font-size: 1.05rem;
-  opacity: 0;
-  transform: translateY(6px);
-  animation: speakWordIn 360ms cubic-bezier(.2,.9,.2,1) forwards;
+.overlayMicBtn:hover:not(:disabled) {
+  transform: scale(1.06);
+  box-shadow: 0 10px 28px rgba(171, 28, 110, 0.45);
 }
 
-@keyframes speakWordIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+.overlayMicBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.overlayMicBtnListening {
+  animation: pulse 1.4s ease-in-out infinite;
 }
 
 @keyframes speakFadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 
 /* Ensure the action row flows properly inside the pill */

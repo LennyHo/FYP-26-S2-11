@@ -499,6 +499,14 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
   };
 
   const handleOverlayMicClick = () => {
+    // Always stop TTS immediately — Chrome needs pause() before cancel() to
+    // reliably cut speech mid-sentence.
+    const synth = window.speechSynthesis;
+    if (synth.speaking || synth.pending) {
+      synth.pause();
+      synth.cancel();
+    }
+
     if (!recognitionRef.current) {
       alert('Speech recognition is not available. This feature requires Chrome, Edge, or Safari.');
       return;
@@ -506,10 +514,6 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     if (isListeningRef.current) {
       try { recognitionRef.current.stop(); } catch {}
     } else {
-      // Cancel any ongoing TTS before opening the mic — prevents Avy's
-      // voice from being picked up and echoed back as a new message.
-      const synth = window.speechSynthesis;
-      if (synth.speaking || synth.pending) synth.cancel();
       requestRecognitionStart();
     }
   };
