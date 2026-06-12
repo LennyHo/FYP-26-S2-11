@@ -759,6 +759,13 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
       if (href) router.push(href);
       return;
     }
+    if (target.tagName === 'A' && target.classList.contains('chat-nav-btn-compact') && target instanceof HTMLAnchorElement) {
+      e.preventDefault();
+      e.stopPropagation();
+      const href = target.getAttribute('href');
+      if (href) router.push(href);
+      return;
+    }
     if (target.tagName === 'BUTTON' && (target.classList.contains('chat-nav-btn') || target.classList.contains('chat-nav-btn-compact'))) {
       const aiAction = target.getAttribute('onclick') || '';
       if (aiAction.includes('handleCart') && onOpenCart) {

@@ -10,7 +10,7 @@ const ChatbotSession = require("../models/chatbotSession.model");
 const { buildSystemPrompt } = require("./prompt.service");
 const CartItem = require("../models/cartItem.model");
 const MenuItem = require("../models/menuItem.model");
-const purchaseHistoryService = require("./purchaseHistory.service");
+const Payment = require("../models/payment.model");
 
 async function findDrinkByName(message) {
     const msg = String(message || "").toLowerCase();
@@ -540,7 +540,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
             };
         }
 
-        const purchaseHistory = await purchaseHistoryService.getPurchaseHistory(userId);
+        const purchaseHistory = await Payment.getPurchaseHistory(userId);
         const latestOrder = purchaseHistory[0];
 
         if (!latestOrder) {
@@ -579,7 +579,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
             `${itemsHtml}<br><br>` +
             `<p>           </p>` + 
             `<strong>Total Paid:</strong> S$ ${Number(latestOrder.totalAmount || 0).toFixed(2)}<br><br>` +
-            `<button class="chat-nav-btn-compact" onclick="handlePurchaseHistory()">View Full Purchase History</button>`;
+            `<a class="chat-nav-btn-compact" href="/purchase-history">View Full Purchase History</a>`;
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, {
             role: "user",

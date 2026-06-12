@@ -977,6 +977,23 @@ router.post("/checkout", async (req, res, next) => {
   }
 });
 
+router.get("/purchase-history", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const userId = toObjectId(req.query.userId || req.params.userId);
+
+    if (!userId) {
+      return res.status(400).json({ ok: false, message: "User ID is required." });
+    }
+
+    const history = await Payment.getPurchaseHistory(userId);
+
+    return res.json({ ok: true, data: history });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.use((err, _req, res, _next) => {
   console.error("[HDC API]", err);
   res.status(err.statusCode || 500).json({
