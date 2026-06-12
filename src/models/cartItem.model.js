@@ -45,7 +45,7 @@ function calculateCustomizedPrice(basePrice, customization = {}) {
   toppings.forEach((topping) => {
     const name = String(topping).toLowerCase();
 
-    if (name.includes("pearl")) price += 1.0;
+    if (name.includes("pearl")) price += 1.2;
     else if (name.includes("aloe")) price += 1.0;
     else if (name.includes("cheese")) price += 1.5;
   });
@@ -82,6 +82,23 @@ cartItemSchema.statics.addToCart = async function addToCart(customerId, beverage
   );
   const lineTotal = unitPrice * quantity;
 
+  const existingItem = await this.findOne({
+    userId: userObjectId,
+    menuItemId: menuItem._id,
+    status: "active",
+    "customization.size": options.customization?.size,
+    "customization.ice": options.customization?.ice,
+    "customization.sugar": options.customization?.sugar,
+    "customization.toppings": options.customization?.toppings || [],
+  });
+
+  if (existingItem) {
+    existingItem.quantity += quantity;
+    existingItem.lineTotal = existingItem.unitPrice * existingItem.quantity;
+    await existingItem.save();
+    return existingItem.toObject();
+  }
+  
   const cartItem = await this.create({
     userId: userObjectId,
     menuItemId: menuItem._id,
@@ -106,12 +123,44 @@ cartItemSchema.statics.getCart = async function getCart(customerId) {
     throw new Error("Invalid customerId.");
   }
 
-  return this.find({
+  const items = await this.find({
     userId: userObjectId,
     status: "active",
   })
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: 1 })
     .lean();
+
+  // Merge duplicate entries (same drink + same customization) that may exist
+  // from before the addToCart duplicate-check logic was in place.
+  const seen = new Map();
+  const duplicateIds = [];
+
+  for (const item of items) {
+    const key = `${item.menuItemId}_${item.customization?.size || ""}_${item.customization?.ice || ""}_${item.customization?.sugar || ""}_${JSON.stringify(item.customization?.toppings || [])}`;
+    if (seen.has(key)) {
+      const primary = seen.get(key);
+      primary.quantity += item.quantity;
+      primary.lineTotal = primary.unitPrice * primary.quantity;
+      duplicateIds.push(item._id);
+    } else {
+      seen.set(key, item);
+    }
+  }
+
+  if (duplicateIds.length > 0) {
+    const updates = [];
+    for (const [, item] of seen) {
+      updates.push(
+        this.findByIdAndUpdate(item._id, { quantity: item.quantity, lineTotal: item.lineTotal })
+      );
+    }
+    await Promise.all([
+      ...updates,
+      this.deleteMany({ _id: { $in: duplicateIds } }),
+    ]);
+  }
+
+  return [...seen.values()].reverse();
 };
 
 cartItemSchema.statics.getCartItemById = async function (cartItemId) {

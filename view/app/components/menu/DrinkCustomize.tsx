@@ -35,10 +35,10 @@ const sizes = [
 const iceOptions = ['Normal Ice', 'Less Ice', 'No Ice', 'Hot'];
 
 const sweetnessOptions = [
-  { label: 'Normal Sweet', pct: '100%', multiplier: 1.0 },
-  { label: 'Less Sweet', pct: '50%', multiplier: 0.5 },
-  { label: 'Slightly Sweet', pct: '25%', multiplier: 0.25 },
-  { label: 'No Additional Sugar', pct: '0%', multiplier: 0 },
+  { label: 'Normal Sweet', pct: '100% Sugar', multiplier: 1.0 },
+  { label: 'Less Sweet', pct: '50% Sugar', multiplier: 0.5 },
+  { label: 'Slightly Sweet', pct: '25% Sugar', multiplier: 0.25 },
+  { label: 'No Additional Sugar', pct: '0% Sugar', multiplier: 0 },
 ];
 
 const toppingOptions = [
@@ -269,7 +269,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
           customization: {
             size: size.label,
             ice,
-            sugar: sweetness.label,
+            sugar: sweetness.pct,
             sugarPercent: sweetness.pct,
             toppings: topping.key === 'none' ? [] : [topping.name],
             nutritionInfo: {
@@ -331,7 +331,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
         customization: {
           size: size.label,
           ice,
-          sugar: sweetness.label,
+          sugar: sweetness.pct,
           sugarPercent: sweetness.pct,
           toppings: topping.key === 'none' ? [] : [topping.name],
           nutritionInfo: {
@@ -393,7 +393,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
         customization: {
           size: size.label,
           ice,
-          sugar: sweetness.label,
+          sugar: sweetness.pct,
           sugarPercent: sweetness.pct,
           toppings: topping.key === "none" ? [] : [topping.name],
           nutritionInfo: {
