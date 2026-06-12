@@ -19,7 +19,7 @@ function parseReceipt(html: string) {
   const drinkPrice = orderMatch?.[2] ? `S$ ${orderMatch[2]}` : "";
 
   // Customisation line (contains ·)
-  const customMatch = plain.match(/S\$\s*[\d.]+\s+([\w\s]+·[\w\s%·]+)/);
+  const customMatch = plain.match(/S\$\s*[\d.]+\s+(.+?)\s+Sugar:/i);
   const customization = customMatch?.[1]?.trim() ?? "";
 
   // Nutrition

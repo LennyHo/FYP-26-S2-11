@@ -33,10 +33,10 @@ async function getConversationHistory(conversationId) {
 // User Story #31: Ask About Nutri-Grade
 function calculateNutrition(drink, sugarLevel, toppings = []) {
     const sugarMap = {
-        "0%": 0,
-        "25%": 10,
-        "50%": 20,
-        "100%": 40,
+        "0% Sugar": 0,
+        "25% Sugar": 10,
+        "50% Sugar": 20,
+        "100% Sugar": 40,
     };
 
     const nutrition = drink.nutritionInfo || {};
@@ -355,10 +355,10 @@ function parseOrderDetails(message) {
     else if (/normal ice|regular ice/.test(msg)) ice = "Normal Ice";
 
     let sugar = null;
-    if (/normal sugar|full sugar|100\s*%/.test(msg)) sugar = "100%";
-    else if (/half sugar|medium sugar|50\s*%/.test(msg)) sugar = "50%";
-    else if (/less sugar|low sugar|少糖|25\s*%/.test(msg)) sugar = "25%";
-    else if (/no sugar|zero sugar|(?<!\d)0\s*%|unsweetened/.test(msg)) sugar = "0%";
+    if (/normal sugar|full sugar|100\s*%/.test(msg)) sugar = "100% Sugar";
+    else if (/half sugar|medium sugar|50\s*%/.test(msg)) sugar = "50% Sugar";
+    else if (/less sugar|low sugar|少糖|25\s*%/.test(msg)) sugar = "25% Sugar";
+    else if (/no sugar|zero sugar|(?<!\d)0\s*%|unsweetened/.test(msg)) sugar = "0% Sugar";
 
     let toppings = null;
     if (/no topping|no toppings|none|without topping/.test(msg)) toppings = [];
@@ -794,10 +794,10 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 const { cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
 
                 const ADDED_SUGAR_G = {
-                    "0%": 0,
-                    "25%": 10,
-                    "50%": 20,
-                    "100%": 40,
+                    "0% Sugar": 0,
+                    "25% Sugar": 10,
+                    "50% Sugar": 20,
+                    "100% Sugar": 40,
                 };
 
                 const orderLines = addedItems.map((item) => {
