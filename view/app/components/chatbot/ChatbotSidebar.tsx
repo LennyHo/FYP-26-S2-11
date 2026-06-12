@@ -233,7 +233,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 <div className={styles.bubbleText}>
                   {!msg.isUser && /added to your cart successfully/i.test(msg.text) && /here is your order summary/i.test(msg.text) ? (
                     <OrderReceiptCard msgText={msg.text} />
-                  ) : !msg.isUser && msg.text.includes("<img") && msg.text.includes("startOrder") ? (
+                  ) : !msg.isUser && msg.text.includes("startOrder") ? (
                     <DrinkRecCards
                       msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
                       flippedCard={flippedCard}
@@ -515,7 +515,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   <div className={styles.bubbleText}>
                     {!msg.isUser && /added to your cart successfully/i.test(msg.text) && /here is your order summary/i.test(msg.text) ? (
                       <OrderReceiptCard msgText={msg.text} />
-                    ) : !msg.isUser && msg.text.includes("<img") && msg.text.includes("startOrder") ? (
+                    ) : !msg.isUser && msg.text.includes("startOrder") ? (
                       <DrinkRecCards
                         msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
                         flippedCard={flippedCard}
