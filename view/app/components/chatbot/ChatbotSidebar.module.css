@@ -1311,12 +1311,19 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
   background: transparent;
   box-shadow: none;
-  padding: 0 12px 0 12px;
-  gap: 0;
-  margin: 16px 0 0 0;
+  padding: 0 12px;
+  gap: 8px;
+  margin: 12px 0 0 0;
+}
+
+.voiceButtons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .messageInputOuter {
@@ -1328,9 +1335,9 @@
   box-shadow: 0 2px 12px rgba(171, 28, 110, 0.06);
   padding: 0 8px 0 0;
   margin: 0;
-  min-height: 64px;
-  width: 100%;
-  max-width: 100%;
+  min-height: 52px;
+  flex: 1;
+  min-width: 0;
 }
 
 .userInput {
@@ -1345,7 +1352,7 @@
   color: var(--foreground);
   background: transparent;
   resize: none;
-  overflow-y: auto;
+  overflow: hidden;
   height: auto;
   min-height: 52px;
   box-sizing: border-box;
@@ -1969,90 +1976,62 @@
   box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.5);
 }
 
-/* 1. Container structure */
+/* 1. Container — fills space between header label and mic button */
 .speakTranscript {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  top: 80px;
   bottom: 120px;
   max-width: 640px;
   width: 92%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Align left by default for AI text */
+  align-items: flex-start;
   text-align: left;
-  gap: 16px;
-  max-height: 60vh;
+  gap: 12px;
   overflow-y: auto;
-  padding-bottom: 20px;
+  padding-bottom: 12px;
 }
 
-/* 2. User Bubble (Right-aligned, gray bubble) */
-.speakUserMsg {
-  align-self: flex-end;
-  background: #f0f0f0; 
-  color: #333;
-  padding: 10px 16px;
-  border-radius: 20px 20px 4px 20px; /* Chat bubble tail effect */
-  max-width: 85%;
-  font-size: 1rem;
-  font-weight: 500;
-  font-family: inherit;
-  text-align: left;
-}
-
-/* Make Avy's text large, bold, and bubble-free just like Claude */
-.speakBotMsg {
-  align-self: flex-start;
-  background: transparent;
-  color: #111111;
-  padding: 10px 0;
-  max-width: 95%;
-  font-size: 1.1rem; /* Large typography */
-  font-weight: 500;
-  font-family: inherit;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-  opacity: 0;
-  animation: voiceFadeIn 0.5s ease forwards;
-}
-
-/* User Bubble (Sleek, pill-like look) */
+/* 2. User bubble */
 .speakUserMsg {
   align-self: flex-end;
   background: #f4f4f4;
   color: #333333;
-  padding: 12px 18px;
-  border-radius: 24px 24px 4px 24px;
+  padding: 10px 16px;
+  border-radius: 20px 20px 4px 20px;
   max-width: 85%;
   font-weight: 500;
-  font-size: 1.05rem;
+  font-size: 1rem;
+  font-family: inherit;
   opacity: 0;
   animation: voiceFadeIn 0.3s ease forwards;
 }
 
-/* Make Avy's text large, bold, and bubble-free just like Claude */
+/* 3. Bot message */
 .speakBotMsg {
   align-self: flex-start;
   background: transparent;
   color: #111111;
-  padding: 10px 0;
+  padding: 6px 0;
   max-width: 95%;
   font-weight: 500;
-  font-size: 1rem; 
+  font-size: 1rem;
+  font-family: inherit;
   line-height: 1.4;
   letter-spacing: -0.01em;
   opacity: 0;
   animation: voiceFadeIn 0.5s ease forwards;
 }
 
-/* Smooth fade-in animation for new messages */
+/* 4. Fade-in animation */
 @keyframes voiceFadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 4. Active Listening Text (Right-aligned) */
+/* 5. Live transcript line (interim speech result) */
 .speakLineContainer {
   width: 100%;
   text-align: right;
@@ -2061,12 +2040,13 @@
 
 .speakLine {
   display: inline-block;
-  color: #888;
-  font-weight: 500;
-  font-size: 1.1rem;
+  color: #777;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.05rem;
 }
 
-/* 5. Position the dynamic status label at the top */
+/* 6. Status label at the top */
 .speakOverlayText {
   position: absolute;
   top: 40px;
@@ -2074,23 +2054,6 @@
   font-size: 1.05rem;
   font-weight: 500;
   letter-spacing: 0.02em;
-}
-
-.speakLine {
-  display: inline-block;
-  color: #777;
-  font-style: italic;
-  font-weight: 600;
-  font-size: 1.15rem;
-}
-
-.speakBotMsg {
-  align-self: flex-start;
-  background: #f3f3f3;
-  color: #222;
-  padding: 10px 14px;
-  border-radius: 14px;
-  max-width: 85%;
 }
 
 .speakWordsContainer {
