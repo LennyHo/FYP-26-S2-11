@@ -90,7 +90,7 @@ async function removeFromCart(req, res) {
   }
 }
 
-// User Story #17: Edit cart items
+// #17 As a customer, I want to edit beverages in my cart so that I can modify my order before completing the checkout process.
 async function updateCartItem(req, res) {
   try {
     const updatedItem = await CartItem.updateCartItem(req.params.id, {
