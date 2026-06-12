@@ -29,7 +29,7 @@ function parseReceipt(html: string) {
   const grade = nutriMatch?.[3] ?? "";
 
   // Cart items: "Drink × 1 - S$ X.XX"
-  const cartSection = plain.match(/Your current cart:(.*?)Total:/is)?.[1] ?? "";
+  const cartSection = plain.match(/Your current cart:([\s\S]*?)Total:/i)?.[1] ?? "";
   const cartItems = [...cartSection.matchAll(/(.+?)\s*[×x]\s*(\d+)\s*-\s*S\$\s*([\d.]+)/gi)].map(m => ({
     name: m[1].trim(),
     qty: m[2],
