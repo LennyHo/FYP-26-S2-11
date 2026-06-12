@@ -143,7 +143,7 @@ export default function DrinkCard({
         className={styles.tapLink}
         onClick={(e) => e.stopPropagation()}
       >
-        Customize →
+        Customize
       </Link>
 
       {active && <div className={styles.badge}>EXPLORE</div>}

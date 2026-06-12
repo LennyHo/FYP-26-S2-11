@@ -223,17 +223,39 @@
 
 .tapLink {
   display: block;
-  padding: 8px 0 0;
-  color: #8b6ab5;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
+  width: 100%;
+  padding: 10px 16px;
+  margin: 10px 0 0;
   text-align: center;
+  text-decoration: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #8b1260 0%, #9b52a0 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-sizing: border-box;
+  box-shadow: 0 4px 14px rgba(139, 18, 96, 0.30);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.tapLink:visited {
+  color: #fff;
+  text-decoration: none;
 }
 
 .tapLink:hover {
-  color: #6a4a9a;
-  text-decoration: underline;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 18, 96, 0.42);
+  filter: brightness(1.08);
+  text-decoration: none;
+}
+
+.tapLink:active {
+  transform: translateY(0);
+  filter: brightness(0.94);
+  box-shadow: 0 2px 8px rgba(139, 18, 96, 0.25);
 }
 
 /* ── Active / badge ── */

@@ -76,7 +76,7 @@ export default function Cart() {
           setTotal(0);
           return;
         }
-        const guestItems: CartItem[] = localData
+        const guestItems = localData
           .split("\n")
           .filter((l) => l.trim())
           .map((line) => {
