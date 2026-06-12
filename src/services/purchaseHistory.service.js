@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+/*const mongoose = require("mongoose");
 const Order = require("../models/order.model");
 const OrderItem = require("../models/orderItem.model");
 const Payment = require("../models/payment.model");
@@ -37,4 +37,4 @@ async function getPurchaseHistory(userId) {
 
 module.exports = {
     getPurchaseHistory,
-};
+};*/

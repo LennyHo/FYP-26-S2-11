@@ -1,4 +1,4 @@
-const purchaseHistoryService = require("../services/purchaseHistory.service");
+const purchaseHistoryService = require("../models/payment.model");
 
 async function getPurchaseHistory(req, res) {
   try {
