@@ -62,6 +62,7 @@ function toDrinkSlug(value: string) {
     .replace(/^-+|-+$/g, '');
 }
 
+// #17 As a customer, I want to edit beverages in my cart so that I can modify my order before completing the checkout process.
 type DrinkCustomizeProps = {
   mode?: "add" | "edit";
 };
