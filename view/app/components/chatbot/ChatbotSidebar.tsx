@@ -14,7 +14,7 @@ import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from '../menu/DrinkRecCards';
 import OrderReceiptCard from '../ui/OrderReceiptCard';
 import DrinkCard from '../menu/DrinkCard';
-import { useChatbotState, SLOW_HINTS, type ChatbotSidebarProps } from './useChatbotState';
+import { useChatbotState, type ChatbotSidebarProps } from './useChatbotState';
 
 const avyLogo = '/img/Group 2.svg';
 
@@ -41,7 +41,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     setIsSearchOpen,
     searchQuery,
     setSearchQuery,
-    slowHintIndex,
+    hintVisible,
+    displayedHintText,
     menuLookup,
     menuById,
     chatWindowRef,
@@ -365,8 +366,10 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               <span className={styles.typingIndicator}>
                 <span></span><span></span><span></span>
               </span>
-              {slowHintIndex >= 0 && (
-                <span className={styles.slowHint}>{SLOW_HINTS[slowHintIndex]}</span>
+              {displayedHintText && (
+                <span className={`${styles.slowHint} ${hintVisible ? styles.slowHintVisible : ''}`}>
+                  {displayedHintText}
+                </span>
               )}
             </div>
           </div>
