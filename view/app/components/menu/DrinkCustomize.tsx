@@ -457,6 +457,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
                   width={160}
                   height={80}
                   className={styles.nutriGradeImg}
+                  style={{ width: 'auto', height: '80px' }}
                 />
               </div>
             )}
