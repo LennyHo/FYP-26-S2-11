@@ -102,7 +102,19 @@ function isRecommendationRequest(message) {
         msg.includes("recommendation") ||
         msg.includes("suggest") ||
         msg.includes("what should i drink") ||
-        msg.includes("i like")
+        msg.includes("i like") ||
+        msg.includes("i want") ||
+        msg.includes("i'd like") ||
+        msg.includes("i would like") ||
+        msg.includes("give me") ||
+        msg.includes("show me") ||
+        msg.includes("i'm in the mood") ||
+        msg.includes("im in the mood") ||
+        msg.includes("i feel like") ||
+        msg.includes("looking for") ||
+        msg.includes("craving") ||
+        msg.includes("any good") ||
+        msg.includes("what do you have")
     );
 }
 
@@ -384,10 +396,12 @@ function fixMissingLineBreaks(reply) {
         .replace(/(x\s*\d+\s*-\s*S\$\s*[0-9.]+)([A-Z])/g, "$1<br>$2")
         .replace(/(Total:\s*S\$\s*[0-9.]+)/gi, "<br>$1")
         .replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>")
-        // NEW: fix "?Regular" → "?<br><br>Regular"
+        // fix "?Regular" → "?<br><br>Regular"
         .replace(/\?(Regular|Large)/gi, "?<br><br>$1")
-        // NEW: fix "Large (+S$1.50)Please" → "Large (+S$1.50)<br><br>Please"
+        // fix "Large (+S$1.50)Please" → "Large (+S$1.50)<br><br>Please"
         .replace(/(\+S\$[0-9.]+\))(Please|Let|Kindly)/gi, "$1<br><br>$2")
+        // fix missing space after sentence-ending punctuation before a capitalised word
+        .replace(/([.!?])([A-Z])/g, "$1 $2")
         .trim();
 }
 
@@ -491,7 +505,19 @@ async function handleChatMessage({ message, conversationId, userId }) {
         }
 
         if (drinks.length > 0) {
-            const reply = "Here are some drinks you may like:";
+            const msg = safeMessage.toLowerCase();
+            let reply;
+            if (msg.includes("choco") || msg.includes("chocolate")) {
+                reply = "Great pick — here are our chocolate drinks!";
+            } else if (msg.includes("matcha")) {
+                reply = "Love that choice! Here are our matcha drinks:";
+            } else if (msg.includes("fruit") || msg.includes("strawberry") || msg.includes("cranberry")) {
+                reply = "Something fruity — nice! Here's what we have:";
+            } else if (msg.includes("taro")) {
+                reply = "Taro fan! Here's what we've got for you:";
+            } else {
+                reply = "Here are some drinks you might love:";
+            }
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -511,7 +537,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
         }
 
         if (isChocolateRequest) {
-            const reply = "Sorry, I could not find any chocolate drinks right now.";
+            const reply = "Hmm, we don't seem to have any chocolate drinks available at the moment — sorry about that! Can I help you find something else?";
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -535,7 +561,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
     if (isPurchaseHistoryRequest(safeMessage)) {
         if (!userId) {
             return {
-                reply: "Please log in first before viewing your purchase history.",
+                reply: "You'll need to be logged in to see your purchase history. Log in and I'll pull it up for you!",
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -546,7 +572,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
         if (!latestOrder) {
             return {
                 reply:
-                    'You have no purchase history yet.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
+                    'Looks like you haven\'t placed an order with us yet — but there\'s always a first time! 😊<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -601,7 +627,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
     if (isAddToCartRequest(safeMessage)) {
         if (!userId) {
             return {
-                reply: "Please log in first before adding items to your cart.",
+                reply: "You'll need to log in before I can add that to your cart — shouldn't take a second!",
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -659,7 +685,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
     if (isViewCartRequest(safeMessage)) {
         if (!userId) {
             return {
-                reply: "Please log in first before viewing your cart.",
+                reply: "You'll need to log in to see your cart. Go ahead and log in and I'll show you what's in there!",
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -669,7 +695,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
         if (!cartItems.length) {
             return {
                 reply:
-                    'Your cart is currently empty.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
+                    'Your cart is empty right now — want to find something good to add?<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
                 system_action: { ui_navigation: "none" },
             };
         }
