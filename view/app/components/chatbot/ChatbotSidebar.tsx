@@ -62,8 +62,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     sanitizeExcessiveBreaks,
     closeOverlay,
     handleOverlayMicClick,
-    handleMicrophoneClick,
-    handleSpeakClick,
   } = useChatbotState(props);
 
   return (
@@ -447,7 +445,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
             )}
           </div>
 
-          {/* Mic + Speak — right of pill, both hidden while typing */}
+          {/* Mic + Speak — commented out
           {!input.trim() && !pendingImages.length && (
             <div className={styles.voiceButtons}>
               <button
@@ -481,131 +479,147 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               </button>
             </div>
           )}
+          */}
         </div>
       </div>
 
       {/* Speak mode overlay */}
       {isSpeakMode && (
         <div className={styles.speakOverlay} role="dialog" aria-modal="true">
-          <button
-            type="button"
-            className={styles.overlayCloseBtn}
-            onClick={closeOverlay}
-            aria-label="Close voice mode"
-          >
-            ✕
-          </button>
-          <div className={styles.speakOverlayInner}>
-            <div className={styles.speakOverlayText}>
-              {overlayLoading ? "Avy is thinking..." : isListening ? "Listening..." : "Tap mic to speak"}
-            </div>
-            <div className={styles.speakTranscript}>
-              {overlayMessages.map(msg => (
-                <div key={msg.id} className={msg.isUser ? styles.speakUserMsg : styles.speakBotMsg}>
-                  {!msg.isUser && /added to your cart successfully/i.test(msg.text) && /here is your order summary/i.test(msg.text) ? (
-                    <OrderReceiptCard msgText={msg.text} />
-                  ) : !msg.isUser && msg.text.includes("<img") && msg.text.includes("startOrder") ? (
-                    <DrinkRecCards
-                      msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
-                      flippedCard={flippedCard}
-                      setFlippedCard={setFlippedCard}
-                    />
-                  ) : !msg.isUser && /Nutri-Grade of [ABCD]/i.test(msg.text) ? (() => {
-                    const gradeMatch = msg.text.match(/Nutri-Grade of ([ABCD])/i)!;
-                    const grade = gradeMatch[1].toUpperCase();
-                    const parts = msg.text.split(/<br\s*\/?>/i);
-                    const before = parts[0] || '';
-                    const after = parts.slice(1).join('<br>').replace(/^(\s*<br\s*\/?>)*\s*/gi, '').replace(/(<br\s*\/?>\s*){2,}/gi, '<br>');
-                    return (
-                      <>
-                        <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(before) }} />
-                        <Image
-                          src={`/grade_nutri_${grade.toLowerCase()}.png`}
-                          alt={`Nutri-Grade ${grade}`}
-                          width={72}
-                          height={72}
-                          className={styles.nutriGradeImg}
-                        />
-                        {after && <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(after) }} />}
-                      </>
-                    );
-                  })() : (
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: msg.isUser
-                          ? convertDrinkNamesToLinks(msg.text, menuLookup)
-                          : sanitizeExcessiveBreaks(msg.text),
-                      }}
-                    />
-                  )}
+          {/* Header: close + status */}
+          <div className={styles.speakOverlayHeader}>
+            <button
+              type="button"
+              className={styles.overlayCloseBtn}
+              onClick={closeOverlay}
+              aria-label="Close voice mode"
+            >
+              ✕
+            </button>
+            <span className={styles.speakOverlayText}>
+              {overlayLoading ? 'Avy is thinking…' : isListening ? 'Listening…' : 'Tap mic to speak'}
+            </span>
+          </div>
 
-                  {!msg.isUser && msg.healthCard && (
-                    <div className={styles.healthCard}>
-                      <div className={styles.healthCardTitle}>Reduce to less sugar!</div>
-                      <div className={styles.healthCardSugars}>
-                        <span className={styles.healthCardCurrentSugar}>{msg.healthCard.currentSugar}g</span>
-                        <span className={styles.healthCardArrow}>→</span>
-                        <span className={styles.healthCardRecommendedSugar}>{msg.healthCard.recommendedSugar}g</span>
-                      </div>
-                      <Image
-                        src={`/grade_nutri_${msg.healthCard.recommendedGrade.toLowerCase()}.png`}
-                        alt={`Nutri-Grade ${msg.healthCard.recommendedGrade}`}
-                        width={80}
-                        height={80}
-                        className={styles.healthCardBadge}
+          {/* Messages — same classes as main chat */}
+          <div className={styles.speakMsgArea}>
+            {overlayMessages.map(msg => (
+              <div key={msg.id} className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
+                {!msg.isUser && (
+                  <div className={styles.botMeta}>
+                    <Image src={avyLogo} alt="Avy" width={18} height={18} className={styles.messageAvatar} />
+                    <span className={styles.assistantLabel}>Avy</span>
+                  </div>
+                )}
+                <div className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}>
+                  <div className={styles.bubbleText}>
+                    {!msg.isUser && /added to your cart successfully/i.test(msg.text) && /here is your order summary/i.test(msg.text) ? (
+                      <OrderReceiptCard msgText={msg.text} />
+                    ) : !msg.isUser && msg.text.includes("<img") && msg.text.includes("startOrder") ? (
+                      <DrinkRecCards
+                        msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
+                        flippedCard={flippedCard}
+                        setFlippedCard={setFlippedCard}
                       />
-                    </div>
-                  )}
+                    ) : !msg.isUser && /Nutri-Grade of [ABCD]/i.test(msg.text) ? (() => {
+                      const gradeMatch = msg.text.match(/Nutri-Grade of ([ABCD])/i)!;
+                      const grade = gradeMatch[1].toUpperCase();
+                      const parts = msg.text.split(/<br\s*\/?>/i);
+                      const before = parts[0] || '';
+                      const after = parts.slice(1).join('<br>').replace(/^(\s*<br\s*\/?>)*\s*/gi, '').replace(/(<br\s*\/?>\s*){2,}/gi, '<br>');
+                      return (
+                        <>
+                          <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(before) }} />
+                          <Image
+                            src={`/grade_nutri_${grade.toLowerCase()}.png`}
+                            alt={`Nutri-Grade ${grade}`}
+                            width={72}
+                            height={72}
+                            className={styles.nutriGradeImg}
+                          />
+                          {after && <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(after) }} />}
+                        </>
+                      );
+                    })() : (
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: msg.isUser
+                            ? convertDrinkNamesToLinks(msg.text, menuLookup)
+                            : sanitizeExcessiveBreaks(msg.text),
+                        }}
+                      />
+                    )}
 
-                  {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && (
-                    <div className={styles.drinkCardList}>
-                      {msg.recommendedDrinks.map((drink) => (
-                        <DrinkCard
-                          key={drink.id}
-                          id={drink.id}
-                          name={drink.name}
-                          price={`S$ ${Number(drink.price).toFixed(2)}`}
-                          image={drink.image ?? `/img/bubble_teas/${drink.id}.jpg`}
-                          categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
-                          nutriGrade={drink.nutri_grade ?? undefined}
-                          sugar={drink.base_sugar_g ?? undefined}
-                          calories={drink.base_calories ?? undefined}
-                          rating={menuById[drink.id]?.rating}
-                          drinkInfo={menuById[drink.id]?.drinkInfo}
-                          accent={
-                            drink.category?.toLowerCase().includes("matcha")
-                              ? "green"
-                              : drink.category?.toLowerCase().includes("ice")
-                              ? "red"
-                              : "brown"
-                          }
+                    {!msg.isUser && msg.healthCard && (
+                      <div className={styles.healthCard}>
+                        <div className={styles.healthCardTitle}>Reduce to less sugar!</div>
+                        <div className={styles.healthCardSugars}>
+                          <span className={styles.healthCardCurrentSugar}>{msg.healthCard.currentSugar}g</span>
+                          <span className={styles.healthCardArrow}>→</span>
+                          <span className={styles.healthCardRecommendedSugar}>{msg.healthCard.recommendedSugar}g</span>
+                        </div>
+                        <Image
+                          src={`/grade_nutri_${msg.healthCard.recommendedGrade.toLowerCase()}.png`}
+                          alt={`Nutri-Grade ${msg.healthCard.recommendedGrade}`}
+                          width={80}
+                          height={80}
+                          className={styles.healthCardBadge}
                         />
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    )}
+
+                    {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && (
+                      <div className={styles.drinkCardList}>
+                        {msg.recommendedDrinks.map((drink) => (
+                          <DrinkCard
+                            key={drink.id}
+                            id={drink.id}
+                            name={drink.name}
+                            price={`S$ ${Number(drink.price).toFixed(2)}`}
+                            image={drink.image ?? `/img/bubble_teas/${drink.id}.jpg`}
+                            categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
+                            nutriGrade={drink.nutri_grade ?? undefined}
+                            sugar={drink.base_sugar_g ?? undefined}
+                            calories={drink.base_calories ?? undefined}
+                            rating={menuById[drink.id]?.rating}
+                            drinkInfo={menuById[drink.id]?.drinkInfo}
+                            accent={
+                              drink.category?.toLowerCase().includes("matcha")
+                                ? "green"
+                                : drink.category?.toLowerCase().includes("ice")
+                                ? "red"
+                                : "brown"
+                            }
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ))}
-              {overlayTranscript && !overlayLoading && (
-                <div className={styles.speakLineContainer} aria-live="polite">
-                  <span className={styles.speakLine}>{overlayTranscript}</span>
-                </div>
-              )}
-            </div>
-            <div className={styles.speakOverlayControls}>
-              <button
-                type="button"
-                className={`${styles.overlayMicBtn} ${isListening ? styles.overlayMicBtnListening : ''}`}
-                onClick={handleOverlayMicClick}
-                disabled={overlayLoading}
-                aria-label={isListening ? 'Stop listening' : 'Start listening'}
-              >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-                  <path d="M17 11a5 5 0 0 1-10 0" />
-                  <path d="M12 16v4" />
-                </svg>
-              </button>
-            </div>
+              </div>
+            ))}
+            {overlayTranscript && !overlayLoading && (
+              <div className={styles.speakLineContainer} aria-live="polite">
+                <span className={styles.speakLine}>{overlayTranscript}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Mic button */}
+          <div className={styles.speakOverlayControls}>
+            <button
+              type="button"
+              className={`${styles.overlayMicBtn} ${isListening ? styles.overlayMicBtnListening : ''}`}
+              onClick={handleOverlayMicClick}
+              disabled={overlayLoading}
+              aria-label={isListening ? 'Stop listening' : 'Start listening'}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                <path d="M17 11a5 5 0 0 1-10 0" />
+                <path d="M12 16v4" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
