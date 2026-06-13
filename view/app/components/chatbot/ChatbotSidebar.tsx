@@ -309,7 +309,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                           nutriGrade={drink.nutri_grade ?? undefined}
                           sugar={drink.base_sugar_g ?? undefined}
                           calories={drink.base_calories ?? undefined}
-                          rating={menuById[drink.id]?.rating}
+                          rating={drink.rating ?? menuById[drink.id]?.rating}
                           drinkInfo={menuById[drink.id]?.drinkInfo}
                           accent={
                             drink.category?.toLowerCase().includes("matcha")
@@ -614,7 +614,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                             nutriGrade={drink.nutri_grade ?? undefined}
                             sugar={drink.base_sugar_g ?? undefined}
                             calories={drink.base_calories ?? undefined}
-                            rating={menuById[drink.id]?.rating}
+                            rating={drink.rating ?? menuById[drink.id]?.rating}
                             drinkInfo={menuById[drink.id]?.drinkInfo}
                             accent={
                               drink.category?.toLowerCase().includes("matcha")

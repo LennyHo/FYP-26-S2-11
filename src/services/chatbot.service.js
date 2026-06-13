@@ -173,6 +173,7 @@ function formatDrinkCards(drinks) {
             nutri_grade: nutrition.nutriGrade || null,
             base_sugar_g: nutrition.baseSugarG ?? null,
             base_calories: nutrition.baseCalories ?? null,
+            rating: drink.rating ?? 0,
         };
     });
 }

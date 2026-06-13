@@ -33,6 +33,7 @@ export interface Message {
     nutri_grade?: string | null;
     base_sugar_g?: number | null;
     base_calories?: number | null;
+    rating?: number;
   }[];
   healthCard?: {
     currentSugar: number;
