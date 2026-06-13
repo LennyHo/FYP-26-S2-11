@@ -202,7 +202,10 @@ function isAddToCartRequest(message) {
         /add.*cart/.test(msg) ||
         /put.*cart/.test(msg) ||
         /order.*this/.test(msg) ||
-        /add\s+[a-z]\d{3}/i.test(msg)
+        /add\s+[a-z]\d{3}/i.test(msg) ||
+        msg.includes("add one") ||
+        msg.includes("help me to add") ||
+        msg.includes("help me add")
     ) return true;
 
     // "i want / i'd like / give me / can i get / i'll have" + customization words → specific order
@@ -351,7 +354,7 @@ function isCartUpdateRequest(message) {
         msg.includes("delete") ||
         msg.includes("increase") ||
         msg.includes("decrease") ||
-        msg.includes("add one") ||
+        msg.includes("add one more") ||
         msg.includes("minus one") ||
         msg.includes("change") ||
         msg.includes("edit") ||
@@ -389,9 +392,12 @@ function getCartUpdateIntent(message) {
         quantityDelta: 0,
     };
 
-    if (msg.includes("remove") || msg.includes("delete")) {
+    if (msg.includes("remove one") || /remove\s+\d+/.test(msg)) {
+        intent.action = "decrease";
+        intent.quantityDelta = -1;
+    } else if (msg.includes("remove") || msg.includes("delete")) {
         intent.action = "remove";
-    } else if (msg.includes("increase") || msg.includes("add one") || msg.includes("plus one")) {
+    } else if (msg.includes("increase") || msg.includes("add one more") || msg.includes("plus one")) {
         intent.action = "increase";
         intent.quantityDelta = 1;
     } else if (msg.includes("decrease") || msg.includes("minus one") || msg.includes("reduce")) {
@@ -400,10 +406,16 @@ function getCartUpdateIntent(message) {
     }
 
     if (msg.includes("classic milk tea")) intent.targetName = "Classic Milk Tea";
+    else if (msg.includes("milk tea")) intent.targetName = "Classic Milk Tea";
     else if (msg.includes("milo dinosaur")) intent.targetName = "Milo Dinosaur";
+    else if (msg.includes("milo")) intent.targetName = "Milo Dinosaur";
     else if (msg.includes("double chocolate frappe")) intent.targetName = "Double Chocolate Frappe";
+    else if (msg.includes("frappe")) intent.targetName = "Double Chocolate Frappe";
     else if (msg.includes("taro slush")) intent.targetName = "Taro Slush";
+    else if (msg.includes("taro")) intent.targetName = "Taro Slush";
     else if (msg.includes("matcha latte")) intent.targetName = "Matcha Latte";
+    else if (msg.includes("matcha")) intent.targetName = "Matcha Latte";
+    else if (msg.includes("jasmine")) intent.targetName = "Jasmine Matcha Tea";
 
     // Split on "change to / update to / make it", or fall back to last " to " in the sentence
     const parts = msg.split(/\bchange to\b|\bupdate to\b|\bmake it\b/);
