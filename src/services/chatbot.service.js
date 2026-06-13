@@ -450,6 +450,20 @@ function getCartUpdateIntent(message) {
         intent.targetCustomization.sugar = "Normal Sweet";
     }
 
+    if (changeText.includes("100%") || changeText.includes("full sweet")) {
+        intent.newCustomization.sugar = "100% Sugar";
+    } else if (changeText.includes("70%")) {
+        intent.newCustomization.sugar = "70% Sugar";
+    } else if (changeText.includes("50%") || changeText.includes("half sweet")) {
+        intent.newCustomization.sugar = "50% Sugar";
+    } else if (changeText.includes("25%") || changeText.includes("less sweet")) {
+        intent.newCustomization.sugar = "25% Sugar";
+    } else if (changeText.includes("0%") || changeText.includes("no sugar") || changeText.includes("unsweetened")) {
+        intent.newCustomization.sugar = "0% Sugar";
+    } else if (changeText.includes("normal sweet")) {
+        intent.newCustomization.sugar = "Normal Sweet";
+    }
+
     if (changeText.includes("no toppings") || changeText.includes("no topping")) {
         intent.newCustomization.toppings = [];
     } else if (changeText.includes("pearl")) {
@@ -1034,24 +1048,26 @@ async function handleChatMessage({ message, conversationId, userId }) {
         if (!targetItem) {
             const matches = findTargetCartItem(cartItems, intent);
 
-            if (matches.length === 0) {
-                return {
-                    reply: "I could not find that drink in your cart.",
-                    system_action: { ui_navigation: "none" },
-                };
-            }
-
             if (matches.length > 1) {
-                return {
-                    reply: "I found more than one matching item in your cart. Please be more specific.",
-                    system_action: { ui_navigation: "none" },
-                };
+                // No drink name specified — default to the most recently added item
+                // (cartItems is sorted newest-first by getCart)
+                if (!intent.targetName) {
+                    targetItem = matches[0];
+                } else {
+                    return {
+                        reply: "I found more than one matching item in your cart. Please be more specific.",
+                        system_action: { ui_navigation: "none" },
+                    };
+                }
+            } else if (matches.length === 1) {
+                targetItem = matches[0];
             }
-
-            targetItem = matches[0];
+            // matches.length === 0 → targetItem stays null → fall through to AI below
         }
 
-        if (intent.action === "remove") {
+        if (!targetItem) {
+            // No matching cart item (likely mid-ordering flow) — let AI handle it
+        } else if (intent.action === "remove") {
             await CartItem.removeFromCart(targetItem._id);
 
             cartItems = await CartItem.getCart(userId);
@@ -1073,9 +1089,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 showViewCart: true,
                 system_action: { ui_navigation: "none" },
             };
-        }
-
-        if (intent.action === "increase" || intent.action === "decrease") {
+        } else if (intent.action === "increase" || intent.action === "decrease") {
             const nextQuantity = Number(targetItem.quantity || 1) + intent.quantityDelta;
 
             if (nextQuantity <= 0) {
@@ -1106,46 +1120,46 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 showViewCart: true,
                 system_action: { ui_navigation: "none" },
             };
+        } else {
+            const newCustomization = {
+                ...(targetItem.customization || {}),
+                ...intent.newCustomization,
+            };
+
+            // Look up the true menu item base price so a previously-corrupted
+            // unitPrice in the DB doesn't compound the error.
+            const menuItem = await MenuItem.findById(targetItem.menuItemId).lean();
+            const basePrice = menuItem ? Number(menuItem.price) : 0;
+            const unitPrice = calculateCartUnitPrice(basePrice, newCustomization);
+            const lineTotal = unitPrice * Number(targetItem.quantity || 1);
+
+            await CartItem.updateCartItem(targetItem._id, {
+                customization: newCustomization,
+                unitPrice,
+                lineTotal,
+            });
+
+            cartItems = await CartItem.getCart(userId);
+
+            const reply = buildCartSummaryReply(cartItems)+
+            `<div class="hidden-last-cart-item" style="display:none;">${targetItem._id}</div>`;
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "user",
+                content: safeMessage,
+            });
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "assistant",
+                content: reply,
+            });
+
+            return {
+                reply,
+                showViewCart: true,
+                system_action: { ui_navigation: "none" },
+            };
         }
-
-        const newCustomization = {
-            ...(targetItem.customization || {}),
-            ...intent.newCustomization,
-        };
-
-        // Look up the true menu item base price so a previously-corrupted
-        // unitPrice in the DB doesn't compound the error.
-        const menuItem = await MenuItem.findById(targetItem.menuItemId).lean();
-        const basePrice = menuItem ? Number(menuItem.price) : 0;
-        const unitPrice = calculateCartUnitPrice(basePrice, newCustomization);
-        const lineTotal = unitPrice * Number(targetItem.quantity || 1);
-
-        await CartItem.updateCartItem(targetItem._id, {
-            customization: newCustomization,
-            unitPrice,
-            lineTotal,
-        });
-
-        cartItems = await CartItem.getCart(userId);
-
-        const reply = buildCartSummaryReply(cartItems)+
-        `<div class="hidden-last-cart-item" style="display:none;">${targetItem._id}</div>`;
-
-        await ChatbotSession.appendToConversation(activeConversationId, userId, {
-            role: "user",
-            content: safeMessage,
-        });
-
-        await ChatbotSession.appendToConversation(activeConversationId, userId, {
-            role: "assistant",
-            content: reply,
-        });
-
-        return {
-            reply,
-            showViewCart: true,
-            system_action: { ui_navigation: "none" },
-        };
     }
     // End of User Story #201
 
