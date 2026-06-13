@@ -47,88 +47,53 @@ export default function OrderReceiptCard({ msgText }: Props) {
   const { drinkName, drinkPrice, customization, sugar, calories, grade, cartItems, total } = parseReceipt(msgText);
 
   return (
-    <div className={styles.wrapper}>
-      {/* Perforated top edge */}
-      <div className={styles.perfTop} />
+    <div>
+      <strong>DripTea — Order Confirmation</strong>
+      <br /><br />
 
-      <div className={styles.receipt}>
-        {/* Header */}
-        <div className={styles.header}>
-          <span className={styles.storeName}>DripTea</span>
-          <span className={styles.tagline}>Order Confirmation</span>
-        </div>
+      {drinkName && (
+        <>
+          <strong>{drinkName}</strong> — {drinkPrice}<br />
+          {customization && <>{customization}<br /></>}
+          {(sugar || calories || grade) && (
+            <>Sugar: {sugar}g | Cal: {calories} kcal | Grade {grade}<br /></>
+          )}
+          <br />
+        </>
+      )}
 
-        <div className={styles.dividerDash} />
+      {cartItems.length > 0 && (
+        <>
+          <strong>Your Cart</strong><br />
+          {cartItems.map((item, i) => (
+            <span key={i}>{item.name} × {item.qty} — {item.price}<br /></span>
+          ))}
+          <br />
+        </>
+      )}
 
-        {/* Order item */}
-        {drinkName && (
-          <div className={styles.section}>
-            <div className={styles.itemRow}>
-              <span className={styles.itemName}>{drinkName}</span>
-              <span className={styles.itemPrice}>{drinkPrice}</span>
-            </div>
-            {customization && (
-              <div className={styles.itemCustom}>{customization}</div>
-            )}
-            {(sugar || calories || grade) && (
-              <div className={styles.nutriRow}>
-                {sugar && <span>Sugar: {sugar}g</span>}
-                {calories && <span>Cal: {calories} kcal</span>}
-                {grade && <span className={styles.gradeChip}>Grade {grade}</span>}
-              </div>
-            )}
-          </div>
-        )}
+      <strong>Total: {total}</strong>
+      <br /><br />
 
-        <div className={styles.dividerDash} />
+      Thank you for your order! 🧋
+      <br /><br />
 
-        {/* Cart summary */}
-        {cartItems.length > 0 && (
-          <div className={styles.section}>
-            <div className={styles.sectionLabel}>Your Cart</div>
-            {cartItems.map((item, i) => (
-              <div key={i} className={styles.cartRow}>
-                <span>{item.name} × {item.qty}</span>
-                <span>{item.price}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className={styles.dividerSolid} />
-
-        {/* Total */}
-        <div className={styles.totalRow}>
-          <span>Total</span>
-          <span className={styles.totalAmount}>{total}</span>
-        </div>
-
-        <div className={styles.dividerDash} />
-
-        {/* Thank you */}
-        <div className={styles.thanks}>Thank you for your order! 🧋</div>
-
-        {/* Buttons */}
-        <div className={styles.btnRow}>
-          <button
-            type="button"
-            className={styles.btnSecondary}
-            onClick={() => (window as any).handleCart?.()}
-          >
-            View Cart
-          </button>
-          <button
-            type="button"
-            className={styles.btnPrimary}
-            onClick={() => (window as any).handleCheckout?.()}
-          >
-            Proceed to Checkout
-          </button>
-        </div>
+      <div className={styles.btnRow}>
+        <button
+          type="button"
+          className={styles.btnSecondary}
+          onClick={() => (window as any).handleCart?.()}
+        >
+          View Cart
+        </button>
+        <button
+          type="button"
+          className={styles.btnPrimary}
+          onClick={() => (window as any).handleCheckout?.()}
+        >
+          Proceed to Checkout
+        </button>
       </div>
-
-      {/* Perforated bottom edge */}
-      <div className={styles.perfBottom} />
     </div>
   );
 }

@@ -1,0 +1,103 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { getStoredUser } from '../../../utils/dripteaApi';
+import { createConversationId } from '../../../utils/chatHelpers';
+import type { Message } from '../useChatbotState';
+
+export const STORAGE_KEY = 'driptea_chatbot_messages';
+const CONVERSATION_ID_KEY = 'driptea_chatbot_conversation_id';
+
+export function getConversationKey(): string {
+  const user = getStoredUser();
+  return user?.id ? `${CONVERSATION_ID_KEY}_${user.id}` : CONVERSATION_ID_KEY;
+}
+
+const WELCOME_GREETINGS = [
+  'Hello, how are you?',
+  "What's the vibe for today?",
+  'What are you in the mood for today?',
+  'What sounds good today?',
+  'How can I help your tea mood?',
+  'Ready for something refreshing?',
+  'What are we sipping today?',
+  'Need a drink idea?',
+  'Craving something sweet or light?',
+  'What can Avy help with today?',
+  'Tell me your mood today.',
+  'Let us find your perfect drink.',
+  'What kind of tea day is it?',
+  'Feeling fruity, milky, or cozy?',
+];
+
+export function getRandomGreeting() {
+  return WELCOME_GREETINGS[Math.floor(Math.random() * WELCOME_GREETINGS.length)];
+}
+
+export function useConversation() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId, setConversationId] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [welcomeGreeting, setWelcomeGreeting] = useState(WELCOME_GREETINGS[0]);
+  const [welcomeAnimationKey, setWelcomeAnimationKey] = useState(0);
+
+  useEffect(() => {
+    setWelcomeGreeting(getRandomGreeting());
+  }, []);
+
+  // Load conversation id and messages from localStorage on mount
+  useEffect(() => {
+    const savedId = localStorage.getItem(getConversationKey());
+    if (savedId) {
+      setConversationId(savedId);
+    } else {
+      const newId = createConversationId();
+      localStorage.setItem(getConversationKey(), newId);
+      setConversationId(newId);
+    }
+    const savedMessages = localStorage.getItem(STORAGE_KEY);
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch {
+        setMessages([{ id: Date.now().toString(), text: 'Hello! How can I help you today?', isUser: false }]);
+      }
+    } else {
+      setMessages([{ id: Date.now().toString(), text: 'Hello! How can I help you today?', isUser: false }]);
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Persist messages whenever they change
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    }
+  }, [messages, isInitialized]);
+
+  function restartConversation() {
+    const newId = createConversationId();
+    const greetingMsg: Message = {
+      id: Date.now().toString(),
+      text: "Hello! I'm Avy, your DripTea companion. How can I help you today?",
+      isUser: false,
+    };
+    setWelcomeGreeting(getRandomGreeting());
+    setWelcomeAnimationKey(k => k + 1);
+    setConversationId(newId);
+    setMessages([greetingMsg]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([greetingMsg]));
+    localStorage.setItem(getConversationKey(), newId);
+  }
+
+  return {
+    messages,
+    setMessages,
+    conversationId,
+    setConversationId,
+    isInitialized,
+    welcomeGreeting,
+    welcomeAnimationKey,
+    restartConversation,
+  };
+}

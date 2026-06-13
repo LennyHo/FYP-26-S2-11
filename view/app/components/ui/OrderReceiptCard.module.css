@@ -167,37 +167,37 @@
 .btnRow {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .btnPrimary,
 .btnSecondary {
   width: 100%;
-  padding: 9px 12px;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: opacity 0.15s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(43, 125, 163, 0.24);
 }
 
 .btnPrimary {
-  background: #3b1f0a;
-  color: #f5f0e8;
+  background: #2b7da3;
+  color: white;
 }
 
 .btnSecondary {
-  background: transparent;
-  color: #3b1f0a;
-  border: 1.5px solid #3b1f0a;
+  background: #2b7da3;
+  color: white;
 }
 
 .btnPrimary:hover,
 .btnSecondary:hover {
-  opacity: 0.8;
+  background: #1a5279;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(43, 125, 163, 0.36);
 }

@@ -1,0 +1,245 @@
+"use client";
+
+import { useState } from 'react';
+import { getStoredUser } from '../../../utils/dripteaApi';
+import { createConversationId, speakText } from '../../../utils/chatHelpers';
+import { getConversationKey } from './useConversation';
+import type { Message } from '../useChatbotState';
+
+function getApiEndpoint(): string {
+  const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
+  if (process.env.NODE_ENV === 'development') return 'http://localhost:5000/api/chat';
+  return configured ? `${configured.replace(/\/$/, '')}/api/chat` : '/api/chat';
+}
+
+function getCurrentUserId(): string {
+  return getStoredUser()?.id || '';
+}
+
+interface UseChatApiProps {
+  conversationId: string;
+  setConversationId: (id: string) => void;
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  pendingImages: Array<{ name: string; previewUrl: string; source: string }>;
+  setPendingImages: React.Dispatch<React.SetStateAction<any[]>>;
+  setInput: (value: string) => void;
+  // Speech refs needed to stop mic when sending in speak mode
+  isListening: boolean;
+  setIsListening: (v: boolean) => void;
+  isListeningRef: React.MutableRefObject<boolean>;
+  recognitionRef: React.MutableRefObject<any>;
+  setIsSpeakMode: (v: boolean) => void;
+  speakModeRef: React.MutableRefObject<boolean>;
+  setHideQuickPrompts: (v: boolean) => void;
+  setOverlayMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  setOverlayLoading: (v: boolean) => void;
+}
+
+export function useChatApi({
+  conversationId,
+  setConversationId,
+  setMessages,
+  pendingImages,
+  setPendingImages,
+  setInput,
+  isListening,
+  setIsListening,
+  isListeningRef,
+  recognitionRef,
+  setIsSpeakMode,
+  speakModeRef,
+  setHideQuickPrompts,
+  setOverlayMessages,
+  setOverlayLoading,
+}: UseChatApiProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  function ensureConversationId(): string {
+    if (conversationId) return conversationId;
+    const newId = createConversationId();
+    try { localStorage.setItem(getConversationKey(), newId); } catch {}
+    setConversationId(newId);
+    return newId;
+  }
+
+  function parsePayload(data: unknown) {
+    const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+    const rawReply = typeof payload.reply === 'string' ? payload.reply
+      : "I'm so sorry for the inconvenience! Our server seems to be taking a short break. Please try again in a moment, or feel free to visit us in store and our baristas will be happy to help.";
+    const recommendedDrinks = Array.isArray(payload.recommendedDrinks)
+      ? (payload.recommendedDrinks as Message['recommendedDrinks']) : [];
+    const healthCard = payload.healthCard && typeof payload.healthCard === 'object'
+      ? (payload.healthCard as Message['healthCard']) : null;
+    const orderReceipt = payload.orderReceipt && typeof payload.orderReceipt === 'object'
+      ? (payload.orderReceipt as Message['orderReceipt']) : null;
+    const strippedReply = rawReply.replace(/<div[^>]*class="[^"]*hidden-cart-data[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+    const sanitizedReply = strippedReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
+    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, showViewCart: payload.showViewCart };
+  }
+
+  async function sendMessage(messageText: string, shouldSpeak: boolean = false) {
+    // ── Image path ──────────────────────────────────────────────────────────
+    if (pendingImages.length > 0) {
+      const img = pendingImages[0];
+      try {
+        setIsLoading(true);
+        const blob = await (await fetch(img.previewUrl)).blob();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result;
+            if (typeof result === 'string') resolve(result.split(',')[1]);
+            else reject(new Error('Failed to read image'));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: `<img src="${img.previewUrl}" alt="uploaded image" style="max-width:120px;max-height:120px;border-radius:8px;" />`,
+          isUser: true,
+        }]);
+        setPendingImages([]);
+        setInput('');
+        const convId = ensureConversationId();
+        const apiBase = process.env.NODE_ENV === 'development'
+          ? 'http://localhost:5000'
+          : (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim() || 'https://driptea-trrn.onrender.com');
+        const res = await fetch(`${apiBase}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: messageText || 'Describe this drink', image: base64, conversationId: convId }),
+        });
+        const data = await res.json();
+        const replyText = typeof data?.reply === 'string' ? data.reply : 'Error connecting to backend';
+        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: replyText, isUser: false }]);
+      } catch {
+        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: 'Error sending image.', isUser: false }]);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // ── Text path ───────────────────────────────────────────────────────────
+    if (!messageText.trim()) return;
+    const convId = ensureConversationId();
+
+    if (shouldSpeak && recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      isListeningRef.current = false;
+      setIsSpeakMode(false);
+      speakModeRef.current = false;
+      setHideQuickPrompts(true);
+    }
+
+    setMessages(prev => [...prev, { id: Date.now().toString(), text: messageText, isUser: true }]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(getApiEndpoint(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: messageText, conversationId: convId, userId: getCurrentUserId() }),
+      });
+      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, showViewCart } = parsePayload(await response.json());
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt };
+      setMessages(prev => [...prev, botMsg]);
+
+      if (shouldSpeak) {
+        const plainText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+        const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i) ? plainText : `Sure — ${plainText}`;
+        speakText(humaneIntro);
+      }
+      if (/added to your cart/i.test(botMsg.text) || showViewCart) {
+        window.dispatchEvent(new Event('cartUpdated'));
+      }
+      syncCartFromReply(botMsg.text);
+    } catch {
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        text: "I'm so sorry for the inconvenience! It looks like our server is currently unavailable. Please try again shortly, or visit us in store and our friendly baristas will be glad to assist you.",
+        isUser: false,
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function sendOverlayMessage(text: string, shouldSpeak: boolean = true) {
+    if (!text) return;
+    setOverlayLoading(true);
+    const convId = ensureConversationId();
+    try {
+      const response = await fetch(getApiEndpoint(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, conversationId: convId, userId: getCurrentUserId() }),
+      });
+      const payload = await response.json() as Record<string, unknown>;
+      const rawReply = typeof payload.reply === 'string' ? payload.reply
+        : "I'm so sorry for the inconvenience! Our server seems to be taking a short break. Please try again in a moment.";
+      const strippedReply = rawReply.replace(/<div[^>]*class="[^"]*hidden-cart-data[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+      const sanitizedReply = strippedReply.replace(/(<br\s*\/?>(\s|&nbsp;)*){3,}/gi, '<br><br>');
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false,
+        recommendedDrinks: Array.isArray(payload.recommendedDrinks) ? (payload.recommendedDrinks as Message['recommendedDrinks']) : [],
+        healthCard: payload.healthCard && typeof payload.healthCard === 'object' ? (payload.healthCard as Message['healthCard']) : null,
+        orderReceipt: payload.orderReceipt && typeof payload.orderReceipt === 'object' ? (payload.orderReceipt as Message['orderReceipt']) : null,
+      };
+      setOverlayMessages(prev => [...prev, botMsg]);
+      if (shouldSpeak) speakText(botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim());
+    } catch {
+      const errorText = "I'm so sorry for the inconvenience! Our server seems to be unavailable right now. Please try again in a moment.";
+      setOverlayMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: errorText, isUser: false }]);
+      if (shouldSpeak) speakText(errorText);
+    } finally {
+      setOverlayLoading(false);
+    }
+  }
+
+  return { isLoading, sendMessage, sendOverlayMessage };
+}
+
+// ── Cart sync (extracted for clarity) ──────────────────────────────────────
+
+function syncCartFromReply(msgText: string) {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(msgText, 'text/html');
+    const hiddenEls = doc.querySelectorAll('.hidden-cart-data');
+    if (hiddenEls.length > 0) {
+      localStorage.setItem('dripTeaCartData', (hiddenEls[hiddenEls.length - 1].textContent || '').trim());
+      window.dispatchEvent(new Event('cartUpdated'));
+      return;
+    }
+    const normalized = msgText.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+    const lines = normalized.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const items: string[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(/^\*\s*\*\*([^*]+)\*\*\s*-\s*S\$?\s*([0-9]+(?:\.[0-9]+)?)/i);
+      if (m) {
+        const details: string[] = [];
+        let j = i + 1;
+        while (j < lines.length && /^[-*]/.test(lines[j])) { details.push(lines[j].replace(/^[-*]\s*/, '').trim()); j++; }
+        items.push(`${m[1].trim()} | ${details.join(' · ')} | S$ ${(parseFloat(m[2]) || 0).toFixed(2)}`);
+        i = j - 1;
+      }
+    }
+    if (items.length > 0) {
+      const existing = localStorage.getItem('dripTeaCartData') || '';
+      localStorage.setItem('dripTeaCartData', (existing ? existing + '\n' + items.join('\n') : items.join('\n')).trim());
+      window.dispatchEvent(new Event('cartUpdated'));
+    }
+  } catch {
+    setTimeout(() => {
+      const hiddenBlocks = document.querySelectorAll('.hidden-cart-data');
+      if (hiddenBlocks.length > 0) {
+        localStorage.setItem('dripTeaCartData', (hiddenBlocks[hiddenBlocks.length - 1].textContent || '').trim());
+        window.dispatchEvent(new Event('cartUpdated'));
+      }
+    }, 300);
+  }
+}

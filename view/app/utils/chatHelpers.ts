@@ -112,6 +112,22 @@ export function convertMarkdownBold(html: string): string {
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
 }
 
+export function speakText(text: string, onEndCallback?: () => void): void {
+  if (!('speechSynthesis' in window)) { onEndCallback?.(); return; }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text.replace(/[*#]/g, ''));
+  const voices = window.speechSynthesis.getVoices();
+  const friendlyVoice = voices.find(v =>
+    v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Google UK English Female')
+  );
+  if (friendlyVoice) utterance.voice = friendlyVoice;
+  utterance.pitch = 1.1;
+  utterance.rate = 1.0;
+  utterance.onend = () => { onEndCallback?.(); };
+  utterance.onerror = () => { onEndCallback?.(); };
+  window.speechSynthesis.speak(utterance);
+}
+
 export function parseDrinkFromHtml(html: string) {
   try {
     const imageMatch = html.match(/<img[^>]+src=['"]([^'"]+)['"][^>]*>/i);
