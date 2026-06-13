@@ -241,8 +241,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 onClick={handleChatClick}
               >
                 <div className={styles.bubbleText}>
-                  {!msg.isUser && /added to your cart successfully/i.test(msg.text) && /here is your order summary/i.test(msg.text) ? (
-                    <OrderReceiptCard msgText={msg.text} />
+                  {!msg.isUser && msg.orderReceipt ? (
+                    <OrderReceiptCard data={msg.orderReceipt} />
                   ) : !msg.isUser && msg.text.includes("startOrder") ? (
                     <DrinkRecCards
                       msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
@@ -546,8 +546,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 )}
                 <div className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}>
                   <div className={styles.bubbleText}>
-                    {!msg.isUser && /added to your cart successfully/i.test(msg.text) && /here is your order summary/i.test(msg.text) ? (
-                      <OrderReceiptCard msgText={msg.text} />
+                    {!msg.isUser && msg.orderReceipt ? (
+                      <OrderReceiptCard data={msg.orderReceipt} />
                     ) : !msg.isUser && msg.text.includes("startOrder") ? (
                       <DrinkRecCards
                         msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}

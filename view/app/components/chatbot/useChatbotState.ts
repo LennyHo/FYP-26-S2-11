@@ -39,6 +39,13 @@ export interface Message {
     recommendedSugar: number;
     recommendedGrade: string;
   } | null;
+  orderReceipt?: {
+    drink: { name: string; price: number; image: string };
+    customization: { size: string; ice: string; sugar: string; toppings: string[] };
+    nutrition: { sugar: number; calories: number; grade: string } | null;
+    cartItems: { name: string; quantity: number; lineTotal: number }[];
+    total: number;
+  } | null;
 }
 
 export interface ChatbotSidebarProps {
@@ -617,10 +624,13 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
       const healthCard = payload.healthCard && typeof payload.healthCard === 'object'
         ? (payload.healthCard as Message['healthCard'])
         : null;
+      const orderReceipt = payload.orderReceipt && typeof payload.orderReceipt === 'object'
+        ? (payload.orderReceipt as Message['orderReceipt'])
+        : null;
 
       const strippedReply = rawReply.replace(/<div[^>]*class="[^"]*hidden-cart-data[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
       const sanitizedReply = strippedReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
-      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard };
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt };
       setMessages(prev => [...prev, botMsg]);
 
       if (shouldSpeak) {
@@ -629,7 +639,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
         speakText(humaneIntro);
       }
 
-      if (/added to your cart/i.test(botMsg.text)) {
+      if (/added to your cart/i.test(botMsg.text) || payload.showViewCart) {
         window.dispatchEvent(new Event('cartUpdated'));
       }
 
@@ -723,9 +733,12 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
       const healthCard = payload.healthCard && typeof payload.healthCard === 'object'
         ? (payload.healthCard as Message['healthCard'])
         : null;
+      const orderReceipt = payload.orderReceipt && typeof payload.orderReceipt === 'object'
+        ? (payload.orderReceipt as Message['orderReceipt'])
+        : null;
       const strippedReply = rawReply.replace(/<div[^>]*class="[^"]*hidden-cart-data[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
       const sanitizedReply = strippedReply.replace(/(<br\s*\/?>(\s|&nbsp;)*){3,}/gi, '<br><br>');
-      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard };
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt };
       setOverlayMessages(prev => [...prev, botMsg]);
       if (shouldSpeak) {
         const plainText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();

@@ -48,7 +48,7 @@ function calculateNutrition(drink, sugarLevel, toppings = []) {
     let calories =
         Number(nutrition.baseCalories ?? drink.base_calories ?? 0);
 
-    if (toppings.includes("Pearls")) {
+    if (toppings.includes("Tapioca Pearls") || toppings.includes("Pearls")) {
         sugar += 8;
         calories += 60;
     }
@@ -93,9 +93,52 @@ function isNutriGradeQuestion(message) {
 }
 // End of User Story #31
 
+const ORDER_CUSTOMIZATION_WORDS = [
+    "regular", "large", "small",
+    "no ice", "less ice", "normal ice", "more ice", "extra ice",
+    "0%", "25%", "50%", "70%", "100%", "no sugar", "less sweet", "full sweet",
+    "aloe", "pearl", "boba", "cheese foam", "tapioca", "no topping",
+];
+
+function hasCustomizationWords(msg) {
+    return ORDER_CUSTOMIZATION_WORDS.some((w) => msg.includes(w));
+}
+
+function parseCustomizationFromMessage(message) {
+    const msg = String(message || "").toLowerCase();
+
+    let size = "Regular";
+    if (msg.includes("large")) size = "Large";
+    else if (msg.includes("small")) size = "Small";
+
+    let ice = "Normal Ice";
+    if (msg.includes("no ice")) ice = "No Ice";
+    else if (msg.includes("less ice")) ice = "Less Ice";
+    else if (msg.includes("more ice") || msg.includes("extra ice")) ice = "More Ice";
+
+    let sugar = "Normal Sweet";
+    if (msg.includes("0%") || msg.includes("no sugar") || msg.includes("unsweetened")) sugar = "0% Sugar";
+    else if (msg.includes("25%") || msg.includes("less sweet")) sugar = "25% Sugar";
+    else if (msg.includes("50%") || msg.includes("half sweet")) sugar = "50% Sugar";
+    else if (msg.includes("70%")) sugar = "70% Sugar";
+    else if (msg.includes("100%") || msg.includes("full sweet")) sugar = "100% Sugar";
+
+    const toppings = [];
+    if (!msg.includes("no topping")) {
+        if (msg.includes("aloe")) toppings.push("Aloe Vera");
+        if (msg.includes("pearl") || msg.includes("boba") || msg.includes("tapioca")) toppings.push("Tapioca Pearls");
+        if (msg.includes("cheese")) toppings.push("Cheese Foam");
+    }
+
+    return { size, ice, sugar, toppings };
+}
+
 // User Story #32: Recommend beverages based on user message
 function isRecommendationRequest(message) {
     const msg = String(message || "").toLowerCase();
+
+    // Specific order with customization details → not a recommendation
+    if (hasCustomizationWords(msg)) return false;
 
     return (
         msg.includes("recommend") ||
@@ -154,12 +197,29 @@ function isPurchaseHistoryRequest(message) {
 function isAddToCartRequest(message) {
     const msg = String(message || "").toLowerCase();
 
-    return (
-    /add.*cart/.test(msg) ||
-    /put.*cart/.test(msg) ||
-    /order.*this/.test(msg) ||
-    /add\s+[a-z]\d{3}/i.test(msg)
+    if (
+        /add.*cart/.test(msg) ||
+        /put.*cart/.test(msg) ||
+        /order.*this/.test(msg) ||
+        /add\s+[a-z]\d{3}/i.test(msg)
+    ) return true;
+
+    // "i want / i'd like / give me / can i get / i'll have" + customization words → specific order
+    const hasOrderIntent = (
+        msg.includes("i want") ||
+        msg.includes("i'd like") ||
+        msg.includes("i would like") ||
+        msg.includes("give me") ||
+        msg.includes("can i get") ||
+        msg.includes("can i have") ||
+        msg.includes("can i order") ||
+        msg.includes("i'll have") ||
+        msg.includes("i'll take") ||
+        msg.includes("order a") ||
+        msg.includes("order the")
     );
+
+    return hasOrderIntent && hasCustomizationWords(msg);
 }
 
 async function resolveBeverageId(message) {
@@ -281,6 +341,198 @@ async function buildCartSummary(userId) {
 }
 // End of User Story #200
 
+// User Story #201
+function isCartUpdateRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    const hasEditVerb = (
+        msg.includes("remove") ||
+        msg.includes("delete") ||
+        msg.includes("increase") ||
+        msg.includes("decrease") ||
+        msg.includes("add one") ||
+        msg.includes("minus one") ||
+        msg.includes("change") ||
+        msg.includes("edit") ||
+        msg.includes("update") ||
+        msg.includes("make it") ||
+        msg.includes("switch")
+    );
+
+    const hasDrinkOrCartRef = (
+        msg.includes("cart") ||
+        msg.includes("drink") ||
+        msg.includes("item") ||
+        msg.includes("milk tea") ||
+        msg.includes("milo") ||
+        msg.includes("frappe") ||
+        msg.includes("matcha") ||
+        msg.includes("taro") ||
+        msg.includes("latte") ||
+        msg.includes("slush") ||
+        msg.includes("dinosaur") ||
+        hasCustomizationWords(msg)
+    );
+
+    return hasEditVerb && hasDrinkOrCartRef;
+}
+
+function getCartUpdateIntent(message) {
+    const msg = String(message || "").toLowerCase();
+
+    const intent = {
+        action: "updateCustomization",
+        targetName: null,
+        targetCustomization: {},
+        newCustomization: {},
+        quantityDelta: 0,
+    };
+
+    if (msg.includes("remove") || msg.includes("delete")) {
+        intent.action = "remove";
+    } else if (msg.includes("increase") || msg.includes("add one") || msg.includes("plus one")) {
+        intent.action = "increase";
+        intent.quantityDelta = 1;
+    } else if (msg.includes("decrease") || msg.includes("minus one") || msg.includes("reduce")) {
+        intent.action = "decrease";
+        intent.quantityDelta = -1;
+    }
+
+    if (msg.includes("classic milk tea")) intent.targetName = "Classic Milk Tea";
+    else if (msg.includes("milo dinosaur")) intent.targetName = "Milo Dinosaur";
+    else if (msg.includes("double chocolate frappe")) intent.targetName = "Double Chocolate Frappe";
+    else if (msg.includes("taro slush")) intent.targetName = "Taro Slush";
+    else if (msg.includes("matcha latte")) intent.targetName = "Matcha Latte";
+
+    // Split on "change to / update to / make it", or fall back to last " to " in the sentence
+    const parts = msg.split(/\bchange to\b|\bupdate to\b|\bmake it\b/);
+    let targetText = parts[0] || msg;
+    let changeText = parts[1] || "";
+
+    if (!changeText) {
+        const toIdx = msg.lastIndexOf(" to ");
+        if (toIdx > -1) {
+            targetText = msg.substring(0, toIdx);
+            changeText = msg.substring(toIdx + 4);
+        }
+    }
+    if (!changeText) changeText = msg;
+
+    // Match sugar values against what parseCustomizationFromMessage stores
+    if (targetText.includes("100%") || targetText.includes("full sweet")) {
+        intent.targetCustomization.sugar = "100% Sugar";
+    } else if (targetText.includes("70%")) {
+        intent.targetCustomization.sugar = "70% Sugar";
+    } else if (targetText.includes("50%") || targetText.includes("half sweet")) {
+        intent.targetCustomization.sugar = "50% Sugar";
+    } else if (targetText.includes("25%") || targetText.includes("less sweet")) {
+        intent.targetCustomization.sugar = "25% Sugar";
+    } else if (targetText.includes("0%") || targetText.includes("no sugar") || targetText.includes("no additional sugar") || targetText.includes("unsweetened")) {
+        intent.targetCustomization.sugar = "0% Sugar";
+    } else if (targetText.includes("normal sweet")) {
+        intent.targetCustomization.sugar = "Normal Sweet";
+    }
+
+    if (changeText.includes("no toppings") || changeText.includes("no topping")) {
+        intent.newCustomization.toppings = [];
+    } else if (changeText.includes("pearl")) {
+        intent.newCustomization.toppings = ["Tapioca Pearls"];
+    } else if (changeText.includes("aloe")) {
+        intent.newCustomization.toppings = ["Aloe Vera"];
+    } else if (changeText.includes("cheese")) {
+        intent.newCustomization.toppings = ["Cheese Foam"];
+    }
+
+    if (changeText.includes("large")) intent.newCustomization.size = "Large";
+    else if (changeText.includes("regular")) intent.newCustomization.size = "Regular";
+
+    if (changeText.includes("no ice")) intent.newCustomization.ice = "No Ice";
+    else if (changeText.includes("less ice")) intent.newCustomization.ice = "Less Ice";
+    else if (changeText.includes("normal ice")) intent.newCustomization.ice = "Normal Ice";
+    else if (changeText.includes("hot")) intent.newCustomization.ice = "Hot";
+
+    return intent;
+}
+
+function findTargetCartItem(cartItems, intent) {
+    let matches = cartItems;
+
+    if (intent.targetName) {
+        matches = matches.filter(
+            item =>
+                String(item.name || "").toLowerCase() ===
+                intent.targetName.toLowerCase()
+        );
+    }
+
+    if (intent.targetCustomization?.sugar) {
+        matches = matches.filter(
+            item =>
+                item.customization?.sugar ===
+                intent.targetCustomization.sugar
+        );
+    }
+
+    return matches;
+}
+
+function calculateCartUnitPrice(basePrice, customization = {}) {
+    let price = Number(basePrice || 0);
+
+    if (customization.size === "Large") price += 1.5;
+
+    const toppings = Array.isArray(customization.toppings)
+        ? customization.toppings
+        : [];
+
+    toppings.forEach((topping) => {
+        const name = String(topping).toLowerCase();
+
+        if (name.includes("pearl")) price += 1.2;
+        else if (name.includes("aloe")) price += 1.0;
+        else if (name.includes("cheese")) price += 1.5;
+    });
+
+    return price;
+}
+
+function buildCartSummaryReply(cartItems) {
+    if (!cartItems.length) {
+        return `Your cart is now empty.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>`;
+    }
+
+    const lines = cartItems.map((item, index) => {
+        const c = item.customization || {};
+        const toppings =
+            Array.isArray(c.toppings) && c.toppings.length > 0
+                ? c.toppings.join(", ")
+                : "No toppings";
+
+        const details = [
+            c.size || "Regular",
+            c.ice || "Normal Ice",
+            c.sugar || "Normal Sweet",
+            toppings,
+        ].join(" · ");
+
+        return `${index + 1}. <strong>${item.name}</strong> × ${item.quantity}<br><span style="color:#ffffff">${details}</span><br>S$ ${Number(item.lineTotal || 0).toFixed(2)}`;
+    });
+
+    const total = cartItems.reduce(
+        (sum, item) => sum + Number(item.lineTotal || 0),
+        0
+    );
+
+    return (
+        `Done! Your cart has been updated.<br><br>` +
+        lines.join("<br><br>") +
+        `<br><br><strong>Total: S$ ${total.toFixed(2)}</strong><br><br>` +
+        `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button>&nbsp;` +
+        `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Checkout</button>`
+    );
+}
+// End of User Story #201
+
 function extractHiddenCartData(reply) {
     const match = String(reply || "").match(
     /<div class=['"]hidden-cart-data['"][^>]*>([\s\S]*?)<\/div>/i
@@ -364,7 +616,7 @@ function parseOrderDetails(message) {
     if (/no topping|no toppings|none|without topping/.test(msg)) toppings = [];
     else {
     const found = [];
-        if (/pearl|pearls|tapioca/.test(msg)) found.push("Pearls");
+        if (/pearl|pearls|tapioca/.test(msg)) found.push("Tapioca Pearls");
         if (/aloe/.test(msg)) found.push("Aloe Vera");
         if (/cheese foam|foam/.test(msg)) found.push("Cheese Foam");
         if (found.length > 0) toppings = found;
@@ -647,21 +899,17 @@ async function handleChatMessage({ message, conversationId, userId }) {
             };
         }
 
-        const cartItem = await CartItem.addToCart(userId, beverageId, {
-            quantity: 1,
-            customization: {
-                size: "Regular",
-                ice: "Normal Ice",
-                sugar: "Normal Sweet",
-                toppings: [],
-            },
-        });
+        const customization = parseCustomizationFromMessage(safeMessage);
 
-        const reply =
-            `${cartItem.name} has been added to your cart.<br><br>` +
-            `Added to your cart successfully.<br><br>` +
-            `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>` +
-            `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>`;
+        const cartItem = await CartItem.addToCart(userId, beverageId, { quantity: 1, customization });
+
+        const allCartItems = await CartItem.getCart(userId);
+        const cartTotal = allCartItems.reduce((sum, i) => sum + Number(i.lineTotal || 0), 0);
+
+        const menuItem = await MenuItem.findOne({ itemId: beverageId }).lean();
+        const nutrition = menuItem ? calculateNutrition(menuItem, customization.sugar, customization.toppings) : null;
+
+        const reply = `${cartItem.name} added to your cart.`;
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, {
             role: "user",
@@ -676,6 +924,21 @@ async function handleChatMessage({ message, conversationId, userId }) {
         return {
             reply,
             system_action: { ui_navigation: "none" },
+            orderReceipt: {
+                drink: {
+                    name: cartItem.name,
+                    price: cartItem.unitPrice,
+                    image: cartItem.image || `/img/bubble_teas/${beverageId}.jpg`,
+                },
+                customization,
+                nutrition,
+                cartItems: allCartItems.map((i) => ({
+                    name: i.name,
+                    quantity: i.quantity,
+                    lineTotal: i.lineTotal,
+                })),
+                total: cartTotal,
+            },
         };
     }
 
@@ -711,6 +974,130 @@ async function handleChatMessage({ message, conversationId, userId }) {
             system_action: { ui_navigation: "none" },
         };
     }
+
+    // User Story #201: Edit cart item through chatbot
+    if (isCartUpdateRequest(safeMessage)) {
+        if (!userId) {
+            return {
+                reply: "Please log in first before editing your cart.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const intent = getCartUpdateIntent(safeMessage);
+        let cartItems = await CartItem.getCart(userId);
+        const matches = findTargetCartItem(cartItems, intent);
+
+        if (matches.length === 0) {
+            return {
+                reply: "I could not find that drink in your cart.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        if (matches.length > 1) {
+            return {
+                reply: "I found more than one matching item in your cart. Please be more specific.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const targetItem = matches[0];
+
+        if (intent.action === "remove") {
+            await CartItem.removeFromCart(targetItem._id);
+
+            cartItems = await CartItem.getCart(userId);
+
+            const reply = buildCartSummaryReply(cartItems);
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "user",
+                content: safeMessage,
+            });
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "assistant",
+                content: reply,
+            });
+
+            return {
+                reply,
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        if (intent.action === "increase" || intent.action === "decrease") {
+            const nextQuantity = Number(targetItem.quantity || 1) + intent.quantityDelta;
+
+            if (nextQuantity <= 0) {
+                await CartItem.removeFromCart(targetItem._id);
+            } else {
+                await CartItem.updateCartItem(targetItem._id, {
+                    quantity: nextQuantity,
+                    lineTotal: Number(targetItem.unitPrice || 0) * nextQuantity,
+                });
+            }
+
+            cartItems = await CartItem.getCart(userId);
+
+            const reply = buildCartSummaryReply(cartItems);
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "user",
+                content: safeMessage,
+            });
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "assistant",
+                content: reply,
+            });
+
+            return {
+                reply,
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const newCustomization = {
+            ...(targetItem.customization || {}),
+            ...intent.newCustomization,
+        };
+
+        // Look up the true menu item base price so a previously-corrupted
+        // unitPrice in the DB doesn't compound the error.
+        const menuItem = await MenuItem.findById(targetItem.menuItemId).lean();
+        const basePrice = menuItem ? Number(menuItem.price) : 0;
+        const unitPrice = calculateCartUnitPrice(basePrice, newCustomization);
+        const lineTotal = unitPrice * Number(targetItem.quantity || 1);
+
+        await CartItem.updateCartItem(targetItem._id, {
+            customization: newCustomization,
+            unitPrice,
+            lineTotal,
+        });
+
+        cartItems = await CartItem.getCart(userId);
+
+        const reply = buildCartSummaryReply(cartItems);
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "user",
+            content: safeMessage,
+        });
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "assistant",
+            content: reply,
+        });
+
+        return {
+            reply,
+            showViewCart: true,
+            system_action: { ui_navigation: "none" },
+        };
+    }
+    // End of User Story #201
 
     // Default AI response
     const orderDetails = parseOrderDetails(safeMessage);
