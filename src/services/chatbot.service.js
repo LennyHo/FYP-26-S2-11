@@ -198,6 +198,9 @@ function isPurchaseHistoryRequest(message) {
 function isAddToCartRequest(message) {
     const msg = String(message || "").toLowerCase();
 
+    // "add one more X" / "add another X" = quantity increase on existing cart item
+    if (msg.includes("add one more") || msg.includes("add another")) return false;
+
     if (
         /add.*cart/.test(msg) ||
         /put.*cart/.test(msg) ||
@@ -355,6 +358,7 @@ function isCartUpdateRequest(message) {
         msg.includes("increase") ||
         msg.includes("decrease") ||
         msg.includes("add one more") ||
+        msg.includes("add another") ||
         msg.includes("minus one") ||
         msg.includes("change") ||
         msg.includes("edit") ||
@@ -397,7 +401,7 @@ function getCartUpdateIntent(message) {
         intent.quantityDelta = -1;
     } else if (msg.includes("remove") || msg.includes("delete")) {
         intent.action = "remove";
-    } else if (msg.includes("increase") || msg.includes("add one more") || msg.includes("plus one")) {
+    } else if (msg.includes("increase") || msg.includes("add one more") || msg.includes("add another") || msg.includes("plus one")) {
         intent.action = "increase";
         intent.quantityDelta = 1;
     } else if (msg.includes("decrease") || msg.includes("minus one") || msg.includes("reduce")) {
@@ -507,6 +511,21 @@ function calculateCartUnitPrice(basePrice, customization = {}) {
     });
 
     return price;
+}
+
+function resolveLastCartItemIdFromHistory(history) {
+    if (!Array.isArray(history)) return null;
+
+    for (let i = history.length - 1; i >= 0; i--) {
+        const content = String(history[i]?.content || "");
+        const match = content.match(
+            /<div class=["']hidden-last-cart-item["'][^>]*>(.*?)<\/div>/i
+        );
+
+        if (match?.[1]) return match[1].trim();
+    }
+
+    return null;
 }
 
 function buildCartSummaryReply(cartItems) {
@@ -999,23 +1018,38 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
         const intent = getCartUpdateIntent(safeMessage);
         let cartItems = await CartItem.getCart(userId);
-        const matches = findTargetCartItem(cartItems, intent);
 
-        if (matches.length === 0) {
-            return {
-                reply: "I could not find that drink in your cart.",
-                system_action: { ui_navigation: "none" },
-            };
+        let targetItem = null;
+
+        if (intent.action === "increase" || intent.action === "decrease") {
+            const lastCartItemId = resolveLastCartItemIdFromHistory(history);
+
+            if (lastCartItemId) {
+                targetItem = cartItems.find(
+                    item => String(item._id) === String(lastCartItemId)
+                );
+            }
         }
 
-        if (matches.length > 1) {
-            return {
-                reply: "I found more than one matching item in your cart. Please be more specific.",
-                system_action: { ui_navigation: "none" },
-            };
-        }
+        if (!targetItem) {
+            const matches = findTargetCartItem(cartItems, intent);
 
-        const targetItem = matches[0];
+            if (matches.length === 0) {
+                return {
+                    reply: "I could not find that drink in your cart.",
+                    system_action: { ui_navigation: "none" },
+                };
+            }
+
+            if (matches.length > 1) {
+                return {
+                    reply: "I found more than one matching item in your cart. Please be more specific.",
+                    system_action: { ui_navigation: "none" },
+                };
+            }
+
+            targetItem = matches[0];
+        }
 
         if (intent.action === "remove") {
             await CartItem.removeFromCart(targetItem._id);
@@ -1036,6 +1070,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
             return {
                 reply,
+                showViewCart: true,
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -1068,6 +1103,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
             return {
                 reply,
+                showViewCart: true,
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -1092,7 +1128,8 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
         cartItems = await CartItem.getCart(userId);
 
-        const reply = buildCartSummaryReply(cartItems);
+        const reply = buildCartSummaryReply(cartItems)+
+        `<div class="hidden-last-cart-item" style="display:none;">${targetItem._id}</div>`;
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, {
             role: "user",
