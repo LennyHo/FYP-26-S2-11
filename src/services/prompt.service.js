@@ -14,7 +14,9 @@ function getLanguageInstruction() {
   return "Reply in UK English only.";
 }
 
-  // User Story #27: Search Beverages
+  // #27 - As a customer, I want to search for beverages using the AI chatbot so that I can find what I want quickly.
+  // #13 - As a customer, I want to view the menu so that I know which beverages are available.
+  // Detects whether the user's message is menu/drink-related before loading menu data into the AI prompt.
 async function isMenuRequest(message) {
   const msg = String(message || "").toLowerCase();
 
@@ -136,7 +138,7 @@ function filterMenu(beverages, message) {
 
   return matched.length ? matched : beverages.slice(0, 8);
 }
-// End of User Story #27
+// End of #27 / #13 menu intent detection
 
 async function buildSystemPrompt(userMessage, extraContext = "") {
   const langInstruction = USE_MATCHED_LANGUAGE

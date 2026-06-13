@@ -1,3 +1,6 @@
+// #246 - As a customer, I want to update my user profile so that my information remains accurate.
+// Frontend: Loads profile form pre-filled from localStorage → on save calls PATCH /api/users/:id
+// → user.controller.js → User.updateUser() → updates fullName, email, profilePic fields in users collection.
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';

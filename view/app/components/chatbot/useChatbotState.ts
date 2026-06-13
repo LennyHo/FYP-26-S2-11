@@ -1,3 +1,7 @@
+// #25/#26/#27/#28/#29/#30/#31/#32 - Core chatbot user stories (customer-facing AI interaction).
+// #197/#198/#199/#200/#201/#202/#203 - Chatbot-driven cart, history, and order management actions.
+// This hook composes all chatbot sub-hooks and wires them together:
+// useChatbotState → useMenuData | useConversation | useLoadingHint | useSpeech | useChatUI | useChatApi
 "use client";
 
 import { useRef, useState, useEffect } from 'react';

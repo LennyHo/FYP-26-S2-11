@@ -26,7 +26,9 @@ const menuItemSchema = new mongoose.Schema(
   { timestamps: true, collection: "menu_items" }
 );
 
-// User Story #13: View Menu
+// #13 - As a customer, I want to view the menu so that I know which beverages are available.
+// #34 - As a store staff, I want to view menu items so that I can review the available beverages.
+// Queries menu_items filtered by status, sorted by category and name.
 menuItemSchema.statics.getMenu = async function getMenu(status = "active") {
   const selectedStatus = String(status || "active").toLowerCase();
   const query = selectedStatus === "all" ? {} : { status: selectedStatus };
@@ -36,8 +38,10 @@ menuItemSchema.statics.getMenu = async function getMenu(status = "active") {
     .lean();
 };
 
-// User Story #21: search for beverages by keyword
-// User Story #27: search for beverages via chatbot
+// #21 - As a customer, I want to search for beverages by name so that I can locate specific drinks quickly.
+// #27 - As a customer, I want to search for beverages using the AI chatbot so that I can find what I want quickly.
+// #36 - As a store staff, I want to search menu items by name so that I can find the beverage.
+// Regex search across name, category, description, tags in menu_items collection.
 menuItemSchema.statics.searchBeverage = async function searchBeverage(keyword) {
   const searchText = String(keyword || "").trim();
 
@@ -57,7 +61,8 @@ menuItemSchema.statics.searchBeverage = async function searchBeverage(keyword) {
   return this.find(query).sort({ category: 1, name: 1 }).lean();
 };
 
-// User Story #32 recommend beverages based on user message
+// #32 - As a customer, I want to get the recommendations from chatbot so that I can complete my order.
+// Extracts keywords from message → queries menu_items with regex across name, category, description, tags.
 menuItemSchema.statics.recommendByMessage = async function recommendByMessage(message) {
   const text = String(message || "").toLowerCase();
 

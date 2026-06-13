@@ -1,3 +1,6 @@
+// #14 - As a customer, I want to reset my password so that I can regain access to my account.
+// Frontend: Customer enters email + new password → calls POST /api/auth/reset-password
+// → auth.controller.js → User.resetPassword() → updates passwordHash + passwordSalt in users collection.
 'use client';
 
 import { useState } from 'react';

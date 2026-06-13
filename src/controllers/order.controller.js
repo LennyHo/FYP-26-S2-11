@@ -94,6 +94,9 @@ function toPublicOrder(order, user, items, payment) {
     };
 }
 
+// #18 - As a customer, I want to apply vouchers during checkout so that I can enjoy discounts.
+// #23 - As a customer, I want to make payment on the checkout page so that I can complete my order.
+// Reads cart_items → creates order in orders → inserts order_items → creates payment → clears cart_items.
 async function processPayment(req, res) {
     try {
     const { userId, paymentMethod, voucherCode } = req.body;
@@ -191,6 +194,8 @@ async function processPayment(req, res) {
     }
 }
 
+// Store staff: view all customer orders from the staff dashboard, filtered by status.
+// Queries orders → joins users, order_items, payments collections → returns combined order list.
 async function getOrders(req, res) {
     try {
         const status = String(req.query.status || "all").trim().toLowerCase();
@@ -286,6 +291,9 @@ async function getOrder(req, res) {
     }
 }
 
+// #28  - As a customer, I want to track my order status so that I know when my drink will be ready.
+// #203 - As a customer, I want to track my order status through the chatbot so that I know when my drink will be ready.
+// Updates the status field (pending → preparing → ready → completed) in the orders collection.
 async function updateOrderStatus(req, res) {
     try {
         const orderId = toObjectId(req.params.id);

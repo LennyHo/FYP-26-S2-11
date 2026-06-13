@@ -27,6 +27,10 @@ function publicUser(user) {
   };
 }
 
+// #02 - As a user admin, I want to view a user profile so that I can access user information.
+// #05 - As a user admin, I want to search for user profiles so that I can retrieve specific user profile information.
+// #07 - As a user admin, I want to view a user account so that I can view the user's details.
+// #10 - As a user admin, I want to search for a user by username so that I can get the user's information quickly.
 router.get("/users", async (req, res) => {
   try {
     const search = String(req.query.search || "").trim();
@@ -58,6 +62,8 @@ router.get("/users", async (req, res) => {
   }
 });
 
+// #01 - As a user admin, I want to create a user profile so that I can handle different types of users.
+// #06 - As a user admin, I want to create a user account so that a new user can access the platform.
 router.post("/users", async (req, res) => {
   try {
     const fullName = String(req.body.fullName || "").trim();
@@ -104,6 +110,11 @@ router.post("/users", async (req, res) => {
   }
 });
 
+// #03  - As a user admin, I want to update the user profile so that I can make changes to the user profile.
+// #04  - As a user admin, I want to suspend user profiles so that I can maintain user access.
+// #08  - As a user admin, I want to update a user account so that I can keep user records up to date.
+// #09  - As a user admin, I want to suspend a user account so that I can prevent unauthorized access.
+// #246 - As a customer, I want to update my account so that I can make sure the information is the latest.
 router.patch("/users/:id", async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {

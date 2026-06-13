@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
 
+// #15  - As a customer, I want to add a selected beverage to my cart so that I can review and purchase it later.
+// #16  - As a customer, I want to view the beverages in my cart so that I can verify my order before proceeding to payment.
+// #17  - As a customer, I want to edit beverages in my cart so that I can modify my order before completing the checkout process.
+// #199 - As a customer, I want to add beverages into my cart through the chatbot.
+// #200 - As a customer, I want to view my cart through the chatbot.
+// #201 - As a customer, I want to edit items in my cart through the chatbot.
+// Collection: cart_items — stores one document per cart line (userId, menuItemId, quantity, customization, lineTotal).
 const cartItemSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },

@@ -23,14 +23,16 @@ async function findDrinkByName(message) {
     msg.includes(String(drink.name || "").toLowerCase())
     );
 }
-// User Story #25: Chat with Chatbot
+// #25 - As a customer, I want to chat with the AI chatbot so that I can get help with ordering and menu questions.
+// Reads chatbot_sessions by conversationId to retrieve prior messages for context.
 async function getConversationHistory(conversationId) {
     return ChatbotSession.getConversationHistory(conversationId);
 }
 // End of User Story #25
 
-// User Story #29: Get Health Advice from Chatbot
-// User Story #31: Ask About Nutri-Grade
+// #29 - As a customer, I want the chatbot to inform me when my chosen drink has a high sugar level so that I can reconsider my selection.
+// #31 - As a customer, I want the chatbot to show me the nutritional grading of each beverage so that I can choose the suitable option.
+// Reads baseSugarG and baseCalories from menu_items → applies sugar/topping adjustments → calculates Nutri-Grade.
 function calculateNutrition(drink, sugarLevel, toppings = []) {
     const sugarMap = {
         "0% Sugar": 0,
@@ -81,7 +83,7 @@ function calculateNutrition(drink, sugarLevel, toppings = []) {
 }
 // End of User Story #29
 
-// User Story #31: Ask About Nutri-Grade
+// #31 - As a customer, I want the chatbot to show me the nutritional grading of each beverage so that I can choose the suitable option.
 function isNutriGradeQuestion(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -133,7 +135,8 @@ function parseCustomizationFromMessage(message) {
     return { size, ice, sugar, toppings };
 }
 
-// User Story #32: Recommend beverages based on user message
+// #32 - As a customer, I want to get the recommendations from chatbot so that I can complete my order.
+// Detects recommendation intent keywords → queries menu_items → injects results into AI prompt.
 function isRecommendationRequest(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -179,7 +182,8 @@ function formatDrinkCards(drinks) {
 }
 // End of User Story #32
 
-// User Story #198: View Purchase History
+// #198 - As a customer, I want to browse my purchase history through the chatbot so that I can review my previous orders conveniently.
+// Detects history-related keywords → calls Payment.getPurchaseHistory() → joins orders and order_items.
 function isPurchaseHistoryRequest(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -194,7 +198,8 @@ function isPurchaseHistoryRequest(message) {
 }
 // End of User Story #198
 
-// User Story #199: Add to Cart Intent
+// #199 - As a customer, I want to add beverages into my cart through the chatbot so that I can prepare my order conveniently.
+// Detects order/add-to-cart intent → resolves drink by name → calls CartItem.addToCart() → writes to cart_items.
 function isAddToCartRequest(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -293,7 +298,8 @@ async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
 }
 // End of User Story #199
 
-// User Story #200: View Cart
+// #200 - As a customer, I want to view my cart through the chatbot so that I can review my selected beverages before checkout.
+// Detects cart-view keywords → calls CartItem.getCart() → queries cart_items where status is active.
 function isViewCartRequest(message) {
     const msg = String(message || "").toLowerCase();
 

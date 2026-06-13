@@ -1,3 +1,9 @@
+// #33 - As a store staff, I want to create a new menu item so that I can expand the drink offerings.
+// #34 - As a store staff, I want to view the menu so that I can see which drinks are currently listed.
+// #35 - As a store staff, I want to update a menu item status so that I can activate or deactivate drinks.
+// #36 - As a store staff, I want to search for beverages so that I can quickly find items to manage.
+// Frontend: Loads StoreStaff page → GET /api/menu-items?status=all → menu.controller.js → MenuItem.find()
+// → POST /api/menu-items (create) | PATCH /api/menu-items/:id/status (toggle) → updates menu_items collection.
 'use client';
 
 import StaffHeader from '../components/layout/StaffHeader';

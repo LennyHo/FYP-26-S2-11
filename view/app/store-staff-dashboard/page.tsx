@@ -1,3 +1,7 @@
+// #28 - As a store staff, I want to track and update order status so that I can manage the order queue.
+// #37 - As a store staff, I want to log in so that I can start my session and access the staff dashboard.
+// Frontend: Loads StoreStaffDashboard → GET /api/orders?status=all (polls every 3s) → order.controller.js → Order.find()
+// → PATCH /api/orders/:id/status (advance status: pending → preparing → ready → completed) → updates orders collection.
 'use client';
 
 import StaffHeader from '../components/layout/StaffHeader';

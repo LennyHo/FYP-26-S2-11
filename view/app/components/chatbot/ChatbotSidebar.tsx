@@ -1,3 +1,14 @@
+// #25 - As a customer, I want to interact with an AI chatbot so that I can get help with my orders.
+// #26 - As a customer, I want to send text messages to the chatbot so that I can communicate my requests.
+// #29 - As a customer, I want to use voice input with the chatbot so that I can speak my orders hands-free.
+// #30 - As a customer, I want to send images to the chatbot so that I can show what I want to order.
+// #31 - As a customer, I want the chatbot to remember my conversation so that I don't repeat myself.
+// #32 - As a customer, I want to restart my chatbot conversation so that I can start fresh.
+// #197 - As a customer, I want to add items to cart via the chatbot so that I can order without navigating menus.
+// #202 - As a customer, I want to view my cart via the chatbot so that I can confirm my order.
+// #203 - As a customer, I want to track my order status via the chatbot so that I can know when it's ready.
+// Frontend: ChatbotSidebar renders the full chat UI → uses useChatbotState for all logic → calls POST /api/chat
+// → chatbot.controller.js → chatbot.service.js (Gemini AI) → performs cart/order/history actions as needed.
 "use client";
 
 /**

@@ -1,3 +1,6 @@
+// #191 - As a customer, I want to create a user account so that I can access the platform.
+// Frontend: Customer fills in fullName, email, password → calls POST /api/auth/register
+// → auth.controller.js → User.register() → inserts into users collection (role: "customer").
 'use client';
 
 import Link from 'next/link';

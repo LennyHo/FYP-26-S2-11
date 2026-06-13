@@ -1,4 +1,7 @@
 // Frontend API bridge — all fetch calls to the Express backend go through this file.
+// Covers all user stories that require HTTP requests:
+// Auth: #11/#14/#22/#37/#191 | Users: #01-#10/#246 | Menu: #13/#21/#33-#36
+// Cart: #15-#17/#199-#201 | Checkout/Orders: #18/#23/#28 | History: #19/#198 | Chatbot: #25-#32/#197/#202/#203
 export type DripTeaUser = {
   id: string;
   fullName: string;
