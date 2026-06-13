@@ -43,11 +43,27 @@ export default function BuyDripTeaPage() {
   const keyword = searchTerm.trim().toLowerCase();
   const hasSearched = keyword.length > 0;
   const searchResults = hasSearched
-    ? allItems.filter(d =>
-        d.name.toLowerCase().includes(keyword) ||
-        d.category.toLowerCase().includes(keyword) ||
-        (d.description || '').toLowerCase().includes(keyword)
-      )
+    ? (() => {
+        const words = keyword.split(/\s+/).filter(Boolean);
+        return allItems
+          .filter(d => {
+            const name = d.name.toLowerCase();
+            const cat = d.category.toLowerCase();
+            const desc = (d.description || '').toLowerCase();
+            return words.every(w => name.includes(w) || cat.includes(w) || desc.includes(w));
+          })
+          .sort((a, b) => {
+            const aExact = a.name.toLowerCase() === keyword;
+            const bExact = b.name.toLowerCase() === keyword;
+            if (aExact && !bExact) return -1;
+            if (!aExact && bExact) return 1;
+            const aName = a.name.toLowerCase().includes(keyword);
+            const bName = b.name.toLowerCase().includes(keyword);
+            if (aName && !bName) return -1;
+            if (!aName && bName) return 1;
+            return 0;
+          });
+      })()
     : [];
 
   const handleSearch = () => {};
