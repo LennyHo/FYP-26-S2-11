@@ -156,6 +156,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     (window as any).handleCart = () => { router.push("/cart"); };
     (window as any).handleCheckout = () => { router.push("/checkout"); };
     (window as any).goToCheckoutPage = () => { router.push("/checkout"); };
+    (window as any).handleMenu = () => { router.push("/menu"); };
   }, [router]);
 
   const getCurrentUserId = () => {
