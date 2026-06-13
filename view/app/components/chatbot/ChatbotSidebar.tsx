@@ -146,10 +146,12 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 </defs>
               </svg>
             </div>
-            <div className={styles.avyTitleGroup}>
-              <h3 className={styles.headerMainTitle}>Avy</h3>
-              <span className={styles.headerSubtitle}>DripConcierge</span>
-            </div>
+            {!isSearchOpen && (
+              <div className={styles.avyTitleGroup}>
+                <h3 className={styles.headerMainTitle}>Avy</h3>
+                <span className={styles.headerSubtitle}>DripConcierge</span>
+              </div>
+            )}
           </div>
           {isSearchOpen && (
             <div className={styles.headerSearch}>
