@@ -352,6 +352,9 @@ async function buildCartSummary(userId) {
 function isCartUpdateRequest(message) {
     const msg = String(message || "").toLowerCase();
 
+    // These are ordering-flow sugar adjustment responses — let AI handle them
+    if (/^(change to \d+%\s*sugar|remain at \d+%\s*sugar)$/i.test(msg.trim())) return false;
+
     const hasEditVerb = (
         msg.includes("remove") ||
         msg.includes("delete") ||
@@ -1233,12 +1236,13 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
     const hiddenCartItems = extractHiddenCartData(reply);
 
+    let addedItems = [];
     if (hiddenCartItems.length > 0) {
         if (!userId) {
             reply = cleanAiReply(reply);
             reply += `<br><br>Please log in first before I add this to your cart.`;
         } else {
-            const addedItems = await addHiddenCartItemsToDatabase(hiddenCartItems, userId);
+            addedItems = await addHiddenCartItemsToDatabase(hiddenCartItems, userId);
             reply = cleanAiReply(reply);
 
             if (addedItems.length > 0) {
@@ -1324,10 +1328,43 @@ async function handleChatMessage({ message, conversationId, userId }) {
         content: reply,
     });
 
+    // Build orderReceipt when the AI flow successfully added items to cart
+    let orderReceipt = null;
+    if (addedItems.length > 0) {
+        const firstItem = addedItems[0];
+        const drink = firstItem.drinkInfo || {};
+        const customization = firstItem.customization || {};
+        const nutrition = calculateNutrition(drink, customization.sugar, customization.toppings || []);
+        const allCartItems = await CartItem.getCart(userId);
+        const cartTotal = allCartItems.reduce((sum, i) => sum + Number(i.lineTotal || 0), 0);
+
+        orderReceipt = {
+            drink: {
+                name: firstItem.name,
+                price: Number(firstItem.unitPrice || 0),
+                image: firstItem.image || `/img/bubble_teas/${drink.itemId || ""}.jpg`,
+            },
+            customization: {
+                size: customization.size || "Regular",
+                ice: customization.ice || "Normal Ice",
+                sugar: customization.sugar || "Normal Sweet",
+                toppings: Array.isArray(customization.toppings) ? customization.toppings : [],
+            },
+            nutrition,
+            cartItems: allCartItems.map((i) => ({
+                name: i.name,
+                quantity: i.quantity,
+                lineTotal: i.lineTotal,
+            })),
+            total: cartTotal,
+        };
+    }
+
     return {
         reply,
         system_action: { ui_navigation: "none" },
         healthCard: healthCardData,
+        ...(orderReceipt ? { orderReceipt } : {}),
     };
 }
 

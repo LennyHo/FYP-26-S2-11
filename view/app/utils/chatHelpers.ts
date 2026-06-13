@@ -61,7 +61,23 @@ export function extractOrderingOptions(html: string): {
     cleanLines.push(lines[i]);
   }
 
-  if (options.length === 0) return { cleanHtml: html, options: [], question: '' };
+  // Fallback: AI sometimes generates <button>...</button> elements instead of
+  // slash-separated text. Extract non-navigation buttons (those without the
+  // chat-nav-btn class) and treat their text as ordering options.
+  if (options.length === 0) {
+    const btnRegex = /<button(?![^>]*chat-nav-btn)[^>]*>(.*?)<\/button>/gi;
+    const btnTexts: string[] = [];
+    let btnMatch: RegExpExecArray | null;
+    while ((btnMatch = btnRegex.exec(html)) !== null) {
+      const t = btnMatch[1].replace(/<[^>]*>/g, '').trim();
+      if (t && t.length <= 55) btnTexts.push(t);
+    }
+    if (btnTexts.length >= 2) {
+      const cleanHtml = html.replace(/<button(?![^>]*chat-nav-btn)[^>]*>.*?<\/button>/gi, '').replace(/\s{2,}/g, ' ').trim();
+      return { cleanHtml, options: btnTexts, question: '' };
+    }
+    return { cleanHtml: html, options: [], question: '' };
+  }
 
   // Find the question line closest before the option line
   let question = '';
@@ -86,6 +102,7 @@ export function getOrderStep(options: string[]): number {
   if (text.includes('regular') || text.includes('large')) return 1;
   if (text.includes('ice') || text.includes('hot')) return 2;
   if (options.some(o => /^\d+%$/.test(o.trim()))) return 3;
+  if (text.includes('sugar') || text.includes('sweet') || text.includes('remain at')) return 3;
   return 4;
 }
 
