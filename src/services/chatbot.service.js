@@ -317,39 +317,36 @@ function isViewCartRequest(message) {
 async function buildCartSummary(userId) {
     const cartItems = await CartItem.getCart(userId);
 
-    const groupedItems = {};
-
-    cartItems.forEach((item) => {
-    const key = JSON.stringify({
-        name: item.name,
-        customization: item.customization || {},
-    });
-
-    if (!groupedItems[key]) {
-        groupedItems[key] = {
-        name: item.name,
-        quantity: 0,
-        total: 0,
-        };
-    }
-
-    groupedItems[key].quantity += Number(item.quantity || 1);
-    groupedItems[key].total += Number(item.lineTotal || 0);
-    });
-
-    const cartSummaryHtml = Object.values(groupedItems)
-    .map((item) => `${item.name} × ${item.quantity} - S$ ${item.total.toFixed(2)}`)
-    .join("<br>");
-
     const cartTotal = cartItems.reduce(
-    (sum, item) => sum + Number(item.lineTotal || 0),
-    0
+        (sum, item) => sum + Number(item.lineTotal || 0),
+        0
     );
 
+    const lines = await Promise.all(cartItems.map(async (item) => {
+        const c = item.customization || {};
+        const toppings = Array.isArray(c.toppings) && c.toppings.length > 0
+            ? c.toppings.join(", ")
+            : "No toppings";
+        const customStr = `${c.size || "Regular"} | ${c.ice || "Normal Ice"} | ${c.sugar || "Normal Sweet"} | ${toppings}`;
+
+        let nutritionLine = "";
+        if (item.menuItemId) {
+            const menuItem = await MenuItem.findById(item.menuItemId).lean();
+            if (menuItem) {
+                const nutrition = calculateNutrition(menuItem, c.sugar, c.toppings || []);
+                nutritionLine = `<br>Sugar: ${nutrition.sugar}g | Cal: ${nutrition.calories} kcal | Grade ${nutrition.grade}`;
+            }
+        }
+
+        return `<strong>${item.name}</strong> × ${item.quantity} - S$ ${Number(item.lineTotal || 0).toFixed(2)}<br>${customStr}${nutritionLine}`;
+    }));
+
+    const cartSummaryHtml = lines.join("<br><br><p>           </p>");
+
     return {
-    cartItems,
-    cartSummaryHtml,
-    cartTotal,
+        cartItems,
+        cartSummaryHtml,
+        cartTotal,
     };
 }
 // End of User Story #200
