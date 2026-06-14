@@ -4,9 +4,9 @@
 }
 
 .purchase-main {
-    max-width: 1000px;
+    width: min(1120px, calc(100% - 32px));
     margin: 0 auto;
-    padding: 42px 20px 80px;
+    padding: 42px 0 80px;
 }
 
 .purchase-card {
@@ -72,10 +72,16 @@
 }
 
 .purchase-status span {
-    color: #1f5f2b;
     font-weight: 900;
     text-transform: capitalize;
 }
+
+.purchase-status-badge { font-weight: 900; text-transform: capitalize; }
+.purchase-status-pending   { color: #b45309; }
+.purchase-status-preparing { color: #1d4ed8; }
+.purchase-status-ready     { color: #1f5f2b; }
+.purchase-status-completed { color: #1f5f2b; }
+.purchase-status-cancelled { color: #b42318; }
 
 .purchase-status strong {
     color: #2c1810;
@@ -140,6 +146,42 @@
 .purchase-payment strong {
     color: #5b351f;
     text-transform: capitalize;
+}
+
+.purchase-track-btn {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 9px 20px;
+    border: 1.5px solid #8d633f;
+    border-radius: 999px;
+    color: #8d633f;
+    font-weight: 800;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.18s, color 0.18s;
+}
+
+.purchase-track-btn:hover {
+    background: #8d633f;
+    color: #fff;
+}
+
+.purchase-collect-btn {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 9px 20px;
+    border: none;
+    border-radius: 999px;
+    background: #1f5f2b;
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.18s;
+}
+
+.purchase-collect-btn:hover {
+    background: #174d22;
 }
 
 @media (max-width: 700px) {

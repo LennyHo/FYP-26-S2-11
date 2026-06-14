@@ -408,54 +408,97 @@
 /* Mobile (≤640px) */
 @media (max-width: 640px) {
   .cart-page {
-    padding: 18px 14px 14px;
+    padding: 12px 0 14px;
   }
+
+  /* Remove the large 64px horizontal padding that crushes content on small screens */
+  .cart-content {
+    padding: 0 14px 24px;
+  }
+
+  .back-menu-btn {
+    width: 100%;
+    text-align: center;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    border-radius: 10px;
+  }
+
   .cart-panel {
     padding: 16px 14px 12px;
     border-radius: 14px;
   }
+
   .cart-title {
     font-size: 18px;
     margin-bottom: 12px;
   }
+
+  /* Keep item as a row on mobile — image left, text centre, actions right */
   .cart-item-row {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
     gap: 10px;
+    flex-wrap: nowrap;
   }
-  .cart-item-actions {
-    align-self: flex-end;
+
+  .cart-item-main {
     gap: 10px;
+    flex: 1;
+    min-width: 0;
   }
+
   .cart-product-image {
     width: 54px;
     height: 54px;
+    flex-shrink: 0;
   }
+
+  .cart-item-text {
+    min-width: 0;
+  }
+
   .cart-item-name {
     font-size: 14px;
+    white-space: normal;
+    word-break: break-word;
   }
+
   .cart-item-details {
     font-size: 12px;
   }
+
+  .cart-item-actions {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
   .cart-action-btn {
-    font-size: 20px;
+    font-size: 18px;
+    padding: 2px 4px;
   }
+
   .cart-price {
-    font-size: 14px;
-    min-width: 56px;
+    font-size: 13px;
+    min-width: 50px;
   }
+
   .cart-delete-btn {
     font-size: 15px;
   }
+
   .cart-total-section h2 {
     font-size: 14px;
   }
+
   .cart-total-section strong {
     font-size: 16px;
   }
+
   .checkout-row {
     justify-content: stretch;
   }
+
   .checkout-btn {
     width: 100%;
     padding: 12px 20px;
