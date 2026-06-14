@@ -456,6 +456,7 @@ function isCartUpdateRequest(message) {
         msg.includes("delete") ||
         msg.includes("increase") ||
         msg.includes("decrease") ||
+        msg.includes("reduce") ||
         msg.includes("add one more") ||
         msg.includes("add another") ||
         msg.includes("minus one") ||
