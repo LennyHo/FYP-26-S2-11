@@ -2,15 +2,15 @@ const {
     //isAddToCartRequest,
     extractBeverageId,
     //isViewCartRequest,
-} = require("../utils/chatIntent.util");
+} = require("../src/utils/chatIntent.util");
 
-const aiClient = require("../ai/aiClient");
-const ChatbotSession = require("../models/chatbotSession.model");
+const aiClient = require("../src/ai/aiClient");
+const ChatbotSession = require("../src/models/chatbotSession.model");
 
-const { buildSystemPrompt } = require("./prompt.service");
-const CartItem = require("../models/cartItem.model");
-const MenuItem = require("../models/menuItem.model");
-const Payment = require("../models/payment.model");
+const { buildSystemPrompt } = require("../src/services/prompt.service");
+const CartItem = require("../src/models/cartItem.model");
+const MenuItem = require("../src/models/menuItem.model");
+const Payment = require("../src/models/payment.model");
 
 async function findDrinkByName(message) {
     const msg = String(message || "").toLowerCase();
@@ -333,6 +333,7 @@ function resolveLastDrinkFromHistory(history) {
 
 async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
     const addedItems = [];
+    console.log("[ChatbotService] addHiddenCartItemsToDatabase userId:", userId, "items:", hiddenCartItems.map(i => i.name));
 
     for (const hiddenItem of hiddenCartItems) {
     const drink = await findDrinkByName(hiddenItem.name);
@@ -385,36 +386,39 @@ function isViewCartRequest(message) {
 async function buildCartSummary(userId) {
     const cartItems = await CartItem.getCart(userId);
 
+    const groupedItems = {};
+
+    cartItems.forEach((item) => {
+    const key = JSON.stringify({
+        name: item.name,
+        customization: item.customization || {},
+    });
+
+    if (!groupedItems[key]) {
+        groupedItems[key] = {
+        name: item.name,
+        quantity: 0,
+        total: 0,
+        };
+    }
+
+    groupedItems[key].quantity += Number(item.quantity || 1);
+    groupedItems[key].total += Number(item.lineTotal || 0);
+    });
+
+    const cartSummaryHtml = Object.values(groupedItems)
+    .map((item) => `${item.name} × ${item.quantity} - S$ ${item.total.toFixed(2)}`)
+    .join("<br>");
+
     const cartTotal = cartItems.reduce(
-        (sum, item) => sum + Number(item.lineTotal || 0),
-        0
+    (sum, item) => sum + Number(item.lineTotal || 0),
+    0
     );
 
-    const lines = await Promise.all(cartItems.map(async (item) => {
-        const c = item.customization || {};
-        const toppings = Array.isArray(c.toppings) && c.toppings.length > 0
-            ? c.toppings.join(", ")
-            : "No toppings";
-        const customStr = `${c.size || "Regular"} | ${c.ice || "Normal Ice"} | ${c.sugar || "Normal Sweet"} | ${toppings}`;
-
-        let nutritionLine = "";
-        if (item.menuItemId) {
-            const menuItem = await MenuItem.findById(item.menuItemId).lean();
-            if (menuItem) {
-                const nutrition = calculateNutrition(menuItem, c.sugar, c.toppings || []);
-                nutritionLine = `<br>Sugar: ${nutrition.sugar}g | Cal: ${nutrition.calories} kcal | Grade ${nutrition.grade}`;
-            }
-        }
-
-        return `<strong>${item.name}</strong> × ${item.quantity} - S$ ${Number(item.lineTotal || 0).toFixed(2)}<br>${customStr}${nutritionLine}`;
-    }));
-
-    const cartSummaryHtml = lines.join("<br><br><p>           </p>");
-
     return {
-        cartItems,
-        cartSummaryHtml,
-        cartTotal,
+    cartItems,
+    cartSummaryHtml,
+    cartTotal,
     };
 }
 // End of User Story #200
@@ -786,8 +790,6 @@ function fixMissingLineBreaks(reply) {
         .replace(/\?(Regular|Large)/gi, "?<br><br>$1")
         // fix "Large (+S$1.50)Please" → "Large (+S$1.50)<br><br>Please"
         .replace(/(\+S\$[0-9.]+\))(Please|Let|Kindly)/gi, "$1<br><br>$2")
-        // fix "Updated Nutri-Grade: CJust" → "Updated Nutri-Grade: C<br><br>Just"
-        .replace(/(Updated Nutri-Grade:\s*[A-D])([A-Za-z])/g, "$1<br><br>$2")
         // fix missing space after sentence-ending punctuation before a capitalised word
         .replace(/([.!?])([A-Z])/g, "$1 $2")
         .trim();
@@ -1341,7 +1343,6 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
     // User Story #29: Show health advice
     let nutritionContext = "";
-    let nutritionBlock = "";
     let healthCardData = null;
 
     if (orderDetails.sugar || orderDetails.toppings) {
@@ -1372,11 +1373,10 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 };
             }
 
-            // Pre-format nutrition block — backend controls the line breaks so AI doesn't duplicate them
-            nutritionBlock = `Updated Sugar: ${nutrition.sugar}g<br>Updated Calories: ${nutrition.calories} kcal<br>Updated Nutri-Grade: ${nutrition.grade}<br><p>           </p>`;
-
             nutritionContext = `
     UPDATED HEALTH CONTEXT:
+    The customer selected sugar or toppings.
+
     Drink: ${drink.name}
     Selected Sugar Level: ${orderDetails.sugar || "Not detected"}
     Selected Toppings: ${
@@ -1385,10 +1385,13 @@ async function handleChatMessage({ message, conversationId, userId }) {
                     : "No toppings"
             }
 
-    The nutrition summary is already displayed above your reply.
-    Do NOT repeat or restate "Updated Sugar:", "Updated Calories:", or "Updated Nutri-Grade:" in your response.
-    Change line and give a brief, gentle health suggestion in 1–2 sentences only.
+    Updated Sugar: ${nutrition.sugar}g
+    Updated Calories: ${nutrition.calories} kcal
+    Updated Nutri-Grade: ${nutrition.grade}
+
+    Give a gentle health suggestion only.
     Do NOT force the customer to change.
+    Use <br> tags between lines.
     `;
         }
     }
@@ -1415,17 +1418,6 @@ async function handleChatMessage({ message, conversationId, userId }) {
     );
 
     reply = fixMissingLineBreaks(reply);
-
-    if (nutritionBlock) {
-        // Strip any nutrition lines the AI still outputs — backend provides them via nutritionBlock
-        reply = reply
-            .replace(/Updated\s+Sugar\s*:[^<\n]*/gi, '')
-            .replace(/Updated\s+Calories\s*:[^<\n]*/gi, '')
-            .replace(/Updated\s+Nutri-?Grade\s*:\s*[A-D][^<\n]*/gi, '')
-            .replace(/^(<br\s*\/?>\s*)+/gi, '')
-            .trim();
-        reply = nutritionBlock + reply;
-    }
 
     const hiddenCartItems = extractHiddenCartData(reply);
 

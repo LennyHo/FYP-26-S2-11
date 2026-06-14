@@ -167,7 +167,7 @@ cartItemSchema.statics.getCart = async function getCart(customerId) {
     ]);
   }
 
-  return [...seen.values()].reverse();
+  return [...seen.values()];
 };
 
 cartItemSchema.statics.getCartItemById = async function (cartItemId) {

@@ -1,4 +1,20 @@
-/* Full-viewport flex column — outer page never scrolls */
+/* ── Keyframes — #15 / #16 / #17 smooth entry, item stagger, and remove animation ── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeSlideOut {
+  from { opacity: 1; transform: translateX(0)    scale(1); }
+  to   { opacity: 0; transform: translateX(40px) scale(0.96); }
+}
+
+/* ── Page ──────────────────────────────────────────────────────────────── */
 .cart-page {
   min-height: 100vh;
   background: #fbf7f1;
@@ -148,7 +164,37 @@
   transform: translateY(-1px);
 }
 
-/* Item list is the only scrollable region */
+/* ── Animated states ───────────────────────────────────────────────────── */
+.cart-panel {
+  animation: fadeSlideUp 0.35s ease both;
+}
+
+.cart-empty-state {
+  animation: fadeIn 0.3s ease both;
+}
+
+.cart-item-row {
+  animation: fadeSlideUp 0.3s ease both;
+  will-change: opacity, transform;
+}
+
+.cart-item-row.removing {
+  animation: fadeSlideOut 0.28s ease forwards;
+  pointer-events: none;
+}
+
+.cart-item-row:nth-child(1)  { animation-delay:   0ms; }
+.cart-item-row:nth-child(2)  { animation-delay:  60ms; }
+.cart-item-row:nth-child(3)  { animation-delay: 120ms; }
+.cart-item-row:nth-child(4)  { animation-delay: 180ms; }
+.cart-item-row:nth-child(5)  { animation-delay: 240ms; }
+.cart-item-row:nth-child(6)  { animation-delay: 300ms; }
+.cart-item-row:nth-child(7)  { animation-delay: 360ms; }
+.cart-item-row:nth-child(8)  { animation-delay: 420ms; }
+.cart-item-row:nth-child(9)  { animation-delay: 480ms; }
+.cart-item-row:nth-child(10) { animation-delay: 540ms; }
+
+/* ── Item list is the only scrollable region ───────────────────────────── */
 .cart-list {
   flex: 1;
   display: flex;
@@ -165,6 +211,14 @@
   align-items: center;
   gap: 20px;
   flex-shrink: 0;
+  border-radius: 12px;
+  padding: 8px;
+  margin: -8px;
+  transition: background 0.2s ease;
+}
+
+.cart-item-row:hover {
+  background: #faf5f0;
 }
 
 .cart-item-main {
@@ -182,6 +236,12 @@
   background: #f4eee7;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   flex-shrink: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cart-item-row:hover .cart-product-image {
+  transform: scale(1.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
 }
 
 .cart-item-text {
@@ -237,6 +297,16 @@
   cursor: pointer;
   line-height: 1;
   padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.cart-action-btn:hover {
+  background: #f0e8df;
+}
+
+.cart-action-btn:active {
+  transform: scale(0.88);
 }
 
 .cart-price {
@@ -253,7 +323,19 @@
   color: #ef3d3d;
   font-size: 17px;
   cursor: pointer;
-  opacity: 0.9;
+  opacity: 0.75;
+  border-radius: 6px;
+  padding: 2px 5px;
+  transition: opacity 0.15s ease, transform 0.1s ease, background 0.15s ease;
+}
+
+.cart-delete-btn:hover {
+  opacity: 1;
+  background: #fef0f0;
+}
+
+.cart-delete-btn:active {
+  transform: scale(0.88);
 }
 
 .cart-total-section {

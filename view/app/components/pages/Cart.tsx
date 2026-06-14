@@ -61,6 +61,9 @@ export default function Cart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  // #17 / #201 - Tracks which item is being deleted so the CSS fadeSlideOut animation
+  // plays for that row before the API call and list refresh happen.
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   async function fetchCartData() {
     setIsLoading(true);
@@ -100,10 +103,8 @@ export default function Cart() {
         return;
       }
 
-      const userId = user?.id || "6a0d439f6dc5d154f7ab75a8";
+      const userId = user?.id || "";
       const response = await getCartItems(userId);
-      console.log("[Cart] user:", user);
-      console.log("[Cart] response:", response);
       const backendItems: DripTeaCartItem[] = response.data || [];
 
       const parsedItems: CartItem[] = backendItems.map((item) => {
@@ -152,14 +153,18 @@ export default function Cart() {
     router.push(`/cart/edit/${item.backendId}`);
   }
 
+  // #17 - Increase quantity by 1, refresh cart list and fire cartUpdated so the
+  // header badge syncs immediately without waiting for the next page load.
   async function handleIncrease(item: CartItem) {
     if (!item.backendId) return;
 
     const nextQuantity = item.quantity + 1;
     await updateCartItemQuantity(item.backendId, nextQuantity);
     await fetchCartData();
+    window.dispatchEvent(new Event('cartUpdated'));
   }
 
+  // #17 - Decrease quantity by 1; remove item entirely when quantity reaches 0.
   async function handleDecrease(item: CartItem) {
     if (!item.backendId) return;
 
@@ -171,13 +176,20 @@ export default function Cart() {
     const nextQuantity = item.quantity - 1;
     await updateCartItemQuantity(item.backendId, nextQuantity);
     await fetchCartData();
+    window.dispatchEvent(new Event('cartUpdated'));
   }
 
+  // #17 - Apply the CSS fadeSlideOut animation (280 ms) before deleting so the row
+  // visually exits before disappearing from the DOM. cartUpdated syncs the header badge.
   async function handleRemove(item: CartItem) {
     if (!item.backendId) return;
 
+    setRemovingId(item.backendId);
+    await new Promise(r => setTimeout(r, 280));
+    setRemovingId(null);
     await deleteCartItem(item.backendId);
     await fetchCartData();
+    window.dispatchEvent(new Event('cartUpdated'));
   }
 
   useEffect(() => {
@@ -207,7 +219,7 @@ export default function Cart() {
       </button>
 
       <section className="cart-panel">
-        <h1 className="cart-title">Your Shopping Cart</h1>
+        <h1 className="cart-title">Shopping Cart</h1>
 
         {isLoading ? (
           <div className="cart-empty-state">
@@ -231,7 +243,10 @@ export default function Cart() {
           <>
             <div className="cart-list">
               {cartItems.map((item, index) => (
-                <div key={item.backendId || `${item.name}-${index}`} className="cart-item-row">
+                <div
+                  key={item.backendId || `${item.name}-${index}`}
+                  className={`cart-item-row${removingId === item.backendId ? ' removing' : ''}`}
+                >
                   <div className="cart-item-main">
                     <img
                       src={getCartItemImage(item)}
