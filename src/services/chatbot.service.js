@@ -393,7 +393,7 @@ async function buildCartSummary(userId) {
     const lines = await Promise.all(cartItems.map(async (item) => {
         const c = item.customization || {};
         const toppings = Array.isArray(c.toppings) && c.toppings.length > 0
-            ? c.toppings.join(", ")
+            ? c.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
             : "No toppings";
         const customStr = `${c.size || "Regular"} | ${c.ice || "Normal Ice"} | ${c.sugar || "Normal Sweet"} | ${toppings}`;
 
@@ -641,7 +641,7 @@ function buildCartSummaryReply(cartItems) {
         const c = item.customization || {};
         const toppings =
             Array.isArray(c.toppings) && c.toppings.length > 0
-                ? c.toppings.join(", ")
+                ? c.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
                 : "No toppings";
 
         const details = [
@@ -713,13 +713,15 @@ function parseCustomization(details) {
     /0%|25%|50%|100%|normal sweet/i.test(part)
     ) || "Normal Sweet";
 
-    const toppings = parts.filter(
-    (part) =>
-        !/medium|large|regular/i.test(part) &&
-        !/normal ice|less ice|no ice|hot/i.test(part) &&
-        !/0%|25%|50%|100%|normal sweet/i.test(part) &&
-        !/no toppings/i.test(part)
-    );
+    const toppings = parts
+    .filter(
+        (part) =>
+            !/medium|large|regular/i.test(part) &&
+            !/normal ice|less ice|no ice|hot/i.test(part) &&
+            !/0%|25%|50%|100%|normal sweet/i.test(part) &&
+            !/no toppings/i.test(part)
+    )
+    .map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim());
 
     return {
     size,
@@ -970,7 +972,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 const c = item.customization || {};
                 const toppings =
                     Array.isArray(c.toppings) && c.toppings.length > 0
-                        ? c.toppings.join(", ")
+                        ? c.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
                         : "No toppings";
 
                 const details = [c.size, c.ice, c.sugar, toppings]
@@ -1455,7 +1457,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
                     const toppings =
                         Array.isArray(c.toppings) && c.toppings.length > 0
-                            ? c.toppings.join(", ")
+                            ? c.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
                             : "No toppings";
 
                     const details = [c.size, c.ice, c.sugar, toppings]

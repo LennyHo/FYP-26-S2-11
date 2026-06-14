@@ -320,6 +320,8 @@ Here is your order summary:<br>
 Sugar: [sugar]g | Calories: [calories] kcal | Nutri-Grade: [grade]<br>
 Total Price: S$[total]
 
+IMPORTANT: In [Toppings], use ONLY the topping name — never include the price (e.g. write "Aloe Vera" not "Aloe Vera (+S$1.00)").
+
 <div class='hidden-cart-data' style='display:none;'>
 [Drink Name] | [Size] · [Ice Level] · [Sugar] · [Toppings] | [price] | [image]
 </div>

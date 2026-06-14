@@ -113,7 +113,7 @@ export default function Cart() {
         const unitPrice = Number(item.unitPrice || lineTotal / quantity || 0);
 
         const toppings = Array.isArray(item.customization?.toppings)
-          ? item.customization.toppings.join(", ")
+          ? item.customization.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
           : "";
 
         const details = [
