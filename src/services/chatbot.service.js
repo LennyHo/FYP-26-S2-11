@@ -702,6 +702,8 @@ function fixMissingLineBreaks(reply) {
         .replace(/\?(Regular|Large)/gi, "?<br><br>$1")
         // fix "Large (+S$1.50)Please" → "Large (+S$1.50)<br><br>Please"
         .replace(/(\+S\$[0-9.]+\))(Please|Let|Kindly)/gi, "$1<br><br>$2")
+        // fix "Updated Nutri-Grade: CJust" → "Updated Nutri-Grade: C<br><br>Just"
+        .replace(/(Updated Nutri-Grade:\s*[A-D])([A-Za-z])/g, "$1<br><br>$2")
         // fix missing space after sentence-ending punctuation before a capitalised word
         .replace(/([.!?])([A-Z])/g, "$1 $2")
         .trim();
@@ -1175,6 +1177,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
     // User Story #29: Show health advice
     let nutritionContext = "";
     let healthCardData = null;
+    let nutritionBlock = "";
 
     if (orderDetails.sugar || orderDetails.toppings) {
         const lastDrinkName = resolveLastDrinkFromHistory(history);
@@ -1204,10 +1207,11 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 };
             }
 
+            // Pre-format nutrition block — backend controls the line breaks
+            nutritionBlock = `Updated Sugar: ${nutrition.sugar}g<br>Updated Calories: ${nutrition.calories} kcal<br>Updated Nutri-Grade: ${nutrition.grade}<br><p>           </p>`;
+
             nutritionContext = `
     UPDATED HEALTH CONTEXT:
-    The customer selected sugar or toppings.
-
     Drink: ${drink.name}
     Selected Sugar Level: ${orderDetails.sugar || "Not detected"}
     Selected Toppings: ${
@@ -1216,13 +1220,10 @@ async function handleChatMessage({ message, conversationId, userId }) {
                     : "No toppings"
             }
 
-    Updated Sugar: ${nutrition.sugar}g
-    Updated Calories: ${nutrition.calories} kcal
-    Updated Nutri-Grade: ${nutrition.grade}
-
-    Give a gentle health suggestion only.
+    The nutrition summary (Sugar, Calories, Nutri-Grade) is already displayed above your reply.
+    Do NOT repeat or restate "Updated Sugar:", "Updated Calories:", or "Updated Nutri-Grade:" in your response.
+    Change line and give a brief, gentle health suggestion in 1–2 sentences only.
     Do NOT force the customer to change.
-    Use <br> tags between lines.
     `;
         }
     }
@@ -1236,6 +1237,17 @@ async function handleChatMessage({ message, conversationId, userId }) {
     );
 
     reply = fixMissingLineBreaks(reply);
+
+    if (nutritionBlock) {
+        // Strip any nutrition lines the AI still outputs — backend provides them via nutritionBlock
+        reply = reply
+            .replace(/Updated\s+Sugar\s*:[^<\n]*/gi, '')
+            .replace(/Updated\s+Calories\s*:[^<\n]*/gi, '')
+            .replace(/Updated\s+Nutri-?Grade\s*:\s*[A-D][^<\n]*/gi, '')
+            .replace(/^(<br\s*\/?>\s*)+/gi, '')
+            .trim();
+        reply = nutritionBlock + reply;
+    }
 
     const hiddenCartItems = extractHiddenCartData(reply);
 
