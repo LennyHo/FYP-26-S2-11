@@ -95,6 +95,23 @@ function isNutriGradeQuestion(message) {
 }
 // End of User Story #31
 
+// Detects queries asking which drinks have low/high sugar or low/high calories.
+function isHealthRankingQuery(message) {
+    const msg = String(message || "").toLowerCase();
+    const hasSugar = msg.includes("sugar");
+    const hasCalorie = msg.includes("calorie") || msg.includes("calories") || msg.includes("cal");
+    const hasHealthy = msg.includes("healthy") || msg.includes("healthier") || msg.includes("healthiest");
+    const hasDrinkRef = msg.includes("which drink") || msg.includes("which beverage") || msg.includes("drinks") || msg.includes("beverages");
+    return (
+        (msg.includes("low sugar") || msg.includes("lower sugar") || msg.includes("least sugar") || msg.includes("lowest sugar") || msg.includes("less sugar")) ||
+        (msg.includes("high sugar") || msg.includes("higher sugar") || msg.includes("most sugar") || msg.includes("highest sugar")) ||
+        (msg.includes("low calorie") || msg.includes("lower calorie") || msg.includes("least calorie") || msg.includes("lowest calorie") || msg.includes("low cal")) ||
+        (msg.includes("high calorie") || msg.includes("higher calorie") || msg.includes("most calorie") || msg.includes("highest calorie")) ||
+        (msg.includes("healthiest") || msg.includes("healthier option") || msg.includes("healthier choice") || msg.includes("healthier drink")) ||
+        (hasDrinkRef && (hasSugar || hasCalorie || hasHealthy))
+    );
+}
+
 const ORDER_CUSTOMIZATION_WORDS = [
     "regular", "large", "small",
     "no ice", "less ice", "normal ice", "more ice", "extra ice",
@@ -970,6 +987,51 @@ async function handleChatMessage({ message, conversationId, userId }) {
         };
     }
     // End of User Story #31
+
+    // Health ranking query: "which beverage has lower sugar?", "healthiest drink", etc.
+    if (isHealthRankingQuery(safeMessage)) {
+        const msg = safeMessage.toLowerCase();
+        const wantHigh =
+            msg.includes("high sugar") || msg.includes("higher sugar") || msg.includes("most sugar") || msg.includes("highest sugar") ||
+            msg.includes("high calorie") || msg.includes("higher calorie") || msg.includes("most calorie") || msg.includes("highest calorie");
+        const rankByCalorie =
+            msg.includes("calorie") || msg.includes("calories") || msg.includes("cal");
+
+        const allDrinks = await MenuItem.find({ status: "active" }).lean();
+        const withNutrition = allDrinks.filter((d) => {
+            const n = d.nutritionInfo || {};
+            return n.baseSugarG != null || n.baseCalories != null;
+        });
+
+        if (withNutrition.length === 0) {
+            const reply = "I don't have nutritional data for our drinks right now. Please ask our staff for details!";
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+            return { reply, system_action: { ui_navigation: "none" } };
+        }
+
+        const sorted = [...withNutrition].sort((a, b) => {
+            const nA = a.nutritionInfo || {};
+            const nB = b.nutritionInfo || {};
+            const valA = rankByCalorie ? Number(nA.baseCalories ?? 9999) : Number(nA.baseSugarG ?? 9999);
+            const valB = rankByCalorie ? Number(nB.baseCalories ?? 9999) : Number(nB.baseSugarG ?? 9999);
+            return wantHigh ? valB - valA : valA - valB;
+        });
+
+        const top = sorted.slice(0, 5);
+        const label = rankByCalorie ? "calories" : "sugar";
+        const direction = wantHigh ? "highest" : "lowest";
+        const reply = `Here are our drinks with the ${direction} base ${label}:`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        return {
+            reply,
+            recommendedDrinks: formatDrinkCards(top),
+            system_action: { ui_navigation: "none" },
+        };
+    }
 
     // User Story #32: Recommend beverages based on user message
     if (isRecommendationRequest(safeMessage)) {
