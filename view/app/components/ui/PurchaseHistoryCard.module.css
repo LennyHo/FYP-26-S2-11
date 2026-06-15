@@ -12,6 +12,17 @@
   margin-bottom: 2px;
 }
 
+.orderBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orderDivider {
+  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+  margin: 4px 0;
+}
+
 .metaSection {
   display: flex;
   flex-direction: column;

@@ -51,11 +51,14 @@ export interface Message {
     total: number;
   } | null;
   purchaseHistory?: {
-    orderNo: string;
-    status: string;
-    paymentStatus: string;
-    items: { name: string; quantity: number; customization?: { size?: string; ice?: string; sugar?: string; toppings?: string[] }; lineTotal: number }[];
-    totalAmount: number;
+    title: string;
+    orders: {
+      orderNo: string;
+      status: string;
+      paymentStatus: string;
+      items: { name: string; quantity: number; customization?: { size?: string; ice?: string; sugar?: string; toppings?: string[] }; lineTotal: number }[];
+      totalAmount: number;
+    }[];
   } | null;
 }
 

@@ -212,9 +212,60 @@ function isPurchaseHistoryRequest(message) {
         msg.includes("order history") ||
         msg.includes("latest order") ||
         msg.includes("last order") ||
+        msg.includes("recent order") ||
         msg.includes("my purchases") ||
-        msg.includes("my orders")
+        msg.includes("my orders") ||
+        msg.includes("my order") ||
+        msg.includes("past order") ||
+        msg.includes("previous order") ||
+        msg.includes("other order") ||
+        /what.*my.*order/i.test(msg) ||
+        /order.*on.*\d/i.test(msg) ||
+        /order.*on\s+[a-z]+/i.test(msg)
     );
+}
+
+// Parses a date reference like "14 June", "June 14", "14th of July" from a message.
+// Returns { day, month } (month is 0-indexed) or null if no date found.
+function extractDateFromMessage(message) {
+    const msg = String(message || "").toLowerCase();
+
+    const monthNames = {
+        jan: 0, january: 0,
+        feb: 1, february: 1,
+        mar: 2, march: 2,
+        apr: 3, april: 3,
+        may: 4,
+        jun: 5, june: 5,
+        jul: 6, july: 6,
+        aug: 7, august: 7,
+        sep: 8, september: 8,
+        oct: 9, october: 9,
+        nov: 10, november: 10,
+        dec: 11, december: 11,
+    };
+
+    // "14 june", "14th june", "14th of june"
+    const dayFirst = msg.match(/(\d{1,2})(?:st|nd|rd|th)?(?:\s+of)?\s+([a-z]+)/);
+    if (dayFirst) {
+        const day = parseInt(dayFirst[1]);
+        const monthStr = dayFirst[2];
+        if (monthNames[monthStr] !== undefined && day >= 1 && day <= 31) {
+            return { day, month: monthNames[monthStr] };
+        }
+    }
+
+    // "june 14", "june 14th"
+    const monthFirst = msg.match(/([a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?/);
+    if (monthFirst) {
+        const monthStr = monthFirst[1];
+        const day = parseInt(monthFirst[2]);
+        if (monthNames[monthStr] !== undefined && day >= 1 && day <= 31) {
+            return { day, month: monthNames[monthStr] };
+        }
+    }
+
+    return null;
 }
 // End of User Story #198
 
@@ -1013,42 +1064,80 @@ async function handleChatMessage({ message, conversationId, userId }) {
             };
         }
 
-        const purchaseHistory = await Payment.getPurchaseHistory(userId);
-        const latestOrder = purchaseHistory[0];
+        const allOrders = await Payment.getPurchaseHistory(userId);
 
-        if (!latestOrder) {
+        if (!allOrders.length) {
             return {
-                reply:
-                    'Looks like you haven\'t placed an order with us yet — but there\'s always a first time! 😊<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
+                reply: "Looks like you haven't placed an order with us yet — but there's always a first time! 😊",
                 system_action: { ui_navigation: "none" },
             };
         }
 
-        const reply = "Here's your most recent order.";
+        // Check if the customer is asking about a specific date
+        const dateQuery = extractDateFromMessage(safeMessage);
+        let targetOrder = null;
+        let reply = "";
 
-        await ChatbotSession.appendToConversation(activeConversationId, userId, {
-            role: "user",
-            content: safeMessage,
-        });
+        let matchedOrders = [];
+        let title = "";
 
-        await ChatbotSession.appendToConversation(activeConversationId, userId, {
-            role: "assistant",
-            content: reply,
-        });
+        if (dateQuery) {
+            const { day, month } = dateQuery;
+            const currentYear = new Date().getFullYear();
+            const monthLabel = new Date(2000, month, 1).toLocaleString("default", { month: "long" });
+
+            // Try current year first, then previous year
+            for (const year of [currentYear, currentYear - 1]) {
+                matchedOrders = allOrders.filter((order) => {
+                    const d = new Date(order.createdAt || order.orderDate);
+                    return (
+                        d.getDate() === day &&
+                        d.getMonth() === month &&
+                        d.getFullYear() === year
+                    );
+                });
+                if (matchedOrders.length) break;
+            }
+
+            if (!matchedOrders.length) {
+                reply = `I couldn't find any orders from ${day} ${monthLabel} in your history. You can check your full purchase history for more details.`;
+                await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+                await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+                return { reply, system_action: { ui_navigation: "none" } };
+            }
+
+            title = matchedOrders.length > 1
+                ? `Your Orders on ${day} ${monthLabel}`
+                : `Your Order on ${day} ${monthLabel}`;
+            reply = matchedOrders.length > 1
+                ? `I found ${matchedOrders.length} orders on ${day} ${monthLabel}.`
+                : `Here's your order from ${day} ${monthLabel}.`;
+        } else {
+            // No date — return most recent order
+            matchedOrders = [allOrders[0]];
+            title = "Your Most Recent Order";
+            reply = "Here's your most recent order.";
+        }
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
 
         return {
             reply,
             purchaseHistory: {
-                orderNo: latestOrder.displayOrderNo || latestOrder.orderNo,
-                status: latestOrder.status,
-                paymentStatus: latestOrder.paymentStatus || "Paid",
-                items: latestOrder.items.map((item) => ({
-                    name: item.name,
-                    quantity: item.quantity,
-                    customization: item.customization || {},
-                    lineTotal: Number(item.lineTotal || 0),
+                title,
+                orders: matchedOrders.map((order) => ({
+                    orderNo: order.displayOrderNo || order.orderNo,
+                    status: order.status,
+                    paymentStatus: order.paymentStatus || "Paid",
+                    items: order.items.map((item) => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        customization: item.customization || {},
+                        lineTotal: Number(item.lineTotal || 0),
+                    })),
+                    totalAmount: Number(order.totalAmount || 0),
                 })),
-                totalAmount: Number(latestOrder.totalAmount || 0),
             },
             system_action: { ui_navigation: "none" },
         };
