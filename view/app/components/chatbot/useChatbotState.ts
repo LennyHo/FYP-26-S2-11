@@ -50,6 +50,13 @@ export interface Message {
     cartItems: { name: string; quantity: number; customization: { size?: string; ice?: string; sugar?: string; toppings?: string[] }; lineTotal: number }[];
     total: number;
   } | null;
+  purchaseHistory?: {
+    orderNo: string;
+    status: string;
+    paymentStatus: string;
+    items: { name: string; quantity: number; customization?: { size?: string; ice?: string; sugar?: string; toppings?: string[] }; lineTotal: number }[];
+    totalAmount: number;
+  } | null;
 }
 
 export interface ChatbotSidebarProps {
@@ -122,6 +129,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     (window as any).handleCheckout = () => { router.push('/checkout'); };
     (window as any).goToCheckoutPage = () => { router.push('/checkout'); };
     (window as any).handleMenu = () => { router.push('/menu'); };
+    (window as any).handlePurchaseHistory = () => { router.push('/purchase-history'); };
   }, [router]);
 
   // Close sidebar on Escape key

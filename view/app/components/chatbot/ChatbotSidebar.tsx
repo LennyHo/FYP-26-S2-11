@@ -25,6 +25,7 @@ import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from '../menu/DrinkRecCards';
 import OrderReceiptCard from '../ui/OrderReceiptCard';
 import CartSummaryCard from '../ui/CartSummaryCard';
+import PurchaseHistoryCard from '../ui/PurchaseHistoryCard';
 import DrinkCard from '../menu/DrinkCard';
 import { useChatbotState, type ChatbotSidebarProps } from './useChatbotState';
 
@@ -259,6 +260,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                     <OrderReceiptCard orderReceipt={msg.orderReceipt} />
                   ) : !msg.isUser && msg.cartUpdate ? (
                     <CartSummaryCard cartUpdate={msg.cartUpdate} />
+                  ) : !msg.isUser && msg.purchaseHistory ? (
+                    <PurchaseHistoryCard purchaseHistory={msg.purchaseHistory} />
                   ) : !msg.isUser && msg.text.includes("startOrder") ? (
                     <DrinkRecCards
                       msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}

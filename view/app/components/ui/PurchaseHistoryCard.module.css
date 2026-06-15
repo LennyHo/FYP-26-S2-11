@@ -1,0 +1,105 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.header {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.metaSection {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.orderNo {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.statusRow {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.itemBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.itemName {
+  font-size: 14px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.itemPrice {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.itemCustom {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 700;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 2px;
+}
+
+.totalAmount {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.btnRow {
+  margin-top: 8px;
+}
+
+.btnPrimary {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: #2b7da3;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btnPrimary:hover {
+  background: #1a5279;
+  transform: translateY(-1px);
+}

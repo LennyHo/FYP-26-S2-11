@@ -1024,35 +1024,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
             };
         }
 
-        const itemsHtml = latestOrder.items
-            .map((item) => {
-                const c = item.customization || {};
-                const toppings =
-                    Array.isArray(c.toppings) && c.toppings.length > 0
-                        ? c.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
-                        : "No toppings";
-
-                const details = [c.size, c.ice, c.sugar, toppings]
-                    .filter(Boolean)
-                    .join(" · ");
-
-                return `${item.name} × ${item.quantity}  <br>${details}  <br>S$ ${Number(item.lineTotal || 0).toFixed(2)}`;
-            })
-            .join("<br><br>");
-
-        const reply =
-            `<strong>Your Most Recent Order</strong><br><br>` +
-            `Order #${latestOrder.displayOrderNo || latestOrder.orderNo} <br><br>` +
-            `<p>           </p>` + 
-            `Order Status: ${latestOrder.status}<br>` +
-            `<p>           </p>` +
-            `Payment Status: ${latestOrder.paymentStatus || "Paid"}<br><br>` +
-            `<p>           </p>` + 
-            `<strong>Items Ordered</strong><br>` +
-            `${itemsHtml}<br><br>` +
-            `<p>           </p>` + 
-            `<strong>Total Paid:</strong> S$ ${Number(latestOrder.totalAmount || 0).toFixed(2)}<br><br>` +
-            `<a class="chat-nav-btn-compact" href="/purchase-history">View Full Purchase History</a>`;
+        const reply = "Here's your most recent order.";
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, {
             role: "user",
@@ -1066,6 +1038,18 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
         return {
             reply,
+            purchaseHistory: {
+                orderNo: latestOrder.displayOrderNo || latestOrder.orderNo,
+                status: latestOrder.status,
+                paymentStatus: latestOrder.paymentStatus || "Paid",
+                items: latestOrder.items.map((item) => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    customization: item.customization || {},
+                    lineTotal: Number(item.lineTotal || 0),
+                })),
+                totalAmount: Number(latestOrder.totalAmount || 0),
+            },
             system_action: { ui_navigation: "none" },
         };
     }
