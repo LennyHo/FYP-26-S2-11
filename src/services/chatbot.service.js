@@ -239,7 +239,7 @@ function isAddToCartRequest(message) {
 function extractOrdinalIndex(message) {
     const msg = String(message || "").toLowerCase();
     const ordinals = [
-        ["first", "1st"],
+        ["first", "1st", "one of"],
         ["second", "2nd"],
         ["third", "3rd"],
         ["fourth", "4th"],
@@ -483,7 +483,12 @@ function isCartUpdateRequest(message) {
         resolveDrinkNameFromMessage(msg) !== null
     );
 
-    return hasEditVerb && hasDrinkOrCartRef;
+    // "second drink" / "the first item" — ordinal targeting without a verb still means cart intent
+    const hasOrdinalItemRef =
+        /\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\b/i.test(msg) &&
+        (msg.includes("drink") || msg.includes("item"));
+
+    return (hasEditVerb && hasDrinkOrCartRef) || hasOrdinalItemRef;
 }
 
 function getCartUpdateIntent(message) {
@@ -633,7 +638,7 @@ function resolveLastCartItemIdFromHistory(history) {
     return null;
 }
 
-function buildCartSummaryReply(cartItems) {
+function buildCartSummaryReply(cartItems, { updated = true } = {}) {
     if (!cartItems.length) {
         return `Your cart is now empty.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>`;
     }
@@ -660,8 +665,10 @@ function buildCartSummaryReply(cartItems) {
         0
     );
 
+    const header = updated ? `Done! Your cart has been updated.<br><br>` : `Here's your current cart:<br><br>`;
+
     return (
-        `Done! Your cart has been updated.<br><br>` +
+        header +
         lines.join("<br><br>") +
         `<br><br><strong>Total: S$ ${total.toFixed(2)}</strong><br><br>` +
         `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button>&nbsp;` +
@@ -1200,6 +1207,11 @@ async function handleChatMessage({ message, conversationId, userId }) {
                     );
                     if (ordinalIndex < namedItems.length) {
                         targetItem = namedItems[ordinalIndex];
+                    } else if (namedItems.length === 1 && Number(namedItems[0].quantity || 1) > ordinalIndex) {
+                        // Ordinal targets a unit within a merged qty>1 item.
+                        // e.g. "second cranberry matcha" where both were stored as one doc with quantity:2.
+                        // The split logic below will separate just the targeted unit.
+                        targetItem = namedItems[0];
                     }
                 } else if (ordinalIndex < cartItems.length) {
                     // "the third drink" → ordinal across the full cart
@@ -1282,6 +1294,16 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 showViewCart: true,
                 system_action: { ui_navigation: "none" },
             };
+        } else if (Object.keys(intent.newCustomization).length === 0 && intent.action === "updateCustomization") {
+            // User said something like "second drink" — they identified a target but didn't say what to change.
+            const name = targetItem.name || "that drink";
+            const c = targetItem.customization || {};
+            const currentDesc = [c.size, c.ice, c.sugar].filter(Boolean).join(", ");
+            const reply = `Got it — I found your <strong>${name}</strong> (${currentDesc}). What would you like to do? I can change the size, ice, sugar, or toppings, adjust the quantity, or remove it entirely.`;
+            return {
+                reply,
+                system_action: { ui_navigation: "none" },
+            };
         } else {
             const newCustomization = {
                 ...(targetItem.customization || {}),
@@ -1293,20 +1315,35 @@ async function handleChatMessage({ message, conversationId, userId }) {
             const newUnitPrice = calculateCartUnitPrice(basePrice, newCustomization);
             const currentQty = Number(targetItem.quantity || 1);
 
-            // If user specifies a particular unit ("second drink") and qty > 1,
+            // If user targets a specific unit ("second drink", "one of them") and qty > 1,
             // split the item so only one unit gets the new customization.
-            const hasOrdinal = /\b(second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\b/i.test(safeMessage);
+            const hasOrdinal = /\b(one of|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\b/i.test(safeMessage);
+
+            console.log('[chatbot split debug]', {
+                safeMessage,
+                hasOrdinal,
+                currentQty,
+                willSplit: hasOrdinal && currentQty > 1,
+                targetItemId: String(targetItem._id),
+                targetItemName: targetItem.name,
+                targetItemQty: targetItem.quantity,
+                menuItemCode: targetItem.menuItemCode,
+                oldCustomization: targetItem.customization,
+                newCustomization,
+            });
 
             if (hasOrdinal && currentQty > 1) {
                 const reducedQty = currentQty - 1;
-                await CartItem.updateCartItem(targetItem._id, {
+                const updateResult = await CartItem.updateCartItem(targetItem._id, {
                     quantity: reducedQty,
                     lineTotal: Number(targetItem.unitPrice || 0) * reducedQty,
                 });
-                await CartItem.addToCart(userId, targetItem.menuItemCode, {
+                console.log('[chatbot split debug] updateCartItem result:', updateResult);
+                const addResult = await CartItem.addToCart(userId, targetItem.menuItemCode, {
                     quantity: 1,
                     customization: newCustomization,
                 });
+                console.log('[chatbot split debug] addToCart result:', addResult);
             } else {
                 await CartItem.updateCartItem(targetItem._id, {
                     customization: newCustomization,

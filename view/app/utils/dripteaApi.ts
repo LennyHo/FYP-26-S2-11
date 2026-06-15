@@ -298,6 +298,48 @@ export function cartItemsToLocalCartData(items: DripTeaCartItem[]) {
     .join('\n');
 }
 
+// On login: pushes any guest localStorage cart items into the backend cart_items collection
+// so the chatbot and backend are aware of them. Must be called BEFORE syncStoredCartFromBackend
+// because that function overwrites localStorage with backend data (erasing guest items).
+export async function migrateLocalCartToBackend(userId: string): Promise<void> {
+  const localData = window.localStorage.getItem('dripTeaCartData');
+  if (!localData) return;
+
+  const lines = localData.split('\n').filter((l) => l.trim());
+  if (!lines.length) return;
+
+  const migrations = lines.map(async (line) => {
+    const parsed = parseLocalCartLine(line);
+    if (!parsed) return;
+
+    // Extract menu item code from image path: /img/bubble_teas/b011.png → "b011"
+    const codeMatch = (parsed.imageSrc || '').match(/\/([a-z]\d{2,4})\.(?:png|jpe?g|webp)/i);
+    const menuItemCode = codeMatch ? codeMatch[1].toLowerCase() : null;
+    if (!menuItemCode) return;
+
+    // Parse details string built by cartItemsToLocalCartData / DrinkCustomize:
+    // "Qty 1 | Regular | Normal Ice | 100% Sugar | Pearl Milk Tea"
+    const parts = (parsed.details || '').split('|').map((p) => p.trim());
+    const qtyMatch = parts[0]?.match(/Qty\s+(\d+)/i);
+    const quantity = qtyMatch ? Number(qtyMatch[1]) : 1;
+    const size = parts[1] || 'Regular';
+    const ice = parts[2] || 'Normal Ice';
+    const sugar = parts[3] || '100% Sugar';
+    const toppingRaw = (parts[4] || '').trim();
+    const toppings = toppingRaw ? [toppingRaw] : [];
+
+    await addCartItem({
+      userId,
+      menuItemId: menuItemCode, // backend falls back to MenuItem.findOne({ itemId }) for non-ObjectId strings
+      quantity,
+      customization: { size, ice, sugar, toppings },
+    });
+  });
+
+  // allSettled so one unrecognised item doesn't block the rest
+  await Promise.allSettled(migrations);
+}
+
 // Syncs the backend cart to localStorage so the cart page can read it offline. Uses getCartItems.
 export async function syncStoredCartFromBackend(userId: string): Promise<DripTeaCartItem[]> {
   const response = await getCartItems(userId);

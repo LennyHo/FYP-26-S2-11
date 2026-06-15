@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import styles from './login.module.css';
 import { useRouter } from 'next/navigation';
-import { syncStoredCartFromBackend } from '../utils/dripteaApi';
+import { syncStoredCartFromBackend, migrateLocalCartToBackend } from '../utils/dripteaApi';
 
 interface LoginCredentials {
   email: string;
@@ -131,6 +131,9 @@ export default function LoginPage() {
       localStorage.setItem('dripTeaAuthToken', payload.token);
       if (payload.user?.id && payload.user.role === 'customer') {
         try {
+          // Push any guest cart items to MongoDB first so they survive the overwrite below
+          await migrateLocalCartToBackend(payload.user.id);
+          // Then overwrite localStorage with the merged backend cart
           await syncStoredCartFromBackend(payload.user.id);
         } catch (error) {
           console.warn('[DripTea login cart sync]', error);

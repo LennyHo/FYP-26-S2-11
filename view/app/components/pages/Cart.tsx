@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getCartItems,
@@ -64,6 +64,9 @@ export default function Cart() {
   // #17 / #201 - Tracks which item is being deleted so the CSS fadeSlideOut animation
   // plays for that row before the API call and list refresh happen.
   const [removingId, setRemovingId] = useState<string | null>(null);
+  // Prevents the cartUpdated listener from re-fetching when the cart page
+  // dispatches the event itself after a + / - optimistic update.
+  const skipNextCartUpdated = useRef(false);
 
   async function fetchCartData() {
     setIsLoading(true);
@@ -153,14 +156,19 @@ export default function Cart() {
     router.push(`/cart/edit/${item.backendId}`);
   }
 
-  // #17 - Increase quantity by 1, refresh cart list and fire cartUpdated so the
-  // header badge syncs immediately without waiting for the next page load.
+  // #17 - Increase quantity by 1. Optimistic local update avoids re-fetching the
+  // full cart (which triggers isLoading → unmount → remount with enter animation).
   async function handleIncrease(item: CartItem) {
     if (!item.backendId) return;
 
     const nextQuantity = item.quantity + 1;
+    setCartItems(prev => prev.map(i => {
+      if (i.backendId !== item.backendId) return i;
+      return { ...i, quantity: nextQuantity, price: i.unitPrice * nextQuantity, details: i.details.replace(/^Qty \d+/, `Qty ${nextQuantity}`) };
+    }));
+    setTotal(prev => prev + item.unitPrice);
     await updateCartItemQuantity(item.backendId, nextQuantity);
-    await fetchCartData();
+    skipNextCartUpdated.current = true;
     window.dispatchEvent(new Event('cartUpdated'));
   }
 
@@ -174,8 +182,13 @@ export default function Cart() {
     }
 
     const nextQuantity = item.quantity - 1;
+    setCartItems(prev => prev.map(i => {
+      if (i.backendId !== item.backendId) return i;
+      return { ...i, quantity: nextQuantity, price: i.unitPrice * nextQuantity, details: i.details.replace(/^Qty \d+/, `Qty ${nextQuantity}`) };
+    }));
+    setTotal(prev => prev - item.unitPrice);
     await updateCartItemQuantity(item.backendId, nextQuantity);
-    await fetchCartData();
+    skipNextCartUpdated.current = true;
     window.dispatchEvent(new Event('cartUpdated'));
   }
 
@@ -196,6 +209,10 @@ export default function Cart() {
     fetchCartData();
 
     const handleCartUpdated = () => {
+      if (skipNextCartUpdated.current) {
+        skipNextCartUpdated.current = false;
+        return;
+      }
       fetchCartData();
     };
 

@@ -566,6 +566,12 @@
   animation-name: messageInLeft;
 }
 
+/* Widen the message bubble when it contains drink cards so cards aren't cramped */
+.botMessageWithCards {
+  width: min(88%, 300px);
+  max-width: min(88%, 300px);
+}
+
 .userMessage {
   align-self: flex-end;
   animation-name: messageInRight;
@@ -2403,6 +2409,11 @@
   gap: 12px;
   margin-top: 12px;
   width: 100%;
+}
+
+/* Override the 260px cap from DrinkCard so cards fill the wider chatbot message bubble */
+.chatbotCard {
+  max-width: 100%;
 }
 
 .healthCard {

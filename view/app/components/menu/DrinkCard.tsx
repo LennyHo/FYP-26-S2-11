@@ -18,6 +18,7 @@ type DrinkCardProps = {
   sugar?: number;
   calories?: number;
   rating?: number;
+  wrapClassName?: string;
   drinkInfo?: {
     ingredients: string[];
     diabeticAdvice: string;
@@ -52,6 +53,7 @@ export default function DrinkCard({
   sugar,
   calories,
   rating = 0,
+  wrapClassName,
   drinkInfo,
 }: DrinkCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -62,7 +64,7 @@ export default function DrinkCard({
   const info = drinkInfo;
 
   return (
-    <div className={`${styles.cardWrap} ${accentClass} ${active ? styles.active : ""}`}>
+    <div className={`${styles.cardWrap} ${accentClass} ${active ? styles.active : ""} ${wrapClassName ?? ""}`}>
       <button
         type="button"
         className={`${styles.card} ${isFlipped ? styles.flipped : ""}`}

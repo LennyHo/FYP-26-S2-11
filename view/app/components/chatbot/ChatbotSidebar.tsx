@@ -233,7 +233,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               : { cleanHtml: '', options: [], question: '' };
             return (
           <React.Fragment key={msg.id}>
-            <div className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
+            <div className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}${(!msg.isUser && msg.recommendedDrinks?.length) ? ` ${styles.botMessageWithCards}` : ""}`}>
               {!msg.isUser && (
                 <div className={styles.botMeta}>
                   <Image
@@ -324,6 +324,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                           calories={drink.base_calories ?? undefined}
                           rating={drink.rating ?? menuById[drink.id]?.rating}
                           drinkInfo={menuById[drink.id]?.drinkInfo}
+                          wrapClassName={styles.chatbotCard}
                           accent={
                             drink.category?.toLowerCase().includes("matcha")
                               ? "green"
