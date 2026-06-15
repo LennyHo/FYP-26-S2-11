@@ -52,10 +52,6 @@
   display: block;
 }
 
-/* Limit consecutive <br> tags to a maximum of 2 */
-.bubbleText br + br + br {
-  display: none !important;
-}
 
 .chatbotSidebar {
   --avy-chat-gradient: #ffffff;

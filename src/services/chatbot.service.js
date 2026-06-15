@@ -390,7 +390,7 @@ async function buildCartSummary(userId) {
         0
     );
 
-    const lines = await Promise.all(cartItems.map(async (item) => {
+    const lines = await Promise.all(cartItems.map(async (item, index) => {
         const c = item.customization || {};
         const toppings = Array.isArray(c.toppings) && c.toppings.length > 0
             ? c.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
@@ -398,18 +398,26 @@ async function buildCartSummary(userId) {
         const customStr = `${c.size || "Regular"} | ${c.ice || "Normal Ice"} | ${c.sugar || "Normal Sweet"} | ${toppings}`;
 
         let nutritionLine = "";
-        if (item.menuItemId) {
-            const menuItem = await MenuItem.findById(item.menuItemId).lean();
-            if (menuItem) {
-                const nutrition = calculateNutrition(menuItem, c.sugar, c.toppings || []);
-                nutritionLine = `<br>Sugar: ${nutrition.sugar}g | Cal: ${nutrition.calories} kcal | Grade ${nutrition.grade}`;
-            }
+        const menuItem = item.menuItemId
+            ? await MenuItem.findById(item.menuItemId).lean()
+            : await MenuItem.findOne({ itemId: item.menuItemCode }).lean();
+        if (menuItem) {
+            const sugarG = menuItem.base_sugar_g ?? menuItem.nutritionInfo?.baseSugarG ?? 0;
+            const calKcal = menuItem.base_calories ?? menuItem.nutritionInfo?.baseCalories ?? 0;
+            const grade = (menuItem.nutritionInfo?.nutriGrade || menuItem.nutri_grade || "").toUpperCase().trim();
+            const gradeText = grade ? ` | Grade ${grade}` : "";
+            nutritionLine = `<br>Dietary Info: Sugar: ${sugarG}g | Cal: ${calKcal} kcal${gradeText}`;
         }
 
-        return `<strong>${item.name}</strong> × ${item.quantity} - S$ ${Number(item.lineTotal || 0).toFixed(2)}<br>${customStr}${nutritionLine}`;
+        return (
+            `${index + 1}. <strong>${item.name}</strong><br>` +
+            `Qty: ${item.quantity}  ·  S$ ${Number(item.lineTotal || 0).toFixed(2)}<br>` +
+            `Customization: ${customStr}` +
+            nutritionLine
+        );
     }));
 
-    const cartSummaryHtml = lines.join("<br><br><p>           </p>");
+    const cartSummaryHtml = lines.join("<br><br>");
 
     return {
         cartItems,
