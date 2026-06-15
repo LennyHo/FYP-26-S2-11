@@ -1,61 +1,49 @@
 .page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #fdf4fb 0%, #f9eef7 50%, #fdf0f6 100%);
+  background: #f5f0e8;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 2rem 1rem 4rem;
+  padding: 2.5rem 1rem 4rem;
 }
 
 .card {
   width: 100%;
-  max-width: 440px;
+  max-width: 480px;
   background: #fff;
-  border-radius: 24px;
-  box-shadow: 0 8px 40px rgba(171, 28, 110, 0.10), 0 2px 12px rgba(165, 94, 163, 0.08);
-  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 2rem 2rem 2.5rem;
   margin-top: 1rem;
 }
 
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.2rem 0.8rem;
-  border-bottom: 1px solid rgba(171, 28, 110, 0.08);
+/* Title */
+.heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 1.8rem;
+  text-align: center;
 }
 
+/* Back button (above card, minimal) */
 .backBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   background: none;
   border: none;
-  color: #AB1C6E;
-  font-size: 0.9rem;
+  color: #555;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 8px;
-  transition: background 0.18s;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  transition: color 0.18s;
 }
 
 .backBtn:hover {
-  background: rgba(171, 28, 110, 0.08);
-}
-
-.heading {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #2d1a2e;
-  margin: 0;
-  text-align: center;
-  flex: 1;
-}
-
-.headerSpacer {
-  width: 72px;
+  color: #1a1a1a;
 }
 
 /* Avatar */
@@ -63,39 +51,39 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem 1.5rem 1.2rem;
-  background: linear-gradient(180deg, rgba(171,28,110,0.04) 0%, transparent 100%);
+  margin-bottom: 1.8rem;
 }
 
 .avatarWrapper {
   position: relative;
   display: inline-block;
+  cursor: pointer;
 }
 
 .avatarImg {
-  width: 100px;
-  height: 100px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #AB1C6E;
-  box-shadow: 0 4px 16px rgba(171, 28, 110, 0.2);
+  border: 2.5px solid #1a1a1a;
   display: block;
+  background: #f0ece4;
 }
 
 .avatarEditBtn {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 30px;
-  height: 30px;
-  background: linear-gradient(135deg, #AB1C6E, #A55EA3);
+  bottom: 4px;
+  right: 4px;
+  width: 26px;
+  height: 26px;
+  background: #fff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(171, 28, 110, 0.3);
-  color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  color: #1a1a1a;
   transition: transform 0.18s;
 }
 
@@ -108,97 +96,113 @@
 }
 
 .avatarHint {
-  margin: 0.7rem 0 0;
-  font-size: 0.78rem;
-  color: #a07090;
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: #888;
 }
 
 /* Form */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
-  padding: 1.5rem 1.8rem 2rem;
+  gap: 1.1rem;
 }
 
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .label {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #7a3060;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
 .input {
   padding: 0.75rem 1rem;
-  border: 1.5px solid #e8d0e4;
+  border: 1.5px solid #e0dbd0;
   border-radius: 10px;
-  font-size: 1rem;
-  background: #fdf8fc;
-  color: #2d1a2e;
+  font-size: 0.97rem;
+  background: #f5f0e8;
+  color: #1a1a1a;
   outline: none;
   transition: border 0.2s, box-shadow 0.2s;
   font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .input::placeholder {
-  color: #c9aac0;
+  color: #bbb;
 }
 
 .input:focus {
-  border-color: #AB1C6E;
-  box-shadow: 0 0 0 3px rgba(171, 28, 110, 0.1);
-  background: #fff;
+  border-color: #aaa;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+  background: #faf8f3;
+}
+
+/* Password row: input + button side by side */
+.passwordRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #e0dbd0;
+  border-radius: 10px;
+  background: #f5f0e8;
+}
+
+.passwordDots {
+  flex: 1;
+  font-size: 1.1rem;
+  color: #555;
+  letter-spacing: 0.15em;
+  line-height: 1;
+}
+
+.changePasswordBtn {
+  background: none;
+  border: none;
+  color: #1a1a1a;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-family: inherit;
+  transition: opacity 0.18s;
+}
+
+.changePasswordBtn:hover {
+  opacity: 0.65;
 }
 
 .saveBtn {
-  margin-top: 0.4rem;
-  padding: 0.9rem;
-  background: linear-gradient(135deg, #AB1C6E 0%, #A55EA3 100%);
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 700;
-  border: none;
+  margin-top: 0.6rem;
+  padding: 0.85rem;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 0.97rem;
+  font-weight: 600;
+  border: 1.5px solid #c8c2b6;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(171, 28, 110, 0.25);
-  transition: opacity 0.2s, transform 0.18s;
+  transition: background 0.18s, border-color 0.18s;
   font-family: inherit;
 }
 
 .saveBtn:hover {
-  opacity: 0.92;
-  transform: translateY(-1px);
+  background: #f5f0e8;
+  border-color: #aaa;
 }
 
 .saveBtn:active {
-  transform: translateY(0);
-}
-
-.changePasswordLink {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 0.7rem 1rem;
-  border: 1.5px solid rgba(171, 28, 110, 0.25);
-  border-radius: 12px;
-  color: #AB1C6E;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: background 0.18s, border-color 0.18s;
-}
-
-.changePasswordLink:hover {
-  background: rgba(171, 28, 110, 0.06);
-  border-color: rgba(171, 28, 110, 0.45);
+  background: #ede8de;
 }
 
 .successMsg {
@@ -206,10 +210,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  color: #AB1C6E;
+  color: #2d6a2d;
   font-weight: 600;
-  font-size: 0.9rem;
-  background: rgba(171, 28, 110, 0.07);
+  font-size: 0.88rem;
+  background: rgba(45, 106, 45, 0.08);
   border-radius: 8px;
-  padding: 0.6rem 1rem;
+  padding: 0.55rem 1rem;
 }
