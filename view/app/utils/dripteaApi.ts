@@ -433,6 +433,9 @@ export type DripTeaMenuItem = {
   price: number;
   description?: string;
   status: string;
+  base_calories?: number;
+  base_sugar_g?: number;
+  nutri_grade?: string;
   drinkInfo?: {
     ingredients: string[];
     diabeticAdvice: string;
