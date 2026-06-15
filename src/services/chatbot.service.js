@@ -958,8 +958,67 @@ function fixMissingLineBreaks(reply) {
         .trim();
 }
 
+// Handles quick-prompt button clicks: fetches the relevant drinks from the DB,
+// injects them as context, and lets Gemini write a natural response.
+// The drink cards are returned alongside the AI reply for the frontend to render.
+async function handleQuickPromptWithGemini({ safeMessage, activeConversationId, userId, history }) {
+    const msg = safeMessage.toLowerCase();
+    const rankByCalorie = msg.includes('calorie') || msg.includes('calories') || msg.includes('cal');
+    const wantLow = msg.includes('low') || msg.includes('least') || msg.includes('lowest') || msg.includes('healthier') || msg.includes('healthy');
+
+    let drinks = [];
+
+    if (msg.includes('sugar') || rankByCalorie || msg.includes('healthy') || msg.includes('healthier')) {
+        // Health-ranked query — sort by the relevant metric ascending
+        const allDrinks = await MenuItem.find({ status: 'active' }).lean();
+        const withNutrition = allDrinks.filter(d => {
+            const n = d.nutritionInfo || {};
+            return n.baseSugarG != null || n.baseCalories != null;
+        });
+        drinks = [...withNutrition].sort((a, b) => {
+            const nA = a.nutritionInfo || {};
+            const nB = b.nutritionInfo || {};
+            const valA = rankByCalorie ? Number(nA.baseCalories ?? 9999) : Number(nA.baseSugarG ?? 9999);
+            const valB = rankByCalorie ? Number(nB.baseCalories ?? 9999) : Number(nB.baseSugarG ?? 9999);
+            return wantLow ? valA - valB : valB - valA;
+        }).slice(0, 5);
+    } else {
+        // General recommendation — top rated across the menu
+        drinks = await MenuItem.recommendByMessage(safeMessage);
+        if (drinks.length === 0) {
+            const allDrinks = await MenuItem.find({ status: 'active' }).lean();
+            drinks = allDrinks.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5);
+        }
+    }
+
+    const cards = formatDrinkCards(drinks);
+
+    const drinkLines = cards.map((d, i) => {
+        const sugar = d.base_sugar_g != null ? `${d.base_sugar_g}g sugar` : null;
+        const cal = d.base_calories != null ? `${d.base_calories} kcal` : null;
+        const grade = d.nutri_grade ? `Grade ${d.nutri_grade.toUpperCase()}` : null;
+        const stats = [sugar, cal, grade].filter(Boolean).join(', ');
+        return `${i + 1}. ${d.name} — S$${Number(d.price).toFixed(2)}${stats ? ` (${stats})` : ''}`;
+    }).join('\n');
+
+    const drinkContext = `
+DRINKS TO RECOMMEND (these will be shown as visual cards — do NOT list their details):
+${drinkLines}
+
+Write a warm, natural 1–2 sentence intro for these recommendations. Reference the selection briefly but do not enumerate every drink — the cards handle the details. Speak as Avy, the friendly DripTea assistant.`;
+
+    const systemPrompt = await buildSystemPrompt(safeMessage, drinkContext);
+    let reply = await aiClient.generateText(safeMessage, history, systemPrompt);
+    reply = fixMissingLineBreaks(reply);
+
+    await ChatbotSession.appendToConversation(activeConversationId, userId, { role: 'user', content: safeMessage });
+    await ChatbotSession.appendToConversation(activeConversationId, userId, { role: 'assistant', content: reply });
+
+    return { reply, recommendedDrinks: cards, system_action: { ui_navigation: 'none' } };
+}
+
 // Main chatbot message handler
-async function handleChatMessage({ message, conversationId, userId }) {
+async function handleChatMessage({ message, conversationId, userId, isQuickPrompt = false }) {
     const safeMessage = String(message || "").trim();
 
     if (!safeMessage) {
@@ -971,6 +1030,13 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
     const activeConversationId = conversationId || `guest-${Date.now()}`;
     const history = await ChatbotSession.getConversationHistory(activeConversationId);
+
+    // Quick prompt button clicks bypass all hardcoded routes and go directly to Gemini.
+    // The relevant drinks are still fetched from the DB and injected as context so Gemini
+    // can write a natural response, while the frontend still receives the cards to render.
+    if (isQuickPrompt) {
+        return await handleQuickPromptWithGemini({ safeMessage, activeConversationId, userId, history });
+    }
 
     // User Story #31: Ask About Nutri-Grade via chatbot
     if (isNutriGradeQuestion(safeMessage)) {

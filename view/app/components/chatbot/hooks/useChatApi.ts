@@ -81,7 +81,7 @@ export function useChatApi({
     return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, showViewCart: payload.showViewCart };
   }
 
-  async function sendMessage(messageText: string, shouldSpeak: boolean = false) {
+  async function sendMessage(messageText: string, shouldSpeak: boolean = false, isQuickPrompt: boolean = false) {
     // ── Image path ──────────────────────────────────────────────────────────
     if (pendingImages.length > 0) {
       const img = pendingImages[0];
@@ -146,7 +146,7 @@ export function useChatApi({
       const response = await fetch(getApiEndpoint(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText, conversationId: convId, userId: getCurrentUserId() }),
+        body: JSON.stringify({ message: messageText, conversationId: convId, userId: getCurrentUserId(), isQuickPrompt }),
       });
       const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, showViewCart } = parsePayload(await response.json());
       const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory };

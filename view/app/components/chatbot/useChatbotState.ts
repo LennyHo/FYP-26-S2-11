@@ -157,8 +157,8 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
 
   // Wrapper so ChatbotSidebar can call sendMessage() with no argument (Enter key,
   // send button) and the current input value is used as the fallback text.
-  const sendMessage = (text?: string, shouldSpeak?: boolean) =>
-    api.sendMessage(text ?? input, shouldSpeak ?? speech.isSpeakMode);
+  const sendMessage = (text?: string, shouldSpeak?: boolean, isQuickPrompt?: boolean) =>
+    api.sendMessage(text ?? input, shouldSpeak ?? speech.isSpeakMode, isQuickPrompt ?? false);
 
   const closeOverlay = () => speech.closeOverlay(conversation.setMessages, STORAGE_KEY);
 

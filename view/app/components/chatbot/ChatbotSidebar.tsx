@@ -478,13 +478,13 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
           </div>
         )}
 
-        <QuickPrompts
+        {/* <QuickPrompts
           prompts={QUICK_PROMPTS}
-          onPromptClick={prompt => sendMessage(prompt, false)}
+          onPromptClick={prompt => sendMessage(prompt, false, true)}
           isLoading={isLoading}
           hasTypedInput={!!input.trim()}
           hideQuickPrompts={hideQuickPrompts}
-        />
+        /> */}
 
         <div className={styles.composerContainer}>
           <div className={styles.messageInputOuter}>

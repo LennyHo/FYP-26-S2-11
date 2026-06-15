@@ -17,12 +17,13 @@ const chatbotService = require("../services/chatbot.service");
 // → builds AI prompt → calls Gemini API → writes to chatbot_sessions → returns reply.
 async function handleChat(req, res) {
     try {
-    const { message, conversationId, userId } = req.body || {};
+    const { message, conversationId, userId, isQuickPrompt } = req.body || {};
 
     const result = await chatbotService.handleChatMessage({
         message,
         conversationId,
         userId,
+        isQuickPrompt: !!isQuickPrompt,
     });
 
     return res.json(result);
