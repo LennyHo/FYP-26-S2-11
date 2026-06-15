@@ -51,7 +51,16 @@ export default function ProfilePage() {
   return (
     <main className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.heading}>Profile Settings</h1>
+        <div className={styles.header}>
+          <button type="button" className={styles.backBtn} onClick={() => router.back()} aria-label="Go back">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+          <h1 className={styles.heading}>Profile Settings</h1>
+          <div className={styles.headerSpacer} />
+        </div>
 
         {/* Avatar */}
         <div className={styles.avatarSection}>
