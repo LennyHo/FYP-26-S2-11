@@ -92,14 +92,16 @@
 }
 
 .chatInputArea {
-  /* Prevents the input box from being crushed */
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  width: 100%;
   padding: 12px 16px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
   background: transparent;
   border-top: none;
-
-  /* CRITICAL FOR IPHONE: Adds extra padding for the bottom home bar */
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 10;
 }
 
 .chatHeader {
@@ -165,32 +167,6 @@
   transform: translate(var(--avy-eye-x, 0px), var(--avy-eye-y, 0px));
 }
 
-.avyLogoAnimated:hover .avyLogoSvgWrap {
-  /* animation: avyHoverFloat 1.15s ease-in-out infinite, avyHoverTilt 0.9s ease-in-out infinite; */
-}
-
-@keyframes avyHoverFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-1px);
-  }
-}
-
-@keyframes avyHoverTilt {
-  0%,
-  100% {
-    transform: rotate(0deg) scale(1);
-  }
-  40% {
-    transform: rotate(-2deg) scale(1.01);
-  }
-  70% {
-    transform: rotate(2deg) scale(1.015);
-  }
-}
 
 .backBtn,
 .restartBtn {
@@ -919,9 +895,6 @@
   color: #fff;
   border-color: transparent;
   text-align: left;
-}
-
-.drinkFlipCardBack {
   transform: rotateY(180deg);
   overflow-y: auto;
 }
@@ -1370,16 +1343,6 @@
   }
 }
 
-.chatInputArea {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: transparent;
-  z-index: 10;
-  padding-bottom: max(14px, env(safe-area-inset-bottom));
-}
-
 @media (max-width: 640px) {
   .chatInputArea {
     position: fixed;
@@ -1615,11 +1578,14 @@
 .sendBtn:disabled {
   background: #e0e0e0;
   color: #aaa;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .sendBtn:hover:not(:disabled) {
   background: linear-gradient(135deg, #A55EA3 0%, #AB1C6E 100%);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(171, 28, 110, 0.22);
 }
 
 @media (max-width: 640px) {
@@ -1673,7 +1639,7 @@
   }
 
   .chatInputArea {
-    padding-bottom: calc(12px + var(--safe-area-inset-bottom, 0px));
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
   }
 
   .sendBtn, .micBtn {
@@ -1771,11 +1737,6 @@
   box-shadow: 0 2px 6px rgba(2,8,23,0.04);
 }
 
-.sendBtn:hover:not(:disabled) {
-  transform: scale(1.05);
-  background: rgba(160, 116, 77, 0.08);
-  box-shadow: 0 4px 12px rgba(139, 90, 70, 0.16);
-}
 
 .micBtn {
   width: 44px;
@@ -1852,11 +1813,6 @@
   transform: scale(0.95);
 }
 
-.sendBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .micBtn:disabled,
 .speakBtn:disabled {
   opacity: 0.5;
@@ -1910,59 +1866,6 @@
   margin-bottom: 0 !important;
 }
 
-.chat-nav-btn {
-  display: block;
-  width: 100%;
-  margin-top: 6px !important;
-  padding: 10px 16px;
-  background-color: #2b7da3;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(43, 125, 163, 0.24);
-}
-
-.chat-nav-btn:hover {
-  background-color: #1a5279;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(43, 125, 163, 0.36);
-}
-
-.chat-nav-btn + .chat-nav-btn {
-  margin-top: 4px !important;
-}
-
-.chat-nav-btn-compact {
-  display: inline-block;
-  padding: 10px 20px;
-  margin-top: 8px;
-  background: #2b7da3;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(43, 125, 163, 0.24);
-}
-
-.chat-nav-btn-compact:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(43, 125, 163, 0.36);
-  background: #1a5279;
-}
-
-.chat-nav-btn-compact:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(43, 125, 163, 0.2);
-}
 
 .tightColumn {
   display: flex;
