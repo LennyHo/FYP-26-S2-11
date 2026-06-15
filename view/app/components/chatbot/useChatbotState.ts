@@ -32,14 +32,22 @@ export interface Message {
   }[];
   healthCard?: {
     currentSugar: number;
+    currentGrade: string;
     recommendedSugar: number;
     recommendedGrade: string;
+    recommendedSugarLevel: string;
   } | null;
   orderReceipt?: {
     drink: { name: string; price: number; image: string };
     customization: { size: string; ice: string; sugar: string; toppings: string[] };
     nutrition: { sugar: number; calories: number; grade: string } | null;
+    recommendedNutrition: { sugar: number; calories: number; grade: string } | null;
     cartItems: { name: string; quantity: number; lineTotal: number }[];
+    total: number;
+  } | null;
+  cartUpdate?: {
+    message: string;
+    cartItems: { name: string; quantity: number; customization: { size?: string; ice?: string; sugar?: string; toppings?: string[] }; lineTotal: number }[];
     total: number;
   } | null;
 }

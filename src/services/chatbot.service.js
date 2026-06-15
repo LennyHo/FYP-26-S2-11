@@ -162,6 +162,26 @@ function isRecommendationRequest(message) {
     );
 }
 
+// Detects when the user wants to learn more about specific drinks (not just order or browse).
+function isInfoRequest(message) {
+    const msg = String(message || "").toLowerCase();
+    return (
+        msg.includes("tell me about") ||
+        msg.includes("more about") ||
+        msg.includes("know more") ||
+        msg.includes("learn about") ||
+        msg.includes("i want to know") ||
+        msg.includes("i want to understand") ||
+        msg.includes("what is") ||
+        msg.includes("explain") ||
+        msg.includes("describe") ||
+        msg.includes("information about") ||
+        msg.includes("more information") ||
+        msg.includes("getting more") ||
+        msg.includes("tell me more")
+    );
+}
+
 function formatDrinkCards(drinks) {
     return drinks.map((drink) => {
         const nutrition = drink.nutritionInfo || {};
@@ -327,6 +347,13 @@ function resolveLastDrinkFromHistory(history) {
             const name = summaryMatch[1].trim();
             if (name) return name;
         }
+    }
+    // Fallback: scan customer messages for a drink name
+    for (let i = history.length - 1; i >= 0; i--) {
+        const msg = history[i];
+        if (msg.role !== "user") continue;
+        const name = resolveDrinkNameFromMessage(msg.content);
+        if (name) return name;
     }
     return null;
 }
@@ -684,6 +711,20 @@ function buildCartSummaryReply(cartItems, { updated = true } = {}) {
     );
 }
 // End of User Story #201
+
+function buildCartUpdatePayload(cartItems, message) {
+    const total = cartItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
+    return {
+        message,
+        cartItems: cartItems.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            customization: item.customization || {},
+            lineTotal: item.lineTotal,
+        })),
+        total,
+    };
+}
 
 function extractHiddenCartData(reply) {
     const match = String(reply || "").match(
@@ -1095,6 +1136,9 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 },
                 customization,
                 nutrition,
+                recommendedNutrition: (nutrition && (nutrition.grade === "C" || nutrition.grade === "D"))
+                    ? calculateNutrition(menuItem, "25% Sugar", customization.toppings || [])
+                    : null,
                 cartItems: allCartItems.map((i) => ({
                     name: i.name,
                     quantity: i.quantity,
@@ -1120,22 +1164,15 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
         if (!cartItems.length) {
             return {
-                reply:
-                    'Your cart is empty right now — want to find something good to add?<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>',
+                reply: "Your cart is empty.",
+                cartUpdate: buildCartUpdatePayload([], "Your cart is empty."),
                 system_action: { ui_navigation: "none" },
             };
         }
 
         return {
-            reply:
-                `Your current cart:<br><br>` +
-                `<p>           </p>` +
-                `${cartSummaryHtml}<br><br>` +
-                `<p>           </p>` +
-                `Total: S$ ${cartTotal.toFixed(2)}<br><br>` +
-                `<p>           </p>` +
-                `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>` +
-                `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>`,
+            reply: "Here's your current cart:",
+            cartUpdate: buildCartUpdatePayload(cartItems, "Here's your current cart:"),
             system_action: { ui_navigation: "none" },
         };
     }
@@ -1150,7 +1187,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
         }
         const allItems = await CartItem.getCart(userId);
         await Promise.all(allItems.map(item => CartItem.removeFromCart(item._id)));
-        const reply = buildCartSummaryReply([]);
+        const reply = "Your cart has been cleared.";
         await ChatbotSession.appendToConversation(activeConversationId, userId, {
             role: "user",
             content: safeMessage,
@@ -1161,7 +1198,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
         });
         return {
             reply,
-            showViewCart: true,
+            cartUpdate: buildCartUpdatePayload([], "Your cart has been cleared."),
             system_action: { ui_navigation: "none" },
         };
     }
@@ -1254,7 +1291,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
             cartItems = await CartItem.getCart(userId);
 
-            const reply = buildCartSummaryReply(cartItems);
+            const reply = "Done! Your cart has been updated.";
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -1268,7 +1305,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
             return {
                 reply,
-                showViewCart: true,
+                cartUpdate: buildCartUpdatePayload(cartItems, "Done! Your cart has been updated."),
                 system_action: { ui_navigation: "none" },
             };
         } else if (intent.action === "increase" || intent.action === "decrease") {
@@ -1285,7 +1322,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
             cartItems = await CartItem.getCart(userId);
 
-            const reply = buildCartSummaryReply(cartItems);
+            const reply = "Done! Your cart has been updated.";
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -1299,7 +1336,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
             return {
                 reply,
-                showViewCart: true,
+                cartUpdate: buildCartUpdatePayload(cartItems, "Done! Your cart has been updated."),
                 system_action: { ui_navigation: "none" },
             };
         } else if (Object.keys(intent.newCustomization).length === 0 && intent.action === "updateCustomization") {
@@ -1362,8 +1399,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
             cartItems = await CartItem.getCart(userId);
 
-            const reply = buildCartSummaryReply(cartItems)+
-            `<div class="hidden-last-cart-item" style="display:none;">${targetItem._id}</div>`;
+            const reply = `Done! Your cart has been updated.<div class="hidden-last-cart-item" style="display:none;">${targetItem._id}</div>`;
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -1377,7 +1413,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
             return {
                 reply,
-                showViewCart: true,
+                cartUpdate: buildCartUpdatePayload(cartItems, "Done! Your cart has been updated."),
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -1392,7 +1428,12 @@ async function handleChatMessage({ message, conversationId, userId }) {
     let nutritionBlock = "";
     let healthCardData = null;
 
-    if (orderDetails.sugar || orderDetails.toppings) {
+    // Suppress health card when user has responded to the sugar warning (either kept or changed it)
+    const isRemainAtSugar = /^remain at \d+%\s*sugar$/i.test(safeMessage.trim());
+    const isChangingSugar = /^change to \d+%\s*sugar$/i.test(safeMessage.trim());
+    const suppressHealthCard = isRemainAtSugar || isChangingSugar;
+
+    if (orderDetails.sugar) {
         const lastDrinkName = resolveLastDrinkFromHistory(history);
         let drink = null;
 
@@ -1411,17 +1452,22 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 orderDetails.toppings || []
             );
 
-            if (nutrition.grade === "C" || nutrition.grade === "D") {
-                const recommended = calculateNutrition(drink, "25%", orderDetails.toppings || []);
+            if (!suppressHealthCard && (nutrition.grade === "C" || nutrition.grade === "D")) {
+                const recommendedSugarLevel = "25%";
+                const recommended = calculateNutrition(drink, recommendedSugarLevel, orderDetails.toppings || []);
                 healthCardData = {
                     currentSugar: nutrition.sugar,
+                    currentGrade: nutrition.grade,
                     recommendedSugar: recommended.sugar,
                     recommendedGrade: recommended.grade,
+                    recommendedSugarLevel,
                 };
             }
 
-            // Pre-format nutrition block — backend controls the line breaks so AI doesn't duplicate them
-            nutritionBlock = `Updated Sugar: ${nutrition.sugar}g<br>Updated Calories: ${nutrition.calories} kcal<br>Updated Nutri-Grade: ${nutrition.grade}<br><p>           </p>`;
+            // Pre-format nutrition block — suppressed when user responded to the sugar warning
+            if (!suppressHealthCard) {
+                nutritionBlock = `Updated Sugar: ${nutrition.sugar}g<br>Updated Calories: ${nutrition.calories} kcal<br>Updated Nutri-Grade: ${nutrition.grade}<br><p>           </p>`;
+            }
 
             nutritionContext = `
     UPDATED HEALTH CONTEXT:
@@ -1534,30 +1580,28 @@ async function handleChatMessage({ message, conversationId, userId }) {
                     0
                 );
 
-                reply =
-                    `Excellent choice!<br><br>` +
-                    `<p>           </p>` +
-                    `Here is your order summary:<br><br>` +
-                    `<p>           </p>` +
-                    `${orderLines.join("<br><br>")}<br><br>` +
-                    `<p>           </p>` +
-                    `Total Price: S$ ${orderTotal.toFixed(2)}<br><br>` +
-                    `<p>           </p>` +
-                    `Added to your cart successfully.<br><br>` +
-                    `<p>           </p>` +
-                    `Your current cart:<br>` +
-                    `<p>           </p>` +
-                    `${cartSummaryHtml}<br><br>` +
-                    `<p>           </p>` +
-                    `Total: S$ ${cartTotal.toFixed(2)}<br><br>` +
-                    `<p>           </p>` +
-                    `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button><br><br>` +
-                    `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Proceed to Checkout</button>`;
+                reply = `${addedItems[0]?.name || "Your drink"} added to your cart.`;
             }
         }
     }
 
     reply = fixMissingLineBreaks(reply);
+
+    // When the user asks for information about drinks (not just ordering or browsing),
+    // detect which drinks the AI mentions and surface them as recommendation cards.
+    let drinkCardsForInfo = [];
+    if (addedItems.length === 0 && isInfoRequest(safeMessage)) {
+        try {
+            const allDrinks = await MenuItem.find({ status: "active" }).lean();
+            const replyLower = reply.toLowerCase();
+            const mentionedDrinks = allDrinks.filter(drink =>
+                replyLower.includes(drink.name.toLowerCase())
+            );
+            if (mentionedDrinks.length > 0) {
+                drinkCardsForInfo = formatDrinkCards(mentionedDrinks);
+            }
+        } catch (_) {}
+    }
 
     await ChatbotSession.appendToConversation(activeConversationId, userId, {
         role: "user",
@@ -1592,6 +1636,9 @@ async function handleChatMessage({ message, conversationId, userId }) {
                 toppings: Array.isArray(customization.toppings) ? customization.toppings : [],
             },
             nutrition,
+            recommendedNutrition: (nutrition && (nutrition.grade === "C" || nutrition.grade === "D"))
+                ? calculateNutrition(drink, "25% Sugar", Array.isArray(customization.toppings) ? customization.toppings : [])
+                : null,
             cartItems: allCartItems.map((i) => ({
                 name: i.name,
                 quantity: i.quantity,
@@ -1607,6 +1654,7 @@ async function handleChatMessage({ message, conversationId, userId }) {
         healthCard: healthCardData,
         ...(orderReceipt ? { orderReceipt } : {}),
         ...(addedItems.length > 0 ? { showViewCart: true } : {}),
+        ...(drinkCardsForInfo.length > 0 ? { recommendedDrinks: drinkCardsForInfo } : {}),
     };
 }
 

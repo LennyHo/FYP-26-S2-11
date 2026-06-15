@@ -184,10 +184,15 @@ ${drinkContext}
 
 ${extraContext}
 
-DRIPTEA TOPPINGS (prices):
-- Tapioca Pearls / Boba / Pearl: +S$1.20
-- Cheese Foam: +S$1.50
-- Aloe Vera: +S$1.00
+DRIPTEA TOPPINGS (prices and health impact):
+- Tapioca Pearls / Boba / Pearl: +S$1.20 | +8g sugar | +60 kcal
+- Cheese Foam: +S$1.50 | +10g sugar | +90 kcal
+- Aloe Vera: +S$1.00 | +4g sugar | +20 kcal
+- No toppings: healthiest option — no added sugar or calories
+
+TOPPING HEALTH ADVICE RULES:
+If the customer asks which topping is healthiest, say Aloe Vera has the least impact, and No toppings is always the best for health.
+Never give unsolicited health advice about toppings.
 
 DRIPTEA DRINKS AND THEIR KEY INGREDIENTS:
 - Classic Milk Tea: black tea, fresh milk, brown sugar syrup, optional pearls

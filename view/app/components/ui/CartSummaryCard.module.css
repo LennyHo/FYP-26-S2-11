@@ -1,0 +1,110 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.statusMsg {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.emptyMsg {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.itemBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.itemName {
+  font-size: 14px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.itemPrice {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.itemCustom {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 700;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 2px;
+}
+
+.totalAmount {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.btnRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btnPrimary,
+.btnSecondary {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btnPrimary {
+  background: #2b7da3;
+  color: white;
+}
+
+.btnSecondary {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.btnPrimary:hover {
+  background: #1a5279;
+  transform: translateY(-1px);
+}
+
+.btnSecondary:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}

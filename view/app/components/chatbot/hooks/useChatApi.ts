@@ -72,9 +72,11 @@ export function useChatApi({
       ? (payload.healthCard as Message['healthCard']) : null;
     const orderReceipt = payload.orderReceipt && typeof payload.orderReceipt === 'object'
       ? (payload.orderReceipt as Message['orderReceipt']) : null;
+    const cartUpdate = payload.cartUpdate && typeof payload.cartUpdate === 'object'
+      ? (payload.cartUpdate as Message['cartUpdate']) : null;
     const strippedReply = rawReply.replace(/<div[^>]*class="[^"]*hidden-cart-data[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
     const sanitizedReply = strippedReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
-    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, showViewCart: payload.showViewCart };
+    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, showViewCart: payload.showViewCart };
   }
 
   async function sendMessage(messageText: string, shouldSpeak: boolean = false) {
@@ -144,8 +146,8 @@ export function useChatApi({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: messageText, conversationId: convId, userId: getCurrentUserId() }),
       });
-      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, showViewCart } = parsePayload(await response.json());
-      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt };
+      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, showViewCart } = parsePayload(await response.json());
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt, cartUpdate };
       setMessages(prev => [...prev, botMsg]);
 
       if (shouldSpeak) {
@@ -198,6 +200,7 @@ export function useChatApi({
         recommendedDrinks: Array.isArray(payload.recommendedDrinks) ? (payload.recommendedDrinks as Message['recommendedDrinks']) : [],
         healthCard: payload.healthCard && typeof payload.healthCard === 'object' ? (payload.healthCard as Message['healthCard']) : null,
         orderReceipt: payload.orderReceipt && typeof payload.orderReceipt === 'object' ? (payload.orderReceipt as Message['orderReceipt']) : null,
+        cartUpdate: payload.cartUpdate && typeof payload.cartUpdate === 'object' ? (payload.cartUpdate as Message['cartUpdate']) : null,
       };
       setOverlayMessages(prev => [...prev, botMsg]);
       if (shouldSpeak) speakText(botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim());

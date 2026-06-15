@@ -24,6 +24,7 @@ import { QUICK_PROMPTS, convertDrinkNamesToLinks, extractOrderingOptions, getOrd
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from '../menu/DrinkRecCards';
 import OrderReceiptCard from '../ui/OrderReceiptCard';
+import CartSummaryCard from '../ui/CartSummaryCard';
 import DrinkCard from '../menu/DrinkCard';
 import { useChatbotState, type ChatbotSidebarProps } from './useChatbotState';
 
@@ -256,6 +257,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 <div className={styles.bubbleText}>
                   {!msg.isUser && msg.orderReceipt ? (
                     <OrderReceiptCard orderReceipt={msg.orderReceipt} />
+                  ) : !msg.isUser && msg.cartUpdate ? (
+                    <CartSummaryCard cartUpdate={msg.cartUpdate} />
                   ) : !msg.isUser && msg.text.includes("startOrder") ? (
                     <DrinkRecCards
                       msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
@@ -294,18 +297,36 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   {!msg.isUser && msg.healthCard && (
                     <div className={styles.healthCard}>
                       <div className={styles.healthCardTitle}>Reduce to less sugar!</div>
-                      <div className={styles.healthCardSugars}>
-                        <span className={styles.healthCardCurrentSugar}>{msg.healthCard.currentSugar}g</span>
-                        <span className={styles.healthCardArrow}>→</span>
-                        <span className={styles.healthCardRecommendedSugar}>{msg.healthCard.recommendedSugar}g</span>
+                      <div className={styles.healthCardLabelRow}>
+                        <span className={styles.healthCardLabel}>Current</span>
+                        <span />
+                        <span className={styles.healthCardLabel}>Reduce to {msg.healthCard.recommendedSugarLevel}</span>
                       </div>
-                      <Image
-                        src={`/grade_nutri_${msg.healthCard.recommendedGrade.toLowerCase()}.png`}
-                        alt={`Nutri-Grade ${msg.healthCard.recommendedGrade}`}
-                        width={80}
-                        height={80}
-                        className={styles.healthCardBadge}
-                      />
+                      <div className={styles.healthCardImagesRow}>
+                        <Image
+                          src={`/grade_nutri_${msg.healthCard.currentGrade.toLowerCase()}.png`}
+                          alt={`Nutri-Grade ${msg.healthCard.currentGrade}`}
+                          width={72}
+                          height={72}
+                        />
+                        <span className={styles.healthCardArrow}>
+                          <svg width="36" height="16" viewBox="0 0 36 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="0" y1="8" x2="28" y2="8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                            <polyline points="22,2 30,8 22,14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                          </svg>
+                        </span>
+                        <Image
+                          src={`/grade_nutri_${msg.healthCard.recommendedGrade.toLowerCase()}.png`}
+                          alt={`Nutri-Grade ${msg.healthCard.recommendedGrade}`}
+                          width={72}
+                          height={72}
+                        />
+                      </div>
+                      <div className={styles.healthCardSugarRow}>
+                        <span className={styles.healthCardCurrentSugar}>{msg.healthCard.currentSugar}g sugar</span>
+                        <span />
+                        <span className={styles.healthCardRecommendedSugar}>{msg.healthCard.recommendedSugar}g sugar</span>
+                      </div>
                     </div>
                   )}
 
@@ -562,6 +583,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   <div className={styles.bubbleText}>
                     {!msg.isUser && msg.orderReceipt ? (
                       <OrderReceiptCard orderReceipt={msg.orderReceipt} />
+                    ) : !msg.isUser && msg.cartUpdate ? (
+                      <CartSummaryCard cartUpdate={msg.cartUpdate} />
                     ) : !msg.isUser && msg.text.includes("startOrder") ? (
                       <DrinkRecCards
                         msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
@@ -602,7 +625,12 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                         <div className={styles.healthCardTitle}>Reduce to less sugar!</div>
                         <div className={styles.healthCardSugars}>
                           <span className={styles.healthCardCurrentSugar}>{msg.healthCard.currentSugar}g</span>
-                          <span className={styles.healthCardArrow}>→</span>
+                          <span className={styles.healthCardArrow}>
+                          <svg width="36" height="16" viewBox="0 0 36 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="0" y1="8" x2="28" y2="8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                            <polyline points="22,2 30,8 22,14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                          </svg>
+                        </span>
                           <span className={styles.healthCardRecommendedSugar}>{msg.healthCard.recommendedSugar}g</span>
                         </div>
                         <Image
