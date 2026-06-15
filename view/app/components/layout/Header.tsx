@@ -176,6 +176,7 @@ export default function Header() {
     clearStoredUser();
     localStorage.removeItem("dripTeaCartData");
     window.dispatchEvent(new Event('cartUpdated'));
+    window.dispatchEvent(new Event('authUpdated'));
     setCurrentUser(null);
     router.push('/login');
   };

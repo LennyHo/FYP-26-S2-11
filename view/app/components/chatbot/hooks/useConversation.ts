@@ -5,13 +5,21 @@ import { getStoredUser } from '../../../utils/dripteaApi';
 import { createConversationId } from '../../../utils/chatHelpers';
 import type { Message } from '../useChatbotState';
 
-export const STORAGE_KEY = 'driptea_chatbot_messages';
+const STORAGE_KEY_BASE = 'driptea_chatbot_messages';
 const CONVERSATION_ID_KEY = 'driptea_chatbot_conversation_id';
 
 export function getConversationKey(): string {
   const user = getStoredUser();
   return user?.id ? `${CONVERSATION_ID_KEY}_${user.id}` : CONVERSATION_ID_KEY;
 }
+
+function getMessagesKey(): string {
+  const user = getStoredUser();
+  return user?.id ? `${STORAGE_KEY_BASE}_${user.id}` : STORAGE_KEY_BASE;
+}
+
+// Keep the old export so other files that import STORAGE_KEY still compile
+export const STORAGE_KEY = STORAGE_KEY_BASE;
 
 const WELCOME_GREETINGS = [
   'Hello, how are you?',
@@ -45,8 +53,7 @@ export function useConversation() {
     setWelcomeGreeting(getRandomGreeting());
   }, []);
 
-  // Load conversation id and messages from localStorage on mount
-  useEffect(() => {
+  function loadConversationFromStorage() {
     const savedId = localStorage.getItem(getConversationKey());
     if (savedId) {
       setConversationId(savedId);
@@ -55,7 +62,7 @@ export function useConversation() {
       localStorage.setItem(getConversationKey(), newId);
       setConversationId(newId);
     }
-    const savedMessages = localStorage.getItem(STORAGE_KEY);
+    const savedMessages = localStorage.getItem(getMessagesKey());
     if (savedMessages) {
       try {
         setMessages(JSON.parse(savedMessages));
@@ -66,12 +73,26 @@ export function useConversation() {
       setMessages([{ id: Date.now().toString(), text: 'Hello! How can I help you today?', isUser: false }]);
     }
     setIsInitialized(true);
+  }
+
+  // Load conversation id and messages from localStorage on mount
+  useEffect(() => {
+    loadConversationFromStorage();
+  }, []);
+
+  // Reset conversation when the logged-in account changes (login / logout)
+  useEffect(() => {
+    const handleAuthUpdated = () => {
+      loadConversationFromStorage();
+    };
+    window.addEventListener('authUpdated', handleAuthUpdated);
+    return () => window.removeEventListener('authUpdated', handleAuthUpdated);
   }, []);
 
   // Persist messages whenever they change
   useEffect(() => {
     if (isInitialized) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      localStorage.setItem(getMessagesKey(), JSON.stringify(messages));
     }
   }, [messages, isInitialized]);
 
@@ -86,7 +107,7 @@ export function useConversation() {
     setWelcomeAnimationKey(k => k + 1);
     setConversationId(newId);
     setMessages([greetingMsg]);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([greetingMsg]));
+    localStorage.setItem(getMessagesKey(), JSON.stringify([greetingMsg]));
     localStorage.setItem(getConversationKey(), newId);
   }
 
