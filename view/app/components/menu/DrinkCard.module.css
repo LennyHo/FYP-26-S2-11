@@ -72,6 +72,7 @@
   overflow-y: auto;
   padding: 14px;
   gap: 10px;
+  text-align: left;
 }
 
 /* ── Image ── */

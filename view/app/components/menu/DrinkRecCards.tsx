@@ -108,10 +108,16 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
       const cleanedText = block
         .replace(/<img[^>]*>/gi, '')
         .replace(/<button[\s\S]*?<\/button>/gi, '')
+        .replace(/<p>(\s|&nbsp;)*<\/p>/gi, '')
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/\n/g, '<br>')
         .trim();
-      if (cleanedText) otherText.push(cleanedText);
+      const strippedText = cleanedText
+        .replace(/^(\s*<br\s*\/?>\s*)+/, '')
+        .replace(/(<br\s*\/?>\s*)+$/, '')
+        .trim();
+      const isOnlyBreaks = /^(\s*<br\s*\/?>\s*)*$/.test(strippedText);
+      if (strippedText && !isOnlyBreaks) otherText.push(strippedText);
     }
   });
 
@@ -120,7 +126,7 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
       {otherText.length > 0 && (
         <div
           className={styles.drinkRecOtherText}
-          dangerouslySetInnerHTML={{ __html: otherText.join('').trim() }}
+          dangerouslySetInnerHTML={{ __html: otherText.join('<br>').trim() }}
         />
       )}
       {drinks.length > 0 && (

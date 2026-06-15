@@ -918,6 +918,7 @@
   background: linear-gradient(140deg, #7b1457 0%, #9b52a0 100%);
   color: #fff;
   border-color: transparent;
+  text-align: left;
 }
 
 .drinkFlipCardBack {
@@ -2405,6 +2406,19 @@
   gap: 12px;
   margin-top: 12px;
   width: 100%;
+}
+
+/* Description line shown above each recommended drink card */
+.drinkDescLine {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.45;
+}
+
+.drinkDescLine strong {
+  color: #ffffff;
+  font-weight: 700;
 }
 
 /* Override the 260px cap from DrinkCard so cards fill the wider chatbot message bubble */

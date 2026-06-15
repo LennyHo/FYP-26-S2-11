@@ -333,30 +333,36 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                     </div>
                   )}
 
-                  {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && (
+                  {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && !msg.text.includes("startOrder") && (
                     <div className={styles.drinkCardList}>
                       {msg.recommendedDrinks.map((drink) => (
-                        <DrinkCard
-                          key={drink.id}
-                          id={drink.id}
-                          name={drink.name}
-                          price={`S$ ${Number(drink.price).toFixed(2)}`}
-                          image={drink.image ?? `/img/bubble_teas/${drink.id}.jpg`}
-                          categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
-                          nutriGrade={drink.nutri_grade ?? undefined}
-                          sugar={drink.base_sugar_g ?? undefined}
-                          calories={drink.base_calories ?? undefined}
-                          rating={drink.rating ?? menuById[drink.id]?.rating}
-                          drinkInfo={menuById[drink.id]?.drinkInfo}
-                          wrapClassName={styles.chatbotCard}
-                          accent={
-                            drink.category?.toLowerCase().includes("matcha")
-                              ? "green"
-                              : drink.category?.toLowerCase().includes("ice")
-                              ? "red"
-                              : "brown"
-                          }
-                        />
+                        <div key={drink.id}>
+                          {drink.description && (
+                            <p className={styles.drinkDescLine}>
+                              <strong>{drink.name}</strong> — {drink.description}
+                            </p>
+                          )}
+                          <DrinkCard
+                            id={drink.id}
+                            name={drink.name}
+                            price={`S$ ${Number(drink.price).toFixed(2)}`}
+                            image={drink.image ?? `/img/bubble_teas/${drink.id}.jpg`}
+                            categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
+                            nutriGrade={drink.nutri_grade ?? undefined}
+                            sugar={drink.base_sugar_g ?? undefined}
+                            calories={drink.base_calories ?? undefined}
+                            rating={drink.rating ?? menuById[drink.id]?.rating}
+                            drinkInfo={menuById[drink.id]?.drinkInfo}
+                            wrapClassName={styles.chatbotCard}
+                            accent={
+                              drink.category?.toLowerCase().includes("matcha")
+                                ? "green"
+                                : drink.category?.toLowerCase().includes("ice")
+                                ? "red"
+                                : "brown"
+                            }
+                          />
+                        </div>
                       ))}
                     </div>
                   )}
@@ -646,29 +652,35 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       </div>
                     )}
 
-                    {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && (
+                    {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && !msg.text.includes("startOrder") && (
                       <div className={styles.drinkCardList}>
                         {msg.recommendedDrinks.map((drink) => (
-                          <DrinkCard
-                            key={drink.id}
-                            id={drink.id}
-                            name={drink.name}
-                            price={`S$ ${Number(drink.price).toFixed(2)}`}
-                            image={drink.image ?? `/img/bubble_teas/${drink.id}.jpg`}
-                            categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
-                            nutriGrade={drink.nutri_grade ?? undefined}
-                            sugar={drink.base_sugar_g ?? undefined}
-                            calories={drink.base_calories ?? undefined}
-                            rating={drink.rating ?? menuById[drink.id]?.rating}
-                            drinkInfo={menuById[drink.id]?.drinkInfo}
-                            accent={
-                              drink.category?.toLowerCase().includes("matcha")
-                                ? "green"
-                                : drink.category?.toLowerCase().includes("ice")
-                                ? "red"
-                                : "brown"
-                            }
-                          />
+                          <div key={drink.id}>
+                            {drink.description && (
+                              <p className={styles.drinkDescLine}>
+                                <strong>{drink.name}</strong> — {drink.description}
+                              </p>
+                            )}
+                            <DrinkCard
+                              id={drink.id}
+                              name={drink.name}
+                              price={`S$ ${Number(drink.price).toFixed(2)}`}
+                              image={drink.image ?? `/img/bubble_teas/${drink.id}.jpg`}
+                              categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
+                              nutriGrade={drink.nutri_grade ?? undefined}
+                              sugar={drink.base_sugar_g ?? undefined}
+                              calories={drink.base_calories ?? undefined}
+                              rating={drink.rating ?? menuById[drink.id]?.rating}
+                              drinkInfo={menuById[drink.id]?.drinkInfo}
+                              accent={
+                                drink.category?.toLowerCase().includes("matcha")
+                                  ? "green"
+                                  : drink.category?.toLowerCase().includes("ice")
+                                  ? "red"
+                                  : "brown"
+                              }
+                            />
+                          </div>
                         ))}
                       </div>
                     )}

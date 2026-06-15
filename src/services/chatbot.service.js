@@ -154,17 +154,36 @@ function parseCustomizationFromMessage(message) {
 
 // #32 - As a customer, I want to get the recommendations from chatbot so that I can complete my order.
 // Detects recommendation intent keywords → queries menu_items → injects results into AI prompt.
+// All drink name associations — any of these words in a message signals a drink-related browse request
+const DRINK_ASSOCIATION_WORDS = [
+    "matcha", "taro", "chocolate", "choco", "cocoa",
+    "milo", "jasmine", "oolong", "osmanthus", "da hong bao",
+    "milk tea", "milktea", "frappe", "slush",
+    "strawberry", "cranberry", "latte",
+];
+
 function isRecommendationRequest(message) {
     const msg = String(message || "").toLowerCase();
 
     // Specific order with customization details → not a recommendation
     if (hasCustomizationWords(msg)) return false;
 
+    // "give me one X" / "give me 2 X" = quantity-based order, not a browse request
+    if (/\bgive me\s+(one|two|three|four|five|\d+)\b/i.test(msg)) return false;
+
     return (
         msg.includes("recommend") ||
         msg.includes("recommendation") ||
         msg.includes("suggest") ||
+        msg.includes("what should i") ||
         msg.includes("what should i drink") ||
+        msg.includes("what's good") ||
+        msg.includes("whats good") ||
+        msg.includes("help me choose") ||
+        msg.includes("help me pick") ||
+        msg.includes("not sure what") ||
+        msg.includes("first time") ||
+        msg.includes("surprise me") ||
         msg.includes("give me") ||
         msg.includes("show me") ||
         msg.includes("i'm in the mood") ||
@@ -175,7 +194,11 @@ function isRecommendationRequest(message) {
         msg.includes("any good") ||
         msg.includes("any drinks") ||
         msg.includes("any recommendations") ||
-        msg.includes("what do you have")
+        msg.includes("what do you have") ||
+        // Exploratory / flavour-first responses (e.g. "maybe a matcha", "something fruity", "how about taro")
+        /^(maybe|perhaps|how about|what about|something)\b/i.test(msg) ||
+        // Any message containing a known drink name / category word
+        DRINK_ASSOCIATION_WORDS.some((kw) => msg.includes(kw))
     );
 }
 
@@ -199,6 +222,21 @@ function isInfoRequest(message) {
     );
 }
 
+const DRINK_TAGLINES = {
+    b001: "Our signature black tea steeped in sweet, creamy milk",
+    b002: "Delicate jasmine-scented green tea with a floral finish",
+    b003: "Smooth oolong balanced with fresh milk and light sweetness",
+    b004: "Rich, earthy matcha blended with creamy fresh milk",
+    b005: "Vibrant strawberry purée layered with earthy matcha",
+    b006: "Tart cranberry meets smooth matcha for a bold contrast",
+    b007: "Floral jasmine-infused green tea with earthy matcha depth",
+    b008: "Fragrant osmanthus flower tea with a soft, milky finish",
+    b009: "Premium Wuyi rock oolong with rich mineral notes and creamy milk",
+    b010: "Indulgent cocoa and chocolate syrup blended over ice",
+    b011: "Classic Milo chocolate-malt with fresh milk over ice",
+    b012: "Creamy purple taro blended into a thick, icy slush",
+};
+
 function formatDrinkCards(drinks) {
     return drinks.map((drink) => {
         const nutrition = drink.nutritionInfo || {};
@@ -207,7 +245,7 @@ function formatDrinkCards(drinks) {
             name: drink.name,
             category: drink.category,
             price: drink.price,
-            description: drink.description,
+            description: drink.description || DRINK_TAGLINES[drink.itemId] || "",
             image: drink.image || `/img/bubble_teas/${drink.itemId}.png`,
             tags: drink.tags || [],
             nutri_grade: nutrition.nutriGrade || null,
@@ -1066,18 +1104,36 @@ async function handleChatMessage({ message, conversationId, userId }) {
 
         if (drinks.length > 0) {
             const msg = safeMessage.toLowerCase();
-            let reply;
-            if (msg.includes("choco") || msg.includes("chocolate")) {
-                reply = "Great pick — here are our chocolate drinks!";
+            let intro;
+            if (msg.includes("choco") || msg.includes("chocolate") || msg.includes("cocoa")) {
+                intro = "Great pick — here are our chocolate drinks!";
             } else if (msg.includes("matcha")) {
-                reply = "Love that choice! Here are our matcha drinks:";
-            } else if (msg.includes("fruit") || msg.includes("strawberry") || msg.includes("cranberry")) {
-                reply = "Something fruity — nice! Here's what we have:";
+                intro = "Love that choice! Here are our matcha options:";
+            } else if (msg.includes("strawberry") || msg.includes("cranberry")) {
+                intro = "Something fruity — nice! Here's what we have:";
             } else if (msg.includes("taro")) {
-                reply = "Taro fan! Here's what we've got for you:";
+                intro = "Taro fan! Here's what we've got for you:";
+            } else if (msg.includes("milo")) {
+                intro = "A local classic! Here's our Milo option:";
+            } else if (msg.includes("jasmine")) {
+                intro = "Lovely choice — here are our jasmine drinks:";
+            } else if (msg.includes("oolong")) {
+                intro = "Great taste — here are our oolong options:";
+            } else if (msg.includes("osmanthus")) {
+                intro = "A floral favourite — here's what we have:";
+            } else if (msg.includes("da hong bao")) {
+                intro = "A premium pick — here's our Da Hong Bao option:";
+            } else if (msg.includes("milk tea") || msg.includes("milktea")) {
+                intro = "Classic milk tea — here's our range:";
+            } else if (msg.includes("frappe") || msg.includes("slush")) {
+                intro = "Something icy and refreshing — here's what we've got:";
+            } else if (msg.includes("latte")) {
+                intro = "Here are our latte options:";
             } else {
-                reply = "Here are some drinks you might love:";
+                intro = "Here are some drinks you might love:";
             }
+
+            const reply = intro;
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -1112,6 +1168,32 @@ async function handleChatMessage({ message, conversationId, userId }) {
             return {
                 reply,
                 recommendedDrinks: [],
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        // Generic recommendation with no specific category matched (e.g. "What should I try today?")
+        // → return a curated cross-category selection so first-timers always see cards + descriptions
+        const allDrinks = await MenuItem.find({ status: "active" }).lean();
+        if (allDrinks.length > 0) {
+            const featured = allDrinks
+                .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                .slice(0, 5);
+            const reply = "Great question — here's a little something from across our menu to get you started:";
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "user",
+                content: safeMessage,
+            });
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "assistant",
+                content: reply,
+            });
+
+            return {
+                reply,
+                recommendedDrinks: formatDrinkCards(featured),
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -1727,10 +1809,14 @@ async function handleChatMessage({ message, conversationId, userId }) {
     let drinkCardsForInfo = [];
     if (addedItems.length === 0 && isInfoRequest(safeMessage)) {
         try {
-            const allDrinks = await MenuItem.find({ status: "active" }).lean();
             const replyLower = reply.toLowerCase();
-            const mentionedDrinks = allDrinks.filter(drink =>
-                replyLower.includes(drink.name.toLowerCase())
+            // Cross-reference: a drink must BOTH appear in Gemini's reply AND match the
+            // user's own query keywords. This prevents drinks casually mentioned in history
+            // (or referenced in passing) from inflating the card list on each follow-up.
+            const queryMatches = await MenuItem.recommendByMessage(safeMessage);
+            const queryIds = new Set(queryMatches.map(d => d.itemId));
+            const mentionedDrinks = queryMatches.filter(drink =>
+                replyLower.includes(drink.name.toLowerCase()) && queryIds.has(drink.itemId)
             );
             if (mentionedDrinks.length > 0) {
                 drinkCardsForInfo = formatDrinkCards(mentionedDrinks);
