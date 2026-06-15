@@ -223,7 +223,7 @@ export default function Checkout() {
         let count = 8;
         setCountdown(count);
         let running = true;
-        let activeTimer: ReturnType<typeof setInterval>;
+        let activeTimer: number;
 
         const startPhase2 = () => {
             setPhase(2);
