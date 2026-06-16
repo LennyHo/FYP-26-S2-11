@@ -11,6 +11,7 @@ const { buildSystemPrompt } = require("./prompt.service");
 const CartItem = require("../models/cartItem.model");
 const MenuItem = require("../models/menuItem.model");
 const Payment = require("../models/payment.model");
+const Order = require("../models/order.model");
 
 async function findDrinkByName(message) {
     const msg = String(message || "").toLowerCase();
@@ -171,6 +172,23 @@ function isRecommendationRequest(message) {
     // "give me one X" / "give me 2 X" = quantity-based order, not a browse request
     if (/\bgive me\s+(one|two|three|four|five|\d+)\b/i.test(msg)) return false;
 
+    // "one matcha latte" / "two taro slush" / "1 milo" = direct order with quantity
+    if (/^(one|two|three|four|five|six|\d+)\s+\w/i.test(msg.trim())) return false;
+
+    // "i want X" / "can i have X" / "i'd like X" / "give me X" = direct order intent (with or without article)
+    if (/\b(i want|can i have|i'd like|i'll have|i'll take|give me|can i get|can i order|i would like)\s+(?:a\s+|an\s+)?\w/i.test(msg)) return false;
+
+    // "add [drink]" / "can add [drink]" / "want to add [drink]" / "can i add [drink]" = add-to-cart intent
+    if (/\badd\s+(?!one\s+more\b|another\b)/i.test(msg)) return false;
+
+    // "the second strawberry" / "the first matcha" / "third one" = cart item disambiguation reply
+    if (/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\b/i.test(msg)) return false;
+
+    // "add one more X" / "add another X" / "increase X" = cart quantity edit, not a recommendation
+    if (msg.includes("add one more") || msg.includes("add another")) return false;
+    if (msg.includes("increase") || msg.includes("decrease") || msg.includes("reduce")) return false;
+    if (msg.includes("remove") || msg.includes("delete")) return false;
+
     return (
         msg.includes("recommend") ||
         msg.includes("recommendation") ||
@@ -259,7 +277,7 @@ function formatDrinkCards(drinks) {
 
 // #198 - As a customer, I want to browse my purchase history through the chatbot so that I can review my previous orders conveniently.
 // Detects history-related keywords → calls Payment.getPurchaseHistory() → joins orders and order_items.
-function isPurchaseHistoryRequest(message) {
+function isPurchaseHistory(message) {
     const msg = String(message || "").toLowerCase();
 
     return (
@@ -279,6 +297,36 @@ function isPurchaseHistoryRequest(message) {
         /order.*on\s+[a-z]+/i.test(msg)
     );
 }
+
+// #203 - As a customer, I want to track my order status through the chatbot.
+// Detects current-order tracking intent (distinct from #198 purchase history which shows past orders).
+function isTrackOrderRequest(message) {
+    const msg = String(message || "").toLowerCase();
+    return (
+        msg.includes("track my order") ||
+        msg.includes("where is my order") ||
+        msg.includes("order status") ||
+        msg.includes("status of my order") ||
+        msg.includes("is my order ready") ||
+        msg.includes("has my order") ||
+        msg.includes("when will my order") ||
+        /\border\b.*\bready\b/i.test(msg) ||
+        /\border\b.*\bstatus\b/i.test(msg)
+    );
+}
+
+// #203 - Queries Order collection for the most recent active order (pending/preparing/ready),
+// falling back to the most recent completed order when no active one exists.
+async function getOrderStatus(userId) {
+    const activeOrder = await Order.findOne(
+        { userId, status: { $in: ["pending", "preparing", "ready"] } },
+        null,
+        { sort: { createdAt: -1 } }
+    ).lean();
+    if (activeOrder) return activeOrder;
+    return Order.findOne({ userId }, null, { sort: { createdAt: -1 } }).lean();
+}
+// End of User Story #203
 
 // Parses a date reference like "14 June", "June 14", "14th of July" from a message.
 // Returns { day, month } (month is 0-indexed) or null if no date found.
@@ -464,6 +512,27 @@ function resolveLastDrinkFromHistory(history) {
     return null;
 }
 
+function resolveLastSugarFromHistory(history) {
+    if (!Array.isArray(history)) return null;
+    const patterns = [
+        { re: /\b0%\s*sugar\b/i, val: "0% Sugar" },
+        { re: /\b25%\s*sugar\b/i, val: "25% Sugar" },
+        { re: /\b50%\s*sugar\b/i, val: "50% Sugar" },
+        { re: /\b75%\s*sugar\b/i, val: "75% Sugar" },
+        { re: /\b100%\s*sugar\b/i, val: "100% Sugar" },
+        { re: /\bno\s*sugar\b/i, val: "0% Sugar" },
+        { re: /\bhalf\s*sweet\b|\bhalf\s*sugar\b/i, val: "50% Sugar" },
+        { re: /\bfull\s*sweet\b|\bfull\s*sugar\b/i, val: "100% Sugar" },
+    ];
+    for (let i = history.length - 1; i >= 0; i--) {
+        const text = String(history[i].content || "").toLowerCase();
+        for (const { re, val } of patterns) {
+            if (re.test(text)) return val;
+        }
+    }
+    return null;
+}
+
 async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
     const addedItems = [];
 
@@ -589,8 +658,16 @@ function isClearCartRequest(message) {
 function isCartUpdateRequest(message) {
     const msg = String(message || "").toLowerCase();
 
-    // These are ordering-flow sugar adjustment responses — let AI handle them
+    // Ordering-flow step responses — no drink name, no ordinal = Gemini ordering option, not a cart edit
     if (/^(change to \d+%\s*sugar|remain at \d+%\s*sugar)$/i.test(msg.trim())) return false;
+    // "Change to Aloe Vera" / "Switch to Tapioca Pearls" at topping step
+    if (
+        /^(change to|switch to)\s+\w/i.test(msg.trim()) &&
+        !resolveDrinkNameFromMessage(msg) &&
+        !/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|1st|2nd|3rd|4th|5th)\b/i.test(msg)
+    ) return false;
+    // "add one more X but with [different customization]" = new item, not a quantity bump
+    if ((msg.includes("add one more") || msg.includes("add another")) && hasCustomizationWords(msg)) return false;
 
     const hasEditVerb = (
         msg.includes("remove") ||
@@ -624,10 +701,12 @@ function isCartUpdateRequest(message) {
         resolveDrinkNameFromMessage(msg) !== null
     );
 
-    // "second drink" / "the first item" — ordinal targeting without a verb still means cart intent
+    // "second drink" / "the first item" / "the first one" / "the first strawberry" — ordinal targeting
+    // without a verb still means cart intent. Also catches any drink keyword so "the first strawberry"
+    // / "the first strawberry matcha tea" routes back here, not Gemini.
     const hasOrdinalItemRef =
         /\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\b/i.test(msg) &&
-        (msg.includes("drink") || msg.includes("item"));
+        (msg.includes("drink") || msg.includes("item") || /\bone\b/i.test(msg) || hasDrinkOrCartRef);
 
     return (hasEditVerb && hasDrinkOrCartRef) || hasOrdinalItemRef;
 }
@@ -1239,13 +1318,21 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         }
 
         // Generic recommendation with no specific category matched (e.g. "What should I try today?")
-        // → return a curated cross-category selection so first-timers always see cards + descriptions
+        // → inject top-rated drinks as context and let Gemini generate a natural reply + return drink cards.
         const allDrinks = await MenuItem.find({ status: "active" }).lean();
         if (allDrinks.length > 0) {
             const featured = allDrinks
                 .sort((a, b) => (b.rating || 0) - (a.rating || 0))
                 .slice(0, 5);
-            const reply = "Great question — here's a little something from across our menu to get you started:";
+
+            const drinkContext = featured.map((d) =>
+                `- ${d.name} (${d.category}, S$${Number(d.price).toFixed(2)})` +
+                (DRINK_TAGLINES[d.itemId] ? `: ${DRINK_TAGLINES[d.itemId]}` : "")
+            ).join("\n");
+
+            const contextPrompt = `The customer asked: "${safeMessage}"\n\nTop-rated drinks available:\n${drinkContext}\n\nRecommend 2-3 of these drinks naturally in 1-2 sentences. Do not list prices or item IDs.`;
+            const systemPrompt = await buildSystemPrompt(safeMessage, "");
+            const reply = await aiClient.generateText(contextPrompt, history, systemPrompt);
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -1265,8 +1352,36 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         }
     }
 
+    // User Story #203: Track current order status via chatbot
+    if (isTrackOrderRequest(safeMessage)) {
+        if (!userId) {
+            return {
+                reply: "Please log in to track your order status.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const order = await getOrderStatus(userId);
+
+        const orderContext = order
+            ? `Customer's most recent order:\nOrder No: ${order.orderNo}\nStatus: ${order.status}\nTotal: S$${Number(order.totalAmount || 0).toFixed(2)}`
+            : "The customer has no recent orders on record.";
+
+        const systemPrompt = await buildSystemPrompt(safeMessage, orderContext);
+        const reply = await aiClient.generateText(safeMessage, history, systemPrompt);
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        return {
+            reply,
+            system_action: { ui_navigation: "none" },
+        };
+    }
+    // End of User Story #203
+
     // User Story #198: View Purchase History
-    if (isPurchaseHistoryRequest(safeMessage)) {
+    if (isPurchaseHistory(safeMessage)) {
         if (!userId) {
             return {
                 reply: "You'll need to be logged in to see your purchase history. Log in and I'll pull it up for you!",
@@ -1500,6 +1615,32 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         }
 
         const intent = getCartUpdateIntent(safeMessage);
+
+        // Disambiguation follow-up: "the first one" / "the first strawberry" / "the second strawberry matcha tea"
+        // after the bot asked "Could you be more specific?" — the reply carries no action, so we
+        // restore action + drink name from the PREVIOUS user message in conversation history.
+        // Guard: only fire when no explicit edit verb is present (i.e. "change the first matcha to 50%"
+        // should NOT be treated as a disambiguation reply).
+        const ordinalForDisambig = extractOrdinalIndex(safeMessage);
+        const hasExplicitEditVerb = /\b(remove|delete|increase|decrease|add one more|add another|plus one|minus one|change|switch|update|edit|modify)\b/i.test(safeMessage);
+        if (intent.action === "updateCustomization" && !hasExplicitEditVerb && ordinalForDisambig >= 0) {
+            const lastUserMsg = [...history].reverse().find(m => m.role === "user");
+            if (lastUserMsg) {
+                const lastContent = String(lastUserMsg.content || "");
+                const lastIntent = getCartUpdateIntent(lastContent);
+                // Restore action (increase / decrease / remove) from previous message
+                if (lastIntent.action !== "updateCustomization") {
+                    intent.action = lastIntent.action;
+                    intent.quantityDelta = lastIntent.quantityDelta;
+                }
+                // Restore drink name if not already resolved from current message
+                if (!intent.targetName) {
+                    const lastDrink = resolveDrinkNameFromMessage(lastContent);
+                    if (lastDrink) intent.targetName = lastDrink;
+                }
+            }
+        }
+
         let cartItems = await CartItem.getCart(userId);
 
         let targetItem = null;
@@ -1527,9 +1668,19 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             const ordinalIndex = extractOrdinalIndex(safeMessage);
 
             if (ordinalIndex >= 0) {
-                if (intent.targetName) {
-                    // #201 - "the first milo" → ordinal within name-matched items only,
-                    // not the full cart (e.g. "first" = index 0 among Milo items, not cart item 0)
+                // Determine whether the user is referencing the full-cart position ("the third drink" /
+                // "the third item") or a position within the matched drink group ("the second strawberry matcha"
+                // / "the first one"). Generic words like "drink"/"item"/"order" without a specific drink name
+                // imply the user is counting across the whole cart; pronoun "one" or a specific drink name
+                // imply counting within the same-name group.
+                const drinkNameInMsg = resolveDrinkNameFromMessage(safeMessage);
+                const isFullCartRef =
+                    !drinkNameInMsg &&
+                    /\b(drink|item|order)\b/i.test(safeMessage) &&
+                    !/\bone\b/i.test(safeMessage);
+
+                if (intent.targetName && !isFullCartRef) {
+                    // "the second strawberry matcha" / "the first one" → ordinal within same-name items
                     const namedItems = cartItems.filter(
                         item => String(item.name || "").toLowerCase() === intent.targetName.toLowerCase()
                     );
@@ -1540,9 +1691,13 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                         // e.g. "second cranberry matcha" where both were stored as one doc with quantity:2.
                         // The split logic below will separate just the targeted unit.
                         targetItem = namedItems[0];
+                    } else if (ordinalIndex < cartItems.length) {
+                        // Named-items ordinal out of bounds (e.g. "the third one" but only 2 SMTs) —
+                        // fall back to full-cart position so the user isn't stuck in a loop.
+                        targetItem = cartItems[ordinalIndex];
                     }
                 } else if (ordinalIndex < cartItems.length) {
-                    // "the third drink" → ordinal across the full cart
+                    // "the third drink" / "the third item" → ordinal across the full cart
                     targetItem = cartItems[ordinalIndex];
                 }
             }
@@ -1557,18 +1712,33 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                         // No name or ordinal — default to most recently added item (last in oldest-first list)
                         targetItem = matches[matches.length - 1];
                     } else {
+                        // Store the user message so the follow-up ordinal reply ("the first one" /
+                        // "the first strawberry matcha") can reconstruct the original intent from history.
+                        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
                         return {
                             reply: "I found more than one matching item in your cart. Could you be more specific, like 'the second strawberry matcha'?",
                             system_action: { ui_navigation: "none" },
                         };
                     }
                 }
-                // matches.length === 0 → targetItem stays null → fall through to AI below
+                // matches.length === 0 → targetItem stays null → display fallback response below
             }
         }
 
         if (!targetItem) {
-            // No matching cart item (likely mid-ordering flow) — let AI handle it
+            // "add one more / add another" with no matching cart item = user wants to add a NEW item,
+            // not edit an existing one — fall through to Gemini ordering flow.
+            if (intent.action === "increase") {
+                // intentional fall-through to Gemini below
+            } else {
+                const reply = "I couldn't find that item in your cart. Could you let me know which drink you'd like to update?";
+                await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+                await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+                return {
+                    reply,
+                    system_action: { ui_navigation: "none" },
+                };
+            }
         } else if (intent.action === "remove") {
             await CartItem.removeFromCart(targetItem._id);
 
@@ -1717,15 +1887,14 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     const suppressHealthCard = isRemainAtSugar || isChangingSugar;
 
     if (orderDetails.sugar) {
-        const lastDrinkName = resolveLastDrinkFromHistory(history);
-        let drink = null;
-
-        if (lastDrinkName) {
-            drink = await findDrinkByName(lastDrinkName);
-        }
-
+        // Current message takes priority — e.g. "add matcha latte with 50% sugar" should show Matcha Latte,
+        // not the last drink from history (Taro Slush etc.)
+        let drink = await findDrinkByName(safeMessage);
         if (!drink) {
-            drink = await findDrinkByName(safeMessage);
+            const lastDrinkName = resolveLastDrinkFromHistory(history);
+            if (lastDrinkName) {
+                drink = await findDrinkByName(lastDrinkName);
+            }
         }
 
         if (drink) {
@@ -1735,10 +1904,14 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 orderDetails.toppings || []
             );
 
-            if (!suppressHealthCard && (nutrition.grade === "C" || nutrition.grade === "D")) {
+            // Use "25% Sugar" as the sugarMap key (not "25%") so the calculation adds 10g correctly
+            const recommended = calculateNutrition(drink, "25% Sugar", orderDetails.toppings || []);
+            const isHighSugarSelected = orderDetails.sugar === "50% Sugar" || orderDetails.sugar === "100% Sugar";
+            // Suppress when reducing to 25% gives the same or higher sugar (e.g. user is already at 25%)
+            if (!suppressHealthCard && (nutrition.grade === "C" || nutrition.grade === "D" || isHighSugarSelected) && recommended.sugar < nutrition.sugar) {
                 const recommendedSugarLevel = "25%";
-                const recommended = calculateNutrition(drink, recommendedSugarLevel, orderDetails.toppings || []);
                 healthCardData = {
+                    drinkName: drink.name,
                     currentSugar: nutrition.sugar,
                     currentGrade: nutrition.grade,
                     recommendedSugar: recommended.sugar,
@@ -1753,20 +1926,47 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             }
 
             nutritionContext = `
-    UPDATED HEALTH CONTEXT:
+    UPDATED HEALTH CONTEXT (authoritative — do NOT recalculate):
     Drink: ${drink.name}
     Selected Sugar Level: ${orderDetails.sugar || "Not detected"}
+    Sugar: ${nutrition.sugar}g | Calories: ${nutrition.calories} kcal | Nutri-Grade: ${nutrition.grade}
     Selected Toppings: ${
                 Array.isArray(orderDetails.toppings) && orderDetails.toppings.length > 0
                     ? orderDetails.toppings.join(", ")
                     : "No toppings"
             }
 
-    The nutrition summary is already displayed above your reply.
-    Do NOT repeat or restate "Updated Sugar:", "Updated Calories:", or "Updated Nutri-Grade:" in your response.
-    Change line and give a brief, gentle health suggestion in 1–2 sentences only.
-    Do NOT force the customer to change.
+    CRITICAL: The values above are computed by the backend. Do NOT estimate, recalculate, or guess your own Nutri-Grade or sugar values — use exactly what is shown above.
+    The nutrition summary is already displayed above your reply. Do NOT repeat or restate "Updated Sugar:", "Updated Calories:", or "Updated Nutri-Grade:" in your response.
+    ${(nutrition.grade === "A" || nutrition.grade === "B")
+        ? "The Nutri-Grade is already healthy (Grade " + nutrition.grade + "). Do NOT suggest reducing sugar or mention health concerns — just move to the next ordering step."
+        : "Give a brief, gentle health suggestion in 1–2 sentences only. Do NOT force the customer to change."
+    }
     `;
+        }
+    }
+
+    // Show health card when user selects a topping — sugar level resolved from conversation history
+    if (!orderDetails.sugar && orderDetails.toppings && orderDetails.toppings.length > 0 && !suppressHealthCard) {
+        const lastSugar = resolveLastSugarFromHistory(history);
+        const lastDrinkName = resolveLastDrinkFromHistory(history);
+        if (lastSugar && lastDrinkName) {
+            const drink = await findDrinkByName(lastDrinkName);
+            if (drink) {
+                const nutrition = calculateNutrition(drink, lastSugar, orderDetails.toppings);
+                const recommended = calculateNutrition(drink, "25% Sugar", orderDetails.toppings);
+                const isHighSugarSelected = lastSugar === "50% Sugar" || lastSugar === "100% Sugar";
+                if ((nutrition.grade === "C" || nutrition.grade === "D" || isHighSugarSelected) && recommended.sugar < nutrition.sugar) {
+                    healthCardData = {
+                        drinkName: drink.name,
+                        currentSugar: nutrition.sugar,
+                        currentGrade: nutrition.grade,
+                        recommendedSugar: recommended.sugar,
+                        recommendedGrade: recommended.grade,
+                        recommendedSugarLevel: "25%",
+                    };
+                }
+            }
         }
     }
 
@@ -1794,6 +1994,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     reply = fixMissingLineBreaks(reply);
 
     if (nutritionBlock) {
+        // Extract the authoritative grade so we can correct any wrong grade Gemini calculated independently
+        const authorGradeMatch = nutritionBlock.match(/Updated Nutri-?Grade:\s*([A-D])/i);
+        const authorGrade = authorGradeMatch ? authorGradeMatch[1].toUpperCase() : null;
+
         // Strip any nutrition lines the AI still outputs — backend provides them via nutritionBlock
         reply = reply
             .replace(/Updated\s+Sugar\s*:[^<\n]*/gi, '')
@@ -1801,7 +2005,18 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             .replace(/Updated\s+Nutri-?Grade\s*:\s*[A-D][^<\n]*/gi, '')
             .replace(/^(<br\s*\/?>\s*)+/gi, '')
             .trim();
+
+        // Correct any inline Nutri-Grade letters Gemini calculated with its own (potentially wrong) math
+        if (authorGrade) {
+            reply = reply.replace(/\bNutri-?Grade\s+[A-D]\b/gi, `Nutri-Grade ${authorGrade}`);
+        }
+
         reply = nutritionBlock + reply;
+    }
+
+    // Remove AI-generated grade badge images that duplicate the health card widget
+    if (healthCardData) {
+        reply = reply.replace(/<img[^>]*grade_nutri[^>]*\/?>/gi, '');
     }
 
     const hiddenCartItems = extractHiddenCartData(reply);
