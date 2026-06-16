@@ -166,6 +166,8 @@ export function useChatApi({
         /removed from your cart/i.test(botMsg.text) ||
         /your cart is now empty/i.test(botMsg.text) ||
         /updated.*cart/i.test(botMsg.text) ||
+        /cart.*updated/i.test(botMsg.text) ||
+        botMsg.cartUpdate ||
         showViewCart
       ) {
         window.dispatchEvent(new Event('cartUpdated'));

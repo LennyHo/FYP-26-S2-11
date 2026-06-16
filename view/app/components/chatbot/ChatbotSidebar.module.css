@@ -2343,7 +2343,14 @@
   font-weight: 700;
   font-size: 15px;
   color: #fff;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
+}
+
+.healthCardDrinkName {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 10px;
 }
 
 .healthCardSugars {

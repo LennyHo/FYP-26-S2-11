@@ -299,7 +299,10 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
 
                   {!msg.isUser && msg.healthCard && (
                     <div className={styles.healthCard}>
-                      <div className={styles.healthCardTitle}>Reduce to less sugar!</div>
+                      <div className={styles.healthCardTitle}>Want to reduce your sugar intake?</div>
+                      {msg.healthCard.drinkName && (
+                        <div className={styles.healthCardDrinkName}>For your {msg.healthCard.drinkName}</div>
+                      )}
                       <div className={styles.healthCardLabelRow}>
                         <span className={styles.healthCardLabel}>Current</span>
                         <span />

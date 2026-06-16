@@ -32,6 +32,7 @@ export interface Message {
     rating?: number;
   }[];
   healthCard?: {
+    drinkName?: string;
     currentSugar: number;
     currentGrade: string;
     recommendedSugar: number;

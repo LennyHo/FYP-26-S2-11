@@ -2,7 +2,7 @@ export const QUICK_PROMPTS = [
   'What should I try today?',
   'Show me low sugar options',
   'Which drink has the least calories?',
-  'Recommend a healthier drink',
+  'Recommend some healthier drinks',
 ];
 
 export function createConversationId(): string {
