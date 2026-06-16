@@ -176,7 +176,7 @@ function isRecommendationRequest(message) {
     if (/^(one|two|three|four|five|six|\d+)\s+\w/i.test(msg.trim())) return false;
 
     // "i want X" / "can i have X" / "i'd like X" / "give me X" = direct order intent (with or without article)
-    if (/\b(i want|can i have|i'd like|i'll have|i'll take|give me|can i get|can i order|i would like)\s+(?:a\s+|an\s+)?\w/i.test(msg)) return false;
+    if (/\b(i want|i like to have|i would like|i'd like|i'll have|i'll take|can i have|can i get|can i order|give me)\s+(?:a\s+|an\s+)?\w/i.test(msg)) return false;
 
     // "add [drink]" / "can add [drink]" / "want to add [drink]" / "can i add [drink]" = add-to-cart intent
     if (/\badd\s+(?!one\s+more\b|another\b)/i.test(msg)) return false;
@@ -214,9 +214,7 @@ function isRecommendationRequest(message) {
         msg.includes("any recommendations") ||
         msg.includes("what do you have") ||
         // Exploratory / flavour-first responses (e.g. "maybe a matcha", "something fruity", "how about taro")
-        /^(maybe|perhaps|how about|what about|something)\b/i.test(msg) ||
-        // Any message containing a known drink name / category word
-        DRINK_ASSOCIATION_WORDS.some((kw) => msg.includes(kw))
+        /^(maybe|perhaps|how about|what about|something)\b/i.test(msg) 
     );
 }
 
@@ -1873,8 +1871,20 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     }
     // End of User Story #201
 
+    // If the message is just a drink name (no other intent detected), treat it as an order.
+    // Re-frame the message for Gemini so it starts Phase 2 immediately instead of guessing intent.
+    const drinkNameMatch = await findDrinkByName(safeMessage);
+    const msgNormalized = safeMessage.toLowerCase().trim();
+    const isDrinkNameOnly =
+        drinkNameMatch &&
+        msgNormalized === String(drinkNameMatch.name || "").toLowerCase().trim();
+
+    const effectiveMessage = isDrinkNameOnly
+        ? `I want to order a ${drinkNameMatch.name}`
+        : safeMessage;
+
     // Default AI response
-    const orderDetails = parseOrderDetails(safeMessage);
+    const orderDetails = parseOrderDetails(effectiveMessage);
 
     // User Story #29: Show health advice
     let nutritionContext = "";
@@ -1983,10 +1993,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         } catch (_) {}
     }
 
-    const systemPrompt = await buildSystemPrompt(safeMessage, nutritionContext + cartContext);
+    const systemPrompt = await buildSystemPrompt(effectiveMessage, nutritionContext + cartContext);
 
     let reply = await aiClient.generateText(
-        safeMessage,
+        effectiveMessage,
         history,
         systemPrompt
     );
