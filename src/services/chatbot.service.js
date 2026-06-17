@@ -291,8 +291,19 @@ function isPurchaseHistory(message) {
         msg.includes("previous order") ||
         msg.includes("other order") ||
         /what.*my.*order/i.test(msg) ||
+        /what.*i.*order/i.test(msg) ||
+        /did.*i.*order/i.test(msg) ||
+        /what.*i.*buy/i.test(msg) ||
+        /what.*i.*bought/i.test(msg) ||
         /order.*on.*\d/i.test(msg) ||
-        /order.*on\s+[a-z]+/i.test(msg)
+        /order.*on\s+[a-z]+/i.test(msg) ||
+        /order.*in\s+[a-z]+/i.test(msg) ||
+        /order.*from\s+[a-z0-9]/i.test(msg) ||
+        /bought.*on/i.test(msg) ||
+        /bought.*in/i.test(msg) ||
+        /purchased.*on/i.test(msg) ||
+        /show.*order/i.test(msg) ||
+        /yesterday|last week|last month|this month/i.test(msg) && /order|buy|bought|purchase/i.test(msg)
     );
 }
 
@@ -330,6 +341,7 @@ async function getOrderStatus(userId) {
 // Returns { day, month } (month is 0-indexed) or null if no date found.
 function extractDateFromMessage(message) {
     const msg = String(message || "").toLowerCase();
+    const now = new Date();
 
     const monthNames = {
         jan: 0, january: 0,
@@ -346,23 +358,80 @@ function extractDateFromMessage(message) {
         dec: 11, december: 11,
     };
 
-    // "14 june", "14th june", "14th of june"
-    const dayFirst = msg.match(/(\d{1,2})(?:st|nd|rd|th)?(?:\s+of)?\s+([a-z]+)/);
-    if (dayFirst) {
-        const day = parseInt(dayFirst[1]);
-        const monthStr = dayFirst[2];
-        if (monthNames[monthStr] !== undefined && day >= 1 && day <= 31) {
-            return { day, month: monthNames[monthStr] };
+    // Relative: "yesterday"
+    if (msg.includes("yesterday")) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 1);
+        return { day: d.getDate(), month: d.getMonth(), year: d.getFullYear() };
+    }
+
+    // Relative: "last week" → return the week range (use startOf/endOf)
+    if (msg.includes("last week")) {
+        const startOfLastWeek = new Date(now);
+        startOfLastWeek.setDate(now.getDate() - now.getDay() - 7);
+        startOfLastWeek.setHours(0, 0, 0, 0);
+        const endOfLastWeek = new Date(startOfLastWeek);
+        endOfLastWeek.setDate(startOfLastWeek.getDate() + 6);
+        endOfLastWeek.setHours(23, 59, 59, 999);
+        return { rangeStart: startOfLastWeek, rangeEnd: endOfLastWeek, label: "last week" };
+    }
+
+    // Relative: "this month" / "last month"
+    if (msg.includes("this month")) {
+        return { monthOnly: true, month: now.getMonth(), year: now.getFullYear(), label: "this month" };
+    }
+    if (msg.includes("last month")) {
+        const m = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        const y = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        return { monthOnly: true, month: m, year: y, label: "last month" };
+    }
+
+    // Numeric: "15/6", "15/06", "6/15" (day/month or month/day — try both, prefer day <= 12 for month)
+    const numeric = msg.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
+    if (numeric) {
+        let a = parseInt(numeric[1]);
+        let b = parseInt(numeric[2]);
+        const year = numeric[3] ? (numeric[3].length === 2 ? 2000 + parseInt(numeric[3]) : parseInt(numeric[3])) : null;
+        // Treat as day/month (common in SG)
+        if (a >= 1 && a <= 31 && b >= 1 && b <= 12) {
+            return { day: a, month: b - 1, ...(year ? { year } : {}) };
+        }
+        // Fallback: month/day
+        if (b >= 1 && b <= 31 && a >= 1 && a <= 12) {
+            return { day: b, month: a - 1, ...(year ? { year } : {}) };
         }
     }
 
-    // "june 14", "june 14th"
-    const monthFirst = msg.match(/([a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?/);
+    // "14 june", "14th june", "14th of june"
+    const dayFirst = msg.match(/(\d{1,2})(?:st|nd|rd|th)?(?:\s+of)?\s+([a-z]+)(?:\s+(\d{4}))?/);
+    if (dayFirst) {
+        const day = parseInt(dayFirst[1]);
+        const monthStr = dayFirst[2];
+        const year = dayFirst[3] ? parseInt(dayFirst[3]) : null;
+        if (monthNames[monthStr] !== undefined && day >= 1 && day <= 31) {
+            return { day, month: monthNames[monthStr], ...(year ? { year } : {}) };
+        }
+    }
+
+    // "june 14", "june 14th", "june 2024"
+    const monthFirst = msg.match(/\b([a-z]+)\s+(\d{1,4})(?:st|nd|rd|th)?\b/);
     if (monthFirst) {
         const monthStr = monthFirst[1];
-        const day = parseInt(monthFirst[2]);
-        if (monthNames[monthStr] !== undefined && day >= 1 && day <= 31) {
-            return { day, month: monthNames[monthStr] };
+        const num = parseInt(monthFirst[2]);
+        if (monthNames[monthStr] !== undefined) {
+            if (num >= 1 && num <= 31) {
+                return { day: num, month: monthNames[monthStr] };
+            }
+            if (num >= 2000 && num <= 2099) {
+                return { monthOnly: true, month: monthNames[monthStr], year: num, label: `${monthStr} ${num}` };
+            }
+        }
+    }
+
+    // Month name only: "in june", "from june", "june orders"
+    for (const [name, idx] of Object.entries(monthNames)) {
+        if (msg.includes(name)) {
+            return { monthOnly: true, month: idx, label: name };
         }
     }
 
@@ -1398,43 +1467,77 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         // Check if the customer is asking about a specific date
         const dateQuery = extractDateFromMessage(safeMessage);
-        let targetOrder = null;
         let reply = "";
-
         let matchedOrders = [];
         let title = "";
 
         if (dateQuery) {
-            const { day, month } = dateQuery;
             const currentYear = new Date().getFullYear();
-            const monthLabel = new Date(2000, month, 1).toLocaleString("default", { month: "long" });
 
-            // Try current year first, then previous year
-            for (const year of [currentYear, currentYear - 1]) {
+            if (dateQuery.rangeStart && dateQuery.rangeEnd) {
+                // Week range
                 matchedOrders = allOrders.filter((order) => {
                     const d = new Date(order.createdAt || order.orderDate);
-                    return (
-                        d.getDate() === day &&
-                        d.getMonth() === month &&
-                        d.getFullYear() === year
-                    );
+                    return d >= dateQuery.rangeStart && d <= dateQuery.rangeEnd;
                 });
-                if (matchedOrders.length) break;
+                const label = dateQuery.label || "that period";
+                title = `Your Orders — ${label}`;
+                reply = matchedOrders.length
+                    ? `Here are your orders from ${label}.`
+                    : `I couldn't find any orders from ${label}.`;
+
+            } else if (dateQuery.monthOnly) {
+                // Month (+ optional year) filter
+                const targetYear = dateQuery.year || null;
+                matchedOrders = allOrders.filter((order) => {
+                    const d = new Date(order.createdAt || order.orderDate);
+                    const monthMatch = d.getMonth() === dateQuery.month;
+                    return targetYear ? monthMatch && d.getFullYear() === targetYear : monthMatch;
+                });
+                const monthLabel = new Date(2000, dateQuery.month, 1).toLocaleString("default", { month: "long" });
+                const periodLabel = targetYear ? `${monthLabel} ${targetYear}` : (dateQuery.label || monthLabel);
+                title = `Your Orders — ${periodLabel}`;
+                reply = matchedOrders.length
+                    ? `Here are your orders from ${periodLabel}.`
+                    : `I couldn't find any orders from ${periodLabel} in your history.`;
+
+            } else {
+                // Specific day
+                const { day, month } = dateQuery;
+                const monthLabel = new Date(2000, month, 1).toLocaleString("default", { month: "long" });
+
+                if (dateQuery.year) {
+                    matchedOrders = allOrders.filter((order) => {
+                        const d = new Date(order.createdAt || order.orderDate);
+                        return d.getDate() === day && d.getMonth() === month && d.getFullYear() === dateQuery.year;
+                    });
+                } else {
+                    // Try current year first, then previous year
+                    for (const year of [currentYear, currentYear - 1]) {
+                        matchedOrders = allOrders.filter((order) => {
+                            const d = new Date(order.createdAt || order.orderDate);
+                            return d.getDate() === day && d.getMonth() === month && d.getFullYear() === year;
+                        });
+                        if (matchedOrders.length) break;
+                    }
+                }
+
+                title = matchedOrders.length > 1
+                    ? `Your Orders on ${day} ${monthLabel}`
+                    : `Your Order on ${day} ${monthLabel}`;
+                reply = matchedOrders.length
+                    ? (matchedOrders.length > 1
+                        ? `I found ${matchedOrders.length} orders on ${day} ${monthLabel}.`
+                        : `Here's your order from ${day} ${monthLabel}.`)
+                    : `I couldn't find any orders from ${day} ${monthLabel} in your history.`;
             }
 
             if (!matchedOrders.length) {
-                reply = `I couldn't find any orders from ${day} ${monthLabel} in your history. You can check your full purchase history for more details.`;
                 await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
                 await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
                 return { reply, system_action: { ui_navigation: "none" } };
             }
 
-            title = matchedOrders.length > 1
-                ? `Your Orders on ${day} ${monthLabel}`
-                : `Your Order on ${day} ${monthLabel}`;
-            reply = matchedOrders.length > 1
-                ? `I found ${matchedOrders.length} orders on ${day} ${monthLabel}.`
-                : `Here's your order from ${day} ${monthLabel}.`;
         } else {
             // No date — return most recent order
             matchedOrders = [allOrders[0]];
