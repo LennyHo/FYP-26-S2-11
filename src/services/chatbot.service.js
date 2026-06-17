@@ -307,36 +307,6 @@ function isPurchaseHistory(message) {
     );
 }
 
-// #203 - As a customer, I want to track my order status through the chatbot.
-// Detects current-order tracking intent (distinct from #198 purchase history which shows past orders).
-function isTrackOrderRequest(message) {
-    const msg = String(message || "").toLowerCase();
-    return (
-        msg.includes("track my order") ||
-        msg.includes("where is my order") ||
-        msg.includes("order status") ||
-        msg.includes("status of my order") ||
-        msg.includes("is my order ready") ||
-        msg.includes("has my order") ||
-        msg.includes("when will my order") ||
-        /\border\b.*\bready\b/i.test(msg) ||
-        /\border\b.*\bstatus\b/i.test(msg)
-    );
-}
-
-// #203 - Queries Order collection for the most recent active order (pending/preparing/ready),
-// falling back to the most recent completed order when no active one exists.
-async function getOrderStatus(userId) {
-    const activeOrder = await Order.findOne(
-        { userId, status: { $in: ["pending", "preparing", "ready"] } },
-        null,
-        { sort: { createdAt: -1 } }
-    ).lean();
-    if (activeOrder) return activeOrder;
-    return Order.findOne({ userId }, null, { sort: { createdAt: -1 } }).lean();
-}
-// End of User Story #203
-
 // Parses a date reference like "14 June", "June 14", "14th of July" from a message.
 // Returns { day, month } (month is 0-indexed) or null if no date found.
 function extractDateFromMessage(message) {
@@ -437,7 +407,124 @@ function extractDateFromMessage(message) {
 
     return null;
 }
-// End of User Story #198
+
+function isReorderPurchaseHistoryRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    const hasReorderIntent =
+        msg.includes("reorder") ||
+        msg.includes("order again") ||
+        msg.includes("buy again") ||
+        msg.includes("add previous order") ||
+        msg.includes("add past order") ||
+        msg.includes("add my order") ||
+        msg.includes("add purchased items") ||
+        msg.includes("add what i bought") ||
+        msg.includes("add items from purchase history") ||
+        msg.includes("add items from order history");
+
+    const hasHistoryRef =
+        msg.includes("purchase history") ||
+        msg.includes("order history") ||
+        msg.includes("previous order") ||
+        msg.includes("past order") ||
+        msg.includes("purchased") ||
+        msg.includes("bought") ||
+        msg.includes("order");
+
+    const hasCartRef =
+        msg.includes("cart") ||
+        msg.includes("basket");
+
+    return hasReorderIntent || (hasHistoryRef && hasCartRef && msg.includes("add"));
+}
+
+function findOrdersByDateQuery(allOrders, dateQuery) {
+    if (!dateQuery) {
+        return [allOrders[0]].filter(Boolean);
+    }
+
+    const currentYear = new Date().getFullYear();
+
+    if (dateQuery.rangeStart && dateQuery.rangeEnd) {
+        return allOrders.filter((order) => {
+            const d = new Date(order.createdAt || order.orderDate);
+            return d >= dateQuery.rangeStart && d <= dateQuery.rangeEnd;
+        });
+    }
+
+    if (dateQuery.monthOnly) {
+        const targetYear = dateQuery.year || null;
+
+        return allOrders.filter((order) => {
+            const d = new Date(order.createdAt || order.orderDate);
+            const monthMatch = d.getMonth() === dateQuery.month;
+            return targetYear
+                ? monthMatch && d.getFullYear() === targetYear
+                : monthMatch;
+        });
+    }
+
+    if (dateQuery.day != null && dateQuery.month != null) {
+        if (dateQuery.year) {
+            return allOrders.filter((order) => {
+                const d = new Date(order.createdAt || order.orderDate);
+                return (
+                    d.getDate() === dateQuery.day &&
+                    d.getMonth() === dateQuery.month &&
+                    d.getFullYear() === dateQuery.year
+                );
+            });
+        }
+
+        for (const year of [currentYear, currentYear - 1]) {
+            const matched = allOrders.filter((order) => {
+                const d = new Date(order.createdAt || order.orderDate);
+                return (
+                    d.getDate() === dateQuery.day &&
+                    d.getMonth() === dateQuery.month &&
+                    d.getFullYear() === year
+                );
+            });
+
+            if (matched.length > 0) return matched;
+        }
+    }
+
+    return [];
+}
+// End of #198
+
+// #203 - As a customer, I want to track my order status through the chatbot.
+// Detects current-order tracking intent (distinct from #198 purchase history which shows past orders).
+function isTrackOrderRequest(message) {
+    const msg = String(message || "").toLowerCase();
+    return (
+        msg.includes("track my order") ||
+        msg.includes("where is my order") ||
+        msg.includes("order status") ||
+        msg.includes("status of my order") ||
+        msg.includes("is my order ready") ||
+        msg.includes("has my order") ||
+        msg.includes("when will my order") ||
+        /\border\b.*\bready\b/i.test(msg) ||
+        /\border\b.*\bstatus\b/i.test(msg)
+    );
+}
+
+// #203 - Queries Order collection for the most recent active order (pending/preparing/ready),
+// falling back to the most recent completed order when no active one exists.
+async function getOrderStatus(userId) {
+    const activeOrder = await Order.findOne(
+        { userId, status: { $in: ["pending", "preparing", "ready"] } },
+        null,
+        { sort: { createdAt: -1 } }
+    ).lean();
+    if (activeOrder) return activeOrder;
+    return Order.findOne({ userId }, null, { sort: { createdAt: -1 } }).lean();
+}
+// End of User Story #203
+
 
 // #199 - As a customer, I want to add beverages into my cart through the chatbot so that I can prepare my order conveniently.
 // Detects order/add-to-cart intent → resolves drink by name → calls CartItem.addToCart() → writes to cart_items.
@@ -1448,6 +1535,113 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // End of User Story #203
 
     // User Story #198: View Purchase History
+    if (isReorderPurchaseHistoryRequest(safeMessage)) {
+        if (!userId) {
+            return {
+                reply: "You'll need to log in before I can reorder your previous items.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const allOrders = await Payment.getPurchaseHistory(userId);
+
+        if (!allOrders.length) {
+            return {
+                reply: "You don't have any purchase history yet, so I can't reorder anything right now.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const dateQuery = extractDateFromMessage(safeMessage);
+        const matchedOrders = findOrdersByDateQuery(allOrders, dateQuery);
+
+        if (!matchedOrders.length) {
+            return {
+                reply: "I couldn't find any matching order in your purchase history.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const addedItems = [];
+        const skippedItems = [];
+
+        for (const order of matchedOrders) {
+            for (const item of order.items || []) {
+                const drink = await findDrinkByName(item.name);
+
+                if (!drink) {
+                    skippedItems.push(item.name);
+                    continue;
+                }
+
+                const customization = item.customization || {};
+                const quantity = Number(item.quantity || 1);
+
+                const cartItem = await CartItem.addToCart(userId, drink.itemId, {
+                    quantity,
+                    customization,
+                });
+
+                addedItems.push(cartItem);
+            }
+        }
+
+        const cartItems = await CartItem.getCart(userId);
+
+        if (!addedItems.length) {
+            return {
+                reply: "I found your previous order, but I couldn't match the drinks to the current menu.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const addedSummary = addedItems
+            .map((item, index) => {
+                const c = item.customization || {};
+                const toppings =
+                    Array.isArray(c.toppings) && c.toppings.length > 0
+                        ? c.toppings.map((t) => String(t).replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
+                        : "No toppings";
+
+                const details = [
+                    c.size || "Regular",
+                    c.ice || "Normal Ice",
+                    c.sugar || "Normal Sweet",
+                    toppings,
+                ].join(" · ");
+
+                return `${index + 1}. <strong>${item.name}</strong> × ${item.quantity}<br>${details}<br>S$ ${Number(item.lineTotal || 0).toFixed(2)}`;
+            })
+            .join("<br><br>");
+
+        let reply =
+            `Done! I've added your previous order items to your cart.<br><br>` +
+            addedSummary;
+
+        if (skippedItems.length > 0) {
+            reply +=
+                `<br><br>I skipped these because they are no longer found in the current menu:<br>` +
+                skippedItems.join(", ");
+        }
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "user",
+            content: safeMessage,
+        });
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "assistant",
+            content: reply,
+        });
+
+        return {
+            reply,
+            cartUpdate: buildCartUpdatePayload(cartItems, "Done! I've added your previous order items to your cart."),
+            showViewCart: true,
+            system_action: { ui_navigation: "none" },
+        };
+    }
+
     if (isPurchaseHistory(safeMessage)) {
         if (!userId) {
             return {
