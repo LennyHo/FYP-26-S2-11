@@ -13,6 +13,7 @@ const MenuItem = require("../models/menuItem.model");
 const Payment = require("../models/payment.model");
 const Order = require("../models/order.model");
 
+// Common functions for most features
 async function findDrinkByName(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -24,6 +25,7 @@ async function findDrinkByName(message) {
     msg.includes(String(drink.name || "").toLowerCase())
     );
 }
+
 // #25 - As a customer, I want to chat with the AI chatbot so that I can get help with ordering and menu questions.
 // Reads chatbot_sessions by conversationId to retrieve prior messages for context.
 async function getConversationHistory(conversationId) {
@@ -85,6 +87,7 @@ function calculateNutrition(drink, sugarLevel, toppings = []) {
 // End of User Story #29
 
 // #31 - As a customer, I want the chatbot to show me the nutritional grading of each beverage so that I can choose the suitable option.
+// Detect queries that customers are asking about nutri grade.
 function isNutriGradeQuestion(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -152,6 +155,7 @@ function parseCustomizationFromMessage(message) {
 
     return { size, ice, sugar, toppings };
 }
+// End of health advice QNA
 
 // #32 - As a customer, I want to get the recommendations from chatbot so that I can complete my order.
 // Detects recommendation intent keywords → queries menu_items → injects results into AI prompt.
@@ -307,6 +311,7 @@ function isPurchaseHistory(message) {
     );
 }
 
+// Get purchase history of certain date
 // Parses a date reference like "14 June", "June 14", "14th of July" from a message.
 // Returns { day, month } (month is 0-indexed) or null if no date found.
 function extractDateFromMessage(message) {
@@ -977,6 +982,7 @@ function findTargetCartItem(cartItems, intent) {
     return matches;
 }
 
+// Update cart item price after editing
 function calculateCartUnitPrice(basePrice, customization = {}) {
     let price = Number(basePrice || 0);
 
@@ -1158,8 +1164,6 @@ function parseOrderDetails(message) {
 
     return { size, ice, sugar, toppings };
 }
-
-
 
 function cleanAiReply(reply) {
     return String(reply || "")
@@ -1762,6 +1766,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             system_action: { ui_navigation: "none" },
         };
     }
+    // End of #198
 
     // User Story #199: Add to Cart Intent
     if (isAddToCartRequest(safeMessage)) {
@@ -1843,6 +1848,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         } // end else (has customization)
     }
+    // End of #199
 
     // User Story #200: View Cart Intent
     if (isViewCartRequest(safeMessage)) {
