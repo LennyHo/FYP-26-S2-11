@@ -892,7 +892,7 @@ function getCartUpdateIntent(message) {
     intent.targetName = resolveDrinkNameFromMessage(msg);
 
     // Split on "change to / update to / make it", or fall back to last " to " in the sentence
-    const parts = msg.split(/\bchange to\b|\bupdate to\b|\bmake it\b/);
+    const parts = msg.split(/\bchange to\b|\bupdate to\b|\bmake it\b|\binto\b|\bto\b/);
     let targetText = parts[0] || msg;
     let changeText = parts[1] || "";
 
@@ -936,7 +936,7 @@ function getCartUpdateIntent(message) {
 
     if (changeText.includes("no toppings") || changeText.includes("no topping")) {
         intent.newCustomization.toppings = [];
-    } else if (changeText.includes("pearl")) {
+    } else if (changeText.includes("pearl") || changeText.includes("pearls")) {
         intent.newCustomization.toppings = ["Tapioca Pearls"];
     } else if (changeText.includes("aloe")) {
         intent.newCustomization.toppings = ["Aloe Vera"];
