@@ -120,8 +120,27 @@ const ORDER_CUSTOMIZATION_WORDS = [
     "regular", "large", "small",
     "no ice", "less ice", "normal ice", "more ice", "extra ice",
     "0%", "25%", "50%", "70%", "100%", "no sugar", "less sweet", "full sweet",
+    "zero percent", "twenty five percent", "twenty-five percent", "fifty percent", "hundred percent",
     "aloe", "pearl", "boba", "cheese foam", "tapioca", "no topping",
 ];
+
+// Parses sugar level from natural language — handles both numeric (50%) and spoken (fifty percent) forms.
+// Uses \b word boundaries so "0%" never falsely matches inside "50%" or "100%".
+function parseSugarLevel(text) {
+    const m = String(text || "").toLowerCase();
+    // Word forms first (spoken input like "fifty percent sugar")
+    if (/\b(a\s+)?hundred\s+percent\b|\bone\s+hundred\s+percent\b|\bfull\s*(sweet|sugar)\b/.test(m)) return "100% Sugar";
+    if (/\bfifty\s+percent\b|\bhalf\s+(sweet|sugar|percent)\b/.test(m)) return "50% Sugar";
+    if (/\btwenty[- ]?five\s+percent\b|\bless\s+sweet\b/.test(m)) return "25% Sugar";
+    if (/\bzero\s+percent\b|\bno\s+sugar\b|\bunsweetened\b/.test(m)) return "0% Sugar";
+    // Numeric % — \b prevents "50%" from matching the "0%" branch
+    if (/\b100\s*%/.test(m)) return "100% Sugar";
+    if (/\b70\s*%/.test(m)) return "70% Sugar";
+    if (/\b50\s*%/.test(m)) return "50% Sugar";
+    if (/\b25\s*%/.test(m)) return "25% Sugar";
+    if (/\b0\s*%/.test(m)) return "0% Sugar";
+    return null;
+}
 
 function hasCustomizationWords(msg) {
     return ORDER_CUSTOMIZATION_WORDS.some((w) => msg.includes(w));
@@ -139,12 +158,7 @@ function parseCustomizationFromMessage(message) {
     else if (msg.includes("less ice")) ice = "Less Ice";
     else if (msg.includes("more ice") || msg.includes("extra ice")) ice = "More Ice";
 
-    let sugar = "Normal Sweet";
-    if (msg.includes("0%") || msg.includes("no sugar") || msg.includes("unsweetened")) sugar = "0% Sugar";
-    else if (msg.includes("25%") || msg.includes("less sweet")) sugar = "25% Sugar";
-    else if (msg.includes("50%") || msg.includes("half sweet")) sugar = "50% Sugar";
-    else if (msg.includes("70%")) sugar = "70% Sugar";
-    else if (msg.includes("100%") || msg.includes("full sweet")) sugar = "100% Sugar";
+    const sugar = parseSugarLevel(msg) || "Normal Sweet";
 
     const toppings = [];
     if (!msg.includes("no topping")) {
@@ -673,21 +687,9 @@ function resolveLastDrinkFromHistory(history) {
 
 function resolveLastSugarFromHistory(history) {
     if (!Array.isArray(history)) return null;
-    const patterns = [
-        { re: /\b0%\s*sugar\b/i, val: "0% Sugar" },
-        { re: /\b25%\s*sugar\b/i, val: "25% Sugar" },
-        { re: /\b50%\s*sugar\b/i, val: "50% Sugar" },
-        { re: /\b75%\s*sugar\b/i, val: "75% Sugar" },
-        { re: /\b100%\s*sugar\b/i, val: "100% Sugar" },
-        { re: /\bno\s*sugar\b/i, val: "0% Sugar" },
-        { re: /\bhalf\s*sweet\b|\bhalf\s*sugar\b/i, val: "50% Sugar" },
-        { re: /\bfull\s*sweet\b|\bfull\s*sugar\b/i, val: "100% Sugar" },
-    ];
     for (let i = history.length - 1; i >= 0; i--) {
-        const text = String(history[i].content || "").toLowerCase();
-        for (const { re, val } of patterns) {
-            if (re.test(text)) return val;
-        }
+        const val = parseSugarLevel(history[i].content);
+        if (val) return val;
     }
     return null;
 }
@@ -911,33 +913,11 @@ function getCartUpdateIntent(message) {
     if (!changeText) changeText = msg;
 
     // Match sugar values against what parseCustomizationFromMessage stores
-    if (targetText.includes("100%") || targetText.includes("full sweet")) {
-        intent.targetCustomization.sugar = "100% Sugar";
-    } else if (targetText.includes("70%")) {
-        intent.targetCustomization.sugar = "70% Sugar";
-    } else if (targetText.includes("50%") || targetText.includes("half sweet")) {
-        intent.targetCustomization.sugar = "50% Sugar";
-    } else if (targetText.includes("25%") || targetText.includes("less sweet")) {
-        intent.targetCustomization.sugar = "25% Sugar";
-    } else if (targetText.includes("0%") || targetText.includes("no sugar") || targetText.includes("no additional sugar") || targetText.includes("unsweetened")) {
-        intent.targetCustomization.sugar = "0% Sugar";
-    } else if (targetText.includes("normal sweet")) {
-        intent.targetCustomization.sugar = "Normal Sweet";
-    }
+    const targetSugar = parseSugarLevel(targetText) || (/normal sweet/.test(targetText) ? "Normal Sweet" : null);
+    if (targetSugar) intent.targetCustomization.sugar = targetSugar;
 
-    if (changeText.includes("100%") || changeText.includes("full sweet")) {
-        intent.newCustomization.sugar = "100% Sugar";
-    } else if (changeText.includes("70%")) {
-        intent.newCustomization.sugar = "70% Sugar";
-    } else if (changeText.includes("50%") || changeText.includes("half sweet")) {
-        intent.newCustomization.sugar = "50% Sugar";
-    } else if (changeText.includes("25%") || changeText.includes("less sweet")) {
-        intent.newCustomization.sugar = "25% Sugar";
-    } else if (changeText.includes("0%") || changeText.includes("no sugar") || changeText.includes("unsweetened")) {
-        intent.newCustomization.sugar = "0% Sugar";
-    } else if (changeText.includes("normal sweet")) {
-        intent.newCustomization.sugar = "Normal Sweet";
-    }
+    const changeSugar = parseSugarLevel(changeText) || (/normal sweet/.test(changeText) ? "Normal Sweet" : null);
+    if (changeSugar) intent.newCustomization.sugar = changeSugar;
 
     if (changeText.includes("no toppings") || changeText.includes("no topping")) {
         intent.newCustomization.toppings = [];
@@ -1146,11 +1126,7 @@ function parseOrderDetails(message) {
     else if (/hot|warm/.test(msg)) ice = "Hot";
     else if (/normal ice|regular ice/.test(msg)) ice = "Normal Ice";
 
-    let sugar = null;
-    if (/normal sugar|full sugar|100\s*%/.test(msg)) sugar = "100% Sugar";
-    else if (/half sugar|medium sugar|50\s*%/.test(msg)) sugar = "50% Sugar";
-    else if (/less sugar|low sugar|少糖|25\s*%/.test(msg)) sugar = "25% Sugar";
-    else if (/no sugar|zero sugar|(?<!\d)0\s*%|unsweetened/.test(msg)) sugar = "0% Sugar";
+    let sugar = parseSugarLevel(msg);
 
     let toppings = null;
     if (/no topping|no toppings|none|without topping/.test(msg)) toppings = [];

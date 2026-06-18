@@ -148,7 +148,7 @@ export default function LoginPage() {
       if (payload.user.role === 'user_admin') {
         router.push('/user-admin-dashboard');
       } else if (payload.user.role === 'store_staff') {
-        router.push('/store-staff-dashboard');
+        router.push('/store-staff');
       } else {
         router.push('/');
       }
