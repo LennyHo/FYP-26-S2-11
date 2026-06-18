@@ -184,6 +184,16 @@ const DRINK_ASSOCIATION_WORDS = [
 function isRecommendationRequest(message) {
     const msg = String(message || "").toLowerCase();
 
+    // Explicit recommendation keywords always win, even if order-intent phrases are present
+    // e.g. "I would like to have matcha today, any recommendations?"
+    if (
+        msg.includes("any recommendations") ||
+        msg.includes("any recommendation") ||
+        msg.includes("what do you recommend") ||
+        msg.includes("any suggestions") ||
+        msg.includes("what would you suggest")
+    ) return true;
+
     // Specific order with customization details → not a recommendation
     if (hasCustomizationWords(msg)) return false;
 
