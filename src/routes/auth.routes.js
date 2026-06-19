@@ -1,3 +1,20 @@
+// User Story Architecture Trace — auth.routes.js
+//
+// #11  Login (User Admin)
+//      View: login/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
+//
+// #14  Reset Password
+//      View: forgot-password/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
+//
+// #22  Login (Customer)
+//      View: login/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
+//
+// #37  Login (Store Staff)
+//      View: login/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
+//
+// #191 Create User Account (Customer)
+//      View: register/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
+
 const express = require("express");
 const authController = require("../controllers/auth.controller");
 
@@ -8,14 +25,11 @@ router.get("/auth/test", (req, res) => {
   res.json({ ok: true });
 });
 
-// #191 - As a customer, I want to create a user account so that I can access the platform.
-// #11  - As a user admin, I want to log in my user account so I can log in to my account.
-// #22  - As a customer, I want to log in to my user account so that I can place an order.
-// #37  - As a store staff, I want to log in so that I can start my session.
+// #191 Register | #11/#22/#37 Login
 router.post("/auth/register", authController.register);
 router.post("/auth/login", authController.login);
 
-// #14 - As a customer, I want to reset my password so that I can regain access to my account.
+// #14 Reset Password
 router.post("/auth/reset-password", authController.resetPassword);
 router.patch("/auth/change-password", authController.changePassword);
 

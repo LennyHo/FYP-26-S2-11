@@ -1,7 +1,10 @@
-// #19 - As a customer, I want to view my purchase history so that I can track my past orders.
-// #198 - As a customer, I want to ask the AI chatbot to show my purchase history so that I can track my spending.
-// Frontend: Loads PurchaseHistory component → calls GET /api/purchase-history?userId=<id>
-// → purchaseHistory.controller.js → Payment.getPurchaseHistory() → reads payments + orders + order_items collections.
+// User Story Architecture Trace — purchase-history/page.tsx
+//
+// #19  View Purchase History
+//      View: purchase-history/page.tsx (this file) → Route: purchaseHistory.routes.js → Ctrl: purchaseHistory.controller.js → Model: payment.model.js
+//
+// #198 Purchase History via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: payment.model.js
 import PurchaseHistory from "../components/pages/PurchaseHistory";
 
 export default function Page() {

@@ -1,8 +1,24 @@
-const CartItem = require("../models/cartItem.model");
+// User Story Architecture Trace — cart.controller.js
+//
+// #15  Add to Cart
+//      View: buy-driptea/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js (this file) → Model: cartItem.model.js
+//
+// #16  View Cart
+//      View: cart/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js (this file) → Model: cartItem.model.js
+//
+// #17  Edit Cart
+//      View: cart/edit/[cartItemId]/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js (this file) → Model: cartItem.model.js
+//
+// #199 Add to Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Ctrl: cart.controller.js (this file) → Model: cartItem.model.js
+//
+// #200 View Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Ctrl: cart.controller.js (this file) → Model: cartItem.model.js
+//
+// #201 Edit Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Ctrl: cart.controller.js (this file) → Model: cartItem.model.js
 
-// #15  - As a customer, I want to add a selected beverage to my cart so that I can review and purchase it later.
-// #199 - As a customer, I want to add beverages into my cart through the chatbot so that I can prepare my order conveniently.
-// Calls CartItem.addToCart() → looks up drink price from menu_items → writes to cart_items collection.
+const CartItem = require("../models/cartItem.model");
 async function addToCart(req, res) {
   try {
     const { customerId, userId, beverageId, menuItemId, quantity, customization } = req.body;

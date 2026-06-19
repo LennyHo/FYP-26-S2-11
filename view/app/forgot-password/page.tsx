@@ -1,6 +1,7 @@
-// #14 - As a customer, I want to reset my password so that I can regain access to my account.
-// Frontend: Customer enters email + new password → calls POST /api/auth/reset-password
-// → auth.controller.js → User.resetPassword() → updates passwordHash + passwordSalt in users collection.
+// User Story Architecture Trace — forgot-password/page.tsx
+//
+// #14  Reset Password
+//      View: forgot-password/page.tsx (this file) → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
 'use client';
 
 import { useState } from 'react';

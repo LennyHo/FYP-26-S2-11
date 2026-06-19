@@ -1,4 +1,11 @@
-﻿"use client";
+﻿// User Story Architecture Trace — Cart.tsx
+//
+// #16  View Cart
+//      View: cart/page.tsx → Component: Cart.tsx (this file) → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js
+//
+// #17  Edit Cart
+//      View: cart/page.tsx → Component: Cart.tsx (this file) → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js
+"use client";
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";

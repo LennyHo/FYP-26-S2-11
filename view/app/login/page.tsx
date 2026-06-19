@@ -1,9 +1,13 @@
-// #11 - As a user admin, I want to log in my user account so I can log in to my account.
-// #22 - As a customer, I want to log in to my user account so that I can place an order.
-// #37 - As a store staff, I want to log in so that I can start my session.
-// Frontend: User submits email + password → calls POST /api/auth/login
-// → auth.controller.js → User.login() → verifies PBKDF2 hash in users collection
-// → stores token + user in localStorage → redirects by role (admin/staff/customer).
+// User Story Architecture Trace — login/page.tsx
+//
+// #11  Login (User Admin)
+//      View: login/page.tsx (this file) → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
+//
+// #22  Login (Customer)
+//      View: login/page.tsx (this file) → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
+//
+// #37  Login (Store Staff)
+//      View: login/page.tsx (this file) → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
 'use client';
 
 import Link from 'next/link';

@@ -1,7 +1,10 @@
-// #18 - As a customer, I want to apply vouchers during checkout so that I can enjoy discounts.
-// #23 - As a customer, I want to make payment on the checkout page so that I can complete my order.
-// Frontend: Loads Checkout component → customer enters voucher + selects payment method → calls POST /api/checkout
-// → order.controller.js → creates orders, order_items, payments records → clears cart_items collection.
+// User Story Architecture Trace — checkout/page.tsx
+//
+// #18  Apply Vouchers
+//      View: checkout/page.tsx (this file) → Route: checkout.routes.js → Ctrl: order.controller.js → Model: order.model.js
+//
+// #23  Make Payment
+//      View: checkout/page.tsx (this file) → Route: checkout.routes.js → Ctrl: order.controller.js → Model: order.model.js, payment.model.js
 import CheckoutPage from "../components/pages/Checkout";
 
 export default function Page() {

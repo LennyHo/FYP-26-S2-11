@@ -1,12 +1,24 @@
-const mongoose = require("mongoose");
+// User Story Architecture Trace — cartItem.model.js
+//
+// #15  Add to Cart
+//      View: buy-driptea/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js (this file)
+//
+// #16  View Cart
+//      View: cart/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js (this file)
+//
+// #17  Edit Cart
+//      View: cart/edit/[cartItemId]/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js (this file)
+//
+// #199 Add to Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: cartItem.model.js (this file)
+//
+// #200 View Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: cartItem.model.js (this file)
+//
+// #201 Edit Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: cartItem.model.js (this file)
 
-// #15  - As a customer, I want to add a selected beverage to my cart so that I can review and purchase it later.
-// #16  - As a customer, I want to view the beverages in my cart so that I can verify my order before proceeding to payment.
-// #17  - As a customer, I want to edit beverages in my cart so that I can modify my order before completing the checkout process.
-// #199 - As a customer, I want to add beverages into my cart through the chatbot.
-// #200 - As a customer, I want to view my cart through the chatbot.
-// #201 - As a customer, I want to edit items in my cart through the chatbot.
-// Collection: cart_items — stores one document per cart line (userId, menuItemId, quantity, customization, lineTotal).
+const mongoose = require("mongoose");
 const cartItemSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },

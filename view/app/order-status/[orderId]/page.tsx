@@ -1,5 +1,10 @@
-// #28  - As a customer, I want to track my order status so that I know when my drink will be ready.
-// #203 - As a customer, I want to track my order status through the chatbot.
+// User Story Architecture Trace — order-status/[orderId]/page.tsx
+//
+// #28  Track Order Status
+//      View: order-status/[orderId]/page.tsx (this file) → Route: checkout.routes.js → Ctrl: order.controller.js → Model: order.model.js
+//
+// #203 Track Order Status via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: order.model.js
 "use client";
 
 import { useEffect, useState } from "react";

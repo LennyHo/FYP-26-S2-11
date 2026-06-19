@@ -1,6 +1,7 @@
-// #191 - As a customer, I want to create a user account so that I can access the platform.
-// Frontend: Customer fills in fullName, email, password → calls POST /api/auth/register
-// → auth.controller.js → User.register() → inserts into users collection (role: "customer").
+// User Story Architecture Trace — register/page.tsx
+//
+// #191 Create User Account (Customer)
+//      View: register/page.tsx (this file) → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
 'use client';
 
 import Link from 'next/link';

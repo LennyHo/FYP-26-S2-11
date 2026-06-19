@@ -1,6 +1,16 @@
+// User Story Architecture Trace — payment.model.js
+//
+// #19  View Purchase History
+//      View: purchase-history/page.tsx → Route: purchaseHistory.routes.js → Ctrl: purchaseHistory.controller.js → Model: payment.model.js (this file)
+//
+// #23  Make Payment
+//      View: checkout/page.tsx → Route: checkout.routes.js → Ctrl: order.controller.js → Model: payment.model.js (this file)
+//
+// #198 Purchase History via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: payment.model.js (this file)
+
 const mongoose = require("mongoose");
 
-// #23 - As a customer, I want to make payment on the checkout page so that I can complete my order.
 // Collection: payments — stores one document per checkout (orderId, userId, method, status, transactionRef).
 const paymentSchema = new mongoose.Schema(
   {

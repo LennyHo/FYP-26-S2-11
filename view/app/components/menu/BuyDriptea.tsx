@@ -1,4 +1,14 @@
-﻿'use client';
+﻿// User Story Architecture Trace — BuyDriptea.tsx
+//
+// #13  View Menu
+//      View: BuyDriptea.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #15  Add to Cart
+//      View: BuyDriptea.tsx (this file) → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js
+//
+// #21  Search Beverages
+//      View: BuyDriptea.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
+'use client';
 
 import { useState, useEffect } from "react";
 import Header from '../layout/Header';

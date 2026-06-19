@@ -1,3 +1,50 @@
+// User Story Architecture Trace — chatbotSession.model.js
+//
+// #25  Chat with AI Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #26  Navigate Website via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #27  Search Beverages via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #28  Track Order Status
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #29  High Sugar Warning via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #31  Nutritional Grading via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #32  Get Recommendations via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #196 Preferred Language
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #197 Speak to Chatbot (Voice Input)
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Gemini API / Groq API (fallback) → Model: chatbotSession.model.js (this file)
+//
+// #198 Purchase History via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #199 Add to Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #200 View Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #201 Edit Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #202 Check Vouchers via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #203 Track Order Status via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+
 const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema(
@@ -15,19 +62,8 @@ const messageSchema = new mongoose.Schema(
     { _id: false, timestamps: true }
 );
 
-// #25  - As a customer, I want to chat with the AI chatbot so that I can get help with ordering and menu questions.
-// #26  - As a customer, I want to ask a chatbot to navigate throughout the website.
-// #27  - As a customer, I want to search for beverages using the AI chatbot.
-// #28  - As a customer, I want to track my order status so that I know when my drink will be ready.
-// #29  - As a customer, I want the chatbot to inform me when my chosen drink has a high sugar level.
-// #31  - As a customer, I want the chatbot to show me the nutritional grading of each beverage.
-// #32  - As a customer, I want to get the recommendations from chatbot so that I can complete my order.
-// #197 - As a customer, I want to speak to the chatbot so that I can interact conveniently.
-// #198 - As a customer, I want to browse my purchase history through the chatbot.
-// #199 - As a customer, I want to add beverages into my cart through the chatbot.
-// #200 - As a customer, I want to view my cart through the chatbot.
-// #201 - As a customer, I want to edit items in my cart through the chatbot.
-// #203 - As a customer, I want to track my order status through the chatbot.
+// Collection: chatbot_sessions — stores conversation history per session (conversationId, userId, messages[]).
+// See file header above for full user story architecture trace.
 // Collection: chatbot_sessions — stores conversationId, userId, and full messages array (role + content).
 // Each POST /api/chat reads history here and appends both the user message and AI reply.
 const chatbotSessionSchema = new mongoose.Schema(

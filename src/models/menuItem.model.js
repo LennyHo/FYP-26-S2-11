@@ -1,3 +1,35 @@
+// User Story Architecture Trace — menuItem.model.js
+//
+// #13  View Menu (Customer)
+//      View: buy-driptea/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//
+// #21  Search Beverages (Customer)
+//      View: buy-driptea/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//
+// #27  Search Beverages via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: menuItem.model.js (this file)
+//
+// #29  High Sugar Warning via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: menuItem.model.js (this file)
+//
+// #31  Nutritional Grading via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: menuItem.model.js (this file)
+//
+// #32  Get Recommendations via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: menuItem.model.js (this file)
+//
+// #33  Create Menu Items (Store Staff)
+//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//
+// #34  View Menu Items (Store Staff)
+//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//
+// #35  Update Menu Items (Store Staff)
+//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//
+// #36  Search Menu Items (Store Staff)
+//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+
 const mongoose = require("mongoose");
 
 const menuItemSchema = new mongoose.Schema(

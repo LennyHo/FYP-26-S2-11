@@ -1,9 +1,22 @@
-// #33 - As a store staff, I want to create a new menu item so that I can expand the drink offerings.
-// #34 - As a store staff, I want to view the menu so that I can see which drinks are currently listed.
-// #35 - As a store staff, I want to update a menu item status so that I can activate or deactivate drinks.
-// #36 - As a store staff, I want to search for beverages so that I can quickly find items to manage.
-// Frontend: Loads StoreStaff page → GET /api/menu-items?status=all → menu.controller.js → MenuItem.find()
-// → POST /api/menu-items (create) | PATCH /api/menu-items/:id/status (toggle) → updates menu_items collection.
+// User Story Architecture Trace — store-staff/page.tsx
+//
+// #33  Create Menu Items
+//      View: store-staff/page.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #34  View Menu Items
+//      View: store-staff/page.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #35  Update Menu Items
+//      View: store-staff/page.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #36  Search Menu Items
+//      View: store-staff/page.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #37  Login (Store Staff)
+//      View: login/page.tsx → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
+//
+// #38  Logout (Store Staff)
+//      View: store-staff/page.tsx (this file) — client-side: JWT cleared from localStorage
 'use client';
 
 import StaffHeader from '../components/layout/StaffHeader';

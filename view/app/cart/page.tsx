@@ -1,7 +1,10 @@
-// #16 - As a customer, I want to view the beverages in my cart so that I can verify my order before proceeding to payment.
-// #17 - As a customer, I want to edit beverages in my cart so that I can modify my order before completing the checkout process.
-// Frontend: Loads Cart component → calls GET /api/cart-items?userId=<id> → cart.controller.js
-// → CartItem.getCart() → reads cart_items collection (status: active) → displays items with edit/remove options.
+// User Story Architecture Trace — cart/page.tsx
+//
+// #16  View Cart
+//      View: cart/page.tsx (this file) → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js
+//
+// #17  Edit Cart
+//      View: cart/page.tsx (this file) → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js
 "use client";
 
 import Cart from '../components/pages/Cart';

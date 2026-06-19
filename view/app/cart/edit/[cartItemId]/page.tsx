@@ -1,6 +1,7 @@
-// #17 - As a customer, I want to edit beverages in my cart so that I can modify my order before completing the checkout process.
-// Frontend: Loads DrinkCustomize in edit mode → pre-fills current customization → on save calls PATCH /api/cart-items/:id
-// → cart.controller.js → CartItem.updateCartItem() → updates quantity, customization, lineTotal in cart_items.
+// User Story Architecture Trace — cart/edit/[cartItemId]/page.tsx
+//
+// #17  Edit Cart
+//      View: cart/edit/[cartItemId]/page.tsx (this file) → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js
 import DrinkCustomize from "../../../components/menu/DrinkCustomize";
 
 export default function EditCartItemPage() {

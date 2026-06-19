@@ -1,17 +1,40 @@
-// #01 - As a user admin, I want to create a user profile so that I can add new users to the system.
-// #02 - As a user admin, I want to view user profiles so that I can monitor all registered users.
-// #03 - As a user admin, I want to update a user profile so that I can keep user information current.
-// #04 - As a user admin, I want to suspend a user profile so that I can restrict access for policy violations.
-// #05 - As a user admin, I want to search for user profiles so that I can find specific users quickly.
-// #06 - As a user admin, I want to create a user account so that I can onboard new users.
-// #07 - As a user admin, I want to view user accounts so that I can oversee all accounts in the system.
-// #08 - As a user admin, I want to update a user account so that I can correct or change account details.
-// #09 - As a user admin, I want to suspend a user account so that I can revoke system access when needed.
-// #10 - As a user admin, I want to search for user accounts so that I can manage accounts efficiently.
-// #11 - As a user admin, I want to log in to my account so that I can access the admin dashboard.
-// #12 - As a user admin, I want to log out of my account so that I can end my session securely.
-// Frontend: Loads UserAdminDashboard → GET /api/users → user.controller.js → User.find()
-// → POST /api/users (create) | PATCH /api/users/:id (update/suspend) → updates users collection.
+// User Story Architecture Trace — user-admin-dashboard/page.tsx
+//
+// #1   Create User Profile
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #2   View User Profile
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #3   Update User Profile
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #4   Suspend User Profile
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #5   Search User Profile
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #6   Create User Account
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #7   View User Account
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #8   Update User Account
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #9   Suspend User Account
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #10  Search User Account
+//      View: user-admin-dashboard/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+//
+// #11  Login (User Admin)
+//      View: login/page.tsx → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
+//
+// #12  Logout (User Admin)
+//      View: user-admin-dashboard/page.tsx (this file) — client-side: JWT cleared from localStorage
 'use client';
 
 import { type FormEvent, useEffect, useMemo, useState } from 'react';

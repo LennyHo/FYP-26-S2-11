@@ -1,14 +1,49 @@
-// #25 - As a customer, I want to interact with an AI chatbot so that I can get help with my orders.
-// #26 - As a customer, I want to send text messages to the chatbot so that I can communicate my requests.
-// #29 - As a customer, I want to use voice input with the chatbot so that I can speak my orders hands-free.
-// #30 - As a customer, I want to send images to the chatbot so that I can show what I want to order.
-// #31 - As a customer, I want the chatbot to remember my conversation so that I don't repeat myself.
-// #32 - As a customer, I want to restart my chatbot conversation so that I can start fresh.
-// #197 - As a customer, I want to add items to cart via the chatbot so that I can order without navigating menus.
-// #202 - As a customer, I want to view my cart via the chatbot so that I can confirm my order.
-// #203 - As a customer, I want to track my order status via the chatbot so that I can know when it's ready.
-// Frontend: ChatbotSidebar renders the full chat UI → uses useChatbotState for all logic → calls POST /api/chat
-// → chatbot.controller.js → chatbot.service.js (Gemini AI) → performs cart/order/history actions as needed.
+// User Story Architecture Trace — ChatbotSidebar.tsx
+//
+// #25  Chat with AI Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: ChatbotSession.Model
+//
+// #26  Navigate Website via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (Gemini navigation response)
+//
+// #27  Search Beverages via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: MenuItem.Model
+//
+// #28  Track Order Status
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: Order.Model
+//
+// #29  High Sugar Warning via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: MenuItem.Model
+//
+// #31  Nutritional Grading via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: MenuItem.Model
+//
+// #32  Get Recommendations via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: MenuItem.Model
+//
+// #196 Preferred Language
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (language param in POST body)
+//
+// #197 Speak to Chatbot (Voice Input)
+//      View: ChatbotSidebar.tsx (speechRecognition) → Ctrl: chatbot.controller.js → Svc: Gemini API / Groq API (fallback) → Model: ChatbotSession.Model
+//
+// #198 Purchase History via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: Payment.Model
+//
+// #199 Add to Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: MenuItem.Model, CartItem.Model
+//
+// #200 View Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: CartItem.Model
+//
+// #201 Edit Cart via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: CartItem.Model
+//
+// #202 Check Vouchers via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: Voucher.Model
+//
+// #203 Track Order Status via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: Order.Model
 "use client";
 
 /**

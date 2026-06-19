@@ -1,10 +1,32 @@
+// User Story Architecture Trace — menu.routes.js
+//
+// #13  View Menu (Customer)
+//      View: buy-driptea/page.tsx → Route: menu.routes.js (this file) → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #21  Search Beverages (Customer)
+//      View: buy-driptea/page.tsx → Route: menu.routes.js (this file) → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #27  Search Beverages via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Route: menu.routes.js (this file) → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #33  Create Menu Items (Store Staff)
+//      View: store-staff/page.tsx → Route: menu.routes.js (this file) → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #34  View Menu Items (Store Staff)
+//      View: store-staff/page.tsx → Route: menu.routes.js (this file) → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #35  Update Menu Items (Store Staff)
+//      View: store-staff/page.tsx → Route: menu.routes.js (this file) → Ctrl: menu.controller.js → Model: menuItem.model.js
+//
+// #36  Search Menu Items (Store Staff)
+//      View: store-staff/page.tsx → Route: menu.routes.js (this file) → Ctrl: menu.controller.js → Model: menuItem.model.js
+
 const express = require("express");
 const menuController = require("../controllers/menu.controller");
 
 const router = express.Router();
 
-// #13 - As a customer, I want to view the menu so that I know which beverages are available.
-// #34 - As a store staff, I want to view menu items so that I can review the available beverages.
+// #13 View Menu | #34 View Menu Items (Store Staff)
 router.get("/menu-items", menuController.getMenu);
 
 // #21 - As a customer, I want to search for beverages by name so that I can locate specific drinks quickly.

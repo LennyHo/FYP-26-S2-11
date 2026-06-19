@@ -1,7 +1,13 @@
-// #28 - As a store staff, I want to track and update order status so that I can manage the order queue.
-// #37 - As a store staff, I want to log in so that I can start my session and access the staff dashboard.
-// Frontend: Loads StoreStaffDashboard → GET /api/orders?status=all (polls every 3s) → order.controller.js → Order.find()
-// → PATCH /api/orders/:id/status (advance status: pending → preparing → ready → completed) → updates orders collection.
+// User Story Architecture Trace — store-staff-dashboard/page.tsx
+//
+// #28  Track Order Status (Store Staff updates status; Customer tracks via order-status/page.tsx)
+//      View: store-staff-dashboard/page.tsx (this file) → Route: checkout.routes.js → Ctrl: order.controller.js → Model: order.model.js
+//
+// #37  Login (Store Staff)
+//      View: login/page.tsx → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
+//
+// #38  Logout (Store Staff)
+//      View: store-staff-dashboard/page.tsx (this file) — client-side: JWT cleared from localStorage
 'use client';
 
 import StaffHeader from '../components/layout/StaffHeader';

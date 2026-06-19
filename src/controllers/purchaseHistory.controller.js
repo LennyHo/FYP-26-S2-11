@@ -1,8 +1,12 @@
-const Payment = require("../models/payment.model");
+// User Story Architecture Trace — purchaseHistory.controller.js
+//
+// #19  View Purchase History
+//      View: purchase-history/page.tsx → Route: purchaseHistory.routes.js → Ctrl: purchaseHistory.controller.js (this file) → Model: payment.model.js
+//
+// #198 Purchase History via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: payment.model.js
 
-// #19  - As a customer, I want to be able to view the purchase history so that I can review my past orders.
-// #198 - As a customer, I want to browse my purchase history through the chatbot so that I can review my previous orders conveniently.
-// Calls Payment.getPurchaseHistory() → joins orders and order_items collections → returns full order history.
+const Payment = require("../models/payment.model");
 async function getPurchaseHistory(req, res) {
   try {
     const userId = req.query.userId || req.params.userId;
