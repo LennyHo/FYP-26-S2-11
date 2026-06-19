@@ -1,0 +1,1107 @@
+[{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d322"
+  },
+  "itemId": "b001",
+  "__v": 0,
+  "category": "Milk Tea",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.228Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Our signature premium black tea blended with rich milk.",
+  "image": "/img/bubble_teas/b001.jpg",
+  "name": "Classic Milk Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 120,
+    "baseSugarG": 5,
+    "nutriGrade": "A"
+  },
+  "price": 4.5,
+  "status": "active",
+  "tags": [
+    "classic",
+    "black tea",
+    "creamy"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.149Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Black tea",
+      "Milk",
+      "Sugar syrup"
+    ],
+    "diabeticAdvice": "High in sugar. Choose 0-25% sugar level to reduce glucose spike.",
+    "insulinImpact": "With milk and sugar, may cause moderate insulin response. Pair with food to slow absorption."
+  },
+  "rating": 4.5
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d323"
+  },
+  "itemId": "b002",
+  "__v": 0,
+  "category": "Milk Tea",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.326Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Light and refreshing jasmine green tea with subtle floral aroma.",
+  "image": "/img/bubble_teas/b002.jpg",
+  "name": "Jasmine Green Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 90,
+    "baseSugarG": 3,
+    "nutriGrade": "A"
+  },
+  "price": 4.2,
+  "status": "active",
+  "tags": [
+    "jasmine",
+    "green tea",
+    "light"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.166Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Green tea",
+      "Jasmine flowers",
+      "Milk"
+    ],
+    "diabeticAdvice": "Lower sugar option. Green tea supports stable blood sugar.",
+    "insulinImpact": "Minimal insulin impact. Green tea can improve insulin sensitivity."
+  },
+  "rating": 4.3
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d324"
+  },
+  "itemId": "b003",
+  "__v": 0,
+  "category": "Milk Tea",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.334Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Smooth oolong tea with a roasted aroma blended with milk.",
+  "image": "/img/bubble_teas/b003.jpg",
+  "name": "Oolong Milk Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 130,
+    "baseSugarG": 6,
+    "nutriGrade": "B"
+  },
+  "price": 4.8,
+  "status": "active",
+  "tags": [
+    "oolong",
+    "roasted",
+    "rich"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.176Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Oolong tea",
+      "Milk",
+      "Sugar syrup"
+    ],
+    "diabeticAdvice": "Moderate sugar. Oolong has antioxidants that may help blood sugar control.",
+    "insulinImpact": "Oolong supports gradual digestion; moderate insulin demand if you choose 25-50% sugar."
+  },
+  "rating": 4.2
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d325"
+  },
+  "itemId": "b004",
+  "__v": 0,
+  "category": "Milk Tea",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.342Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Fragrant osmanthus-infused milk tea with a floral finish.",
+  "image": "/img/bubble_teas/b004.jpg",
+  "name": "Osmanthus Milk Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 125,
+    "baseSugarG": 5,
+    "nutriGrade": "A"
+  },
+  "price": 5,
+  "status": "active",
+  "tags": [
+    "osmanthus",
+    "floral",
+    "fragrant"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.186Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Osmanthus-infused tea",
+      "Milk",
+      "Sugar syrup"
+    ],
+    "diabeticAdvice": "Moderate sugar. Choose 0-25% sugar level to keep the floral milk tea lighter.",
+    "insulinImpact": "Milk and added sugar may cause a moderate insulin response. Lower sugar helps reduce the spike."
+  },
+  "rating": 4
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d326"
+  },
+  "itemId": "b005",
+  "__v": 0,
+  "category": "Milk Tea",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.418Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Premium Da Hong Bao oolong tea with deep, complex flavor.",
+  "image": "/img/bubble_teas/b005.jpg",
+  "name": "Da Hong Bao Milk Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 135,
+    "baseSugarG": 6,
+    "nutriGrade": "B"
+  },
+  "price": 5.2,
+  "status": "active",
+  "tags": [
+    "da hong bao",
+    "premium",
+    "oolong"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.196Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Da Hong Bao oolong tea",
+      "Milk",
+      "Sugar syrup"
+    ],
+    "diabeticAdvice": "Moderate sugar. Da Hong Bao is tea-forward, so 0-25% sugar can preserve flavor with less glucose impact.",
+    "insulinImpact": "Oolong tea with milk has moderate insulin demand when sweetened. Pair with food for steadier absorption."
+  },
+  "rating": 4.4
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d327"
+  },
+  "itemId": "b006",
+  "__v": 0,
+  "category": "Matcha Teas",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.618Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Ceremonial grade Uji matcha layered with fresh milk.",
+  "image": "/img/bubble_teas/b006.jpg",
+  "name": "Matcha Latte",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 140,
+    "baseSugarG": 2,
+    "nutriGrade": "A"
+  },
+  "price": 5.5,
+  "status": "active",
+  "tags": [
+    "matcha",
+    "green tea",
+    "premium"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.206Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Matcha powder",
+      "Milk",
+      "Minimal sugar"
+    ],
+    "diabeticAdvice": "Very low sugar. Matcha provides slow-release energy without sharp glucose spike.",
+    "insulinImpact": "Low insulin response. Matcha contains L-theanine which promotes stable blood sugar."
+  },
+  "rating": 4.6
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d328"
+  },
+  "itemId": "b007",
+  "__v": 0,
+  "category": "Matcha Teas",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.724Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Fresh strawberry puree layered with premium matcha.",
+  "image": "/img/bubble_teas/b007.jpg",
+  "name": "Strawberry Matcha Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 160,
+    "baseSugarG": 8,
+    "nutriGrade": "B"
+  },
+  "price": 6,
+  "status": "active",
+  "tags": [
+    "matcha",
+    "strawberry",
+    "fruit"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.216Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Matcha powder",
+      "Milk",
+      "Strawberry puree"
+    ],
+    "diabeticAdvice": "Higher natural and added sugar from strawberry puree. Choose 0-25% sugar to reduce glucose spike.",
+    "insulinImpact": "Fruit puree and milk can create a moderate insulin response. Lower sugar and no topping can help."
+  },
+  "rating": 4.7
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d329"
+  },
+  "itemId": "b008",
+  "__v": 0,
+  "category": "Matcha Teas",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.732Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Tangy cranberry paired with smooth matcha.",
+  "image": "/img/bubble_teas/b008.jpg",
+  "name": "Cranberry Matcha Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 155,
+    "baseSugarG": 7,
+    "nutriGrade": "B"
+  },
+  "price": 6,
+  "status": "active",
+  "tags": [
+    "matcha",
+    "cranberry",
+    "tart"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.226Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Matcha powder",
+      "Milk",
+      "Cranberry"
+    ],
+    "diabeticAdvice": "Moderate sugar with tart cranberry flavor. Choose 0-25% sugar for better blood sugar control.",
+    "insulinImpact": "Cranberry and milk may cause a moderate insulin response. Matcha can help slow the perceived energy crash."
+  },
+  "rating": 4.1
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d32a"
+  },
+  "itemId": "b009",
+  "__v": 0,
+  "category": "Matcha Teas",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.738Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Floral jasmine tea blended with rich matcha.",
+  "image": "/img/bubble_teas/b009.jpg",
+  "name": "Jasmine Matcha Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 140,
+    "baseSugarG": 5,
+    "nutriGrade": "A"
+  },
+  "price": 5.8,
+  "status": "active",
+  "tags": [
+    "matcha",
+    "jasmine",
+    "floral"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.235Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Matcha powder",
+      "Jasmine tea",
+      "Milk"
+    ],
+    "diabeticAdvice": "Moderate sugar. Jasmine and matcha flavors work well at 0-25% sugar.",
+    "insulinImpact": "Milk and sweetener may cause a mild to moderate insulin response. Lower sugar keeps it steadier."
+  },
+  "rating": 4.5
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d32b"
+  },
+  "itemId": "b010",
+  "__v": 0,
+  "category": "Ice Blended",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.746Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Rich dark chocolate blended with ice and milk.",
+  "image": "/img/bubble_teas/b010.jpg",
+  "name": "Double Chocolate Frappe",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 320,
+    "baseSugarG": 25,
+    "nutriGrade": "C"
+  },
+  "price": 6.5,
+  "status": "active",
+  "tags": [
+    "chocolate",
+    "sweet",
+    "frappe"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.252Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Dark chocolate",
+      "Milk",
+      "Ice",
+      "Sugar"
+    ],
+    "diabeticAdvice": "High sugar and calories. Choose 0% sugar and avoid sweet toppings if you need tighter glucose control.",
+    "insulinImpact": "Chocolate, milk, and sugar can cause a stronger insulin response. Best treated as an occasional dessert drink."
+  },
+  "rating": 4.8
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d32c"
+  },
+  "itemId": "b011",
+  "__v": 0,
+  "category": "Local Favorites",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.824Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Classic iced Milo topped with a mountain of Milo powder.",
+  "image": "/img/bubble_teas/b011.jpg",
+  "name": "Milo Dinosaur",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 300,
+    "baseSugarG": 22,
+    "nutriGrade": "D"
+  },
+  "price": 5,
+  "status": "active",
+  "tags": [
+    "milo",
+    "chocolate",
+    "malt"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.261Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Milo",
+      "Milk",
+      "Ice",
+      "Milo powder"
+    ],
+    "diabeticAdvice": "High sugar and calories. Choose 0% sugar and no topping to reduce the overall glucose load.",
+    "insulinImpact": "Malt chocolate powder and milk can cause a stronger insulin response. Pair with food and choose a smaller size."
+  },
+  "rating": 4.9
+},
+{
+  "_id": {
+    "$oid": "6a0d439f8f546218a1d6d32d"
+  },
+  "itemId": "b012",
+  "__v": 0,
+  "category": "Ice Blended",
+  "createdAt": {
+    "$date": "2026-05-20T05:16:15.831Z"
+  },
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice",
+        "Hot"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "Cheese Foam",
+          "price": 1.5,
+          "addedSugarG": 8,
+          "addedCalories": 120
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Creamy taro blended into a refreshing slush.",
+  "image": "/img/bubble_teas/b012.jpg",
+  "name": "Taro Slush",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 200,
+    "baseSugarG": 10,
+    "nutriGrade": "C"
+  },
+  "price": 6,
+  "status": "active",
+  "tags": [
+    "taro",
+    "sweet",
+    "slush"
+  ],
+  "updatedAt": {
+    "$date": "2026-06-11T16:37:49.273Z"
+  },
+  "drinkInfo": {
+    "ingredients": [
+      "Taro",
+      "Milk",
+      "Ice",
+      "Sugar syrup"
+    ],
+    "diabeticAdvice": "Moderate to high sugar. Choose 0-25% sugar because taro-style drinks can be naturally starchy and sweet.",
+    "insulinImpact": "Taro and sugar can cause a moderate insulin response. Lower sugar helps reduce glucose impact."
+  },
+  "rating": 4.3
+}]
