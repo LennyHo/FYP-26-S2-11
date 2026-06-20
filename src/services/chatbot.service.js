@@ -149,6 +149,17 @@ function isNutriGradeQuestion(message) {
 // Detects queries asking which drinks have low/high sugar or low/high calories.
 function isHealthRankingQuery(message) {
     const msg = String(message || "").toLowerCase();
+
+    // "less sugar" / "less sweet" used as an order customization — not a health ranking query.
+    // e.g. "Can I have matcha latte, less sugar" should go to the ordering path.
+    const hasOrderIntent =
+        msg.includes("can i have") || msg.includes("can i get") || msg.includes("can i order") ||
+        msg.includes("i want") || msg.includes("i'd like") || msg.includes("i would like") ||
+        msg.includes("i'll have") || msg.includes("i'll take") || msg.includes("give me");
+    if (hasOrderIntent && (msg.includes("less sugar") || msg.includes("less sweet") || msg.includes("no sugar"))) {
+        return false;
+    }
+
     const hasSugar = msg.includes("sugar");
     const hasCalorie = msg.includes("calorie") || msg.includes("calories") || msg.includes("cal");
     const hasHealthy = msg.includes("healthy") || msg.includes("healthier") || msg.includes("healthiest");
@@ -166,7 +177,7 @@ function isHealthRankingQuery(message) {
 const ORDER_CUSTOMIZATION_WORDS = [
     "regular", "large", "small",
     "no ice", "less ice", "normal ice", "more ice", "extra ice",
-    "0%", "25%", "50%", "70%", "100%", "no sugar", "less sweet", "full sweet",
+    "0%", "25%", "50%", "70%", "100%", "no sugar", "less sweet", "less sugar", "full sweet",
     "zero percent", "twenty five percent", "twenty-five percent", "fifty percent", "hundred percent",
     "aloe", "pearl", "boba", "cheese foam", "tapioca", "no topping",
 ];
@@ -178,7 +189,7 @@ function parseSugarLevel(text) {
     // Word forms first (spoken input like "fifty percent sugar")
     if (/\b(a\s+)?hundred\s+percent\b|\bone\s+hundred\s+percent\b|\bfull\s*(sweet|sugar)\b/.test(m)) return "100% Sugar";
     if (/\bfifty\s+percent\b|\bhalf\s+(sweet|sugar|percent)\b/.test(m)) return "50% Sugar";
-    if (/\btwenty[- ]?five\s+percent\b|\bless\s+sweet\b/.test(m)) return "25% Sugar";
+    if (/\btwenty[- ]?five\s+percent\b|\bless\s+sweet\b|\bless\s+sugar\b/.test(m)) return "25% Sugar";
     if (/\bzero\s+percent\b|\bno\s+sugar\b|\bunsweetened\b/.test(m)) return "0% Sugar";
     // Numeric % — \b prevents "50%" from matching the "0%" branch
     if (/\b100\s*%/.test(m)) return "100% Sugar";
@@ -1290,6 +1301,39 @@ Write a warm, natural 1–2 sentence intro for these recommendations. Reference 
     return { reply, recommendedDrinks: cards, system_action: { ui_navigation: 'none' } };
 }
 
+// #199 - Detects messages that order multiple distinct drinks in one request.
+// Matches: "and another X", "and have another X", "plus another X", "and also X",
+//          "and one/two/[n] X" (quantity-style), "both X and Y" shared-customization orders.
+function isMultiItemOrder(message) {
+    const msg = String(message || "").toLowerCase();
+    return (
+        /\band\s+(?:have\s+)?another\s+\w/i.test(msg) ||
+        /\bplus\s+(?:a\s+|an\s+|another\s+|one\s+more\s+)\w/i.test(msg) ||
+        /\band\s+also\s+(?:(?:a|an|one)\s+)?\w/i.test(msg) ||
+        // "and one/two/three/[n] [drink]" — excludes "and one more" / "and one of"
+        /\band\s+(?:one|two|three|four|five|\d+)\s+(?!more\b|of\b)\w/i.test(msg)
+    );
+}
+
+// #199 - Splits a multi-item order message into individual item segments.
+// e.g. "one jasmine matcha tea and one matcha latte, both regular, less ice"
+//   → ["one jasmine matcha tea", "matcha latte, both regular, less ice"]
+function splitMultiItemOrder(message) {
+    const parts = message.split(
+        /\s+(?:and\s+(?:have\s+)?another|plus\s+(?:a|an|another|one\s+more)|and\s+also\s+(?:a|an|one)?|and\s+(?:one|two|three|four|five|\d+)(?=\s+(?!more\b|of\b)))\s+/gi
+    );
+    return parts.map(p => p.trim()).filter(Boolean);
+}
+
+// #199 - Extracts customization specified after "both" for shared-customization orders.
+// e.g. "...both regular, less ice, less sugar" → { size: "Regular", ice: "Less Ice", sugar: "25% Sugar", toppings: [] }
+function extractBothCustomization(message) {
+    const msg = String(message || "").toLowerCase();
+    const bothIdx = msg.indexOf("both ");
+    if (bothIdx === -1) return null;
+    return parseCustomizationFromMessage(message.substring(bothIdx + 5));
+}
+
 // Main chatbot message handler
 async function handleChatMessage({ message, conversationId, userId, isQuickPrompt = false }) {
     const safeMessage = String(message || "").trim();
@@ -1803,6 +1847,100 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         };
     }
     // End of #198
+
+    // User Story #199: Multi-item add-to-cart
+    // "I want X with less ice and have another Y with regular sugar"
+    if (isMultiItemOrder(safeMessage) && isAddToCartRequest(safeMessage)) {
+        const segments = splitMultiItemOrder(safeMessage);
+
+        if (segments.length >= 2) {
+            if (!userId) {
+                return {
+                    reply: "You'll need to log in before I can add items to your cart!",
+                    system_action: { ui_navigation: "none" },
+                };
+            }
+
+            const addedItems = [];
+            let lastBeverageId = null;
+            // Shared customization from "both regular, less ice, ..." applies to all segments
+            // that don't carry their own customization keywords.
+            const bothCustomization = extractBothCustomization(safeMessage);
+
+            for (const segment of segments) {
+                let beverageId = await resolveBeverageId(segment);
+                if (!beverageId) beverageId = lastBeverageId;
+                if (!beverageId) continue;
+                lastBeverageId = beverageId;
+
+                const segHasOwnCustomization = hasCustomizationWords(segment.toLowerCase());
+                const customization = (bothCustomization && !segHasOwnCustomization)
+                    ? bothCustomization
+                    : parseCustomizationFromMessage(segment);
+                const cartItem = await CartItem.addToCart(userId, beverageId, { quantity: 1, customization });
+                const menuItem = await MenuItem.findOne({ itemId: beverageId }).lean();
+                cartItem.drinkInfo = menuItem;
+                cartItem.menuItemCode = beverageId;
+                addedItems.push({ cartItem, customization, menuItem });
+            }
+
+            if (addedItems.length === 0) {
+                return {
+                    reply: "I couldn't find the drinks you mentioned. Could you let me know which drinks you'd like?",
+                    system_action: { ui_navigation: "none" },
+                };
+            }
+
+            const allCartItems = await CartItem.getCart(userId);
+            const cartTotal = allCartItems.reduce((sum, i) => sum + Number(i.lineTotal || 0), 0);
+
+            const lines = addedItems.map(({ cartItem, customization }) => {
+                const toppings =
+                    Array.isArray(customization.toppings) && customization.toppings.length > 0
+                        ? customization.toppings.join(", ")
+                        : "No toppings";
+                return (
+                    `<strong>${cartItem.name}</strong><br>` +
+                    `${customization.size} · ${customization.ice} · ${customization.sugar} · ${toppings}<br>` +
+                    `S$ ${Number(cartItem.lineTotal || cartItem.unitPrice || 0).toFixed(2)}`
+                );
+            });
+
+            const reply =
+                `Done! I've added ${addedItems.length} item${addedItems.length > 1 ? "s" : ""} to your cart.<br><br>` +
+                lines.join("<br><br>");
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+            const first = addedItems[0];
+            const firstNutrition = first.menuItem
+                ? calculateNutrition(first.menuItem, first.customization.sugar, first.customization.toppings)
+                : null;
+
+            return {
+                reply,
+                system_action: { ui_navigation: "none" },
+                showViewCart: true,
+                orderReceipt: {
+                    drink: {
+                        name: first.cartItem.name,
+                        price: first.cartItem.unitPrice,
+                        image: first.cartItem.image || `/img/bubble_teas/${first.cartItem.menuItemCode || ""}.jpg`,
+                    },
+                    customization: first.customization,
+                    nutrition: firstNutrition,
+                    recommendedNutrition:
+                        firstNutrition && (firstNutrition.grade === "C" || firstNutrition.grade === "D")
+                            ? calculateNutrition(first.menuItem, "25% Sugar", first.customization.toppings || [])
+                            : null,
+                    cartItems: allCartItems.map(i => ({ name: i.name, quantity: i.quantity, lineTotal: i.lineTotal })),
+                    total: cartTotal,
+                },
+            };
+        }
+    }
+    // End of multi-item #199
 
     // User Story #199: Add to Cart Intent
     if (isAddToCartRequest(safeMessage)) {
