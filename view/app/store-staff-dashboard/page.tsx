@@ -13,7 +13,7 @@
 import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
 import { useEffect, useMemo, useState } from 'react';
-import { getOrders, updateOrderStatus, type DripTeaOrder } from '../utils/dripteaApi';
+import { getOrders, updateOrderStatus, type DripTeaOrder } from '../utils/staffApi';
 
 type StaffTab = 'orders' | 'completed' | 'inventory';
 

@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { checkEmailExists, resetPassword } from '../utils/dripteaApi';
+import { checkEmailExists, resetPassword } from '../utils/customerApi';
 import styles from './ForgotPassword.module.css';
 
 type Step = 'email' | 'reset' | 'done';

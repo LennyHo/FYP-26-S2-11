@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getStoredUser } from '../../../utils/dripteaApi';
+import { getStoredUser } from '../../../utils/api.base';
 import { createConversationId } from '../../../utils/chatHelpers';
 import type { Message } from '../useChatbotState';
 

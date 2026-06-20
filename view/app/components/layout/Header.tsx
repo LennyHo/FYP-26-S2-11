@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 import Link from 'next/link';
 // done by "HDC" - reads backend-auth user stored by login so the header can show Log out.
-import { clearStoredUser, getStoredUser, parseLocalCartLine, syncStoredCartFromBackend, type DripTeaUser } from '../../utils/dripteaApi';
+import { syncStoredCartFromBackend } from '../../utils/customerApi';
+import { clearStoredUser, getStoredUser, parseLocalCartLine, type DripTeaUser } from '../../utils/api.base';
 // end done by "HDC"
 
 // Inline SVG for the brand logo to avoid bundler import issues and ensure consistent rendering

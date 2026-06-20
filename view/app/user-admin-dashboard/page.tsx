@@ -41,14 +41,8 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaTimes } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
-import {
-  clearStoredUser,
-  createUserAccount,
-  getUsers,
-  suspendUser,
-  updateUser,
-  type DripTeaUser,
-} from '../utils/dripteaApi';
+import { createUserAccount, getUsers, suspendUser, updateUser } from '../utils/adminApi';
+import { clearStoredUser, type DripTeaUser } from '../utils/api.base';
 import styles from './page.module.css';
 
 type ActiveTab = 'profiles' | 'accounts';

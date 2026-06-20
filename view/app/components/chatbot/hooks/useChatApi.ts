@@ -11,16 +11,11 @@
 "use client";
 
 import { useState } from 'react';
-import { getStoredUser } from '../../../utils/dripteaApi';
+import { getStoredUser } from '../../../utils/api.base';
+import { sendChatMessage, sendChatImage } from '../../../utils/chatbotApi';
 import { createConversationId, speakText } from '../../../utils/chatHelpers';
 import { getConversationKey } from './useConversation';
 import type { Message } from '../useChatbotState';
-
-function getApiEndpoint(): string {
-  const configured = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim();
-  if (process.env.NODE_ENV === 'development') return 'http://localhost:5000/api/chat';
-  return configured ? `${configured.replace(/\/$/, '')}/api/chat` : '/api/chat';
-}
 
 function getCurrentUserId(): string {
   return getStoredUser()?.id || '';
@@ -116,14 +111,7 @@ export function useChatApi({
         setPendingImages([]);
         setInput('');
         const convId = ensureConversationId();
-        const apiBase = process.env.NODE_ENV === 'development'
-          ? 'http://localhost:5000'
-          : (process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim() || 'https://driptea-trrn.onrender.com');
-        const res = await fetch(`${apiBase}/api/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: messageText || 'Describe this drink', image: base64, conversationId: convId }),
-        });
+        const res = await sendChatImage({ message: messageText || 'Describe this drink', image: base64, conversationId: convId });
         const data = await res.json();
         const replyText = typeof data?.reply === 'string' ? data.reply : 'Error connecting to backend';
         setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: replyText, isUser: false }]);
@@ -153,11 +141,7 @@ export function useChatApi({
     setIsLoading(true);
 
     try {
-      const response = await fetch(getApiEndpoint(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText, conversationId: convId, userId: getCurrentUserId(), isQuickPrompt }),
-      });
+      const response = await sendChatMessage({ message: messageText, conversationId: convId, userId: getCurrentUserId(), isQuickPrompt });
       const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, showViewCart } = parsePayload(await response.json());
       const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory };
       setMessages(prev => [...prev, botMsg]);
@@ -199,11 +183,7 @@ export function useChatApi({
     setOverlayLoading(true);
     const convId = ensureConversationId();
     try {
-      const response = await fetch(getApiEndpoint(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, conversationId: convId, userId: getCurrentUserId() }),
-      });
+      const response = await sendChatMessage({ message: text, conversationId: convId, userId: getCurrentUserId() });
       const payload = await response.json() as Record<string, unknown>;
       const rawReply = typeof payload.reply === 'string' ? payload.reply
         : "I'm so sorry for the inconvenience! Our server seems to be taking a short break. Please try again in a moment.";

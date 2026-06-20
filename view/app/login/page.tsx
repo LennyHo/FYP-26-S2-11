@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import styles from './login.module.css';
 import { useRouter } from 'next/navigation';
-import { syncStoredCartFromBackend, migrateLocalCartToBackend } from '../utils/dripteaApi';
+import { syncStoredCartFromBackend, migrateLocalCartToBackend } from '../utils/customerApi';
 
 interface LoginCredentials {
   email: string;

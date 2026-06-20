@@ -9,13 +9,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  getCartItems,
-  getStoredUser,
-  deleteCartItem,
-  updateCartItemQuantity,
-  parseLocalCartLine,
-} from "../../utils/dripteaApi";
+import { getCartItems, deleteCartItem, updateCartItemQuantity } from "../../utils/customerApi";
+import { getStoredUser, parseLocalCartLine } from "../../utils/api.base";
 import Header from "../layout/Header";
 import "./Cart.css";
 

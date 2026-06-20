@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '../layout/Header';
 import styles from './MenuCategory.module.css';
-import { getMenuItems } from '../../utils/dripteaApi';
+import { getMenuItems } from '../../utils/customerApi';
 
 type Beverage = {
   id: string;

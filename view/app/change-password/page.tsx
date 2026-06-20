@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { changePassword, getStoredUser } from '../utils/dripteaApi';
+import { changePassword } from '../utils/customerApi';
+import { getStoredUser } from '../utils/api.base';
 import styles from './ChangePassword.module.css';
 
 export default function ChangePasswordPage() {

@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import styles from './register.module.css';
-import { registerCustomer } from '../utils/dripteaApi';
+import { registerCustomer } from '../utils/customerApi';
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (

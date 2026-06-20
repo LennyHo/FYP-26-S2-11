@@ -10,7 +10,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Header from "../../components/layout/Header";
-import { getOrder, updateOrderStatus, type DripTeaOrder } from "../../utils/dripteaApi";
+import { getOrder, updateOrderStatus, type DripTeaOrder } from "../../utils/staffApi";
 import "../../components/pages/Checkout.css";
 
 const PHASE1_MS = 8_000;

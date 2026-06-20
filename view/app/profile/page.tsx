@@ -6,7 +6,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './Profile.module.css';
-import { getStoredUser, storeUser, updateUser } from '../utils/dripteaApi';
+import { updateUser } from '../utils/customerApi';
+import { getStoredUser, storeUser } from '../utils/api.base';
 
 export default function ProfilePage() {
   const router = useRouter();

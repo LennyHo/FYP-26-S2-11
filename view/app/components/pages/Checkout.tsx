@@ -3,15 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../layout/Header";
-import {
-    checkoutCart,
-    getOrder,
-    getCartItems,
-    getStoredUser,
-    updateOrderStatus,
-    parseLocalCartLine,
-    type DripTeaCartItem,
-} from "../../utils/dripteaApi";
+import { checkoutCart, getCartItems } from "../../utils/customerApi";
+import { getOrder, updateOrderStatus } from "../../utils/staffApi";
+import { getStoredUser, parseLocalCartLine, type DripTeaCartItem } from "../../utils/api.base";
 import "./Checkout.css";
 
 type CheckoutItem = {

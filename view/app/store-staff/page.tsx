@@ -23,7 +23,8 @@ import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { getMenuItems, updateMenuItemStatus, createMenuItem, type DripTeaMenuItem } from '../utils/dripteaApi';
+import { getMenuItems } from '../utils/customerApi';
+import { updateMenuItemStatus, createMenuItem, type DripTeaMenuItem } from '../utils/adminApi';
 
 export default function StoreStaffPage() {
   const [items, setItems] = useState<DripTeaMenuItem[]>([]);

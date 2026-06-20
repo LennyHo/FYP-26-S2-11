@@ -5,15 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '../layout/Header';
 import styles from './DrinkCustomize.module.css';
-import {
-  addCartItem,
-  updateCartItem,
-  getCartItem,
-  formatLocalCartLine,
-  getDripTeaApiBase,
-  getMenuItems,
-  getStoredUser,
-} from '../../utils/dripteaApi';
+import { addCartItem, updateCartItem, getCartItem, getMenuItems } from '../../utils/customerApi';
+import { formatLocalCartLine, getDripTeaApiBase, getStoredUser } from '../../utils/api.base';
 
 interface DrinkData {
   id: string;

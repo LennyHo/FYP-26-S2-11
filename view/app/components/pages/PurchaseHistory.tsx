@@ -3,12 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Header from "../layout/Header";
-import {
-  getPurchaseHistory,
-  getStoredUser,
-  updateOrderStatus,
-  type DripTeaPurchaseHistoryItem,
-} from "../../utils/dripteaApi";
+import { getPurchaseHistory } from "../../utils/customerApi";
+import { updateOrderStatus } from "../../utils/staffApi";
+import { getStoredUser, type DripTeaPurchaseHistoryItem } from "../../utils/api.base";
 import "./PurchaseHistory.css";
 
 const TRACK_STATUSES = new Set(["pending", "preparing"]);
