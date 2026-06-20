@@ -567,6 +567,14 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               value={input}
               onChange={e => setInput(e.target.value)}
               onPaste={handleInputPaste}
+              onFocus={() => {
+                // Scroll to the latest message after the iOS keyboard finishes animating
+                setTimeout(() => {
+                  if (chatWindowRef.current) {
+                    chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+                  }
+                }, 350);
+              }}
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
                   e.preventDefault();
