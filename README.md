@@ -113,7 +113,7 @@ GROQ_API_KEY=your_groq_api_key_here
 GEMINI_API_KEY=your_gemini_key_1,your_gemini_key_2
 
 # ── MongoDB ───────────────────────────────────────────────
-MONGODB_URI=mongodb+srv://justcode1234_db_user:PQTZYHCE3MsGGVOS@fyp-chatbot.8mob6wy.mongodb.net/?appName=fyp-chatbot
+MONGODB_URI=mongodb+srv://avisfyp01_db_user:zefhyp1jucca8@driptea-vs1.tt7qbar.mongodb.net/?retryWrites=true&w=majority&appName=driptea-vs1
 MONGODB_DB_NAME=driptea_vs1
 MONGODB_AUTOCONNECT=true
 
@@ -145,15 +145,15 @@ The project already has a shared MongoDB Atlas cluster. Use the credentials belo
 
 | Field         | Value                                      |
 |---------------|--------------------------------------------|
-| Host          | fyp-chatbot.8mob6wy.mongodb.net            |
+| Host          | DripTea_V1                                 |
 | Database name | driptea_vs1                                |
-| Username      | justcode1234_db_user                       |
-| Password      | PQTZYHCE3MsGGVOS                           |
+| Username      | avisfyp01_db_user                          |
+| Password      | zefhyp1jucca8                              |
 
 Copy these three lines into your root `.env` file exactly as shown:
 
 ```env
-MONGODB_URI=mongodb+srv://justcode1234_db_user:PQTZYHCE3MsGGVOS@fyp-chatbot.8mob6wy.mongodb.net/?appName=fyp-chatbot
+MONGODB_URI=mongodb+srv://avisfyp01_db_user:zefhyp1jucca8@driptea-vs1.tt7qbar.mongodb.net/?retryWrites=true&w=majority&appName=driptea-vs1
 MONGODB_DB_NAME=driptea_vs1
 MONGODB_AUTOCONNECT=true
 ```
