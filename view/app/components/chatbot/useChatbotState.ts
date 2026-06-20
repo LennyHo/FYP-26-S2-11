@@ -141,12 +141,15 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
   // Wire setInput into speech so recognition onresult can update input state
   speech.setInputRef.current = setInput;
 
+  // ui must come before api — api consumes ui.pendingImages / ui.setPendingImages
   const ui = useChatUI({ messages: conversation.messages, input });
 
   const api = useChatApi({
     conversationId: conversation.conversationId,
     setConversationId: conversation.setConversationId,
     setMessages: conversation.setMessages,
+    pendingImages: ui.pendingImages,
+    setPendingImages: ui.setPendingImages,
     setInput,
     isListening: speech.isListening,
     setIsListening: speech.setIsListening,
@@ -253,6 +256,9 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     isLoading: api.isLoading,
     isInitialized: conversation.isInitialized,
     conversationId: conversation.conversationId,
+    pendingImages: ui.pendingImages,
+    previewIndex: ui.previewIndex,
+    setPreviewIndex: ui.setPreviewIndex,
     flippedCard: ui.flippedCard,
     setFlippedCard: ui.setFlippedCard,
     isListening: speech.isListening,
@@ -282,6 +288,9 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     router,
     sendMessage,
     sendOverlayMessage: api.sendOverlayMessage,
+    handlePickedImage: ui.handlePickedImage,
+    handleInputPaste: ui.handleInputPaste,
+    removePendingImage: ui.removePendingImage,
     restartConversation: conversation.restartConversation,
     handleChatClick,
     formatMessageTime,

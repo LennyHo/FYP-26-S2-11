@@ -12,7 +12,7 @@
 
 import { useState } from 'react';
 import { getStoredUser } from '../../../utils/api.base';
-import { sendChatMessage } from '../../../utils/chatbotApi';
+import { sendChatMessage, sendChatImage } from '../../../utils/chatbotApi';
 import { createConversationId, speakText } from '../../../utils/chatHelpers';
 import { getConversationKey } from './useConversation';
 import type { Message } from '../useChatbotState';
@@ -25,6 +25,8 @@ interface UseChatApiProps {
   conversationId: string;
   setConversationId: (id: string) => void;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  pendingImages: Array<{ name: string; previewUrl: string; source: string }>;
+  setPendingImages: React.Dispatch<React.SetStateAction<any[]>>;
   setInput: (value: string) => void;
   // Speech refs needed to stop mic when sending in speak mode
   isListening: boolean;
@@ -42,6 +44,8 @@ export function useChatApi({
   conversationId,
   setConversationId,
   setMessages,
+  pendingImages,
+  setPendingImages,
   setInput,
   isListening,
   setIsListening,
@@ -83,6 +87,43 @@ export function useChatApi({
   }
 
   async function sendMessage(messageText: string, shouldSpeak: boolean = false, isQuickPrompt: boolean = false) {
+    // ── Image path ──────────────────────────────────────────────────────────
+    if (pendingImages.length > 0) {
+      const img = pendingImages[0];
+      try {
+        setIsLoading(true);
+        const blob = await (await fetch(img.previewUrl)).blob();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result;
+            if (typeof result === 'string') resolve(result.split(',')[1]);
+            else reject(new Error('Failed to read image'));
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          text: `<img src="${img.previewUrl}" alt="uploaded image" style="max-width:120px;max-height:120px;border-radius:8px;" />`,
+          isUser: true,
+        }]);
+        setPendingImages([]);
+        setInput('');
+        const convId = ensureConversationId();
+        const res = await sendChatImage({ message: messageText || 'Describe this drink', image: base64, conversationId: convId });
+        const data = await res.json();
+        const replyText = typeof data?.reply === 'string' ? data.reply : 'Error connecting to backend';
+        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: replyText, isUser: false }]);
+      } catch {
+        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: 'Error sending image.', isUser: false }]);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // ── Text path ───────────────────────────────────────────────────────────
     if (!messageText.trim()) return;
     const convId = ensureConversationId();
 
