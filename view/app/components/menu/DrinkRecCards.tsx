@@ -30,6 +30,7 @@ interface MenuBeverage {
   base_calories: number;
   base_sugar_g: number;
   nutri_grade: string;
+  image?: string;
   rating?: number;
   drinkInfo?: {
     ingredients: string[];
