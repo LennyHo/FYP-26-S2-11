@@ -25,6 +25,8 @@ import type {
   DripTeaPurchaseHistoryItem,
 } from './api.base';
 
+export type { DripTeaMenuItem };
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 // Registers a new customer account. POST /api/auth/register
