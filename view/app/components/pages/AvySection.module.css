@@ -21,11 +21,11 @@
   position: absolute;
   top: -80px;
   right: -60px;
-  width: 420px;
-  height: 420px;
+  width: 380px;
+  height: 380px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(140, 80, 255, 0.22) 0%, transparent 68%);
-  filter: blur(30px);
+  background: radial-gradient(circle, rgba(140, 80, 255, 0.1) 0%, transparent 68%);
+  filter: blur(40px);
   pointer-events: none;
   z-index: 0;
 }
@@ -35,11 +35,11 @@
   position: absolute;
   bottom: -60px;
   left: -40px;
-  width: 300px;
-  height: 300px;
+  width: 280px;
+  height: 280px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(80, 120, 255, 0.18) 0%, transparent 68%);
-  filter: blur(28px);
+  background: radial-gradient(circle, rgba(80, 120, 255, 0.08) 0%, transparent 68%);
+  filter: blur(40px);
   pointer-events: none;
   z-index: 0;
 }
@@ -123,29 +123,28 @@
   margin: 0;
 }
 
-/* Gradient CTA button */
+/* CTA button — matches Avy's purple palette */
 .cta {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.88rem;
-  letter-spacing: 0.04em;
-  padding: 13px 26px;
+  justify-content: center;
+  background: #c9a8ff;
+  color: #1a0535;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 13px 28px;
   border-radius: 999px;
   border: none;
   width: fit-content;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(109, 40, 217, 0.45);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .cta:hover {
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  box-shadow: 0 6px 28px rgba(109, 40, 217, 0.6);
-  transform: translateY(-1px);
+  background: #b68fff;
+  color: #0e0520;
 }
 
 /* Visual column */
@@ -183,11 +182,11 @@
 
 .avyGlow {
   position: absolute;
-  width: 280px;
-  height: 280px;
+  width: 260px;
+  height: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(180, 130, 255, 0.28) 0%, transparent 70%);
-  filter: blur(36px);
+  background: radial-gradient(circle, rgba(180, 130, 255, 0.14) 0%, transparent 70%);
+  filter: blur(40px);
 }
 
 .avyImg {
@@ -196,7 +195,7 @@
   width: 320px;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 20px 48px rgba(140, 80, 255, 0.4));
+  filter: drop-shadow(0 12px 24px rgba(140, 80, 255, 0.2));
 }
 
 @media (max-width: 860px) {
