@@ -12,6 +12,7 @@
 //   #17  Edit cart              → updateCartItem      → PATCH /api/cart-items/:id
 //   #23  Checkout               → checkoutCart        → POST /api/checkout
 //   #19  Purchase history       → getPurchaseHistory  → GET /api/purchase-history
+//   #246 Update account         → updateUser          → PATCH /api/users/:id
 //
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 
@@ -207,5 +208,13 @@ export function checkoutCart(userId: string, paymentMethod: string, voucherCode?
 export function getPurchaseHistory(userId: string) {
   return requestJson<{ ok: boolean; data: DripTeaPurchaseHistoryItem[] }>(
     `/api/purchase-history?userId=${encodeURIComponent(userId)}`
+  );
+}
+
+// Updates a user's profile. PATCH /api/users/:id
+export function updateUser(userId: string, payload: { profilePic?: string; fullName?: string; email?: string }) {
+  return requestJson<{ ok: boolean; data: DripTeaUser }>(
+    `/api/users/${encodeURIComponent(userId)}`,
+    { method: 'PATCH', body: JSON.stringify(payload) }
   );
 }

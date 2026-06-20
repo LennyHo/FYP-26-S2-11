@@ -27,9 +27,19 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       const url = ev.target?.result as string;
       setProfilePic(url);
+      const user = getStoredUser();
+      if (user) {
+        try {
+          const response = await updateUser(user.id, { profilePic: url });
+          storeUser(response.data);
+          window.dispatchEvent(new Event('profileUpdated'));
+        } catch {
+          setStatus("Failed to save profile picture.");
+        }
+      }
     };
     reader.readAsDataURL(file);
   }
