@@ -576,8 +576,38 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               disabled={isLoading}
               rows={1}
             />
-            {/* Right side of pill: send OR mic+speak, never both */}
-            {(input.trim() || pendingImages.length > 0) ? (
+            {/* Right side of pill: mic listening → show pulsing mic (+ send if text); has text → send only; idle → mic + speak */}
+            {isListening ? (
+              <div className={styles.voiceButtons}>
+                <button
+                  type="button"
+                  className={`${styles.micBtn} ${styles.listening}`}
+                  onClick={() => handleMicrophoneClick(input)}
+                  disabled={isLoading}
+                  aria-label="Stop voice input"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                    <path d="M17 11a5 5 0 0 1-10 0" />
+                    <path d="M12 16v4" />
+                  </svg>
+                </button>
+                {(input.trim() || pendingImages.length > 0) && (
+                  <button
+                    type="button"
+                    className={styles.sendBtn}
+                    onClick={() => sendMessage()}
+                    disabled={isLoading}
+                    aria-label="Send message"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 19V5" />
+                      <path d="M5 12l7-7 7 7" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ) : (input.trim() || pendingImages.length > 0) ? (
               <button
                 type="button"
                 className={styles.sendBtn}
@@ -595,10 +625,10 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               <div className={styles.voiceButtons}>
                 <button
                   type="button"
-                  className={`${styles.micBtn} ${isListening ? styles.listening : ''}`}
-                  onClick={handleMicrophoneClick}
+                  className={styles.micBtn}
+                  onClick={() => handleMicrophoneClick(input)}
                   disabled={isLoading}
-                  aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+                  aria-label="Start voice input"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
