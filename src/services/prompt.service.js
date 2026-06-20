@@ -172,10 +172,16 @@ async function buildSystemPrompt(userMessage, extraContext = "") {
 
     const structuredData = filtered.map((item) => {
       const nutrition = item.nutritionInfo || {};
+      const info = item.drinkInfo || {};
       return {
         id: item.itemId || item.id || item._id,
         name: item.name,
+        category: item.category,
         price: item.price,
+        description: item.description || "",
+        ingredients: Array.isArray(info.ingredients) && info.ingredients.length > 0 ? info.ingredients : [],
+        diabetic_advice: info.diabeticAdvice || "",
+        insulin_impact: info.insulinImpact || "",
         calories: parseNum(nutrition.baseCalories),
         sugar: parseNum(nutrition.baseSugarG),
         nutri_grade: nutrition.nutriGrade,
@@ -184,8 +190,30 @@ async function buildSystemPrompt(userMessage, extraContext = "") {
       };
     });
 
+    // Build dynamic ingredients section from DB so new drinks added by staff are included automatically
+    const allBeverages = await getMenuBeverages();
+    const ingredientLines = allBeverages
+      .filter(item => {
+        const info = item.drinkInfo || {};
+        return (Array.isArray(info.ingredients) && info.ingredients.length > 0) || item.description;
+      })
+      .map(item => {
+        const info = item.drinkInfo || {};
+        const ingredientStr = Array.isArray(info.ingredients) && info.ingredients.length > 0
+          ? info.ingredients.join(", ")
+          : item.description || "";
+        return `- ${item.name}: ${ingredientStr}`;
+      })
+      .join("\n");
+
+    const ingredientsSection = ingredientLines
+      ? `DRIPTEA DRINKS AND THEIR KEY INGREDIENTS:\n${ingredientLines}`
+      : "";
+
     drinkContext = `AVAILABLE DRINKS CONTEXT:
-${JSON.stringify(structuredData, null, 2)}`;
+${JSON.stringify(structuredData, null, 2)}
+
+${ingredientsSection}`;
   } else {
     drinkContext =
       "NOTE: No menu data is loaded for this message. Do not invent drink names. If the user asks for drinks, ask what flavour they are in the mood for.";
@@ -208,19 +236,6 @@ TOPPING HEALTH ADVICE RULES:
 If the customer asks which topping is healthiest, say Aloe Vera has the least impact, and No toppings is always the best for health.
 Never give unsolicited health advice about toppings.
 
-DRIPTEA DRINKS AND THEIR KEY INGREDIENTS:
-- Classic Milk Tea: black tea, fresh milk, brown sugar syrup, optional pearls
-- Jasmine Green Tea: jasmine-scented green tea, milk, sugar syrup
-- Oolong Milk Tea: oolong tea, fresh milk, sugar syrup
-- Osmanthus Milk Tea: osmanthus flower-infused tea, milk, sugar syrup
-- Da Hong Bao Milk Tea: premium Wuyi rock oolong, milk, sugar syrup
-- Matcha Latte: matcha powder, fresh milk, sugar syrup
-- Strawberry Matcha Tea: matcha powder, strawberry puree, milk
-- Cranberry Matcha Tea: matcha powder, cranberry, milk
-- Jasmine Matcha Tea: matcha powder, jasmine green tea, milk
-- Double Chocolate Frappe: cocoa powder, chocolate syrup, milk, ice
-- Taro Slush: taro, milk, ice, sugar syrup
-- Milo Dinosaur: Milo chocolate-malt powder, fresh milk, ice
 
 PERSONALITY & TONE:
 - Be warm, upbeat, and conversational — like texting a friendly barista.

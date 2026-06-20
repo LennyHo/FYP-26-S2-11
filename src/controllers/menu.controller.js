@@ -102,6 +102,13 @@ async function createMenuItem(req, res) {
     const description = String(req.body.description || "").trim();
     const status = String(req.body.status || "active").trim().toLowerCase();
     const tags = Array.isArray(req.body.tags) ? req.body.tags.map(String) : [];
+    const ingredients = Array.isArray(req.body.ingredients) ? req.body.ingredients.map(String) : [];
+    const calories = Number.isFinite(Number(req.body.calories)) ? Number(req.body.calories) : 0;
+    const sugar = Number.isFinite(Number(req.body.sugar)) ? Number(req.body.sugar) : 0;
+    const allowedGrades = ["A", "B", "C", "D"];
+    const nutriGrade = allowedGrades.includes(String(req.body.nutriGrade || "").toUpperCase())
+      ? String(req.body.nutriGrade).toUpperCase()
+      : "B";
 
     if (!name || !category || !Number.isFinite(price) || price < 0) {
       return res.status(400).json({
@@ -111,6 +118,8 @@ async function createMenuItem(req, res) {
     }
 
     // Student note: custom menu item IDs keep new drinks separate from seeded b001 drinks.
+    const image = typeof req.body.image === "string" ? req.body.image : "";
+
     const item = await MenuItem.create({
       itemId: `custom_${Date.now()}`,
       name,
@@ -119,13 +128,18 @@ async function createMenuItem(req, res) {
       description,
       tags,
       status: status === "inactive" ? "inactive" : "active",
-      image: "",
+      image,
       customizationOptions: [],
+      drinkInfo: {
+        ingredients,
+        diabeticAdvice: "",
+        insulinImpact: "",
+      },
       nutritionInfo: {
-        baseCalories: 0,
-        baseSugarG: 0,
+        baseCalories: calories,
+        baseSugarG: sugar,
         baseVolumeMl: 500,
-        nutriGrade: "B",
+        nutriGrade,
       },
     });
 

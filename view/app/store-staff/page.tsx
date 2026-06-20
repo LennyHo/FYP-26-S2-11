@@ -34,9 +34,17 @@ export default function StoreStaffPage() {
   const [filterCat, setFilterCat] = useState('all');
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', category: '', price: '', description: '', tags: '', status: 'active' });
+  const [addForm, setAddForm] = useState({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
   const [addError, setAddError] = useState('');
   const [adding, setAdding] = useState(false);
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setAddForm(f => ({ ...f, image: ev.target?.result as string }));
+    reader.readAsDataURL(file);
+  }
 
   async function fetchItems() {
     try {
@@ -80,12 +88,17 @@ export default function StoreStaffPage() {
         category: addForm.category.trim(),
         price,
         description: addForm.description.trim(),
+        ingredients: addForm.ingredients.split(',').map(t => t.trim()).filter(Boolean),
+        calories: addForm.calories ? parseFloat(addForm.calories) : undefined,
+        sugar: addForm.sugar ? parseFloat(addForm.sugar) : undefined,
+        nutriGrade: addForm.nutriGrade || 'B',
         tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
         status: addForm.status,
+        image: addForm.image,
       });
       setItems(prev => [...prev, res.data]);
       setShowAddModal(false);
-      setAddForm({ name: '', category: '', price: '', description: '', tags: '', status: 'active' });
+      setAddForm({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
     } catch (err) {
       setAddError(err instanceof Error ? err.message : 'Failed to add drink.');
     } finally {
@@ -252,47 +265,124 @@ export default function StoreStaffPage() {
       {showAddModal && (
         <div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Add New Drink</h2>
-              <button type="button" className={styles.modalClose} onClick={() => setShowAddModal(false)}>✕</button>
+              <button type="button" className={styles.modalClose} onClick={() => setShowAddModal(false)} aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             </div>
-            <form onSubmit={handleAddDrink} className={styles.modalForm}>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>Name <span className={styles.required}>*</span></label>
-                <input className={styles.formInput} value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Taro Milk Tea" />
+
+            <form onSubmit={handleAddDrink}>
+              <div className={styles.modalBody}>
+
+                {/* Image upload */}
+                <div className={styles.imageUploadRow}>
+                  <label htmlFor="drinkImage" className={styles.imageUploadZone}>
+                    {addForm.image
+                      ? <img src={addForm.image} alt="Preview" className={styles.imagePreview} />
+                      : (
+                        <div className={styles.imageUploadPlaceholder}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          <span>Upload photo</span>
+                        </div>
+                      )
+                    }
+                    {addForm.image && (
+                      <div className={styles.imageOverlay}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+                        Change
+                      </div>
+                    )}
+                  </label>
+                  <input id="drinkImage" type="file" accept="image/*" className={styles.fileInputHidden} onChange={handleImageChange} />
+                  <div className={styles.imageUploadMeta}>
+                    <p className={styles.imageUploadTitle}>Drink Photo</p>
+                    <p className={styles.imageUploadHint}>Shown on the menu and chatbot recommendations.</p>
+                    {addForm.image && (
+                      <button type="button" className={styles.imageClearBtn} onClick={() => setAddForm(f => ({ ...f, image: '' }))}>Remove photo</button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Name + Category + Price */}
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Name <span className={styles.required}>*</span></label>
+                  <input className={styles.formInput} value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Taro Milk Tea" />
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Category <span className={styles.required}>*</span></label>
+                    <input className={styles.formInput} value={addForm.category} onChange={e => setAddForm(f => ({ ...f, category: e.target.value }))} placeholder="e.g. Milk Tea" list="cat-list" />
+                    <datalist id="cat-list">
+                      {Array.from(new Set(items.map(i => i.category))).sort().map(c => <option key={c} value={c} />)}
+                    </datalist>
+                  </div>
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Price (S$) <span className={styles.required}>*</span></label>
+                    <input className={styles.formInput} type="number" min="0" step="0.01" value={addForm.price} onChange={e => setAddForm(f => ({ ...f, price: e.target.value }))} placeholder="5.90" />
+                  </div>
+                </div>
+
+                {/* Description + Ingredients */}
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Description</label>
+                  <input className={styles.formInput} value={addForm.description} onChange={e => setAddForm(f => ({ ...f, description: e.target.value }))} placeholder="e.g. Smooth taro blended with milk and ice" />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Ingredients <span className={styles.formHint}>(comma-separated)</span></label>
+                  <input className={styles.formInput} value={addForm.ingredients} onChange={e => setAddForm(f => ({ ...f, ingredients: e.target.value }))} placeholder="e.g. taro, milk, ice, sugar syrup" />
+                </div>
+
+                {/* Nutrition row */}
+                <div className={styles.formRow3}>
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Calories (kcal)</label>
+                    <input className={styles.formInput} type="number" min="0" step="1" value={addForm.calories} onChange={e => setAddForm(f => ({ ...f, calories: e.target.value }))} placeholder="180" />
+                  </div>
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Sugar (g)</label>
+                    <input className={styles.formInput} type="number" min="0" step="0.1" value={addForm.sugar} onChange={e => setAddForm(f => ({ ...f, sugar: e.target.value }))} placeholder="24" />
+                  </div>
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Nutri-Grade</label>
+                    <div className={styles.gradeChips}>
+                      {(['A', 'B', 'C', 'D'] as const).map(g => (
+                        <button key={g} type="button"
+                          className={`${styles.gradeChip} ${addForm.nutriGrade === g ? styles.gradeChipActive : ''} ${styles[`grade${g}`]}`}
+                          onClick={() => setAddForm(f => ({ ...f, nutriGrade: g }))}>
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tags + Status */}
+                <div className={styles.formRow}>
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Tags <span className={styles.formHint}>(comma-separated)</span></label>
+                    <input className={styles.formInput} value={addForm.tags} onChange={e => setAddForm(f => ({ ...f, tags: e.target.value }))} placeholder="sweet, popular, vegan" />
+                  </div>
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Status</label>
+                    <select className={styles.formInput} title="Status" value={addForm.status} onChange={e => setAddForm(f => ({ ...f, status: e.target.value }))}>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                {addError && <p className={styles.formError}>{addError}</p>}
               </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>Category <span className={styles.required}>*</span></label>
-                <input className={styles.formInput} value={addForm.category} onChange={e => setAddForm(f => ({ ...f, category: e.target.value }))} placeholder="e.g. Milk Tea" list="cat-list" />
-                <datalist id="cat-list">
-                  {Array.from(new Set(items.map(i => i.category))).sort().map(c => <option key={c} value={c} />)}
-                </datalist>
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>Price (S$) <span className={styles.required}>*</span></label>
-                <input className={styles.formInput} type="number" min="0" step="0.01" value={addForm.price} onChange={e => setAddForm(f => ({ ...f, price: e.target.value }))} placeholder="e.g. 5.90" />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>Description</label>
-                <input className={styles.formInput} value={addForm.description} onChange={e => setAddForm(f => ({ ...f, description: e.target.value }))} placeholder="Short description (optional)" />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>Tags <span className={styles.formHint}>(comma-separated)</span></label>
-                <input className={styles.formInput} value={addForm.tags} onChange={e => setAddForm(f => ({ ...f, tags: e.target.value }))} placeholder="e.g. sweet, popular, vegan" />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>Status</label>
-                <select className={styles.formInput} title="Status" value={addForm.status} onChange={e => setAddForm(f => ({ ...f, status: e.target.value }))}>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              {addError && <p className={styles.formError}>{addError}</p>}
-              <div className={styles.modalActions}>
+
+              <div className={styles.modalFooter}>
                 <button type="button" className={styles.cancelBtn} onClick={() => setShowAddModal(false)}>Cancel</button>
                 <button type="submit" className={styles.saveBtn} disabled={adding}>{adding ? 'Adding…' : 'Add Drink'}</button>
               </div>
             </form>
+
           </div>
         </div>
       )}

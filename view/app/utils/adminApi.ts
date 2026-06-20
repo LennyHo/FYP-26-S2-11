@@ -67,8 +67,13 @@ export function createMenuItem(payload: {
   category: string;
   price: number;
   description?: string;
+  ingredients?: string[];
+  calories?: number;
+  sugar?: number;
+  nutriGrade?: string;
   tags?: string[];
   status?: string;
+  image?: string;
 }) {
   return requestJson<{ ok: boolean; data: DripTeaMenuItem }>('/api/menu-items', {
     method: 'POST',

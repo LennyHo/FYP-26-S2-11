@@ -29,12 +29,10 @@ export default function AdminHeader() {
           <Link href="/user-admin-dashboard" className={styles.navLink}>
             Dashboard
           </Link>
-          <Link href="/global-stores" className={styles.navLink}>Global Stores</Link>
         </nav>
 
         <div className={styles.actions}>
-          <Link href="/contact" className={styles.navLink}>CONTACT</Link>
-          <button 
+          <button
             className={styles.logoutBtn}
             onClick={() => router.push('/login')}
           >
