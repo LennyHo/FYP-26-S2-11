@@ -253,6 +253,9 @@ function isRecommendationRequest(message) {
     // "i want X" / "can i have X" / "i'd like X" / "give me X" = direct order intent (with or without article)
     if (/\b(i want|i like to have|i would like|i'd like|i'll have|i'll take|can i have|can i get|can i order|give me)\s+(?:a\s+|an\s+)?\w/i.test(msg)) return false;
 
+    // "show me my cart" / "show me what is inside my cart"
+    if (/\bshow me\b/i.test(msg) && (msg.includes("cart") || msg.includes("in my order"))) return false;
+    
     // "add [drink]" / "can add [drink]" / "want to add [drink]" / "can i add [drink]" = add-to-cart intent
     if (/\badd\s+(?!one\s+more\b|another\b)/i.test(msg)) return false;
 
