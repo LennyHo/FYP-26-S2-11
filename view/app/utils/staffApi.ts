@@ -11,6 +11,8 @@
 import { requestJson } from './api.base';
 import type { DripTeaOrder } from './api.base';
 
+export type { DripTeaOrder };
+
 // Fetches all orders filtered by status. GET /api/orders
 export function getOrders(status: string = 'all') {
   return requestJson<{ ok: boolean; data: DripTeaOrder[] }>(`/api/orders?status=${encodeURIComponent(status)}`);

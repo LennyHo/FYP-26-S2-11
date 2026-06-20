@@ -13,6 +13,8 @@
 import { requestJson } from './api.base';
 import type { DripTeaUser, DripTeaMenuItem } from './api.base';
 
+export type { DripTeaUser, DripTeaMenuItem };
+
 // ── User management ───────────────────────────────────────────────────────────
 
 // Fetches all users, optionally filtered by search keyword. GET /api/users
