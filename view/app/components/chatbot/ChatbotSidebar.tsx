@@ -72,9 +72,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     setInput,
     isLoading,
     isInitialized,
-    pendingImages,
-    previewIndex,
-    setPreviewIndex,
     flippedCard,
     setFlippedCard,
     isListening,
@@ -102,8 +99,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     router,
     onClose,
     sendMessage,
-    handleInputPaste,
-    removePendingImage,
     restartConversation,
     handleChatClick,
     formatMessageTime,
@@ -493,31 +488,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
 
       {/* Input area */}
       <div className={styles.chatInputArea}>
-        {pendingImages.length > 0 && (
-          <div className={styles.pendingImagesMini} role="list" aria-label="Pasted images">
-            {pendingImages.map((img, i) => (
-              <div
-                key={`pending-mini-${i}`}
-                className={styles.pendingMiniItem}
-                role="listitem"
-                onClick={() => setPreviewIndex(i)}
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setPreviewIndex(i); }}
-              >
-                <img src={img.previewUrl} alt={img.name} className={styles.pendingMiniThumb} />
-                <button
-                  type="button"
-                  className={styles.pendingMiniClose}
-                  onClick={(e) => { e.stopPropagation(); removePendingImage(i); }}
-                  aria-label={`Remove ${img.name}`}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
         <QuickPrompts
           prompts={QUICK_PROMPTS}
           onPromptClick={prompt => sendMessage(prompt, false, true)}
@@ -534,7 +504,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               placeholder="Text Avy..."
               value={input}
               onChange={e => setInput(e.target.value)}
-              onPaste={handleInputPaste}
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
                   e.preventDefault();
@@ -545,7 +514,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               rows={1}
             />
             {/* Send button — inside pill, shown only when there's content */}
-            {(input.trim() || pendingImages.length > 0) && (
+            {input.trim() && (
               <button
                 type="button"
                 className={styles.sendBtn}
@@ -562,7 +531,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
             )}
           </div>
 
-          {!input.trim() && !pendingImages.length && (
+          {!input.trim() && (
             <div className={styles.voiceButtons}>
               <button
                 type="button"
@@ -752,51 +721,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
         </div>
       )}
 
-      {/* Image preview modal */}
-      {previewIndex !== null && pendingImages[previewIndex] && (
-        <div
-          className={styles.imagePreviewOverlay}
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setPreviewIndex(null)}
-        >
-          <div className={styles.imagePreviewContent} onClick={(e) => e.stopPropagation()}>
-            {pendingImages.length > 1 && (
-              <button
-                type="button"
-                className={styles.imagePreviewNavButton + ' ' + styles.imagePreviewPrev}
-                onClick={() => setPreviewIndex(i => (i && i > 0 ? i - 1 : i))}
-                aria-label="Previous image"
-              >
-                ‹
-              </button>
-            )}
-            <img
-              src={pendingImages[previewIndex].previewUrl}
-              alt={pendingImages[previewIndex].name}
-              className={styles.imagePreviewImg}
-            />
-            {pendingImages.length > 1 && (
-              <button
-                type="button"
-                className={styles.imagePreviewNavButton + ' ' + styles.imagePreviewNext}
-                onClick={() => setPreviewIndex(i => (typeof i === 'number' && i < pendingImages.length - 1 ? i + 1 : i))}
-                aria-label="Next image"
-              >
-                ›
-              </button>
-            )}
-            <button
-              type="button"
-              className={styles.imagePreviewClose}
-              onClick={() => setPreviewIndex(null)}
-              aria-label="Close preview"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }

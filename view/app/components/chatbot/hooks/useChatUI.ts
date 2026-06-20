@@ -10,8 +10,6 @@ interface UseChatUIProps {
 
 export function useChatUI({ messages, input }: UseChatUIProps) {
   const [addedIds, setAddedIds] = useState<string[]>([]);
-  const [pendingImages, setPendingImages] = useState<Array<{ name: string; previewUrl: string; source: 'camera' | 'screenshot' | 'clipboard' }>>([]);
-  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [flippedCard, setFlippedCard] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,40 +33,6 @@ export function useChatUI({ messages, input }: UseChatUIProps) {
     el.style.height = `${el.scrollHeight}px`;
   }, [input]);
 
-  // Keyboard navigation for image preview modal
-  useEffect(() => {
-    if (previewIndex === null) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setPreviewIndex(null); return; }
-      if (e.key === 'ArrowLeft') { setPreviewIndex(prev => (prev && prev > 0 ? prev - 1 : prev)); return; }
-      if (e.key === 'ArrowRight') { setPreviewIndex(prev => (typeof prev === 'number' && prev < pendingImages.length - 1 ? prev + 1 : prev)); }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [previewIndex, pendingImages.length]);
-
-  const handlePickedImage = (file: File | null, source: 'camera' | 'screenshot' | 'clipboard') => {
-    if (!file) return;
-    setPendingImages(prev => [...prev, { name: file.name, previewUrl: URL.createObjectURL(file), source }]);
-  };
-
-  const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const imageItem = Array.from(event.clipboardData.items || []).find(item => item.kind === 'file' && item.type.startsWith('image/'));
-    if (!imageItem) return;
-    const file = imageItem.getAsFile();
-    if (!file) return;
-    event.preventDefault();
-    handlePickedImage(file, 'clipboard');
-  };
-
-  const removePendingImage = (index: number) => {
-    setPendingImages(prev => {
-      const item = prev[index];
-      if (item) { try { URL.revokeObjectURL(item.previewUrl); } catch {} }
-      return prev.filter((_, i) => i !== index);
-    });
-  };
-
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const visibleMessages = normalizedSearchQuery
     ? messages.filter(msg => msg.text.replace(/<[^>]*>/g, ' ').toLowerCase().includes(normalizedSearchQuery))
@@ -79,10 +43,6 @@ export function useChatUI({ messages, input }: UseChatUIProps) {
   return {
     addedIds,
     setAddedIds,
-    pendingImages,
-    setPendingImages,
-    previewIndex,
-    setPreviewIndex,
     flippedCard,
     setFlippedCard,
     isSearchOpen,
@@ -93,9 +53,6 @@ export function useChatUI({ messages, input }: UseChatUIProps) {
     setIsSettingsOpen,
     chatWindowRef,
     textareaRef,
-    handlePickedImage,
-    handleInputPaste,
-    removePendingImage,
     normalizedSearchQuery,
     visibleMessages,
     searchResultCount,
