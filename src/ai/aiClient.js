@@ -113,6 +113,36 @@ async function callGroqText(userMessage, history, systemPrompt) {
   return response.data.choices[0].message.content;
 }
 
+async function generateImageAnalysis(base64, mimeType, textPrompt, systemPrompt = "") {
+  const geminiKeys = getGeminiKeys();
+  if (geminiKeys.length === 0) throw new Error("No Gemini keys available.");
+
+  let lastError;
+  for (let i = 0; i < geminiKeys.length; i++) {
+    const indexToTry = (currentGeminiKeyIndex + i) % geminiKeys.length;
+    try {
+      const genAI = new GoogleGenerativeAI(geminiKeys[indexToTry]);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: systemPrompt,
+      });
+
+      const result = await model.generateContent([
+        { inlineData: { mimeType: mimeType || "image/jpeg", data: base64 } },
+        textPrompt || "What drink is this?",
+      ]);
+
+      currentGeminiKeyIndex = indexToTry;
+      return result.response.text();
+    } catch (error) {
+      console.warn(`[AI] Gemini vision key ${indexToTry + 1} failed:`, error.message);
+      lastError = error;
+    }
+  }
+  throw new Error(`All Gemini vision keys failed. Last error: ${lastError.message}`);
+}
+
 module.exports = {
   generateText,
+  generateImageAnalysis,
 };

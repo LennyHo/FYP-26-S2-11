@@ -515,6 +515,9 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 </button>
               </div>
             ))}
+            {pendingImages.length >= 5 && (
+              <span className={styles.pendingImagesLimit}>Max 5</span>
+            )}
           </div>
         )}
 

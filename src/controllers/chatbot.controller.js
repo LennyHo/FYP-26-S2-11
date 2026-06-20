@@ -46,15 +46,21 @@
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js (this file) → Svc: chatbot.service.js → Model: order.model.js
 
 const chatbotService = require("../services/chatbot.service");
+
 async function handleChat(req, res) {
-    try {
-    const { message, conversationId, userId, isQuickPrompt } = req.body || {};
+  try {
+    const { message, conversationId, userId, isQuickPrompt, image, mimeType } = req.body || {};
+
+    if (image) {
+      const result = await chatbotService.handleImageMessage({ image, mimeType, message, conversationId });
+      return res.json(result);
+    }
 
     const result = await chatbotService.handleChatMessage({
-        message,
-        conversationId,
-        userId,
-        isQuickPrompt: !!isQuickPrompt,
+      message,
+      conversationId,
+      userId,
+      isQuickPrompt: !!isQuickPrompt,
     });
 
     return res.json(result);

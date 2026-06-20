@@ -47,9 +47,14 @@ export function useChatUI({ messages, input }: UseChatUIProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [previewIndex, pendingImages.length]);
 
+  const MAX_IMAGES = 5;
+
   const handlePickedImage = (file: File | null, source: 'camera' | 'screenshot' | 'clipboard') => {
     if (!file) return;
-    setPendingImages(prev => [...prev, { name: file.name, previewUrl: URL.createObjectURL(file), source }]);
+    setPendingImages(prev => {
+      if (prev.length >= MAX_IMAGES) return prev;
+      return [...prev, { name: file.name, previewUrl: URL.createObjectURL(file), source }];
+    });
   };
 
   const handleInputPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {

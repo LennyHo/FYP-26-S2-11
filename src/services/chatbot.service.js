@@ -2649,6 +2649,46 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
 
 
+async function handleImageMessage({ image, mimeType, message, conversationId }) {
+    try {
+        const MenuItem = require("../models/menuItem.model");
+        const allDrinks = await MenuItem.find({ status: "active" }).lean();
+
+        const menuSummary = allDrinks.map(d => {
+            const nutrition = d.nutritionInfo || {};
+            return `- ${d.name} (${d.category}) S$${Number(d.price).toFixed(2)}, Nutri-Grade ${nutrition.nutriGrade || "B"}`;
+        }).join("\n");
+
+        const systemPrompt = `You are Avy, the friendly AI assistant for DripTea, a bubble tea café in Singapore.
+A customer has sent you a photo of a drink. Your job is to:
+1. Identify what the drink looks like (colour, appearance, visible ingredients).
+2. Match it to the closest item(s) on our menu listed below, or let them know if it looks like something we don't serve.
+3. Suggest the matched drink warmly and offer to help them order it.
+4. Keep your tone friendly, concise, and helpful.
+
+Our current menu:
+${menuSummary}`;
+
+        const userPrompt = message && message.trim()
+            ? message
+            : "What drink is this? Can you identify it and match it to your menu?";
+
+        const reply = await aiClient.generateImageAnalysis(image, mimeType || "image/jpeg", userPrompt, systemPrompt);
+
+        return {
+            reply,
+            system_action: { ui_navigation: "none" },
+        };
+    } catch (error) {
+        console.error("[ChatbotService] handleImageMessage error:", error.message);
+        return {
+            reply: "Sorry, I had trouble analysing that image. Please try again or describe the drink in text!",
+            system_action: { ui_navigation: "none" },
+        };
+    }
+}
+
 module.exports = {
     handleChatMessage,
+    handleImageMessage,
 };

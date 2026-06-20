@@ -4,7 +4,7 @@
 }
 
 .main {
-  width: min(1200px, calc(100% - 40px));
+  width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
   padding: 40px 0 100px;
 }

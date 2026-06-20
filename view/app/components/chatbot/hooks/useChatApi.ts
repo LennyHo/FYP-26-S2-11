@@ -93,6 +93,7 @@ export function useChatApi({
       try {
         setIsLoading(true);
         const blob = await (await fetch(img.previewUrl)).blob();
+        const mimeType = blob.type || 'image/jpeg';
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -103,15 +104,19 @@ export function useChatApi({
           reader.onerror = reject;
           reader.readAsDataURL(blob);
         });
+        const photoChip = `<span style="display:inline-flex;align-items:center;gap:8px;background:#f7eaf5;border:1.5px solid rgba(171,28,110,0.28);border-radius:10px;padding:5px 12px 5px 5px;"><span style="position:relative;display:inline-block;width:38px;height:38px;flex-shrink:0;"><img src="${img.previewUrl}" alt="" style="width:38px;height:38px;border-radius:7px;object-fit:cover;display:block;border:1.5px solid rgba(171,28,110,0.30);" /><span style="position:absolute;bottom:2px;right:2px;background:rgba(171,28,110,0.80);border-radius:4px;padding:2px 3px;font-size:9px;line-height:1;color:#fff;">&#128247;</span></span><span style="font-size:0.73rem;color:#7b1254;font-weight:600;white-space:nowrap;">Photo attached</span></span>`;
+        const userBubbleText = messageText.trim()
+          ? `${photoChip}<div style="margin-top:6px;">${messageText.trim()}</div>`
+          : photoChip;
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
-          text: `<img src="${img.previewUrl}" alt="uploaded image" style="max-width:120px;max-height:120px;border-radius:8px;" />`,
+          text: userBubbleText,
           isUser: true,
         }]);
         setPendingImages([]);
         setInput('');
         const convId = ensureConversationId();
-        const res = await sendChatImage({ message: messageText || 'Describe this drink', image: base64, conversationId: convId });
+        const res = await sendChatImage({ message: messageText || 'What drink is this?', image: base64, mimeType, conversationId: convId });
         const data = await res.json();
         const replyText = typeof data?.reply === 'string' ? data.reply : 'Error connecting to backend';
         setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: replyText, isUser: false }]);

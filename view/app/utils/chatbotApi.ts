@@ -42,6 +42,7 @@ export function sendChatMessage(payload: {
 export function sendChatImage(payload: {
   message: string;
   image: string;
+  mimeType: string;
   conversationId: string;
 }): Promise<Response> {
   return fetch(`${getImageApiBase()}/api/chat`, {

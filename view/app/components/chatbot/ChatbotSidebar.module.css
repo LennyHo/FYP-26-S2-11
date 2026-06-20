@@ -859,13 +859,153 @@
   transform: rotateY(180deg);
 }
 
-.pendingMiniThumb {
-  width: 80px;  /* Increase this to make the placeholder wider */
-  height: 80px; /* Increase this to make the placeholder taller */
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+/* ── Pending image thumbnails strip ───────────────────────── */
+.pendingImagesMini {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 6px;
+  padding: 8px 12px 6px;
+  border-bottom: 1px solid rgba(161, 126, 190, 0.15);
 }
+.pendingImagesMini::-webkit-scrollbar {
+  display: none;
+}
+
+.pendingMiniItem {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 1.5px solid rgba(161, 126, 190, 0.3);
+  transition: border-color 0.15s;
+}
+.pendingMiniItem:hover {
+  border-color: rgba(161, 126, 190, 0.75);
+}
+
+.pendingMiniThumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pendingMiniClose {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(120, 60, 180, 0.72);
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.pendingMiniClose:hover {
+  background: rgba(120, 60, 180, 0.95);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.pendingImagesLimit {
+  align-self: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #a17ebe;
+  white-space: nowrap;
+  padding-left: 2px;
+  opacity: 0.8;
+}
+
+/* ── Image preview modal ──────────────────────────────────── */
+.imagePreviewOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 5, 20, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.imagePreviewContent {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 90vw;
+  max-height: 90vh;
+  padding: 16px;
+}
+
+.imagePreviewImg {
+  max-width: min(320px, 80vw);
+  max-height: min(280px, 60vh);
+  border-radius: 10px;
+  object-fit: contain;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+.imagePreviewClose {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.imagePreviewClose:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.imagePreviewNavButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  z-index: 1;
+}
+.imagePreviewNavButton:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.imagePreviewPrev { left: -52px; }
+.imagePreviewNext { right: -52px; }
 
 .drinkFlipCardFront,
 .drinkFlipCardBack {
@@ -1417,7 +1557,6 @@
   overflow-x: auto;
   overflow-y: visible;
   touch-action: pan-x;
-  scrollbar-width: none;
   -ms-overflow-style: none;
   -webkit-mask-image: linear-gradient(to right, black 84%, transparent 100%);
   mask-image: linear-gradient(to right, black 84%, transparent 100%);

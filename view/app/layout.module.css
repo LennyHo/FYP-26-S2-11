@@ -46,8 +46,8 @@
   width: var(--chat-width);
   max-width: 42vw;
   height: auto;
-  border-left: 2px solid #EFEAE6;
-  background: #f7f7f7;
+  border-left: none;
+  background: #ffffff;
   z-index: 9998;
   transform: translateX(100%);
   transition: transform 0.36s cubic-bezier(.2,.9,.2,1);

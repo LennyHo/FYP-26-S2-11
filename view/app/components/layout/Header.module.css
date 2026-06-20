@@ -141,7 +141,8 @@
 }
 
 .nav {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  gap: 2px;
 }
 
 .nav a,
@@ -166,16 +167,17 @@
 /* Nav link visual styles */
 .navLink {
   color: var(--muted);
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: 12px;
   text-decoration: none;
   display: inline-block;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .nav a + a,
 .navLink + .navLink {
-  margin-left: 12px;
+  margin-left: 0;
 }
 
 /* Menu button (mobile) */
