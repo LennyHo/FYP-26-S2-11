@@ -7,4 +7,5 @@
 export * from './api.base';
 export * from './customerApi';
 export * from './staffApi';
-export * from './adminApi';
+// Explicit exports from adminApi — omits `updateUser` which conflicts with customerApi's export
+export { getUsers, createUserAccount, suspendUser, updateMenuItemStatus, createMenuItem } from './adminApi';

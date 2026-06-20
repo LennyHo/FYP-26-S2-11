@@ -25,7 +25,6 @@ import type {
   DripTeaPurchaseHistoryItem,
 } from './api.base';
 
-export type { DripTeaMenuItem };
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 

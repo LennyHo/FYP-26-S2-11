@@ -13,7 +13,7 @@
 import { requestJson } from './api.base';
 import type { DripTeaUser, DripTeaMenuItem } from './api.base';
 
-export type { DripTeaUser, DripTeaMenuItem };
+export type { DripTeaUser, DripTeaMenuItem };  // needed for direct imports (e.g. store-staff/page.tsx)
 
 // ── User management ───────────────────────────────────────────────────────────
 

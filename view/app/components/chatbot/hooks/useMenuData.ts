@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getMenuItems, type DripTeaMenuItem } from '../../../utils/customerApi';
+import { getMenuItems } from '../../../utils/customerApi';
+import type { DripTeaMenuItem } from '../../../utils/api.base';
 
 export function useMenuData() {
   const [menuLookup, setMenuLookup] = useState<Record<string, { id: string; category: string }>>({});

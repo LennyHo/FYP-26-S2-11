@@ -234,7 +234,7 @@ export default function Cart() {
         className="back-menu-btn"
         onClick={() => router.push("/buy-driptea")}
       >
-        ← Back to Menu
+        Back to Menu
       </button>
 
       <section className="cart-panel">
