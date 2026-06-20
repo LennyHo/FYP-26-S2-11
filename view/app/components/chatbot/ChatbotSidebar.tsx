@@ -110,6 +110,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     sanitizeExcessiveBreaks,
     closeOverlay,
     handleOverlayMicClick,
+    handleMicrophoneClick,
+    handleSpeakClick,
   } = useChatbotState(props);
 
   const [dismissedMsgId, setDismissedMsgId] = React.useState<string | null>(null);
@@ -560,7 +562,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
             )}
           </div>
 
-          {/* Mic + Speak — commented out
           {!input.trim() && !pendingImages.length && (
             <div className={styles.voiceButtons}>
               <button
@@ -594,7 +595,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               </button>
             </div>
           )}
-          */}
         </div>
       </div>
 

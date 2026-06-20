@@ -67,7 +67,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
         className={`${styles.mainPane} no-scrollbar ${!hideChatbot && isChatOpen ? styles.mainPaneWithChat : ''} ${hideChatbot ? 'fullWidth' : ''}`}
       >
         {children}
-        {/* {!hideFooter && <Footer />} */}
+        {!hideFooter && <Footer />}
       </div>
 
       {/* RIGHT SIDE: CHATBOT */}
