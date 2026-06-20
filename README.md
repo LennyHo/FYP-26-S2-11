@@ -37,7 +37,7 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 
 ---
 
-## Live Deployment (Vercel)
+## Live Deployments (Vercel)
 
 The frontend is hosted on Vercel at:
 
