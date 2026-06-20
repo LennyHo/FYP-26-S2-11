@@ -80,7 +80,7 @@ export default function DrinkCard({
                 alt={name}
                 className={styles.image}
                 onError={(e) => {
-                  e.currentTarget.src = "/img/bubble_teas/b001.png";
+                  e.currentTarget.src = "/img/bubble_teas/b001.jpg";
                 }}
               />
             </div>

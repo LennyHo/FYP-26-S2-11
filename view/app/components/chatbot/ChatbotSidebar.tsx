@@ -102,6 +102,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     router,
     onClose,
     sendMessage,
+    handlePickedImage,
     handleInputPaste,
     removePendingImage,
     restartConversation,
@@ -115,6 +116,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
   } = useChatbotState(props);
 
   const [dismissedMsgId, setDismissedMsgId] = React.useState<string | null>(null);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <aside className={styles.chatbotSidebar}>
@@ -530,7 +532,34 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
         />
 
         <div className={styles.composerContainer}>
+          {/* Hidden file input — triggers native photo picker on mobile */}
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            aria-label="Upload photo"
+            className={styles.hiddenFileInput}
+            onChange={e => {
+              const file = e.target.files?.[0];
+              if (file) handlePickedImage(file, 'screenshot');
+              e.target.value = '';
+            }}
+          />
           <div className={styles.messageInputOuter}>
+            {/* Photo upload button — left side of input pill */}
+            <button
+              type="button"
+              className={styles.photoInputBtn}
+              onClick={() => photoInputRef.current?.click()}
+              disabled={isLoading || pendingImages.length >= 5}
+              aria-label="Attach photo"
+              title="Attach photo"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </button>
             <textarea
               ref={textareaRef}
               className={styles.userInput}
@@ -547,8 +576,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               disabled={isLoading}
               rows={1}
             />
-            {/* Send button — inside pill, shown only when there's content */}
-            {(input.trim() || pendingImages.length > 0) && (
+            {/* Right side of pill: send OR mic+speak, never both */}
+            {(input.trim() || pendingImages.length > 0) ? (
               <button
                 type="button"
                 className={styles.sendBtn}
@@ -562,42 +591,40 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   <path d="M5 12l7-7 7 7" />
                 </svg>
               </button>
+            ) : (
+              <div className={styles.voiceButtons}>
+                <button
+                  type="button"
+                  className={`${styles.micBtn} ${isListening ? styles.listening : ''}`}
+                  onClick={handleMicrophoneClick}
+                  disabled={isLoading}
+                  aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                    <path d="M17 11a5 5 0 0 1-10 0" />
+                    <path d="M12 16v4" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.speakBtn} ${isSpeakMode ? styles.speakBtnListening : ''}`}
+                  onClick={handleSpeakClick}
+                  disabled={isLoading}
+                  aria-label={isSpeakMode ? 'Stop voice mode' : 'Speak to Avy'}
+                >
+                  <span className={styles.speakWave} aria-hidden="true">
+                    <span className={styles.speakWaveBar}></span>
+                    <span className={styles.speakWaveBar}></span>
+                    <span className={styles.speakWaveBar}></span>
+                    <span className={styles.speakWaveBar}></span>
+                    <span className={styles.speakWaveBar}></span>
+                  </span>
+                  <span className={styles.speakBtnText}>{isSpeakMode ? 'Stop' : 'Speak'}</span>
+                </button>
+              </div>
             )}
           </div>
-
-          {!input.trim() && !pendingImages.length && (
-            <div className={styles.voiceButtons}>
-              <button
-                type="button"
-                className={`${styles.micBtn} ${isListening ? styles.listening : ''}`}
-                onClick={handleMicrophoneClick}
-                disabled={isLoading}
-                aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
-                  <path d="M17 11a5 5 0 0 1-10 0" />
-                  <path d="M12 16v4" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                className={`${styles.speakBtn} ${isSpeakMode ? styles.speakBtnListening : ''}`}
-                onClick={handleSpeakClick}
-                disabled={isLoading}
-                aria-label={isSpeakMode ? 'Stop voice mode' : 'Speak to Avy'}
-              >
-                <span className={styles.speakWave} aria-hidden="true">
-                  <span className={styles.speakWaveBar}></span>
-                  <span className={styles.speakWaveBar}></span>
-                  <span className={styles.speakWaveBar}></span>
-                  <span className={styles.speakWaveBar}></span>
-                  <span className={styles.speakWaveBar}></span>
-                </span>
-                <span className={styles.speakBtnText}>{isSpeakMode ? 'Stop' : 'Speak'}</span>
-              </button>
-            </div>
-          )}
         </div>
       </div>
 

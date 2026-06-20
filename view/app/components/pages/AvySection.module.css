@@ -122,6 +122,8 @@
 .avyImg {
   position: relative;
   z-index: 1;
+  width: 320px;
+  height: auto;
   object-fit: contain;
   filter: drop-shadow(0 20px 40px rgba(150, 100, 255, 0.3));
 }

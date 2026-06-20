@@ -156,9 +156,10 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                     <div className={styles.drinkFlipCardFront}>
                       <div className={styles.drinkFlipCardImgWrap}>
                         <img
-                          src={`/img/bubble_teas/${resolvedId}.jpg`}
+                          src={mongoData?.image || `/img/bubble_teas/${resolvedId}.jpg`}
                           alt={drink.name}
                           className={styles.drinkFlipCardImg}
+                          onError={(e) => { e.currentTarget.src = "/img/bubble_teas/b001.jpg"; }}
                         />
                       </div>
                       <div className={styles.drinkFlipCardName}>{drink.name}</div>

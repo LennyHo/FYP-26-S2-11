@@ -104,7 +104,11 @@ export function useChatApi({
           reader.onerror = reject;
           reader.readAsDataURL(blob);
         });
-        const photoChip = `<span style="display:inline-flex;align-items:center;gap:8px;background:#f7eaf5;border:1.5px solid rgba(171,28,110,0.28);border-radius:10px;padding:5px 12px 5px 5px;"><span style="position:relative;display:inline-block;width:38px;height:38px;flex-shrink:0;"><img src="${img.previewUrl}" alt="" style="width:38px;height:38px;border-radius:7px;object-fit:cover;display:block;border:1.5px solid rgba(171,28,110,0.30);" /><span style="position:absolute;bottom:2px;right:2px;background:rgba(171,28,110,0.80);border-radius:4px;padding:2px 3px;font-size:9px;line-height:1;color:#fff;">&#128247;</span></span><span style="font-size:0.73rem;color:#7b1254;font-weight:600;white-space:nowrap;">Photo attached</span></span>`;
+        // Create a tiny thumbnail data URL so the chip survives page reloads
+        // (blob: URLs are session-only and break on refresh)
+        const thumbDataUrl = await createThumbnail(blob);
+        const thumbSrc = thumbDataUrl || `data:${mimeType};base64,${base64}`;
+        const photoChip = `<span style="display:inline-flex;align-items:center;gap:8px;background:#f7eaf5;border:1.5px solid rgba(171,28,110,0.28);border-radius:10px;padding:5px 12px 5px 5px;"><span style="position:relative;display:inline-block;width:38px;height:38px;flex-shrink:0;"><img src="${thumbSrc}" alt="" style="width:38px;height:38px;border-radius:7px;object-fit:cover;display:block;border:1.5px solid rgba(171,28,110,0.30);" /><span style="position:absolute;bottom:2px;right:2px;background:rgba(171,28,110,0.80);border-radius:4px;padding:2px 3px;font-size:9px;line-height:1;color:#fff;">&#128247;</span></span><span style="font-size:0.73rem;color:#7b1254;font-weight:600;white-space:nowrap;">Photo attached</span></span>`;
         const userBubbleText = messageText.trim()
           ? `${photoChip}<div style="margin-top:6px;">${messageText.trim()}</div>`
           : photoChip;
@@ -214,6 +218,26 @@ export function useChatApi({
   }
 
   return { isLoading, sendMessage, sendOverlayMessage };
+}
+
+// ── Thumbnail helper ────────────────────────────────────────────────────────
+
+function createThumbnail(blob: Blob, maxPx = 48): Promise<string> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(maxPx / img.width, maxPx / img.height, 1);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
+    img.src = url;
+  });
 }
 
 // ── Cart sync (extracted for clarity) ──────────────────────────────────────
