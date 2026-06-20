@@ -4,22 +4,36 @@ import Image from 'next/image';
 import styles from './AvySection.module.css';
 
 const FEATURES = [
-  { label: 'Just talk to her', desc: "Craving taro? Less sugar? Avy gets it. No tapping through menus." },
-  { label: "She's got your back", desc: "Your faves are saved. Reorder in seconds without starting from scratch." },
-  { label: 'Always around', desc: "Skip the queue, skip the wait. Avy's here whenever the craving hits." },
+  {
+    label: 'Say it, get it',
+    desc: "Describe your craving — Avy searches the whole menu and finds your match instantly. No browsing, no scrolling.",
+  },
+  {
+    label: 'Remembers your taste',
+    desc: "Your sugar level, your go-to topping, your usual order — Avy keeps it all ready for next time.",
+  },
+  {
+    label: 'No queue, no wait',
+    desc: "Place your order any time in seconds. Avy's always on — even when the line isn't.",
+  },
 ];
 
 export default function AvySection() {
   return (
     <section className={styles.section}>
+      {/* Background decorative elements */}
+      <div className={styles.blobTopRight} />
+      <div className={styles.blobBottomLeft} />
+      <div className={styles.gridOverlay} />
+
       <div className={styles.inner}>
         <div className={styles.copy}>
-          <p className={styles.eyebrow}>Say hi to Avy</p>
+          <p className={styles.eyebrow}>Your AI Barista</p>
           <h2 className={styles.headline}>
-            Skip the menu.<br />chat with Her.
+            Order in seconds.<br />Talk to Avy.
           </h2>
           <p className={styles.sub}>
-            Just drop Avy a message and she'll take it from there.
+            Tell Avy what you're in the mood for — she finds the perfect drink, remembers your preferences, and places your order without you lifting a finger.
           </p>
 
           <ul className={styles.featureList}>
@@ -39,11 +53,16 @@ export default function AvySection() {
             className={styles.cta}
             onClick={() => window.dispatchEvent(new CustomEvent('openAvyChat'))}
           >
-            CHAT WITH AVY
+            Talk to Avy
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
 
         <div className={styles.visual}>
+          <div className={styles.ringOuter} />
+          <div className={styles.ringInner} />
           <div className={styles.avyGlow} />
           <Image
             src="/avy_flying.png"
