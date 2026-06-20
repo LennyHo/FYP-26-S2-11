@@ -2,7 +2,7 @@
   position: relative;
   border-radius: 24px;
   overflow: hidden;
-  background: linear-gradient(135deg, #0e0520 0%, #1a0535 40%, #0b1030 100%);
+  background: linear-gradient(135deg, #0d0520 0%, #1a0640 40%, #0a0118 100%);
   box-shadow: 0 8px 48px rgba(0, 0, 0, 0.32);
 }
 
@@ -10,7 +10,7 @@
 .gridOverlay {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(180, 130, 255, 0.18) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(139, 92, 246, 0.18) 1px, transparent 1px);
   background-size: 28px 28px;
   pointer-events: none;
   z-index: 0;
@@ -24,7 +24,7 @@
   width: 380px;
   height: 380px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(140, 80, 255, 0.1) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, transparent 68%);
   filter: blur(40px);
   pointer-events: none;
   z-index: 0;
@@ -38,7 +38,7 @@
   width: 280px;
   height: 280px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(80, 120, 255, 0.08) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(109, 40, 217, 0.15) 0%, transparent 68%);
   filter: blur(40px);
   pointer-events: none;
   z-index: 0;
@@ -105,7 +105,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #c9a8ff;
+  background: #8b5cf6;
   margin-top: 6px;
 }
 
@@ -123,13 +123,13 @@
   margin: 0;
 }
 
-/* CTA button — matches Avy's purple palette */
+/* CTA button — purple */
 .cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #c9a8ff;
-  color: #1a0535;
+  background: #7c3aed;
+  color: #fff;
   font-weight: 700;
   font-size: 0.85rem;
   letter-spacing: 0.06em;
@@ -139,12 +139,11 @@
   border: none;
   width: fit-content;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition: background 0.18s ease;
 }
 
 .cta:hover {
-  background: #b68fff;
-  color: #0e0520;
+  background: #6d28d9;
 }
 
 /* Visual column */
