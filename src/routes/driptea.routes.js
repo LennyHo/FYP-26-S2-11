@@ -577,13 +577,31 @@ router.patch("/menu-items/:id/status", async (req, res, next) => {
     if (!allowedStatuses.has(status)) {
       return res.status(400).json({ ok: false, message: "status must be 'active' or 'inactive'" });
     }
+    const updateFields = status === "inactive" ? { status, isNewArrival: false } : { status };
     const item = await MenuItem.findOneAndUpdate(
       { $or: [{ itemId: req.params.id }, ...(Types.ObjectId.isValid(req.params.id) ? [{ _id: new Types.ObjectId(req.params.id) }] : [])] },
-      { $set: { status } },
+      { $set: updateFields },
       { new: true }
     ).lean();
     if (!item) return res.status(404).json({ ok: false, message: "Menu item not found" });
     res.json({ ok: true, data: { id: item.itemId, mongoId: String(item._id), status: item.status } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/menu-items/:id/new-arrival", async (req, res, next) => {
+  try {
+    await getPreparedDb();
+    const query = { $or: [{ itemId: req.params.id }, ...(Types.ObjectId.isValid(req.params.id) ? [{ _id: new Types.ObjectId(req.params.id) }] : [])] };
+    const current = await MenuItem.findOne(query).lean();
+    if (!current) return res.status(404).json({ ok: false, message: "Menu item not found" });
+    const item = await MenuItem.findOneAndUpdate(
+      query,
+      { $set: { isNewArrival: !current.isNewArrival } },
+      { new: true }
+    ).lean();
+    res.json({ ok: true, data: { id: item.itemId, mongoId: String(item._id), name: item.name, category: item.category, price: item.price, description: item.description, tags: item.tags, status: item.status, isNewArrival: item.isNewArrival } });
   } catch (error) {
     next(error);
   }

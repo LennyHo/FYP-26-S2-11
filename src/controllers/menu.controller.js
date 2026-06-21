@@ -188,9 +188,14 @@ async function updateMenuItemStatus(req, res) {
       : { itemId: id };
 
     // This lets the dashboard hide/show drinks without deleting menu data.
+    // When deactivating, also clear isNewArrival so the DB stays consistent.
+    const updateFields = status === "inactive"
+      ? { status, isNewArrival: false }
+      : { status };
+
     const item = await MenuItem.findOneAndUpdate(
       query,
-      { $set: { status } },
+      { $set: updateFields },
       { new: true, runValidators: true }
     );
 
