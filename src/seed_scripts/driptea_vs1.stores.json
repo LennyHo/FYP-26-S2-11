@@ -1,0 +1,36 @@
+[
+  {
+    "_id": { "$oid": "6b2fcc1a3e5d9f0a14b7e001" },
+    "storeCode": "DT-001",
+    "name": "DripTea Orchard",
+    "address": "313 Orchard Road, #B2-01, Singapore 238895",
+    "lat": 1.3006,
+    "lng": 103.8389,
+    "phone": "+65 6123 4567",
+    "openingHours": {
+      "weekday": "10:00 – 22:00",
+      "weekend": "09:00 – 23:00"
+    },
+    "status": "active",
+    "createdAt": { "$date": "2026-06-01T08:00:00.000Z" },
+    "updatedAt": { "$date": "2026-06-01T08:00:00.000Z" },
+    "__v": 0
+  },
+  {
+    "_id": { "$oid": "6b2fcc1a3e5d9f0a14b7e002" },
+    "storeCode": "DT-002",
+    "name": "DripTea Jurong East",
+    "address": "50 Jurong Gateway Road, #03-12 JEM, Singapore 608549",
+    "lat": 1.3336,
+    "lng": 103.7436,
+    "phone": "+65 6234 5678",
+    "openingHours": {
+      "weekday": "10:00 – 22:00",
+      "weekend": "09:00 – 23:00"
+    },
+    "status": "active",
+    "createdAt": { "$date": "2026-06-01T08:00:00.000Z" },
+    "updatedAt": { "$date": "2026-06-01T08:00:00.000Z" },
+    "__v": 0
+  }
+]

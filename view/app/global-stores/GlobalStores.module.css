@@ -1,15 +1,170 @@
-.container {
-  padding: 2rem;
-  max-width: 800px;
+/* ─── Page wrapper ──────────────────────────────── */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #fffaf5;
+}
+
+/* ─── Hero ──────────────────────────────────────── */
+.hero {
+  background: var(--background, #fffaf5);
+  border-bottom: 1px solid rgba(200, 175, 148, 0.25);
+  padding: 56px 40px 48px;
+  text-align: center;
+}
+
+.heroEyebrow {
+  color: #F43B03;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.heroHeadline {
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 900;
+  color: #0a1832;
+  margin: 0 0 14px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.heroSub {
+  font-size: 1rem;
+  color: #555;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ─── Content area ──────────────────────────────── */
+.content {
+  max-width: 1100px;
   margin: 0 auto;
+  padding: 48px 32px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.heading {
-  font-size: 2.2rem;
-  margin-bottom: 1.2rem;
+/* ─── Map panel ─────────────────────────────────── */
+.mapPanel {
+  width: 100%;
+  height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(2, 87, 173, 0.14);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
 }
 
-.text {
-  font-size: 1.1rem;
-  color: #333;
+/* ─── Store cards ───────────────────────────────── */
+.cardsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.card {
+  border-radius: 20px;
+  border: 1px solid rgba(200, 175, 148, 0.3);
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+  transform: translateY(-2px);
+}
+
+.cardAccent {
+  height: 5px;
+  width: 100%;
+}
+
+.card_blue .cardAccent { background: #0257AD; }
+.card_red  .cardAccent { background: #F43B03; }
+
+.card_blue .infoIcon { stroke: #0257AD; }
+.card_red  .infoIcon { stroke: #F43B03; }
+
+.cardBody {
+  padding: 28px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cardCode {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin: 0;
+}
+
+.cardName {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0a1832;
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* ─── Info rows ─────────────────────────────────── */
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.5;
+}
+
+.infoIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.hoursBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoRowIndented {
+  padding-left: 26px;
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.5;
+}
+
+/* ─── Responsive ────────────────────────────────── */
+@media (max-width: 680px) {
+  .hero {
+    padding: 72px 24px 56px;
+  }
+
+  .content {
+    padding: 32px 20px 60px;
+  }
+
+  .cardsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .mapPanel {
+    height: 300px;
+  }
 }

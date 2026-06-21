@@ -117,7 +117,7 @@
 .header {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 1100;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
