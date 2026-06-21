@@ -90,6 +90,7 @@ export interface Message {
     recommendedNutrition: { sugar: number; calories: number; grade: string } | null;
     cartItems: { name: string; quantity: number; lineTotal: number }[];
     total: number;
+    lang?: string;
   } | null;
   cartUpdate?: {
     message: string;

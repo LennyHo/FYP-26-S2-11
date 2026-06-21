@@ -16,19 +16,64 @@ interface OrderReceiptData {
   recommendedNutrition: NutritionData | null;
   cartItems: { name: string; quantity: number; lineTotal: number }[];
   total: number;
+  lang?: string;
 }
 
 interface Props {
   orderReceipt: OrderReceiptData;
 }
 
+const RECEIPT_LABELS: Record<string, Record<string, string>> = {
+  ms: {
+    Regular: "Biasa", Large: "Besar",
+    "Normal Ice": "Ais Normal", "Less Ice": "Kurang Ais", "No Ice": "Tanpa Ais", Hot: "Panas",
+    "Normal Sweet": "Normal Manis",
+    "0% Sugar": "0% Gula", "25% Sugar": "25% Gula", "50% Sugar": "50% Gula", "100% Sugar": "100% Gula",
+    "Tapioca Pearls": "Mutiara", "Aloe Vera": "Aloe Vera", "Cheese Foam": "Busa Keju",
+    "No toppings": "Tanpa topping",
+    Sugar: "Gula", Cal: "Kal", Grade: "Gred",
+    Total: "Jumlah",
+    "Thank you for your order!": "Terima kasih atas pesanan anda!",
+    "View Cart": "Lihat Troli",
+    "Proceed to Checkout": "Teruskan Pembayaran",
+    "Want to reduce your sugar intake?": "Ingin mengurangkan pengambilan gula anda?",
+    "Based on your current customization, here's how switching to 25% sugar would look.":
+      "Berdasarkan pilihan semasa anda, begini jika anda beralih kepada 25% gula.",
+    Current: "Semasa", "Reduce to 25%": "Kurang kepada 25%",
+    "g sugar": "g gula",
+  },
+  zh: {
+    Regular: "中杯", Large: "大杯",
+    "Normal Ice": "正常冰", "Less Ice": "少冰", "No Ice": "去冰", Hot: "热饮",
+    "Normal Sweet": "正常甜",
+    "0% Sugar": "0%糖", "25% Sugar": "25%糖", "50% Sugar": "50%糖", "100% Sugar": "100%糖",
+    "Tapioca Pearls": "珍珠", "Aloe Vera": "芦荟", "Cheese Foam": "芝士泡沫",
+    "No toppings": "不加配料",
+    Sugar: "糖分", Cal: "卡路里", Grade: "营养等级",
+    Total: "总计",
+    "Thank you for your order!": "感谢您的订购！",
+    "View Cart": "查看购物车",
+    "Proceed to Checkout": "前往结账",
+    "Want to reduce your sugar intake?": "想要减少糖分摄入吗？",
+    "Based on your current customization, here's how switching to 25% sugar would look.":
+      "根据您当前的选择，以下是切换至25%糖会有何变化。",
+    Current: "当前", "Reduce to 25%": "减少至25%",
+    "g sugar": "g糖",
+  },
+};
+
+function tR(label: string, lang?: string): string {
+  if (!lang || lang === "en") return label;
+  return RECEIPT_LABELS[lang]?.[label] ?? label;
+}
+
 export default function OrderReceiptCard({ orderReceipt }: Props) {
-  const { drink, customization, nutrition, recommendedNutrition, cartItems, total } = orderReceipt;
+  const { drink, customization, nutrition, recommendedNutrition, cartItems, total, lang } = orderReceipt;
 
   const toppingStr =
     customization.toppings.length > 0
-      ? customization.toppings.join(", ")
-      : "No toppings";
+      ? customization.toppings.map((t) => tR(t, lang)).join(", ")
+      : tR("No toppings", lang);
 
   const grade = nutrition?.grade?.toUpperCase() ?? null;
   const recGrade = recommendedNutrition?.grade?.toUpperCase() ?? null;
@@ -41,11 +86,11 @@ export default function OrderReceiptCard({ orderReceipt }: Props) {
         <strong>{drink.name}</strong> — S$ {Number(drink.price).toFixed(2)}
       </div>
       <div className={styles.customLine}>
-        {customization.size} · {customization.ice} · {customization.sugar} · {toppingStr}
+        {tR(customization.size, lang)} · {tR(customization.ice, lang)} · {tR(customization.sugar, lang)} · {toppingStr}
       </div>
       {nutrition && (
         <div className={styles.nutriLine}>
-          Sugar: {nutrition.sugar}g · Cal: {nutrition.calories} kcal · Grade {grade}
+          {tR("Sugar", lang)}: {nutrition.sugar}g · {tR("Cal", lang)}: {nutrition.calories} kcal · {tR("Grade", lang)} {grade}
         </div>
       )}
 
@@ -59,25 +104,25 @@ export default function OrderReceiptCard({ orderReceipt }: Props) {
             </div>
           ))}
           <div className={styles.totalRow}>
-            <span>Total</span>
+            <span>{tR("Total", lang)}</span>
             <span>S$ {Number(total).toFixed(2)}</span>
           </div>
         </div>
       )}
 
-      <p className={styles.thanks}>Thank you for your order! 🧋</p>
+      <p className={styles.thanks}>{tR("Thank you for your order!", lang)} 🧋</p>
 
       {/* Health widget — Grade C or D only, shown after the thank-you line */}
       {isUnhealthy && nutrition && recommendedNutrition && recGrade && (
         <div className={styles.healthWidget}>
-          <div className={styles.healthTitle}>Want to reduce your sugar intake?</div>
+          <div className={styles.healthTitle}>{tR("Want to reduce your sugar intake?", lang)}</div>
           <div className={styles.healthSubtitle}>
-            Based on your current customization, here&apos;s how switching to 25% sugar would look.
+            {tR("Based on your current customization, here's how switching to 25% sugar would look.", lang)}
           </div>
           <div className={styles.healthLabelRow}>
-            <span className={styles.healthLabel}>Current</span>
+            <span className={styles.healthLabel}>{tR("Current", lang)}</span>
             <span />
-            <span className={styles.healthLabel}>Reduce to 25%</span>
+            <span className={styles.healthLabel}>{tR("Reduce to 25%", lang)}</span>
           </div>
           <div className={styles.healthImagesRow}>
             <Image
@@ -100,9 +145,9 @@ export default function OrderReceiptCard({ orderReceipt }: Props) {
             />
           </div>
           <div className={styles.healthSugarRow}>
-            <span className={styles.sugarCurrent}>{nutrition.sugar}g sugar</span>
+            <span className={styles.sugarCurrent}>{nutrition.sugar}{tR("g sugar", lang)}</span>
             <span />
-            <span className={styles.sugarRecommended}>{recommendedNutrition.sugar}g sugar</span>
+            <span className={styles.sugarRecommended}>{recommendedNutrition.sugar}{tR("g sugar", lang)}</span>
           </div>
         </div>
       )}
@@ -113,14 +158,14 @@ export default function OrderReceiptCard({ orderReceipt }: Props) {
           className={styles.btnSecondary}
           onClick={() => (window as any).handleCart?.()}
         >
-          View Cart
+          {tR("View Cart", lang)}
         </button>
         <button
           type="button"
           className={styles.btnPrimary}
           onClick={() => (window as any).handleCheckout?.()}
         >
-          Proceed to Checkout
+          {tR("Proceed to Checkout", lang)}
         </button>
       </div>
     </div>

@@ -214,6 +214,13 @@ function hasCustomizationWords(msg) {
     return ORDER_CUSTOMIZATION_WORDS.some((w) => msg.includes(w));
 }
 
+function detectMessageLanguage(message) {
+    const msg = String(message || "");
+    if (/[一-鿿]/.test(msg)) return "zh";
+    if (/\b(nak|satu|dua|mahu|boleh|saya|aku|dengan|yang|dan|tak|ada|tolong|bagi|beli|letak|tambah|kurang|tanpa|besar|biasa|ais|gula|saiz|dan|keju|mutiara)\b/i.test(msg)) return "ms";
+    return "en";
+}
+
 function parseCustomizationFromMessage(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -2070,6 +2077,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                             : null,
                     cartItems: allCartItems.map(i => ({ name: i.name, quantity: i.quantity, lineTotal: i.lineTotal })),
                     total: cartTotal,
+                    lang: detectMessageLanguage(safeMessage),
                 },
             };
         }
@@ -2153,6 +2161,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                     lineTotal: i.lineTotal,
                 })),
                 total: cartTotal,
+                lang: detectMessageLanguage(safeMessage),
             },
         };
 
@@ -2779,6 +2788,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 lineTotal: i.lineTotal,
             })),
             total: cartTotal,
+            lang: detectMessageLanguage(safeMessage),
         };
     }
 
