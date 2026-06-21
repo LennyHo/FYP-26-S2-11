@@ -42,6 +42,16 @@ export function getRandomGreeting() {
   return WELCOME_GREETINGS[Math.floor(Math.random() * WELCOME_GREETINGS.length)];
 }
 
+function buildWelcomeGreeting() {
+  const user = getStoredUser();
+  const randomPrompt = getRandomGreeting();
+  if (user?.fullName) {
+    const firstName = user.fullName.trim().split(/\s+/)[0];
+    return `Hello, ${firstName}!\n${randomPrompt}`;
+  }
+  return randomPrompt;
+}
+
 export function useConversation() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState('');
@@ -50,7 +60,7 @@ export function useConversation() {
   const [welcomeAnimationKey, setWelcomeAnimationKey] = useState(0);
 
   useEffect(() => {
-    setWelcomeGreeting(getRandomGreeting());
+    setWelcomeGreeting(buildWelcomeGreeting());
   }, []);
 
   function loadConversationFromStorage() {
@@ -67,10 +77,10 @@ export function useConversation() {
       try {
         setMessages(JSON.parse(savedMessages));
       } catch {
-        setMessages([{ id: Date.now().toString(), text: 'Hello! How can I help you today?', isUser: false }]);
+        setMessages([]);
       }
     } else {
-      setMessages([{ id: Date.now().toString(), text: 'Hello! How can I help you today?', isUser: false }]);
+      setMessages([]);
     }
     setIsInitialized(true);
   }
@@ -84,6 +94,7 @@ export function useConversation() {
   useEffect(() => {
     const handleAuthUpdated = () => {
       loadConversationFromStorage();
+      setWelcomeGreeting(buildWelcomeGreeting());
     };
     window.addEventListener('authUpdated', handleAuthUpdated);
     return () => window.removeEventListener('authUpdated', handleAuthUpdated);
@@ -98,16 +109,11 @@ export function useConversation() {
 
   function restartConversation() {
     const newId = createConversationId();
-    const greetingMsg: Message = {
-      id: Date.now().toString(),
-      text: "Hello! I'm Avy, your DripTea companion. How can I help you today?",
-      isUser: false,
-    };
-    setWelcomeGreeting(getRandomGreeting());
+    setWelcomeGreeting(buildWelcomeGreeting());
     setWelcomeAnimationKey(k => k + 1);
     setConversationId(newId);
-    setMessages([greetingMsg]);
-    localStorage.setItem(getMessagesKey(), JSON.stringify([greetingMsg]));
+    setMessages([]);
+    localStorage.setItem(getMessagesKey(), JSON.stringify([]));
     localStorage.setItem(getConversationKey(), newId);
   }
 
