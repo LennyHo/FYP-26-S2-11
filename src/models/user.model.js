@@ -10,10 +10,10 @@
 //      client-side: JWT cleared from localStorage — no model call
 //
 // #14  Reset Password
-//      View: forgot-password/page.tsx → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js (this file)
+//      View: forgot-password/page.tsx → Route: auth.routes.js → Ctrl: user.controller.js → Model: user.model.js (this file)
 //
 // #191 Create User Account (Customer)
-//      View: register/page.tsx → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js (this file)
+//      View: register/page.tsx → Route: auth.routes.js → Ctrl: user.controller.js → Model: user.model.js (this file)
 //
 // #246 Update Account (Customer)
 //      View: profile/page.tsx → Route: user.routes.js → Model: user.model.js (this file)

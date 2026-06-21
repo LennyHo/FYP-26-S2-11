@@ -4,7 +4,7 @@
 //      View: login/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
 //
 // #14  Reset Password
-//      View: forgot-password/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
+//      View: forgot-password/page.tsx → Route: auth.routes.js (this file) → Ctrl: user.controller.js → Model: user.model.js
 //
 // #22  Login (Customer)
 //      View: login/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
@@ -13,10 +13,11 @@
 //      View: login/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
 //
 // #191 Create User Account (Customer)
-//      View: register/page.tsx → Route: auth.routes.js (this file) → Ctrl: auth.controller.js → Model: user.model.js
+//      View: register/page.tsx → Route: auth.routes.js (this file) → Ctrl: user.controller.js → Model: user.model.js
 
 const express = require("express");
 const authController = require("../controllers/auth.controller");
+const userController = require("../controllers/user.controller");
 
 const router = express.Router();
 
@@ -26,11 +27,11 @@ router.get("/auth/test", (req, res) => {
 });
 
 // #191 Register | #11/#22/#37 Login
-router.post("/auth/register", authController.register);
+router.post("/auth/register", userController.register);
 router.post("/auth/login", authController.login);
 
 // #14 Reset Password
-router.post("/auth/reset-password", authController.resetPassword);
-router.patch("/auth/change-password", authController.changePassword);
+router.post("/auth/reset-password", userController.resetPassword);
+router.patch("/auth/change-password", userController.changePassword);
 
 module.exports = router;
