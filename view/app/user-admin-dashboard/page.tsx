@@ -163,6 +163,8 @@ export default function UserAdminDashboardPage() {
     );
   }, [searchQuery, users]);
 
+  const [viewingRole, setViewingRole] = useState<typeof roleOptions[number] | null>(null);
+
   const activeUsers = users.filter(user => user.status === 'active').length;
   const userTypeCount = new Set(users.map(user => user.role)).size;
 
@@ -357,37 +359,61 @@ export default function UserAdminDashboardPage() {
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>User Type</th>
+                    <th>Profile</th>
                     <th>Status</th>
+                    <th>Last Updated</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan={5} className={styles.noResults}>Loading users...</td>
+                  {roleOptions.map(profile => {
+                    const roleUsers = users.filter(u => u.role === profile.value);
+                    const latestDate = roleUsers.reduce<string | undefined>((latest, u) => {
+                      const d = u.updatedAt || u.createdAt;
+                      if (!d) return latest;
+                      return !latest || d > latest ? d : latest;
+                    }, undefined);
+                    return (
+                    <tr key={profile.value}>
+                      <td><span className={styles.badge}>{profile.label}</span></td>
+                      <td><span className={`${styles.status} ${styles.active}`}>Active</span></td>
+                      <td>{formatDate(latestDate)}</td>
+                      <td className={styles.actions}>
+                        <button
+                          type="button"
+                          className={styles.btnSmall}
+                          title="View"
+                          aria-label={`View ${profile.label}`}
+                          onClick={() => setViewingRole(profile)}
+                        >
+                          <FaEye />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.btnSmall}
+                          title={`Create ${profile.label}`}
+                          aria-label={`Create ${profile.label}`}
+                          onClick={() => {
+                            setFormData({ ...emptyForm(), role: profile.value });
+                            setEditingUser(null);
+                            setFormMode('create');
+                          }}
+                        >
+                          <FaPen />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.btnSmall}
+                          disabled
+                          title="Cannot suspend a profile type"
+                          aria-label={`Suspend ${profile.label}`}
+                        >
+                          <FaBan />
+                        </button>
+                      </td>
                     </tr>
-                  ) : filteredUsers.length > 0 ? (
-                    filteredUsers.map(user => (
-                      <tr key={user.id}>
-                        <td>{user.fullName}</td>
-                        <td>{user.email}</td>
-                        <td><span className={styles.badge}>{roleLabel(user.role)}</span></td>
-                        <td>
-                          <span className={`${styles.status} ${styles[user.status]}`}>
-                            {statusLabel(user.status)}
-                          </span>
-                        </td>
-                        {renderActions(user)}
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className={styles.noResults}>No profiles found</td>
-                    </tr>
-                  )}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -409,6 +435,7 @@ export default function UserAdminDashboardPage() {
                   <tr>
                     <th>Username</th>
                     <th>Email</th>
+                    <th>User Type</th>
                     <th>Account Status</th>
                     <th>Last Updated</th>
                     <th>Actions</th>
@@ -417,13 +444,14 @@ export default function UserAdminDashboardPage() {
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan={5} className={styles.noResults}>Loading users...</td>
+                      <td colSpan={6} className={styles.noResults}>Loading users...</td>
                     </tr>
                   ) : filteredUsers.length > 0 ? (
                     filteredUsers.map(user => (
                       <tr key={user.id}>
-                        <td>{usernameFromEmail(user.email)}</td>
+                        <td>{user.fullName}</td>
                         <td>{user.email}</td>
+                        <td><span className={styles.badge}>{roleLabel(user.role)}</span></td>
                         <td>
                           <span className={`${styles.status} ${styles[user.status]}`}>
                             {statusLabel(user.status)}
@@ -435,7 +463,7 @@ export default function UserAdminDashboardPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className={styles.noResults}>No accounts found</td>
+                      <td colSpan={6} className={styles.noResults}>No accounts found</td>
                     </tr>
                   )}
                 </tbody>
@@ -482,6 +510,43 @@ export default function UserAdminDashboardPage() {
                   }}
                 >
                   Edit User
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingRole && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="view-role-title">
+          <div className={styles.modal}>
+            <div className={styles.modalAccent} />
+            <div className={styles.modalBody}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalAvatar}>👤</div>
+                <div className={styles.modalHeaderText}>
+                  <h2 id="view-role-title">{viewingRole.label} Profile</h2>
+                  <p>{users.filter(u => u.role === viewingRole.value).length} user(s)</p>
+                </div>
+                <button type="button" className={styles.iconButton} onClick={() => setViewingRole(null)} aria-label="Close">
+                  <FaTimes />
+                </button>
+              </div>
+              <dl className={styles.detailList}>
+                {users.filter(u => u.role === viewingRole.value).length === 0 ? (
+                  <div><dd>No users with this profile yet.</dd></div>
+                ) : (
+                  users.filter(u => u.role === viewingRole.value).map(u => (
+                    <div key={u.id}>
+                      <dt>{u.fullName}</dt>
+                      <dd>{u.email} — <span className={`${styles.status} ${styles[u.status]}`}>{statusLabel(u.status)}</span></dd>
+                    </div>
+                  ))
+                )}
+              </dl>
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.secondaryButton} onClick={() => setViewingRole(null)}>
+                  Close
                 </button>
               </div>
             </div>
