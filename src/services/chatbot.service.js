@@ -1604,33 +1604,50 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         if (drinks.length > 0) {
             const msg = safeMessage.toLowerCase();
+            const hasChinese = /[一-鿿]/.test(safeMessage);
+            const hasMalay = /\b(nak|satu|mahu|ada|boleh|apa|yang|sedap|cadangan|rekomen)\b/i.test(safeMessage);
+
             let intro;
-            if (msg.includes("choco") || msg.includes("chocolate") || msg.includes("cocoa")) {
-                intro = "Great pick — here are our chocolate drinks!";
-            } else if (msg.includes("matcha")) {
-                intro = "Love that choice! Here are our matcha options:";
-            } else if (msg.includes("strawberry") || msg.includes("cranberry")) {
-                intro = "Something fruity — nice! Here's what we have:";
-            } else if (msg.includes("taro")) {
-                intro = "Taro fan! Here's what we've got for you:";
-            } else if (msg.includes("milo")) {
-                intro = "A local classic! Here's our Milo option:";
-            } else if (msg.includes("jasmine")) {
-                intro = "Lovely choice — here are our jasmine drinks:";
-            } else if (msg.includes("oolong")) {
-                intro = "Great taste — here are our oolong options:";
-            } else if (msg.includes("osmanthus")) {
-                intro = "A floral favourite — here's what we have:";
-            } else if (msg.includes("da hong bao")) {
-                intro = "A premium pick — here's our Da Hong Bao option:";
-            } else if (msg.includes("milk tea") || msg.includes("milktea")) {
-                intro = "Classic milk tea — here's our range:";
-            } else if (msg.includes("frappe") || msg.includes("slush")) {
-                intro = "Something icy and refreshing — here's what we've got:";
-            } else if (msg.includes("latte")) {
-                intro = "Here are our latte options:";
+            if (hasChinese) {
+                if (msg.includes("草莓") || msg.includes("蔓越莓")) intro = "为您推荐以下水果味饮品：";
+                else if (msg.includes("抹茶"))                       intro = "以下是我们的抹茶系列：";
+                else if (msg.includes("芋头"))                       intro = "芋头爱好者！以下是我们的芋头饮品：";
+                else if (msg.includes("巧克力") || msg.includes("可可")) intro = "以下是我们的巧克力饮品：";
+                else if (msg.includes("奶茶"))                       intro = "以下是我们的奶茶系列：";
+                else                                                 intro = "以下是一些您可能会喜欢的饮品：";
+            } else if (hasMalay) {
+                if (msg.includes("strawberi"))  intro = "Berikut adalah pilihan minuman berperisa strawberi kami:";
+                else if (msg.includes("coklat")) intro = "Berikut adalah minuman coklat kami:";
+                else if (msg.includes("matcha")) intro = "Berikut adalah pilihan matcha kami:";
+                else                             intro = "Berikut adalah beberapa minuman yang mungkin anda suka:";
             } else {
-                intro = "Here are some drinks you might love:";
+                if (msg.includes("choco") || msg.includes("chocolate") || msg.includes("cocoa")) {
+                    intro = "Great pick — here are our chocolate drinks!";
+                } else if (msg.includes("matcha")) {
+                    intro = "Love that choice! Here are our matcha options:";
+                } else if (msg.includes("strawberry") || msg.includes("cranberry")) {
+                    intro = "Something fruity — nice! Here's what we have:";
+                } else if (msg.includes("taro")) {
+                    intro = "Taro fan! Here's what we've got for you:";
+                } else if (msg.includes("milo")) {
+                    intro = "A local classic! Here's our Milo option:";
+                } else if (msg.includes("jasmine")) {
+                    intro = "Lovely choice — here are our jasmine drinks:";
+                } else if (msg.includes("oolong")) {
+                    intro = "Great taste — here are our oolong options:";
+                } else if (msg.includes("osmanthus")) {
+                    intro = "A floral favourite — here's what we have:";
+                } else if (msg.includes("da hong bao")) {
+                    intro = "A premium pick — here's our Da Hong Bao option:";
+                } else if (msg.includes("milk tea") || msg.includes("milktea")) {
+                    intro = "Classic milk tea — here's our range:";
+                } else if (msg.includes("frappe") || msg.includes("slush")) {
+                    intro = "Something icy and refreshing — here's what we've got:";
+                } else if (msg.includes("latte")) {
+                    intro = "Here are our latte options:";
+                } else {
+                    intro = "Here are some drinks you might love:";
+                }
             }
 
             const reply = intro;
