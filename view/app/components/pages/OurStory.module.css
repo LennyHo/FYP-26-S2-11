@@ -667,21 +667,76 @@
 
 /* ─── Timeline panel ────────────────────────────── */
 .timelinePanel {
-  background: var(--background, #fffaf5);
-  background-image: radial-gradient(circle, rgba(2, 87, 173, 0.065) 1px, transparent 1px);
-  background-size: 22px 22px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #010919 0%, #011840 45%, #040d1f 100%);
   border-radius: 24px;
-  border: 1px solid rgba(200, 175, 148, 0.4);
-  box-shadow: 0 4px 18px rgba(59, 39, 26, 0.05);
+  border: 1px solid rgba(2, 87, 173, 0.22);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.28);
   padding: 48px 52px;
+}
+
+/* ─── Timeline galaxy layers ─────────────────────── */
+/* Tiling starfield — covers any panel height automatically */
+.tlStarfield {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Three overlapping tile grids at prime-ish sizes so stars never line up */
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.30) 1px, transparent 1px),
+    radial-gradient(circle, rgba(200,220,255,0.24) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,240,200,0.20) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.11) 0.5px, transparent 0.5px),
+    radial-gradient(circle, rgba(200,220,255,0.09) 0.5px, transparent 0.5px),
+    radial-gradient(circle, rgba(255,240,200,0.08) 0.5px, transparent 0.5px);
+  background-size:
+    60px 65px, 88px 82px, 114px 108px,
+    48px 52px, 76px 68px, 102px 96px;
+  background-position:
+    9px 14px, 24px 39px, 57px 8px,
+    19px 9px, 43px 29px, 72px 48px;
+}
+
+.tlStarsBright {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Three bright-star grids at large tile sizes so they feel sparse */
+  animation: twinkleBright 4s ease-in-out infinite;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.65) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(255,245,210,0.58) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(200,225,255,0.62) 1px, transparent 1px);
+  background-size: 188px 200px, 224px 240px, 272px 232px;
+  background-position: 29px 46px, 84px 112px, 158px 70px;
+}
+
+.tlNebula {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 38% at 18% 68%, rgba(2, 87, 173, 0.09) 0%, transparent 100%),
+    radial-gradient(ellipse 42% 30% at 82% 22%, rgba(244, 59, 3, 0.05) 0%, transparent 100%),
+    radial-gradient(ellipse 60% 42% at 52% 88%, rgba(2, 50, 130, 0.07) 0%, transparent 100%),
+    radial-gradient(ellipse 38% 28% at 72% 60%, rgba(2, 87, 173, 0.06) 0%, transparent 100%),
+    radial-gradient(ellipse 48% 35% at 28% 30%, rgba(244, 59, 3, 0.04) 0%, transparent 100%);
+}
+
+.tlInner {
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── Values panel ──────────────────────────────── */
 .valuesPanel {
-  background: var(--background, #fffaf5);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #010919 0%, #011840 45%, #040d1f 100%);
   border-radius: 24px;
-  border: 1px solid rgba(200, 175, 148, 0.4);
-  box-shadow: 0 4px 18px rgba(59, 39, 26, 0.05);
+  border: 1px solid rgba(2, 87, 173, 0.22);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.28);
   padding: 48px 52px;
 }
 
@@ -693,6 +748,11 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   margin: 0 0 20px;
+}
+
+/* Override eyebrow color inside the dark timeline panel */
+.timelinePanel .sectionEyebrow {
+  color: #F43B03;
 }
 
 /* ─── Timeline spine ────────────────────────────── */
@@ -739,8 +799,8 @@
   background: linear-gradient(
     to right,
     transparent,
-    rgba(2, 87, 173, 0.08) 25%,
-    rgba(2, 87, 173, 0.08) 75%,
+    rgba(255, 255, 255, 0.07) 25%,
+    rgba(255, 255, 255, 0.07) 75%,
     transparent
   );
   pointer-events: none;
@@ -751,8 +811,8 @@
   background: linear-gradient(
     to right,
     transparent,
-    rgba(244, 59, 3, 0.08) 25%,
-    rgba(244, 59, 3, 0.08) 75%,
+    rgba(244, 59, 3, 0.14) 25%,
+    rgba(244, 59, 3, 0.14) 75%,
     transparent
   );
 }
@@ -811,11 +871,11 @@
 /* Large ghost year — sits as background accent behind the text */
 .ghostYear {
   display: block;
-  font-size: clamp(3.2rem, 6vw, 5rem);
+  font-size: clamp(3.8rem, 7vw, 6rem);
   font-weight: 900;
   line-height: 0.85;
-  color: rgba(2, 87, 173, 0.09);
-  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.20);
+  letter-spacing: 0.06em;
   -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
@@ -834,7 +894,7 @@
 
 /* Last milestone ghost year in warm tint */
 .milestone:last-child .ghostYear {
-  color: rgba(244, 59, 3, 0.07);
+  color: rgba(244, 59, 3, 0.22);
 }
 
 /* Year badge pill */
@@ -859,7 +919,7 @@
 .milestoneTitle {
   font-size: 1.2rem;
   font-weight: 800;
-  color: #0a1832;
+  color: #ffffff;
   margin: 0 0 10px;
   line-height: 1.2;
 }
@@ -867,7 +927,7 @@
 .milestoneText {
   font-size: 0.9rem;
   line-height: 1.72;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.62);
   margin: 0;
   max-width: 320px;
 }
@@ -881,7 +941,7 @@
 .valuesHeadline {
   font-size: clamp(1.5rem, 2.8vw, 2rem);
   font-weight: 800;
-  color: #050d1f;
+  color: #ffffff;
   margin: 0 0 28px;
   line-height: 1.15;
 }
@@ -894,21 +954,29 @@
 
 .valueCard {
   border-radius: 20px;
-  border: 1px solid rgba(200, 175, 148, 0.4);
-  background: rgba(255, 250, 245, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   padding: 26px 22px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 4px 16px rgba(59, 39, 26, 0.04);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.valueCard:hover {
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .valueIconWrap {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: rgba(2, 87, 173, 0.07);
-  border: 1px solid rgba(2, 87, 173, 0.14);
+  background: rgba(2, 87, 173, 0.22);
+  border: 1px solid rgba(2, 87, 173, 0.38);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -918,14 +986,14 @@
 .valueTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: #050d1f;
+  color: #ffffff;
   margin: 0;
 }
 
 .valueText {
   font-size: 0.86rem;
   line-height: 1.55;
-  color: #777;
+  color: rgba(255, 255, 255, 0.60);
   margin: 0;
 }
 

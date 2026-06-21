@@ -143,6 +143,10 @@ export default function OurStory() {
 
         {/* Timeline */}
         <div className={styles.timelinePanel}>
+          <div className={styles.tlStarfield} />
+          <div className={styles.tlStarsBright} />
+          <div className={styles.tlNebula} />
+          <div className={styles.tlInner}>
           <p className={styles.sectionEyebrow}>Over the years</p>
           <div className={styles.spine}>
             {TIMELINE.map((item, i) => {
@@ -185,11 +189,15 @@ export default function OurStory() {
               );
             })}
           </div>
+          </div>{/* tlInner */}
         </div>
 
         {/* Values */}
         <div className={styles.valuesPanel}>
-          <p className={styles.sectionEyebrow}>What we stand for</p>
+          <div className={styles.tlStarfield} />
+          <div className={styles.tlStarsBright} />
+          <div className={styles.tlNebula} />
+          <div className={styles.tlInner}>
           <h2 className={styles.valuesHeadline}>Our Values</h2>
           <div className={styles.valuesGrid}>
             {VALUES.map((v) => (
@@ -204,6 +212,7 @@ export default function OurStory() {
               </div>
             ))}
           </div>
+          </div>{/* tlInner */}
         </div>
 
         {/* CTA */}
