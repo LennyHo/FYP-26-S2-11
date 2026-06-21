@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -13,33 +13,17 @@ const COLLECT_STATUSES = new Set(["ready"]);
 
 function formatDate(value?: string) {
   if (!value) return "Not recorded";
-
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Not recorded";
-
-  return date.toLocaleDateString("en-SG", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  });
+  return date.toLocaleDateString("en-SG", { year: "numeric", month: "short", day: "2-digit" });
 }
 
 function formatCustomization(customization?: Record<string, unknown>) {
   if (!customization) return "No customization";
-
-  const toppings = Array.isArray(customization.toppings)
-    ? customization.toppings.join(", ")
-    : "";
-
-  const text = [
-    customization.size,
-    customization.ice,
-    customization.sugar,
-    toppings,
-  ]
+  const toppings = Array.isArray(customization.toppings) ? customization.toppings.join(", ") : "";
+  const text = [customization.size, customization.ice, customization.sugar, toppings]
     .filter(Boolean)
     .join(" · ");
-
   return text || "No customization";
 }
 
@@ -53,6 +37,10 @@ function formatStatus(status?: string) {
 function formatPaymentStatus(status?: string) {
   if (!status) return "Paid";
   return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function totalSpent(orders: DripTeaPurchaseHistoryItem[]) {
+  return orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
 }
 
 export default function PurchaseHistory() {
@@ -72,132 +60,173 @@ export default function PurchaseHistory() {
           setOrders([]);
           return;
         }
-
         const response = await getPurchaseHistory(user.id);
         setOrders(response.data || []);
       } catch (error) {
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : "Unable to load purchase history."
-        );
+        setMessage(error instanceof Error ? error.message : "Unable to load purchase history.");
       } finally {
         setIsLoading(false);
       }
     }
 
     void loadPurchaseHistory();
-
     if (!user) return;
     const timer = window.setInterval(() => void loadPurchaseHistory(), 5000);
     return () => window.clearInterval(timer);
   }, []);
 
-  // Auto-mark pending orders as "ready" once 28 s have elapsed since placement
-  // (8 s phase 1 + 20 s phase 2). Runs on every poll so it catches orders the
-  // customer placed then navigated away from before the tracking timer could fire.
   useEffect(() => {
     const READY_AFTER_MS = 28_000;
     const now = Date.now();
     orders.forEach((order) => {
       if ((order.status || "").toLowerCase() !== "pending") return;
       if (!order.createdAt) return;
-      const age = now - new Date(order.createdAt).getTime();
-      if (age >= READY_AFTER_MS) {
+      if (now - new Date(order.createdAt).getTime() >= READY_AFTER_MS) {
         void updateOrderStatus(order.id, "ready").catch(console.error);
       }
     });
   }, [orders]);
+
+  const activeOrders = orders.filter(o =>
+    ["pending", "preparing", "ready"].includes((o.status || "").toLowerCase())
+  ).length;
 
   return (
     <div className="purchase-page">
       <Header />
 
       <main className="purchase-main">
-        <section className="purchase-card">
-          <div className="purchase-header">
-            <p>{customerName || "Account"}</p>
+
+        {/* Header */}
+        <div className="purchase-header">
+          <div className="purchase-header-top">
+            <div className="purchase-header-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+            </div>
             <h1>Purchase History</h1>
           </div>
+          <p className="purchase-header-sub">{customerName || "Account"}</p>
+        </div>
 
-          {isLoading ? (
-            <p className="purchase-message">Loading purchase history...</p>
-          ) : message ? (
-            <p className="purchase-message">{message}</p>
-          ) : orders.length === 0 ? (
-            <p className="purchase-message">No purchase history found.</p>
-          ) : (
-            <div className="purchase-list">
-              {orders.map((order) => (
-                <article key={order.id} className="purchase-order">
-                  <div className="purchase-order-top">
+        {/* Summary chips */}
+        {!isLoading && !message && orders.length > 0 && (
+          <div className="purchase-summary">
+            <div className="purchase-summary-chip">
+              <strong>{orders.length}</strong> order{orders.length !== 1 ? "s" : ""}
+            </div>
+            <div className="purchase-summary-chip">
+              Total spent <strong>S$ {totalSpent(orders).toFixed(2)}</strong>
+            </div>
+            {activeOrders > 0 && (
+              <div className="purchase-summary-chip">
+                <strong>{activeOrders}</strong> active
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* States */}
+        {isLoading ? (
+          <p className="purchase-loading">Loading your orders…</p>
+        ) : message ? (
+          <p className="purchase-message">{message}</p>
+        ) : orders.length === 0 ? (
+          <div className="purchase-empty">
+            <div className="purchase-empty-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+            </div>
+            <h2>No orders yet</h2>
+            <p>Your purchase history will appear here once you place an order.</p>
+          </div>
+        ) : (
+          <div className="purchase-list">
+            {orders.map((order) => {
+              const status = (order.status || "pending").toLowerCase();
+              return (
+                <article key={order.id} className="purchase-order" data-status={status}>
+
+                  {/* Card header */}
+                  <div className="purchase-order-head">
                     <div>
-                      <h2>Order #{order.displayOrderNo || "0001"}</h2>
-                      <p>{formatDate(order.createdAt)}</p>
+                      <h2 className="purchase-order-no">Order #{order.displayOrderNo || "0001"}</h2>
+                      <p className="purchase-order-date">{formatDate(order.createdAt)}</p>
                     </div>
-
-                    <div className="purchase-status">
-                      <span className={`purchase-status-badge purchase-status-${(order.status || "pending").toLowerCase()}`}>{formatStatus(order.status)}</span>
-                      <strong>
+                    <div className="purchase-order-meta">
+                      <span className={`purchase-status-badge purchase-status-${status}`}>
+                        {formatStatus(order.status)}
+                      </span>
+                      <span className="purchase-order-amount">
                         S$ {Number(order.totalAmount || 0).toFixed(2)}
-                      </strong>
+                      </span>
                     </div>
                   </div>
 
                   <div className="purchase-divider" />
 
+                  {/* Items */}
                   <div className="purchase-items">
                     {order.items && order.items.length > 0 ? (
                       order.items.map((item, index) => (
-                        <div
-                          key={`${order.id}-${item.name}-${index}`}
-                          className="purchase-item"
-                        >
+                        <div key={`${order.id}-${item.name}-${index}`} className="purchase-item">
                           <img
                             src={item.image || "/img/no-image.png"}
                             alt={item.name}
                             className="purchase-item-image"
                           />
-
                           <div className="purchase-item-info">
-                            <strong>
+                            <strong className="purchase-item-name">
                               {item.name} × {item.quantity}
                             </strong>
-                            <p>{formatCustomization(item.customization)}</p>
+                            <p className="purchase-item-custom">
+                              {formatCustomization(item.customization)}
+                            </p>
                           </div>
-
                           <span className="purchase-item-price">
                             S$ {Number(item.lineTotal || 0).toFixed(2)}
                           </span>
                         </div>
                       ))
                     ) : (
-                      <p className="purchase-message">
-                        No purchased items recorded for this order.
-                      </p>
+                      <p className="purchase-message">No items recorded for this order.</p>
                     )}
                   </div>
 
-                  <div className="purchase-payment">
-                    Payment status:{" "}
-                    <strong>{formatPaymentStatus(order.paymentStatus)}</strong>
+                  {/* Card footer */}
+                  <div className="purchase-order-foot">
+                    <div className="purchase-payment-label">
+                      Payment
+                      <span className="purchase-payment-badge">
+                        {formatPaymentStatus(order.paymentStatus)}
+                      </span>
+                    </div>
+                    <div className="purchase-order-actions">
+                      {TRACK_STATUSES.has(status) && (
+                        <Link href={`/order-status/${order.id}`} className="purchase-track-btn">
+                          Track Order
+                        </Link>
+                      )}
+                      {COLLECT_STATUSES.has(status) && (
+                        <Link href={`/order-status/${order.id}`} className="purchase-collect-btn">
+                          Ready to Collect
+                        </Link>
+                      )}
+                    </div>
                   </div>
 
-                  {TRACK_STATUSES.has((order.status || "").toLowerCase()) && (
-                    <Link href={`/order-status/${order.id}`} className="purchase-track-btn">
-                      Track Order
-                    </Link>
-                  )}
-                  {COLLECT_STATUSES.has((order.status || "").toLowerCase()) && (
-                    <Link href={`/order-status/${order.id}`} className="purchase-collect-btn">
-                      Ready to Collect
-                    </Link>
-                  )}
                 </article>
-              ))}
-            </div>
-          )}
-        </section>
+              );
+            })}
+          </div>
+        )}
+
       </main>
     </div>
   );
