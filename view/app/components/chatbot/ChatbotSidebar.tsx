@@ -533,19 +533,21 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
 
         <div className={styles.composerContainer}>
           {/* Hidden file input — triggers native photo picker on mobile.
-               accept lists both wildcard and explicit iOS formats (HEIC/HEIF) so the
-               OS opens the photo library rather than the generic file browser. */}
+               Explicit MIME types (no image/* wildcard) prevent iOS from offering
+               "Take Photo or Video" — it shows only the photo option. */}
           <input
             ref={photoInputRef}
             type="file"
-            accept="image/*,image/heic,image/heif"
+            accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,image/bmp,image/tiff"
             aria-label="Upload photo"
             className={styles.hiddenFileInput}
             onChange={e => {
               const file = e.target.files?.[0];
               if (!file) return;
-              if (!file.type.startsWith('image/') && !file.name.match(/\.(heic|heif|jpg|jpeg|png|gif|webp|bmp|tiff?)$/i)) {
-                alert('Only image files are supported. Please select a photo.');
+              const isImageByType = file.type.startsWith('image/');
+              const isImageByExt  = /\.(heic|heif|jpg|jpeg|png|gif|webp|bmp|tiff?)$/i.test(file.name);
+              if (file.type.startsWith('video/') || (!isImageByType && !isImageByExt)) {
+                alert('Only photos are supported. Videos and documents cannot be uploaded.');
                 e.target.value = '';
                 return;
               }
