@@ -45,7 +45,8 @@ export default function CartSummaryCard({ cartUpdate }: Props) {
                 <div key={i} className={styles.itemBlock}>
                   <div className={styles.itemRow}>
                     <span className={styles.itemName}>
-                      {item.name} × {item.quantity}
+                      <span className={styles.itemNameText}>{item.name}</span>
+                      <span className={styles.itemQty}>&thinsp;× {item.quantity}</span>
                     </span>
                     <span className={styles.itemPrice}>
                       S$ {Number(item.lineTotal).toFixed(2)}
