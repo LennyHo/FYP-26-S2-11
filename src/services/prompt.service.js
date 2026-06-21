@@ -14,7 +14,7 @@
 
 const MenuItem = require("../models/menuItem.model");
 
-const CHAT_LANGUAGE_MODE = String(process.env.CHAT_LANGUAGE_MODE || "english")
+const CHAT_LANGUAGE_MODE = String(process.env.CHAT_LANGUAGE_MODE || "match")
   .trim()
   .toLowerCase();
 
@@ -156,7 +156,33 @@ function filterMenu(beverages, message) {
 
 async function buildSystemPrompt(userMessage, extraContext = "") {
   const langInstruction = USE_MATCHED_LANGUAGE
-    ? "CRITICAL FINAL RULE: You MUST reply in the exact same language as the user's last message. If they spoke Chinese, reply in Chinese. If English, reply in English."
+    ? `LANGUAGE DETECTION — CRITICAL:
+Detect the language from the user's LATEST message alone, never from previous turns. Rules:
+- Malay (BM): user wrote Latin script with ANY Malay word — including nak, satu, dua, tiga, empat, lima, mahu, boleh, saya, aku, kita, dengan, yang, dan, tak, ada, nak, tolong, minta, bagi, beli, letak, tambah, kurang, tanpa, besar, biasa, ais, gula, minuman, teh, susu — reply ENTIRELY in Malay (Bahasa Melayu), even if the message also contains English words like drink names ("matcha latte", "taro") or prices.
+- Chinese: user wrote using Chinese characters (汉字) → reply in Mandarin Chinese.
+- English: user wrote in English → reply in English.
+If the latest message is a short Malay phrase like "Tanpa topping" or "Kurang ais", that IS Malay — do NOT fall back to the previous conversation language. Never mix languages in the same reply.
+
+LANGUAGE APPLIES TO VISIBLE TEXT ONLY: When replying in a non-English language, translate ALL visible option labels — size names, ice levels, topping names, sugar-warning choices. Keep prices (S$1.20 etc.), percentages (0%, 25%, 50%, 100%), and all HTML tags exactly as-is.
+Malay reference translations (use these exactly in visible text):
+- Regular → Biasa | Large → Besar
+- Normal Ice → Ais Normal | Less Ice → Kurang Ais | No Ice → Tanpa Ais | Hot → Panas
+- Tapioca Pearls / Pearls → Mutiara | Aloe Vera → Aloe Vera | Cheese Foam → Busa Keju | No toppings → Tanpa topping
+- Change to X% Sugar → Tukar kepada X% Gula | Remain at X% Sugar → Kekal pada X% Gula
+Chinese reference translations (use these exactly in visible text):
+- Regular → 中杯 | Large → 大杯
+- Normal Ice → 正常冰 | Less Ice → 少冰 | No Ice → 去冰 | Hot → 热饮
+- Tapioca Pearls / Pearls → 珍珠 | Aloe Vera → 芦荟 | Cheese Foam → 芝士泡沫 | No toppings → 不加配料
+- Change to X% Sugar → 改为X%甜度 | Remain at X% Sugar → 保持X%甜度
+
+HIDDEN-CART-DATA IS ALWAYS ENGLISH — CRITICAL:
+The <div class='hidden-cart-data'> block is read by the backend database, NOT by the customer. It MUST always use English names and labels regardless of the conversation language.
+- Drink name: use the exact English menu name (e.g. "Matcha Latte", never "抹茶拿铁" or "Teh Matcha")
+- Size: "Regular" or "Large" (never Besar, 大杯, etc.)
+- Ice: "Normal Ice", "Less Ice", "No Ice", or "Hot" (never Kurang Ais, 少冰, etc.)
+- Sugar: "0% Sugar", "25% Sugar", "50% Sugar", or "100% Sugar" (never "25% Gula" or "25%甜度")
+- Toppings: "Tapioca Pearls", "Aloe Vera", "Cheese Foam", or "No toppings" (never Mutiara, 珍珠, etc.)
+Only the visible summary text above the hidden-cart-data block is translated into the customer's language.`
     : "CRITICAL FINAL RULE: You MUST reply in UK English only.";
 
   let drinkContext = "";
@@ -351,7 +377,8 @@ Ask naturally. CRITICAL FORMAT — you MUST output the options on their own sepa
 Pearls (+S$1.20) / Aloe Vera (+S$1.00) / Cheese Foam (+S$1.50) / No toppings
 
 Do NOT embed topping names in the question sentence. Options MUST be on their own line.
-CRITICAL: Once the customer selects a topping (including "No toppings"), immediately proceed to PHASE 6 with the full order summary. NEVER skip Phase 6 or say "added to your cart" — the backend only adds the drink if it receives the hidden-cart-data block from Phase 6.
+PHASE 5 → PHASE 6 TRANSITION — CRITICAL:
+When the customer replies with a topping selection — in ANY language or format, including "Aloe Vera (+S$1.00)", "芦茗 (+S$1.00)", "Mutiara", "珍珠", "Tanpa topping", "不加配料", or any translated/short form — treat it as the final ordering step and IMMEDIATELY output the FULL Phase 6 order summary with the hidden-cart-data block. Do NOT say "added to your cart", do NOT skip Phase 6, do NOT output just one line. The drink is only added to the customer's cart when you output the hidden-cart-data block. If you skip it, nothing is saved.
 
 PHASE 6: ORDER SUMMARY
 Use a warm opening, then:
@@ -364,8 +391,9 @@ Total Price: S$[total]
 IMPORTANT: In [Toppings], use ONLY the topping name — never include the price (e.g. write "Aloe Vera" not "Aloe Vera (+S$1.00)").
 
 <div class='hidden-cart-data' style='display:none;'>
-[Drink Name] | [Size] · [Ice Level] · [Sugar] · [Toppings] | [price] | [image]
+[English Drink Name] | [English Size] · [English Ice Level] · [English Sugar] · [English Toppings] | [price] | [image]
 </div>
+CRITICAL: hidden-cart-data uses English only — "Matcha Latte" not "抹茶拿铁", "Large" not "Besar", "Less Ice" not "Kurang Ais", "25% Sugar" not "25% Gula", "Tapioca Pearls" not "Mutiara".
 No bullet points, asterisks, or markdown. Do not skip the <br> tags.
 
 ${langInstruction}

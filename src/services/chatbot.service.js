@@ -259,7 +259,14 @@ function isRecommendationRequest(message) {
         msg.includes("any recommendation") ||
         msg.includes("what do you recommend") ||
         msg.includes("any suggestions") ||
-        msg.includes("what would you suggest")
+        msg.includes("what would you suggest") ||
+        // Chinese recommendation phrases
+        msg.includes("推荐") || msg.includes("建议") ||
+        msg.includes("什么好喝") || msg.includes("帮我选") ||
+        // Malay recommendation phrases
+        msg.includes("cadangan") || msg.includes("apa yang sedap") ||
+        msg.includes("yang mana sedap") || msg.includes("nak cuba apa") ||
+        msg.includes("ada apa yang") || msg.includes("boleh rekomen")
     ) return true;
 
     // Specific order with customization details → not a recommendation
@@ -736,11 +743,24 @@ async function resolveBeverageId(message) {
             const drink = await findDrinkByName(resolvedName);
             if (drink) beverageId = drink.itemId;
 
-            // Last resort: regex keyword search — catches name mismatches between
-            // the hardcoded alias list and the actual DB drink name.
+            // Fallback A: full resolved-name regex search (e.g. /Milo Dinosaur/i)
             if (!beverageId) {
                 const results = await MenuItem.searchBeverage(resolvedName);
                 if (results.length > 0) beverageId = results[0].itemId;
+            }
+
+            // Fallback B: individual keyword search — handles DB names that differ from
+            // the hardcoded alias (e.g. DB name "Milo" would be missed by "Milo Dinosaur" regex
+            // but caught by searching "milo" alone).
+            if (!beverageId) {
+                for (const keyword of resolvedName.split(/\s+/)) {
+                    if (keyword.length < 3) continue;
+                    const results = await MenuItem.searchBeverage(keyword);
+                    if (results.length > 0) {
+                        beverageId = results[0].itemId;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -750,30 +770,43 @@ async function resolveBeverageId(message) {
 
 function resolveLastDrinkFromHistory(history) {
     if (!Array.isArray(history)) return null;
+
+    // Pass 1: structured data in assistant messages (most authoritative — added by the backend itself)
     for (let i = history.length - 1; i >= 0; i--) {
         const msg = history[i];
         if (msg.role !== "assistant") continue;
         const content = String(msg.content || "");
-        // Check hidden-cart-data first (most reliable)
         const cartMatch = content.match(/<div class=['"]hidden-cart-data['"][^>]*>([\s\S]*?)<\/div>/i);
         if (cartMatch) {
             const name = cartMatch[1].split("|")[0].trim();
             if (name) return name;
         }
-        // Fall back to order summary pattern: "[Drink Name] - S$[price]"
         const summaryMatch = content.match(/Here is your order summary:(?:<br>)?\s*([^<\n\-]+?)\s*-\s*S\$/i);
         if (summaryMatch) {
             const name = summaryMatch[1].trim();
             if (name) return name;
         }
     }
-    // Fallback: scan customer messages for a drink name
+
+    // Pass 2: most recent assistant message that mentions a drink name.
+    // Gemini names the current drink throughout the ordering flow ("your Milo Dinosaur", etc.)
+    // so this reflects the ACTIVE order context, unlike scanning user messages which may
+    // return a drink from an older conversation turn.
+    for (let i = history.length - 1; i >= 0; i--) {
+        const msg = history[i];
+        if (msg.role !== "assistant") continue;
+        const name = resolveDrinkNameFromMessage(String(msg.content || ""));
+        if (name) return name;
+    }
+
+    // Pass 3: last resort — scan user messages (may surface stale drink names from old turns)
     for (let i = history.length - 1; i >= 0; i--) {
         const msg = history[i];
         if (msg.role !== "user") continue;
         const name = resolveDrinkNameFromMessage(msg.content);
         if (name) return name;
     }
+
     return null;
 }
 
@@ -1175,34 +1208,66 @@ function parseCustomization(details) {
         .map((part) => part.trim())
         .filter(Boolean);
 
-    const size = parts.find((part) =>
-    /medium|large|regular/i.test(part)
-    ) || "Regular";
+    // Detect ordering language from Malay/Chinese keywords so Cart can translate labels back
+    const hasMs = /besar|biasa|kurang ais|tanpa ais|ais normal|panas|mutiara|busa keju|tanpa topping/i.test(text);
+    const hasZh = /大杯|中杯|少冰|去冰|正常冰|热饮|珍珠|芦荟|芝士泡沫|不加配料/.test(text);
+    const lang = hasMs ? "ms" : hasZh ? "zh" : "en";
 
-    const ice = parts.find((part) =>
-    /normal ice|less ice|no ice|hot/i.test(part)
-    ) || "Normal Ice";
+    // --- SIZE ---
+    const sizePart = parts.find((p) =>
+        /\b(large|besar|大杯|regular|medium|biasa|中杯)\b/i.test(p)
+    );
+    let size = "Regular";
+    if (sizePart && /\b(large|besar|大杯)\b/i.test(sizePart)) size = "Large";
 
-    const sugar = parts.find((part) =>
-    /0%|25%|50%|100%|normal sweet/i.test(part)
-    ) || "Normal Sweet";
+    // --- ICE ---
+    const icePart = parts.find((p) =>
+        /no ice|less ice|normal ice|hot|tanpa ais|kurang ais|ais normal|panas|去冰|少冰|正常冰|热饮/i.test(p)
+    );
+    let ice = "Normal Ice";
+    if (icePart) {
+        const ip = icePart.toLowerCase();
+        if (/no ice|tanpa ais|去冰/.test(ip))    ice = "No Ice";
+        else if (/less ice|kurang ais|少冰/.test(ip)) ice = "Less Ice";
+        else if (/hot|panas|热饮/.test(ip))      ice = "Hot";
+        else                                      ice = "Normal Ice";
+    }
+
+    // --- SUGAR ---
+    // Use \b before the number only (no trailing \b) — "25% Sugar" needs \b before "25", not after "%".
+    // Prefer an explicit percentage over "Normal Sweet" when both appear (Gemini sometimes outputs both).
+    const sugarPercentPart = parts.find((p) => /\b(0|25|50|100)\s*%/i.test(p));
+    const sugarNormalPart  = parts.find((p) => /normal sweet|normal manis|正常甜/i.test(p));
+    const sugarPart = sugarPercentPart || sugarNormalPart;
+    let sugar = "Normal Sweet";
+    if (sugarPart) {
+        if (/\b0\s*%/.test(sugarPart))    sugar = "0% Sugar";
+        else if (/\b25\s*%/.test(sugarPart)) sugar = "25% Sugar";
+        else if (/\b50\s*%/.test(sugarPart)) sugar = "50% Sugar";
+        else if (/\b100\s*%/.test(sugarPart)) sugar = "100% Sugar";
+        else                               sugar = "Normal Sweet";
+    }
+
+    // --- TOPPINGS --- normalize Malay/Chinese topping names → English
+    // Sugar filter uses same \b(n)\s*% pattern so "25% Sugar" is excluded from toppings
+    const isNotTopping = (p) =>
+        /\b(large|besar|大杯|regular|medium|biasa|中杯)\b/i.test(p) ||
+        /no ice|less ice|normal ice|hot|tanpa ais|kurang ais|ais normal|panas|去冰|少冰|正常冰|热饮/i.test(p) ||
+        /\b(0|25|50|100)\s*%|normal sweet|normal manis|正常甜/i.test(p) ||
+        /no toppings|tanpa topping|不加配料/i.test(p);
 
     const toppings = parts
-    .filter(
-        (part) =>
-            !/medium|large|regular/i.test(part) &&
-            !/normal ice|less ice|no ice|hot/i.test(part) &&
-            !/0%|25%|50%|100%|normal sweet/i.test(part) &&
-            !/no toppings/i.test(part)
-    )
-    .map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim());
+        .filter((p) => !isNotTopping(p))
+        .map((t) => {
+            const clean = t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim();
+            if (/pearl|mutiara|珍珠|boba|tapioca/i.test(clean)) return "Tapioca Pearls";
+            if (/aloe/i.test(clean))                             return "Aloe Vera";
+            if (/cheese|busa keju|芝士/i.test(clean))            return "Cheese Foam";
+            return clean;
+        })
+        .filter(Boolean);
 
-    return {
-    size,
-    ice,
-    sugar,
-    toppings,
-    };
+    return { size, ice, sugar, toppings, lang };
 }
 
 function parseOrderDetails(message) {
@@ -1490,6 +1555,25 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // User Story #32: Recommend beverages based on user message
     if (isRecommendationRequest(safeMessage)) {
         let drinks = await MenuItem.recommendByMessage(safeMessage);
+
+        // For non-English queries (Chinese/Malay), recommendByMessage won't match English menu names.
+        // Map common foreign-language flavor words to English keywords and retry.
+        if (drinks.length === 0) {
+            const FLAVOR_MAP = {
+                草莓: "strawberry", 蔓越莓: "cranberry", 抹茶: "matcha",
+                芋头: "taro", 巧克力: "chocolate", 可可: "cocoa",
+                茉莉: "jasmine", 乌龙: "oolong", 奶茶: "milk tea",
+                拿铁: "latte", 冰沙: "slush", 芒果: "mango",
+                strawberi: "strawberry", coklat: "chocolate",
+                matcha: "matcha", taro: "taro", oolong: "oolong",
+            };
+            for (const [foreign, english] of Object.entries(FLAVOR_MAP)) {
+                if (safeMessage.includes(foreign)) {
+                    const fallback = await MenuItem.recommendByMessage(english);
+                    if (fallback.length > 0) { drinks = fallback; break; }
+                }
+            }
+        }
 
         const msg = safeMessage.toLowerCase();
 
@@ -2507,8 +2591,17 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
     const systemPrompt = await buildSystemPrompt(effectiveMessage, nutritionContext + cartContext);
 
+    // When the user's message is a bare topping selection (e.g. "Aloe Vera (+S$1.00)", "珍珠",
+    // "Mutiara", "No toppings"), Gemini tends to shortcut to "added to your cart" without
+    // producing the required Phase 6 hidden-cart-data block.  Appending an explicit reminder
+    // to the message that Gemini sees (but not to the stored history) reliably fixes this.
+    const TOPPING_SELECTION = /^(pearls?|tapioca pearls?|aloe vera|cheese foam|no toppings?|mutiara|busa keju|珍珠|芦荟|芝士泡沫|不加配料|tanpa topping)(\s*\(\+S\$[\d.]+\))?$/i;
+    const geminiInput = TOPPING_SELECTION.test(safeMessage.trim())
+        ? effectiveMessage + "\n[REMINDER: Customer selected a topping. Immediately output the complete Phase 6 order summary including the hidden-cart-data block. Do NOT say \"added to your cart\".]"
+        : effectiveMessage;
+
     let reply = await aiClient.generateText(
-        effectiveMessage,
+        geminiInput,
         history,
         systemPrompt
     );

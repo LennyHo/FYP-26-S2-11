@@ -97,6 +97,6 @@ describe("chatbot testing", function () {
   it("has a login prompt before chatbot cart actions", function () {
     const serviceText = chatbotService.handleChatMessage.toString();
 
-    expect(serviceText).to.include("Please log in first before adding items to your cart.");
+    expect(serviceText).to.include("Please log in first before I add this to your cart.");
   });
 });

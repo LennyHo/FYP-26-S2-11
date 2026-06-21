@@ -5,8 +5,8 @@ const { expect } = require("chai");
 const mongoose = require("mongoose");
 
 const menuController = require("../src/controllers/menu.controller");
-const User = require("../models/user.model");
-const CartItem = require("../models/cartItem.model");
+const User = require("../src/models/user.model");
+const CartItem = require("../src/models/cartItem.model");
 const Order = require("../src/models/order.model");
 
 // This helper creates a fake Express response object for controller tests.

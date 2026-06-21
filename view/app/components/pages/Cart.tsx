@@ -29,7 +29,50 @@ interface DripTeaCartItem {
     ice?: string;
     sugar?: string;
     toppings?: string[];
+    lang?: string;
   };
+}
+
+const CART_LABELS: Record<string, Record<string, string>> = {
+  ms: {
+    Qty: "Bilangan",
+    Regular: "Biasa",
+    Large: "Besar",
+    "Normal Ice": "Ais Normal",
+    "Less Ice": "Kurang Ais",
+    "No Ice": "Tanpa Ais",
+    Hot: "Panas",
+    "Normal Sweet": "Normal Manis",
+    "0% Sugar": "0% Gula",
+    "25% Sugar": "25% Gula",
+    "50% Sugar": "50% Gula",
+    "100% Sugar": "100% Gula",
+    "Tapioca Pearls": "Mutiara",
+    "Aloe Vera": "Aloe Vera",
+    "Cheese Foam": "Busa Keju",
+  },
+  zh: {
+    Qty: "数量",
+    Regular: "中杯",
+    Large: "大杯",
+    "Normal Ice": "正常冰",
+    "Less Ice": "少冰",
+    "No Ice": "去冰",
+    Hot: "热饮",
+    "Normal Sweet": "正常甜",
+    "0% Sugar": "0%糖",
+    "25% Sugar": "25%糖",
+    "50% Sugar": "50%糖",
+    "100% Sugar": "100%糖",
+    "Tapioca Pearls": "珍珠",
+    "Aloe Vera": "芦荟",
+    "Cheese Foam": "芝士泡沫",
+  },
+};
+
+function tLabel(label: string, lang?: string): string {
+  if (!lang || lang === "en") return label;
+  return CART_LABELS[lang]?.[label] ?? label;
 }
 
 interface CartItem {
@@ -90,7 +133,7 @@ export default function Cart() {
           .map((line) => {
             const parsed = parseLocalCartLine(line);
             if (!parsed) return null;
-            const qtyMatch = parsed.details.match(/Qty\s+(\d+)/i);
+            const qtyMatch = parsed.details.match(/(?:Qty|Bilangan|数量)\s+(\d+)/i);
             const quantity = qtyMatch ? Number(qtyMatch[1]) : 1;
             const unitPrice = quantity > 0 ? parsed.price / quantity : parsed.price;
             return {
@@ -117,15 +160,18 @@ export default function Cart() {
         const lineTotal = Number(item.lineTotal || 0);
         const unitPrice = Number(item.unitPrice || lineTotal / quantity || 0);
 
+        const lang = item.customization?.lang;
         const toppings = Array.isArray(item.customization?.toppings)
-          ? item.customization.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
+          ? item.customization.toppings
+              .map((tp) => tLabel(tp.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim(), lang))
+              .join(", ")
           : "";
 
         const details = [
-          `Qty ${quantity}`,
-          item.customization?.size || "Regular",
-          item.customization?.ice || "Normal Ice",
-          item.customization?.sugar || "Normal Sweet",
+          `${tLabel("Qty", lang)} ${quantity}`,
+          tLabel(item.customization?.size || "Regular", lang),
+          tLabel(item.customization?.ice || "Normal Ice", lang),
+          tLabel(item.customization?.sugar || "Normal Sweet", lang),
           toppings,
         ]
           .filter(Boolean)
@@ -166,7 +212,7 @@ export default function Cart() {
     const nextQuantity = item.quantity + 1;
     setCartItems(prev => prev.map(i => {
       if (i.backendId !== item.backendId) return i;
-      return { ...i, quantity: nextQuantity, price: i.unitPrice * nextQuantity, details: i.details.replace(/^Qty \d+/, `Qty ${nextQuantity}`) };
+      return { ...i, quantity: nextQuantity, price: i.unitPrice * nextQuantity, details: i.details.replace(/^(Qty|Bilangan|数量) \d+/, `$1 ${nextQuantity}`) };
     }));
     setTotal(prev => prev + item.unitPrice);
     await updateCartItemQuantity(item.backendId, nextQuantity);
@@ -186,7 +232,7 @@ export default function Cart() {
     const nextQuantity = item.quantity - 1;
     setCartItems(prev => prev.map(i => {
       if (i.backendId !== item.backendId) return i;
-      return { ...i, quantity: nextQuantity, price: i.unitPrice * nextQuantity, details: i.details.replace(/^Qty \d+/, `Qty ${nextQuantity}`) };
+      return { ...i, quantity: nextQuantity, price: i.unitPrice * nextQuantity, details: i.details.replace(/^(Qty|Bilangan|数量) \d+/, `$1 ${nextQuantity}`) };
     }));
     setTotal(prev => prev - item.unitPrice);
     await updateCartItemQuantity(item.backendId, nextQuantity);

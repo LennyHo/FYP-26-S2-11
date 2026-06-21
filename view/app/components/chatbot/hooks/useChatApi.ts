@@ -160,19 +160,10 @@ export function useChatApi({
         const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i) ? plainText : `Sure — ${plainText}`;
         speakText(humaneIntro);
       }
-      // #199 / #200 / #201 - Dispatch cartUpdated so Cart page and header badge re-fetch
-      // from the backend after any cart change (add, edit, remove, clear).
-      // showViewCart is set explicitly by the backend; text patterns are a safety net
-      // for Gemini-flow responses that don't carry the flag.
-      if (
-        /added to your cart/i.test(botMsg.text) ||
-        /removed from your cart/i.test(botMsg.text) ||
-        /your cart is now empty/i.test(botMsg.text) ||
-        /updated.*cart/i.test(botMsg.text) ||
-        /cart.*updated/i.test(botMsg.text) ||
-        botMsg.cartUpdate ||
-        showViewCart
-      ) {
+      // #199 / #200 / #201 - Dispatch cartUpdated only when the backend confirms a real cart
+      // change via showViewCart. Text-pattern matching is a false-positive risk — Gemini sometimes
+      // says "added to your cart" without producing Phase 6 data, so only the backend flag is reliable.
+      if (showViewCart || botMsg.cartUpdate) {
         window.dispatchEvent(new Event('cartUpdated'));
       }
       syncCartFromReply(botMsg.text);
