@@ -264,6 +264,13 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
         {normalizedSearchQuery && visibleMessages.length === 0 && (
           <div className={styles.noSearchResults}>No messages found</div>
         )}
+        {isInitialized && !hasUserMessage && !normalizedSearchQuery && visibleMessages.length === 0 && (
+          <div className={styles.welcomeIntroCard}>
+            <p key={welcomeAnimationKey} className={styles.welcomeGreeting}>
+              {welcomeGreeting}
+            </p>
+          </div>
+        )}
         {(() => {
           const lastBotIdx = visibleMessages.reduce((last, m, i) => !m.isUser ? i : last, -1);
           return visibleMessages.map((msg, index) => {
@@ -460,13 +467,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
             </div>
 
 
-            {isInitialized && !normalizedSearchQuery && !hasUserMessage && index === 0 && !msg.isUser && (
-              <div className={styles.welcomeIntroCard}>
-                <p key={welcomeAnimationKey} className={styles.welcomeGreeting}>
-                  {welcomeGreeting}
-                </p>
-              </div>
-            )}
           </React.Fragment>
             );
           });

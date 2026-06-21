@@ -512,6 +512,7 @@
   letter-spacing: 0;
   max-width: 16ch;
   text-shadow: none;
+  white-space: pre-line;
   animation: welcomeGreetingIn 260ms ease-out both;
   will-change: opacity, transform, filter;
 }
