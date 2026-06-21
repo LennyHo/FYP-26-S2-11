@@ -56,6 +56,7 @@ function publicMenuItem(item) {
     nutritionInfo: nutrition,
     drinkInfo: item.drinkInfo || { ingredients: [], diabeticAdvice: '', insulinImpact: '' },
     rating: item.rating || 0,
+    isNewArrival: item.isNewArrival || false,
   };
 }
 
@@ -187,9 +188,14 @@ async function updateMenuItemStatus(req, res) {
       : { itemId: id };
 
     // This lets the dashboard hide/show drinks without deleting menu data.
+    // When deactivating, also clear isNewArrival so the DB stays consistent.
+    const updateFields = status === "inactive"
+      ? { status, isNewArrival: false }
+      : { status };
+
     const item = await MenuItem.findOneAndUpdate(
       query,
-      { $set: { status } },
+      { $set: updateFields },
       { new: true, runValidators: true }
     );
 
@@ -214,9 +220,35 @@ async function updateMenuItemStatus(req, res) {
 }
 
 
+async function toggleNewArrival(req, res) {
+  try {
+    const id = String(req.params.id || "");
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { itemId: id }] }
+      : { itemId: id };
+
+    const current = await MenuItem.findOne(query).lean();
+    if (!current) {
+      return res.status(404).json({ ok: false, message: "Menu item not found." });
+    }
+
+    const item = await MenuItem.findOneAndUpdate(
+      query,
+      { $set: { isNewArrival: !current.isNewArrival } },
+      { new: true, runValidators: true }
+    );
+
+    res.json({ ok: true, data: publicMenuItem(item) });
+  } catch (error) {
+    console.error("[MenuController] toggleNewArrival failed:", error);
+    res.status(500).json({ ok: false, message: "Unable to update new arrival flag." });
+  }
+}
+
 module.exports = {
   getMenu,
   searchBeverage,
   createMenuItem,
   updateMenuItemStatus,
+  toggleNewArrival,
 };

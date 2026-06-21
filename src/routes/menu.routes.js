@@ -40,4 +40,6 @@ router.post("/menu-items", menuController.createMenuItem);
 // #35 - As store staff, I want to update menu items so that prices, descriptions, and availability remain accurate.
 router.patch("/menu-items/:id/status", menuController.updateMenuItemStatus);
 
+router.patch("/menu-items/:id/new-arrival", menuController.toggleNewArrival);
+
 module.exports = router;

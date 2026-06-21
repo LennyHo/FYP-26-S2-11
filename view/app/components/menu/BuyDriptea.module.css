@@ -11,7 +11,6 @@
   gap: 28px;
 }
 
-.hero,
 .splitSection {
   display: grid;
   gap: 24px;
@@ -19,13 +18,13 @@
 
 .hero {
   position: relative;
-  min-height: 360px;
-  grid-template-columns: minmax(0, 0.58fr) minmax(280px, 0.42fr);
-  align-items: center;
-  padding: 28px;
-  border: 1px solid rgba(255, 238, 219, 0.72);
+  min-height: 300px;
+  display: flex;
+  align-items: flex-end;
+  padding: 36px 40px;
+  border: 1px solid rgba(180, 220, 160, 0.20);
   border-radius: 30px;
-  background: #1f170f;
+  background: #0c1a0a;
   box-shadow: var(--shadow);
   overflow: hidden;
   isolation: isolate;
@@ -38,6 +37,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 30%;
 }
 
 .heroOverlay {
@@ -45,17 +45,18 @@
   inset: 0;
   z-index: -1;
   background:
-    linear-gradient(90deg, rgba(22, 13, 7, 0.86) 0%, rgba(44, 28, 16, 0.66) 42%, rgba(44, 28, 16, 0.18) 78%),
-    linear-gradient(180deg, rgba(255, 247, 233, 0.08), rgba(18, 12, 7, 0.18));
+    linear-gradient(160deg, rgba(6, 14, 4, 0.88) 0%, rgba(14, 28, 10, 0.62) 46%, rgba(14, 28, 10, 0.10) 100%),
+    linear-gradient(0deg, rgba(4, 12, 3, 0.65) 0%, transparent 58%),
+    linear-gradient(180deg, rgba(80, 160, 60, 0.06) 0%, transparent 45%);
 }
 
 .heroCopy {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 620px;
-  padding: 18px 0 18px 10px;
+  gap: 14px;
+  max-width: 640px;
 }
+
 
 .eyebrow,
 .sectionEyebrow {
@@ -71,23 +72,27 @@
   line-height: 0.92;
   letter-spacing: 0.03em;
   background: linear-gradient(110deg, #fff8eb 0%, #f4d6a8 42%, #bfd37d 74%, #ffffff 100%);
-  background-clip: text;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.34));
 }
 
 .description {
-  max-width: 560px;
-  color: #fff3df;
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.55;
-  border-left: 4px solid #bfd37d;
-  padding-left: 16px;
-  background: linear-gradient(90deg, rgba(255, 248, 235, 0.16), rgba(255, 248, 235, 0));
-  border-radius: 12px;
-  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.38);
+  display: inline-block;
+  max-width: 520px;
+  color: rgba(255, 243, 223, 0.92);
+  font-size: 0.97rem;
+  font-weight: 500;
+  line-height: 1.65;
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: rgba(255, 248, 235, 0.10);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 248, 235, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.40);
 }
 
 .actions {
@@ -239,20 +244,83 @@
 .sectionHeading {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  position: relative;
 }
 
-.sectionHeading h2,
+/* Decorative bubble-glow orbs — evoke bubble tea */
+.sectionHeading::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -16px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(191, 211, 125, 0.20) 0%, transparent 68%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sectionHeading::after {
+  content: '';
+  position: absolute;
+  right: 90px;
+  top: 18px;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, rgba(155, 109, 74, 0.14) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+.menuTitle {
+  font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.1;
+  background: linear-gradient(115deg, #2c1200 0%, #8b5a2b 36%, #4e7c22 70%, #2a6a18 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+.menuTitleLine {
+  width: 52px;
+  height: 3px;
+  background: linear-gradient(90deg, #9b6d4a, #bfd37d);
+  border-radius: 999px;
+  position: relative;
+  z-index: 1;
+}
+
 .bundlePanel h2,
 .offerPanel h2 {
   font-size: clamp(1.6rem, 4vw, 2.4rem);
   color: var(--foreground);
 }
 
+.sectionDesc {
+  color: #7a6252;
+  font-size: 0.97rem;
+  line-height: 1.65;
+  max-width: 540px;
+  margin: 0;
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
+}
+
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
+  align-items: start;
 }
 
 @media (min-width: 700px) {
@@ -490,53 +558,129 @@
   }
 }
 
-.categoryCard {
+/* ── Mood filter ──────────────────────────────────────────────── */
+
+.moodFilterRow {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.moodFilterLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9a7560;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.moodChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(155, 109, 74, 0.24);
+  background: rgba(254, 250, 246, 0.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: #6b4020;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.moodChip:hover {
+  border-color: rgba(155, 109, 74, 0.50);
+  background: rgba(155, 109, 74, 0.10);
+}
+
+.moodChipActive {
+  background: rgba(155, 109, 74, 0.88);
+  border-color: rgba(155, 109, 74, 0.88);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(155, 109, 74, 0.28);
+}
+
+.moodChipActive:hover {
+  background: rgba(107, 62, 34, 0.92);
+  border-color: rgba(107, 62, 34, 0.92);
+}
+
+.moodChipIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* ── Category cards ───────────────────────────────────────────── */
+
+.categoryCard {
+  position: relative;
+  height: 380px;
   border-radius: 22px;
-  border: 1.5px solid rgba(220, 199, 180, 0.5);
-  background: #fff;
-  box-shadow: 0 2px 12px rgba(59, 39, 26, 0.06);
+  border: 1.5px solid rgba(220, 199, 180, 0.40);
+  overflow: hidden;
   text-decoration: none;
   color: inherit;
-  overflow: hidden;
-  transition: box-shadow 0.2s ease;
+  box-shadow: 0 4px 18px rgba(59, 39, 26, 0.08);
+  transition: opacity 0.3s ease, filter 0.3s ease;
 }
 
-.categoryCard:hover {
-  box-shadow: 0 8px 28px rgba(59, 39, 26, 0.12);
+.categoryCardDimmed {
+  opacity: 0.32;
+  filter: grayscale(0.25);
 }
 
+
+/* Image fills entire card */
 .categoryVisual {
-  position: relative;
-  height: 240px;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  background: #f5ede3;
 }
+
+/* Per-category background fallback (shows while image loads) */
+.catBrown .categoryVisual { background: linear-gradient(145deg, #fef0d2, #f5c878); }
+.catGreen .categoryVisual { background: linear-gradient(145deg, #e6f8d6, #a8d870); }
+.catBlue  .categoryVisual { background: linear-gradient(145deg, #daeefb, #88c6f0); }
+.catGold  .categoryVisual { background: linear-gradient(145deg, #fffad8, #f5d840); }
 
 .categoryDrinkImage {
   object-fit: cover;
-  transition: transform 0.35s ease;
+  object-position: center center;
 }
 
-.categoryCard:hover .categoryDrinkImage {
-  transform: scale(1.04);
+.catGold .categoryDrinkImage {
+  object-position: center 15%;
 }
 
+/* Frosted glass footer — overlays bottom of image */
 .categoryFooter {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 14px 16px 16px;
-  background: #fefaf6;
-  border-top: 1px solid rgba(220, 199, 180, 0.4);
+  min-height: 72px;
+  padding: 14px 18px 16px;
+  background: rgba(255, 252, 247, 0.82);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.55);
+  z-index: 2;
 }
 
 .categoryFooterText {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .categoryCard h3 {
@@ -545,35 +689,47 @@
   font-weight: 800;
   margin: 0;
   letter-spacing: -0.01em;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .categoryDesc {
-  color: #a08070;
-  font-size: 0.74rem;
+  color: #9a7560;
+  font-size: 0.76rem;
   font-weight: 500;
+  font-style: italic;
   margin: 0;
   letter-spacing: 0.01em;
+}
+
+.categoryDesc::before {
+  content: '· ';
+  font-style: normal;
+  color: rgba(155, 109, 74, 0.55);
 }
 
 .categoryArrow {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   flex-shrink: 0;
-  padding: 7px 16px;
+  padding: 8px 16px;
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  background: #9b6d4a;
+  background: rgba(155, 109, 74, 0.82);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.20);
   color: #fff;
-  transition: background 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.categoryCard:hover .categoryArrow {
-  background: #0257AD;
+.categoryArrow:hover {
+  background: rgba(107, 62, 34, 0.92);
+  transform: scale(1.05);
 }
 
 .categoryArrowIcon {
@@ -581,12 +737,6 @@
   font-weight: 400;
   line-height: 1;
 }
-
-/* Category tone visual backgrounds */
-.catBrown .categoryVisual { background: linear-gradient(145deg, #fef0d2, #f5c878); }
-.catGreen .categoryVisual { background: linear-gradient(145deg, #e6f8d6, #a8d870); }
-.catBlue  .categoryVisual { background: linear-gradient(145deg, #daeefb, #88c6f0); }
-.catGold  .categoryVisual { background: linear-gradient(145deg, #fffad8, #f5d840); }
 
 /* Offer panel badge */
 .offerBadge {
@@ -607,39 +757,77 @@
   }
 }
 
-.menuSearchRow {
+.menuSearchContainer {
   display: flex;
-  gap: 14px;
-  margin: 18px 0 26px;
-  max-width: 720px;
+  align-items: center;
+  max-width: 580px;
+  margin: 20px 0 28px;
+  padding: 8px 8px 8px 20px;
+  border: 1.5px solid rgba(141, 99, 63, 0.22);
+  border-radius: 20px;
+  background: rgba(254, 250, 246, 0.68);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: 0 4px 20px rgba(72, 43, 24, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.60);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+.menuSearchContainer:focus-within {
+  border-color: #9a6a3d;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 0 0 3px rgba(154, 106, 61, 0.13), 0 4px 20px rgba(72, 43, 24, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.70);
+}
+
+.menuSearchIcon {
+  width: 18px;
+  height: 18px;
+  color: #a07850;
+  flex-shrink: 0;
+  margin-right: 0;
+}
+
+.menuSearchDivider {
+  width: 1px;
+  height: 20px;
+  background: rgba(141, 99, 63, 0.22);
+  margin: 0 14px;
+  flex-shrink: 0;
 }
 
 .menuSearchInput {
   flex: 1;
-  border: 1px solid rgba(141, 99, 63, 0.28);
-  border-radius: 999px;
-  padding: 15px 22px;
-  font-size: 16px;
-  background: #fff;
+  border: none;
+  background: transparent;
+  padding: 10px 4px;
+  font-size: 15px;
   color: #2c1810;
   outline: none;
-  box-shadow: 0 8px 20px rgba(72, 43, 24, 0.06);
+  min-width: 0;
 }
 
-.menuSearchInput:focus {
-  border-color: #9a6a3d;
-  box-shadow: 0 0 0 4px rgba(154, 106, 61, 0.12);
+.menuSearchInput::placeholder {
+  color: #b09070;
 }
 
 .menuSearchButton {
-  border: none;
-  border-radius: 999px;
-  padding: 0 28px;
-  background: #5b351f;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 13px;
+  padding: 11px 24px;
+  background: rgba(91, 53, 31, 0.84);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   color: #fff;
-  font-weight: 900;
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(91, 53, 31, 0.18);
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  transition: background 0.2s ease;
+}
+
+.menuSearchButton:hover {
+  background: rgba(62, 32, 16, 0.92);
 }
 
 @keyframes fadeSlideIn {
@@ -678,17 +866,18 @@
 
 .searchDrinkCard {
   background: #fff;
-  border: 1px solid rgba(220, 199, 180, 0.5);
+  border: 1.5px solid rgba(220, 199, 180, 0.5);
   border-radius: 22px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 12px rgba(59, 39, 26, 0.06);
-  transition: box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(59, 39, 26, 0.07);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .searchDrinkCard:hover {
-  box-shadow: 0 6px 24px rgba(59, 39, 26, 0.10);
+  box-shadow: 0 12px 32px rgba(59, 39, 26, 0.13);
+  transform: translateY(-4px);
 }
 
 .searchImageWrapper {
@@ -743,6 +932,7 @@
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -755,26 +945,26 @@
   display: block;
   text-align: center;
   text-decoration: none;
-  background: #9b6d4a;
+  background: rgba(155, 109, 74, 0.82);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
   border-radius: 14px;
   padding: 13px 24px;
   font-weight: 700;
   font-size: 0.95rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
   transition: background 0.2s ease;
 }
 
 .searchAddButton:hover {
-  background: #0257AD;
+  background: rgba(107, 62, 34, 0.90);
 }
 
 @media (max-width: 900px) {
-  .menuSearchRow {
-    flex-direction: column;
-  }
-
-  .menuSearchButton {
-    padding: 14px 22px;
+  .menuSearchContainer {
+    max-width: 100%;
   }
 
   .searchCardGrid {
@@ -784,13 +974,13 @@
 
 @media (max-width: 600px) {
   .hero {
-    min-height: 220px;
-    padding: 20px 16px;
+    min-height: 180px;
+    padding: 18px 16px;
     border-radius: 18px;
   }
 
-  .categoryVisual {
-    height: 150px;
+  .categoryCard {
+    height: 280px;
   }
 
   .categoryCard h3 {
@@ -798,7 +988,7 @@
   }
 
   .categoryDesc {
-    font-size: 0.68rem;
+    font-size: 0.7rem;
   }
 
   .categoryArrow {
@@ -814,17 +1004,13 @@
     grid-template-columns: 1fr;
   }
 
-  .menuSearchRow {
+  .menuSearchContainer {
     margin: 12px 0 18px;
-  }
-
-  .menuSearchInput {
-    padding: 12px 16px;
-    font-size: 15px;
+    padding: 5px 5px 5px 16px;
   }
 
   .menuSearchButton {
-    padding: 12px 18px;
+    padding: 10px 18px;
     font-size: 0.95rem;
   }
 }
