@@ -1,19 +1,20 @@
-// adminApi.ts — API calls for the admin actor.
+// adminApi.ts — API calls for the user-admin actor.
 //
 // Covers user stories:
-//   User management  → getUsers            → GET /api/users
-//                    → createUserAccount   → POST /api/users
-//                    → updateUser          → PATCH /api/users/:id
-//                    → suspendUser         → PATCH /api/users/:id (sets status: suspended)
-//   Menu management  → updateMenuItemStatus → PATCH /api/menu-items/:id/status
-//                    → createMenuItem       → POST /api/menu-items
+//   User management  → getUsers          → GET /api/users
+//                    → createUserAccount → POST /api/users
+//                    → updateUser        → PATCH /api/users/:id
+//                    → suspendUser       → PATCH /api/users/:id (sets status: suspended)
+//
+// Menu management (toggleMenuItemNewArrival, updateMenuItemStatus, createMenuItem)
+// belongs to store staff and lives in staffApi.ts.
 //
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 
 import { requestJson } from './api.base';
-import type { DripTeaUser, DripTeaMenuItem } from './api.base';
+import type { DripTeaUser } from './api.base';
 
-export type { DripTeaUser, DripTeaMenuItem };  // needed for direct imports (e.g. store-staff/page.tsx)
+export type { DripTeaUser };
 
 // ── User management ───────────────────────────────────────────────────────────
 
@@ -53,32 +54,3 @@ export function suspendUser(userId: string) {
   });
 }
 
-// ── Menu item management ──────────────────────────────────────────────────────
-
-// Toggles a menu item between active and inactive. PATCH /api/menu-items/:id/status
-export function updateMenuItemStatus(id: string, status: string) {
-  return requestJson<{ ok: boolean; data: { id: string; mongoId: string; status: string } }>(
-    `/api/menu-items/${encodeURIComponent(id)}/status`,
-    { method: 'PATCH', body: JSON.stringify({ status }) }
-  );
-}
-
-// Creates a new menu item. POST /api/menu-items
-export function createMenuItem(payload: {
-  name: string;
-  category: string;
-  price: number;
-  description?: string;
-  ingredients?: string[];
-  calories?: number;
-  sugar?: number;
-  nutriGrade?: string;
-  tags?: string[];
-  status?: string;
-  image?: string;
-}) {
-  return requestJson<{ ok: boolean; data: DripTeaMenuItem }>('/api/menu-items', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-}

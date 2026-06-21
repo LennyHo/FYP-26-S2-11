@@ -24,7 +24,7 @@ import styles from './page.module.css';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { getMenuItems } from '../utils/customerApi';
-import { updateMenuItemStatus, createMenuItem, type DripTeaMenuItem } from '../utils/adminApi';
+import { updateMenuItemStatus, toggleMenuItemNewArrival, createMenuItem, type DripTeaMenuItem } from '../utils/staffApi';
 
 export default function StoreStaffPage() {
   const [items, setItems] = useState<DripTeaMenuItem[]>([]);
@@ -33,6 +33,7 @@ export default function StoreStaffPage() {
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('all');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [togglingNewArrivalId, setTogglingNewArrivalId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
   const [addError, setAddError] = useState('');
@@ -59,6 +60,18 @@ export default function StoreStaffPage() {
   }
 
   useEffect(() => { void fetchItems(); }, []);
+
+  async function toggleNewArrival(item: DripTeaMenuItem) {
+    setTogglingNewArrivalId(item.mongoId);
+    try {
+      const res = await toggleMenuItemNewArrival(item.mongoId);
+      setItems(prev => prev.map(i => i.mongoId === item.mongoId ? { ...i, isNewArrival: res.data.isNewArrival } : i));
+    } catch {
+      setError('Failed to update new arrival flag.');
+    } finally {
+      setTogglingNewArrivalId(null);
+    }
+  }
 
   async function toggleStatus(item: DripTeaMenuItem) {
     const next = item.status === 'active' ? 'inactive' : 'active';
@@ -198,6 +211,7 @@ export default function StoreStaffPage() {
                     <th>Tags</th>
                     <th>Price</th>
                     <th>Status</th>
+                    <th>New Arrival</th>
                     <th>Toggle</th>
                   </tr>
                 </thead>
@@ -243,6 +257,16 @@ export default function StoreStaffPage() {
                       <td>
                         <button
                           type="button"
+                          className={`${styles.toggleBtn} ${item.isNewArrival ? styles.toggleOff : styles.toggleOn}`}
+                          onClick={() => void toggleNewArrival(item)}
+                          disabled={togglingNewArrivalId === item.mongoId}
+                        >
+                          {togglingNewArrivalId === item.mongoId ? '…' : item.isNewArrival ? 'Remove' : 'Mark New'}
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
                           className={`${styles.toggleBtn} ${item.status === 'active' ? styles.toggleOff : styles.toggleOn}`}
                           onClick={() => void toggleStatus(item)}
                           disabled={togglingId === item.mongoId}
@@ -252,7 +276,7 @@ export default function StoreStaffPage() {
                       </td>
                     </tr>
                   )) : (
-                    <tr><td colSpan={6} className={styles.empty}>No items match your search</td></tr>
+                    <tr><td colSpan={7} className={styles.empty}>No items match your search</td></tr>
                   )}
                 </tbody>
               </table>
