@@ -82,6 +82,7 @@ export type DripTeaMenuItem = {
     insulinImpact: string;
   };
   rating?: number;
+  isNewArrival?: boolean;
 };
 
 export type DripTeaOrder = {

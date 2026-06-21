@@ -90,6 +90,14 @@ async function getMenuBeverages() {
   return MenuItem.find({ status: "active" }).lean();
 }
 
+async function getNewArrivals() {
+  return MenuItem.find({ status: "active", isNewArrival: true }).select("name category description drinkInfo").lean();
+}
+
+async function getUnavailableItems() {
+  return MenuItem.find({ status: "inactive" }).select("name").lean();
+}
+
 function filterMenu(beverages, message) {
   const msg = String(message || "").toLowerCase();
 
@@ -185,6 +193,26 @@ The <div class='hidden-cart-data'> block is read by the backend database, NOT by
 Only the visible summary text above the hidden-cart-data block is translated into the customer's language.`
     : "CRITICAL FINAL RULE: You MUST reply in UK English only.";
 
+  const [newArrivals, unavailableItems] = await Promise.all([
+    getNewArrivals(),
+    getUnavailableItems(),
+  ]);
+
+  const newArrivalsSection = newArrivals.length > 0
+    ? `NEW ARRIVALS — These drinks have just been added to the DripTea menu:\n${newArrivals.map(d => {
+        const info = d.drinkInfo || {};
+        const ingredients = Array.isArray(info.ingredients) && info.ingredients.length > 0
+          ? `Ingredients: ${info.ingredients.join(", ")}.`
+          : "";
+        const desc = d.description ? `Description: ${d.description}.` : "";
+        return `- ${d.name} (${d.category})${desc ? " " + desc : ""}${ingredients ? " " + ingredients : ""}`;
+      }).join("\n")}`
+    : "";
+
+  const unavailableSection = unavailableItems.length > 0
+    ? `TEMPORARILY UNAVAILABLE (do NOT recommend these; if asked, say it is currently unavailable and offer an alternative):\n${unavailableItems.map(d => `- ${d.name}`).join("\n")}`
+    : "";
+
   let drinkContext = "";
 
   if (await isMenuRequest(userMessage)) {
@@ -250,7 +278,15 @@ You are Avy, a professional yet casual barista at DripTea — a bubble tea shop 
 
 ${drinkContext}
 
+${newArrivalsSection}
+
+${unavailableSection}
+
 ${extraContext}
+
+MENU AWARENESS RULES:
+- NEW ARRIVALS: When a customer asks for recommendations or browses the menu, proactively mention new arrivals once in a natural, warm way (e.g. "By the way, we just added [name] — you might love it!"). Do not mention new arrivals for every message, only once per conversation or when they are browsing. If the customer asks about a new arrival drink — what it tastes like, what's in it, or anything about it — give a full, enthusiastic explanation using the description and ingredients from NEW ARRIVALS above, then invite them to try it or order it.
+- TEMPORARILY UNAVAILABLE: If a customer asks for a drink listed under TEMPORARILY UNAVAILABLE, respond professionally and warmly: "I'm sorry, [drink name] is temporarily unavailable at the moment. May I suggest something similar?" Then offer 1–2 alternatives from the available menu.
 
 DRIPTEA TOPPINGS (prices and health impact):
 - Tapioca Pearls / Boba / Pearl: +S$1.20 | +8g sugar | +60 kcal
