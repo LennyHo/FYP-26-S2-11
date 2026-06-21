@@ -54,6 +54,8 @@ import { useSpeech } from './hooks/useSpeech';
 import { useChatApi } from './hooks/useChatApi';
 import { useLoadingHint } from './hooks/useLoadingHint';
 import { useChatUI } from './hooks/useChatUI';
+import { getStoredUser } from '../../utils/api.base';
+import { getCartItems } from '../../utils/customerApi';
 
 // ==== TYPE DEFINITIONS ====
 
@@ -173,8 +175,28 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
   // Next.js client-side navigation instead of a full page reload.
   useEffect(() => {
     (window as any).handleCart = () => { router.push('/cart'); };
-    (window as any).handleCheckout = () => { router.push('/checkout'); };
-    (window as any).goToCheckoutPage = () => { router.push('/checkout'); };
+    (window as any).handleCheckout = async () => {
+      const user = getStoredUser();
+      if (user?.id) {
+        try {
+          const res = await getCartItems(user.id);
+          if (!res.data || res.data.length === 0) {
+            alert('Your cart is empty. Please add items before checking out.');
+            return;
+          }
+        } catch {
+          // If the check fails, let the checkout page handle validation
+        }
+      } else {
+        const localData = localStorage.getItem('dripTeaCartData');
+        if (!localData || !localData.trim()) {
+          alert('Your cart is empty. Please add items before checking out.');
+          return;
+        }
+      }
+      router.push('/checkout');
+    };
+    (window as any).goToCheckoutPage = (window as any).handleCheckout;
     (window as any).handleMenu = () => { router.push('/menu'); };
     (window as any).handlePurchaseHistory = () => { router.push('/purchase-history'); };
   }, [router]);
@@ -185,6 +207,24 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
+
+  // Stop mic and TTS whenever the sidebar closes
+  useEffect(() => {
+    if (isOpen) return;
+    window.speechSynthesis?.cancel();
+    if (speech.recognitionRef.current && speech.isListeningRef.current) {
+      try { speech.recognitionRef.current.stop(); } catch {}
+    }
+    speech.isListeningRef.current = false;
+    speech.isRecognitionStartingRef.current = false;
+    speech.setIsListening(false);
+    if (speech.speakModeRef.current) {
+      speech.setIsSpeakMode(false);
+      speech.speakModeRef.current = false;
+      speech.voiceConversationRef.current = false;
+      speech.setHideQuickPrompts(false);
+    }
+  }, [isOpen]);
 
   // Speak mode auto-send: when mic transcript lands in input, send it automatically.
   // lastSentRef prevents re-sending the same transcript if the effect re-fires.
