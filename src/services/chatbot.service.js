@@ -68,9 +68,17 @@ async function findDrinkByName(message) {
     status: "active",
     }).lean();
 
-    return drinks.find((drink) =>
-    msg.includes(String(drink.name || "").toLowerCase())
+    // Primary: message contains the drink name ("i want milo dinosaur" → "milo dinosaur" found)
+    const primary = drinks.find((drink) =>
+        msg.includes(String(drink.name || "").toLowerCase())
     );
+    if (primary) return primary;
+
+    // Secondary: drink name contains the search term — handles short resolved names like
+    // "Milo Dinosaur" matching a DB drink named "Milo Dinosaur Iced" (or vice-versa).
+    return drinks.find((drink) =>
+        String(drink.name || "").toLowerCase().includes(msg)
+    ) || null;
 }
 
 // #25 - As a customer, I want to chat with the AI chatbot so that I can get help with ordering and menu questions.
@@ -155,7 +163,9 @@ function isHealthRankingQuery(message) {
     const hasOrderIntent =
         msg.includes("can i have") || msg.includes("can i get") || msg.includes("can i order") ||
         msg.includes("i want") || msg.includes("i'd like") || msg.includes("i would like") ||
-        msg.includes("i'll have") || msg.includes("i'll take") || msg.includes("give me");
+        msg.includes("i'll have") || msg.includes("i'll take") || msg.includes("give me") ||
+        msg.includes("i like to have") || msg.includes("i like to order") ||
+        msg.includes("i would like to have") || msg.includes("i'd like to have");
     if (hasOrderIntent && (msg.includes("less sugar") || msg.includes("less sweet") || msg.includes("no sugar"))) {
         return false;
     }
@@ -634,11 +644,15 @@ function isAddToCartRequest(message) {
         msg.includes("help me add")
     ) return true;
 
-    // "i want / i'd like / give me / can i get / i'll have" + customization words → specific order
+    // "i want / i'd like / give me / can i get / i'll have / i like to have" + customization words → specific order
     const hasOrderIntent = (
         msg.includes("i want") ||
         msg.includes("i'd like") ||
         msg.includes("i would like") ||
+        msg.includes("i like to have") ||
+        msg.includes("i like to order") ||
+        msg.includes("i would like to have") ||
+        msg.includes("i'd like to have") ||
         msg.includes("give me") ||
         msg.includes("can i get") ||
         msg.includes("can i have") ||
@@ -721,6 +735,13 @@ async function resolveBeverageId(message) {
         if (resolvedName) {
             const drink = await findDrinkByName(resolvedName);
             if (drink) beverageId = drink.itemId;
+
+            // Last resort: regex keyword search — catches name mismatches between
+            // the hardcoded alias list and the actual DB drink name.
+            if (!beverageId) {
+                const results = await MenuItem.searchBeverage(resolvedName);
+                if (results.length > 0) beverageId = results[0].itemId;
+            }
         }
     }
 
@@ -1299,6 +1320,18 @@ Write a warm, natural 1–2 sentence intro for these recommendations. Reference 
     await ChatbotSession.appendToConversation(activeConversationId, userId, { role: 'assistant', content: reply });
 
     return { reply, recommendedDrinks: cards, system_action: { ui_navigation: 'none' } };
+}
+
+// #199 - Parses an explicit quantity from natural language.
+// "two large milo" → 2 | "3 taro slush" → 3 | anything else → 1
+function parseQuantityFromMessage(message) {
+    const msg = String(message || "").toLowerCase();
+    const wordMap = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+    const wordMatch = msg.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
+    if (wordMatch) return wordMap[wordMatch[1]];
+    const numMatch = msg.match(/\b([2-9]|10)\b/);
+    if (numMatch) return parseInt(numMatch[1]);
+    return 1;
 }
 
 // #199 - Detects messages that order multiple distinct drinks in one request.
@@ -1976,8 +2009,9 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         }
 
         const customization = parseCustomizationFromMessage(safeMessage);
+        const quantity = parseQuantityFromMessage(safeMessage);
 
-        const cartItem = await CartItem.addToCart(userId, beverageId, { quantity: 1, customization });
+        const cartItem = await CartItem.addToCart(userId, beverageId, { quantity, customization });
 
         const allCartItems = await CartItem.getCart(userId);
         const cartTotal = allCartItems.reduce((sum, i) => sum + Number(i.lineTotal || 0), 0);
@@ -1985,7 +2019,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         const menuItem = await MenuItem.findOne({ itemId: beverageId }).lean();
         const nutrition = menuItem ? calculateNutrition(menuItem, customization.sugar, customization.toppings) : null;
 
-        const reply = `${cartItem.name} added to your cart.`;
+        const qtyLabel = quantity > 1 ? ` ×${quantity}` : "";
+        const reply = `${cartItem.name}${qtyLabel} added to your cart.`;
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, {
             role: "user",
