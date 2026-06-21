@@ -21,6 +21,9 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   // Refs let recognition event handlers (mounted once with [] deps) read
   // current values without stale closures.
   const recognitionRef = useRef<any>(null);
+  // Updated by useChatbotState whenever a bot reply arrives so the next mic
+  // session uses the right recognition language.
+  const recognitionLangRef = useRef<string>('en-US');
   const speakModeRef = useRef(false);
   const voiceConversationRef = useRef(false);
   const isListeningRef = useRef(false);
@@ -122,6 +125,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     isRecognitionStartingRef.current = true;
     speechBaseRef.current = textareaValue ?? '';
     try {
+      recognitionRef.current.lang = recognitionLangRef.current;
       recognitionRef.current.start();
       // Auto-stop after 15 s to prevent the mic staying open indefinitely
       setTimeout(() => {
@@ -217,6 +221,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     isListening,
     setIsListening,
     isListeningRef,
+    recognitionLangRef,
     isSpeakMode,
     setIsSpeakMode,
     speakModeRef,

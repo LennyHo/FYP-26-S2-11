@@ -52,6 +52,7 @@ import { useMenuData } from './hooks/useMenuData';
 import { useConversation, STORAGE_KEY } from './hooks/useConversation';
 import { useSpeech } from './hooks/useSpeech';
 import { useChatApi } from './hooks/useChatApi';
+import { detectChatLang } from '../../utils/chatHelpers';
 import { useLoadingHint } from './hooks/useLoadingHint';
 import { useChatUI } from './hooks/useChatUI';
 import { getStoredUser } from '../../utils/api.base';
@@ -169,6 +170,25 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
   sendOverlayMessageRef.current = api.sendOverlayMessage;
 
   const hint = useLoadingHint(api.isLoading);
+
+  // Auto-detect recognition language from the user's own messages so the mic
+  // automatically switches to Malay/Chinese after the user types in that language.
+  const messages = conversation.messages;
+  useEffect(() => {
+    const lastUser = [...messages].reverse().find(m => m.isUser);
+    if (!lastUser) return;
+    const plain = lastUser.text.replace(/<[^>]+>/g, '').trim();
+    const detected = detectChatLang(plain);
+    if (detected !== 'en-US') speech.recognitionLangRef.current = detected;
+  }, [messages]);
+
+  // Also watch the input field in real-time — so typing "nak..." already
+  // switches the mic to Malay before the message is even sent.
+  useEffect(() => {
+    if (!input.trim()) return;
+    const detected = detectChatLang(input);
+    if (detected !== 'en-US') speech.recognitionLangRef.current = detected;
+  }, [input]);
 
   // ── Cross-hook effects ─────────────────────────────────────────────────────
 
@@ -338,6 +358,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     sanitizeExcessiveBreaks,
     handleMicrophoneClick: speech.handleMicrophoneClick,
     handleSpeakClick: speech.handleSpeakClick,
+    recognitionLangRef: speech.recognitionLangRef,
     closeOverlay,
     handleOverlayMicClick: speech.handleOverlayMicClick,
     onClose,

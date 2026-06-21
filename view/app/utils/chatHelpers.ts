@@ -112,17 +112,31 @@ export function convertMarkdownBold(html: string): string {
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
 }
 
+function detectSpeechLang(text: string): string {
+  if (/[一-鿿]/.test(text)) return 'zh-CN';
+  if (/\b(nak|saya|mahu|boleh|dan|yang|ada|dengan|untuk|tidak|ini|itu|awak|anda|minuman|teh|gula|ais|besar|biasa|kurang|tanpa|panas|mutiara)\b/i.test(text)) return 'ms-MY';
+  return 'en-US';
+}
+
+export function detectChatLang(text: string): string {
+  return detectSpeechLang(text);
+}
+
 export function speakText(text: string, onEndCallback?: () => void): void {
   if (!('speechSynthesis' in window)) { onEndCallback?.(); return; }
   window.speechSynthesis.cancel();
+  const lang = detectSpeechLang(text);
   const utterance = new SpeechSynthesisUtterance(text.replace(/[*#]/g, ''));
+  utterance.lang = lang;
   const voices = window.speechSynthesis.getVoices();
-  const friendlyVoice = voices.find(v =>
+  const langVoice = voices.find(v => v.lang === lang) ||
+    voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+  const fallbackVoice = voices.find(v =>
     v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Google UK English Female')
   );
-  if (friendlyVoice) utterance.voice = friendlyVoice;
+  utterance.voice = langVoice || fallbackVoice || null;
   utterance.pitch = 1.1;
-  utterance.rate = 1.0;
+  utterance.rate = lang === 'zh-CN' ? 0.95 : 1.0;
   utterance.onend = () => { onEndCallback?.(); };
   utterance.onerror = () => { onEndCallback?.(); };
   window.speechSynthesis.speak(utterance);

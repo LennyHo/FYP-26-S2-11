@@ -163,6 +163,7 @@ export async function requestJson<T>(path: string, init: RequestInit = {}, logLa
 
       const response = await fetch(`${apiBase}${path}`, {
         ...init,
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
           ...(init.headers || {}),

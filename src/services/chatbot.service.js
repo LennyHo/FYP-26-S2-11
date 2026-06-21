@@ -826,6 +826,100 @@ function resolveLastSugarFromHistory(history) {
     return null;
 }
 
+// Parse the order details from Gemini's Phase 6 reply text when it outputs a
+// summary ("Berikut adalah ringkasan pesanan anda: …") but no hidden-cart-data.
+function extractPhase6OrderFromReply(reply) {
+    const text = String(reply || '').replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/gi, ' ');
+
+    const PHASE6 = [
+        /berikut adalah ringkasan pesanan/i,
+        /ringkasan pesanan anda/i,
+        /here is your order summary/i,
+        /order summary/i,
+        /pesanan anda:/i,
+        /以下是您的订单摘要/i,
+        /您的订单摘要/i,
+    ];
+    if (!PHASE6.some(p => p.test(text))) return null;
+
+    // "Strawberry Tea - S$7.30" or "Matcha Latte – S$6.50" or "Classic Milk Tea — S$7.20"
+    const drinkMatch = text.match(/([A-Z][A-Za-z ]{2,40})\s*[-–—]\s*S\$\s*([\d.]+)/);
+    if (!drinkMatch) return null;
+
+    const drinkName = drinkMatch[1].trim();
+
+    // Customization line: contains · separator AND a size or ice keyword in any language
+    const lines = text.split(/[\n\r]/).map(l => l.trim()).filter(Boolean);
+    let customStr = null;
+    for (const line of lines) {
+        if (
+            /[·•]/.test(line) &&
+            /(large|regular|besar|biasa|大杯|中杯|less ice|no ice|normal ice|kurang ais|tanpa ais|ais normal|少冰|去冰|正常冰|hot|panas|热饮)/i.test(line)
+        ) {
+            customStr = line;
+            break;
+        }
+    }
+
+    return { drinkName, customStr };
+}
+
+// Extract size/ice/sugar from the most recent Phase 5 assistant message
+// (Phase 5 always lists topping options, so that's our anchor).
+function resolveCustomizationFromHistory(history) {
+    if (!Array.isArray(history)) return null;
+    for (let i = history.length - 1; i >= 0; i--) {
+        const msg = history[i];
+        if (msg.role !== 'assistant') continue;
+        const content = String(msg.content || '');
+        if (!/tapioca|aloe vera|cheese foam|mutiara|busa keju|珍珠|芦荟|芝士泡沫|tanpa topping|no topping/i.test(content)) continue;
+
+        let size = 'Regular';
+        if (/\b(large|besar|大杯)\b/i.test(content)) size = 'Large';
+
+        let ice = 'Normal Ice';
+        if (/\b(no ice|tanpa ais|去冰)\b/i.test(content))       ice = 'No Ice';
+        else if (/\b(less ice|kurang ais|少冰)\b/i.test(content)) ice = 'Less Ice';
+        else if (/\b(hot|panas|热饮)\b/i.test(content))          ice = 'Hot';
+
+        let sugar = 'Normal Sweet';
+        const pctMatch = content.match(/\b(0|25|50|100)\s*%/i);
+        if (pctMatch) sugar = `${pctMatch[1]}% Sugar`;
+
+        // Detect lang from the Phase 5 content so the Cart page can translate labels
+        const hasMs = /besar|biasa|kurang ais|tanpa ais|ais normal|panas|mutiara|busa keju|tanpa topping/i.test(content);
+        const hasZh = /大杯|中杯|少冰|去冰|正常冰|热饮|珍珠|芦荟|芝士泡沫|不加配料/.test(content);
+        const lang = hasMs ? 'ms' : hasZh ? 'zh' : 'en';
+
+        return { size, ice, sugar, lang };
+    }
+    return null;
+}
+
+function normalizeToppingName(raw) {
+    const t = String(raw || '').toLowerCase().trim().replace(/\s*\(\+s\$[\d.]+\)/i, '');
+    if (/pearl|mutiara|珍珠|tapioca|boba/.test(t)) return 'Tapioca Pearls';
+    if (/aloe/.test(t))                            return 'Aloe Vera';
+    if (/cheese|busa keju|芝士/.test(t))           return 'Cheese Foam';
+    return null; // no toppings
+}
+
+async function addToppingToCartFromHistory(toppingText, history, userId) {
+    const drinkName = resolveLastDrinkFromHistory(history);
+    if (!drinkName) return [];
+    const drink = await findDrinkByName(drinkName);
+    if (!drink) return [];
+
+    const base = resolveCustomizationFromHistory(history) || { size: 'Regular', ice: 'Normal Ice', sugar: 'Normal Sweet', lang: 'en' };
+    const topping = normalizeToppingName(toppingText);
+    const customization = { size: base.size, ice: base.ice, sugar: base.sugar, toppings: topping ? [topping] : [], lang: base.lang };
+
+    const cartItem = await CartItem.addToCart(userId, drink.itemId, { quantity: 1, customization });
+    cartItem.drinkInfo = drink;
+    cartItem.menuItemCode = drink.itemId;
+    return [cartItem];
+}
+
 async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
     const addedItems = [];
 
@@ -2622,7 +2716,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // producing the required Phase 6 hidden-cart-data block.  Appending an explicit reminder
     // to the message that Gemini sees (but not to the stored history) reliably fixes this.
     const TOPPING_SELECTION = /^(pearls?|tapioca pearls?|aloe vera|cheese foam|no toppings?|mutiara|busa keju|珍珠|芦荟|芝士泡沫|不加配料|tanpa topping)(\s*\(\+S\$[\d.]+\))?$/i;
-    const geminiInput = TOPPING_SELECTION.test(safeMessage.trim())
+    const toppingMatch = TOPPING_SELECTION.exec(safeMessage.trim());
+    const geminiInput = toppingMatch
         ? effectiveMessage + "\n[REMINDER: Customer selected a topping. Immediately output the complete Phase 6 order summary including the hidden-cart-data block. Do NOT say \"added to your cart\".]"
         : effectiveMessage;
 
@@ -2721,6 +2816,27 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
                 reply = `${addedItems[0]?.name || "Your drink"} added to your cart.`;
             }
+        }
+    }
+
+    // Fallback: Gemini showed a Phase 6 summary in text but didn't produce hidden-cart-data.
+    // This covers combined inputs like "25% tanpa topping" and all Malay/Chinese orderings.
+    if (addedItems.length === 0 && userId) {
+        const phase6 = extractPhase6OrderFromReply(reply);
+        if (phase6) {
+            const drink = await findDrinkByName(phase6.drinkName);
+            if (drink) {
+                const customization = phase6.customStr
+                    ? parseCustomization(phase6.customStr)
+                    : (resolveCustomizationFromHistory(history) || { size: 'Regular', ice: 'Normal Ice', sugar: 'Normal Sweet', toppings: [], lang: 'en' });
+                const cartItem = await CartItem.addToCart(userId, drink.itemId, { quantity: 1, customization });
+                cartItem.drinkInfo = drink;
+                cartItem.menuItemCode = drink.itemId;
+                addedItems = [cartItem];
+            }
+        } else if (toppingMatch) {
+            // Secondary fallback: bare topping with no readable summary in reply
+            addedItems = await addToppingToCartFromHistory(toppingMatch[1], history, userId);
         }
     }
 
