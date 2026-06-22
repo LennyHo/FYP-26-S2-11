@@ -2238,6 +2238,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         return {
             reply,
             system_action: { ui_navigation: "none" },
+            showViewCart: true,
             orderReceipt: {
                 drink: {
                     name: cartItem.name,
