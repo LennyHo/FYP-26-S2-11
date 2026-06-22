@@ -92,6 +92,23 @@
   object-fit: cover;
 }
 
+.imageNameOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 18px 10px 6px;
+  background: linear-gradient(transparent, rgba(30, 10, 40, 0.55));
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-align: center;
+  text-transform: uppercase;
+  border-radius: 0 0 16px 0;
+  pointer-events: none;
+}
+
 
 /* ── Name ── */
 

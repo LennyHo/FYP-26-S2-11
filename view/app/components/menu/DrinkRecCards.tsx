@@ -39,6 +39,21 @@ interface MenuBeverage {
   };
 }
 
+const DRINK_TAGLINES: Record<string, string> = {
+  b001: "Our signature black tea steeped in sweet, creamy milk",
+  b002: "Delicate jasmine-scented green tea with a floral finish",
+  b003: "Smooth oolong balanced with fresh milk and light sweetness",
+  b004: "Rich, earthy matcha blended with creamy fresh milk",
+  b005: "Vibrant strawberry purée layered with earthy matcha",
+  b006: "Tart cranberry meets smooth matcha for a bold contrast",
+  b007: "Floral jasmine-infused green tea with earthy matcha depth",
+  b008: "Fragrant osmanthus flower tea with a soft, milky finish",
+  b009: "Premium Wuyi rock oolong with rich mineral notes and creamy milk",
+  b010: "Indulgent cocoa and chocolate syrup blended over ice",
+  b011: "Classic Milo chocolate-malt with fresh milk over ice",
+  b012: "Creamy purple taro blended into a thick, icy slush",
+};
+
 const CACHE_TTL_MS = 60_000; // 60 s — changes in MongoDB appear within a minute
 let cachedMenu: MenuBeverage[] | null = null;
 let cacheExpiry = 0;
@@ -144,8 +159,15 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
             const displaySugar = mongoData?.base_sugar_g ?? drink.sugar;
             const displayCal   = mongoData?.base_calories ?? drink.calories;
 
+            const description = DRINK_TAGLINES[resolvedId] ?? "";
+
             return (
               <div key={`drink-${i}`}>
+                {description && (
+                  <p className={styles.drinkDescLine}>
+                    <strong>{drink.name}</strong> — {description}
+                  </p>
+                )}
                 <button
                   type="button"
                   className={isFlipped ? `${styles.drinkFlipCard} ${styles.drinkFlipCardFlipped}` : styles.drinkFlipCard}
@@ -155,13 +177,14 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                   <div className={styles.drinkFlipCardInner}>
                     {/* Front */}
                     <div className={styles.drinkFlipCardFront}>
-                      <div className={styles.drinkFlipCardImgWrap}>
+                      <div className={styles.drinkFlipCardImgWrapFull}>
                         <img
                           src={mongoData?.image || `/img/bubble_teas/${resolvedId}.jpg`}
                           alt={drink.name}
                           className={styles.drinkFlipCardImg}
                           onError={(e) => { e.currentTarget.src = "/img/bubble_teas/b001.jpg"; }}
                         />
+                        <div className={styles.drinkImgNameOverlay}>{drink.name}</div>
                       </div>
                       <div className={styles.drinkFlipCardName}>{drink.name}</div>
                       <StarRating rating={mongoData?.rating ?? 0} />
