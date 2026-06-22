@@ -122,6 +122,18 @@ export function detectChatLang(text: string): string {
   return detectSpeechLang(text);
 }
 
+// Module-level ref so cancelSpeech() can stop ElevenLabs audio elements too
+let _activeAudio: HTMLAudioElement | null = null;
+export function registerAudio(audio: HTMLAudioElement | null) { _activeAudio = audio; }
+
+export function cancelSpeech(): void {
+  if (_activeAudio) { _activeAudio.pause(); _activeAudio.src = ''; _activeAudio = null; }
+  if ('speechSynthesis' in window) {
+    const s = window.speechSynthesis;
+    if (s.speaking || s.pending) { s.pause(); s.cancel(); }
+  }
+}
+
 export function speakText(text: string, onEndCallback?: () => void): void {
   if (!('speechSynthesis' in window)) { onEndCallback?.(); return; }
   window.speechSynthesis.cancel();

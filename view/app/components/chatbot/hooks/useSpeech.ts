@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from 'react';
-import { speakText } from '../../../utils/chatHelpers';
+import { speakText, cancelSpeech } from '../../../utils/chatHelpers';
 import type { Message } from '../useChatbotState';
 
 interface UseSpeechProps {
@@ -31,6 +31,9 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   const speechBaseRef = useRef('');
   // Populated by useChatbotState so the recognition handler can update input state.
   const setInputRef = useRef<((value: string) => void) | undefined>(undefined);
+  // Speak-mode debounce: accumulate isFinal segments and send after a pause
+  const accumulatedTextRef = useRef('');
+  const sendDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep speakModeRef in sync with React state
   useEffect(() => { speakModeRef.current = isSpeakMode; }, [isSpeakMode]);
@@ -64,25 +67,41 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
       };
       recognition.onresult = (event: any) => {
         if (speakModeRef.current) {
-          // Speak mode — only send final results
+          // Speak mode — debounce send so brief pauses don't cut the user off mid-sentence.
+          // Accumulate isFinal segments; only dispatch after 1.4 s of silence.
           let interimText = '';
-          let finalText = '';
+          let newFinal = '';
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const t = event.results[i][0].transcript.trim();
-            if (event.results[i].isFinal) finalText += t + ' ';
+            if (event.results[i].isFinal) newFinal += t + ' ';
             else interimText += t;
           }
-          if (interimText) setOverlayTranscript(interimText);
-          if (finalText) {
-            const text = finalText.trim();
-            setOverlayTranscript('');
-            if (recognitionRef.current && isListeningRef.current) {
-              try { recognitionRef.current.stop(); } catch {}
-              setIsListening(false);
-              isListeningRef.current = false;
-            }
-            setOverlayMessages(prev => [...prev, { id: Date.now().toString(), text, isUser: true }]);
-            sendOverlayMessageRef.current?.(text, true);
+
+          if (newFinal) {
+            accumulatedTextRef.current = (accumulatedTextRef.current + ' ' + newFinal).trim();
+          }
+
+          // Show accumulated + live interim in the transcript line
+          const display = [accumulatedTextRef.current, interimText].filter(Boolean).join(' ');
+          setOverlayTranscript(display);
+
+          // Reset the send timer whenever speech activity arrives
+          if (accumulatedTextRef.current) {
+            if (sendDelayTimerRef.current) clearTimeout(sendDelayTimerRef.current);
+            sendDelayTimerRef.current = setTimeout(() => {
+              sendDelayTimerRef.current = null;
+              const text = accumulatedTextRef.current.trim();
+              accumulatedTextRef.current = '';
+              if (!text) return;
+              setOverlayTranscript('');
+              if (recognitionRef.current && isListeningRef.current) {
+                try { recognitionRef.current.stop(); } catch {}
+                setIsListening(false);
+                isListeningRef.current = false;
+              }
+              setOverlayMessages(prev => [...prev, { id: Date.now().toString(), text, isUser: true }]);
+              sendOverlayMessageRef.current?.(text, true);
+            }, 1400);
           }
         } else {
           // Regular mic mode — rebuild full input from all session results
@@ -180,9 +199,15 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     stopNarrationAndListen();
   };
 
+  const clearSendTimer = () => {
+    if (sendDelayTimerRef.current) { clearTimeout(sendDelayTimerRef.current); sendDelayTimerRef.current = null; }
+    accumulatedTextRef.current = '';
+  };
+
   // closeOverlay uses overlayMessages from closure — no need to pass it as param
   const closeOverlay = (setMessages: React.Dispatch<React.SetStateAction<Message[]>>, storageKey: string) => {
-    window.speechSynthesis?.cancel();
+    clearSendTimer();
+    cancelSpeech();
     if (recognitionRef.current && isListeningRef.current) {
       try { recognitionRef.current.stop(); } catch {}
     }
@@ -203,9 +228,8 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   };
 
   const handleOverlayMicClick = () => {
-    // Chrome needs pause() before cancel() to reliably cut speech mid-sentence
-    const synth = window.speechSynthesis;
-    if (synth.speaking || synth.pending) { synth.pause(); synth.cancel(); }
+    clearSendTimer();
+    cancelSpeech();
     if (!recognitionRef.current) {
       alert('Speech recognition is not available. This feature requires Chrome, Edge, or Safari.');
       return;
