@@ -83,7 +83,6 @@ export default function DrinkCard({
                   e.currentTarget.src = "/img/bubble_teas/b001.jpg";
                 }}
               />
-              <div className={styles.imageNameOverlay}>{name}</div>
             </div>
 
             <div className={styles.name}>{name}</div>

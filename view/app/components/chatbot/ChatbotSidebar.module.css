@@ -1109,35 +1109,20 @@
 .drinkFlipCardImgWrapFull {
   position: relative;
   width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #f9eef7;
   margin-bottom: 4px;
 }
 
 .drinkFlipCardImg {
   width: 100%;
-  max-height: 148px;
+  height: 100%;
   object-fit: cover;
-  border-radius: 10px;
-  background: #f9eef7;
-  box-shadow: 0 2px 10px rgba(120, 30, 90, 0.10);
+  object-position: center center;
   display: block;
   border: none;
-}
-
-.drinkImgNameOverlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 18px 10px 6px;
-  background: linear-gradient(transparent, rgba(30, 10, 40, 0.55));
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-  text-align: center;
-  text-transform: uppercase;
-  border-radius: 0 0 10px 10px;
-  pointer-events: none;
 }
 
 .drinkFlipCardName {
