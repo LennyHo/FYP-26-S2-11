@@ -10,6 +10,9 @@
   height: 100vh;
   overflow: hidden;
   background-color: #F9F6F0;
+  /* Single source of truth: both mainPane and chatPane derive their widths from here */
+  --chat-width: clamp(360px, 30vw, 460px);
+  --chat-gap: 12px;
 }
 
 
@@ -38,13 +41,11 @@
 }
 
 .chatPane {
-  --chat-width: 360px;
   position: fixed;
   right: var(--chat-gap, 12px);
   top: 18px;
   bottom: 18px;
   width: var(--chat-width);
-  max-width: 42vw;
   height: auto;
   border-left: none;
   background: #ffffff;
