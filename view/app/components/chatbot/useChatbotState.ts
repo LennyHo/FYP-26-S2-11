@@ -52,7 +52,7 @@ import { useMenuData } from './hooks/useMenuData';
 import { useConversation, STORAGE_KEY } from './hooks/useConversation';
 import { useSpeech } from './hooks/useSpeech';
 import { useChatApi } from './hooks/useChatApi';
-import { detectChatLang } from '../../utils/chatHelpers';
+import { detectChatLang, cancelSpeech } from '../../utils/chatHelpers';
 import { useLoadingHint } from './hooks/useLoadingHint';
 import { useChatUI } from './hooks/useChatUI';
 import { getStoredUser } from '../../utils/api.base';
@@ -132,6 +132,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
 
   // input lives here so both useSpeech (setInputRef) and useChatApi (setInput) share the same state
   const [input, setInput] = useState('');
+  const [activeGlossaryTerm, setActiveGlossaryTerm] = useState<string | null>(null);
 
   // ── Sub-hooks ──────────────────────────────────────────────────────────────
   const menu = useMenuData();
@@ -232,7 +233,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
   // Stop mic and TTS whenever the sidebar closes
   useEffect(() => {
     if (isOpen) return;
-    window.speechSynthesis?.cancel();
+    cancelSpeech();
     if (speech.recognitionRef.current && speech.isListeningRef.current) {
       try { speech.recognitionRef.current.stop(); } catch {}
     }
@@ -268,6 +269,12 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
 
   const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
+    // GLOSSARY click handler — commented out, re-enable with GlossaryCard in ChatbotSidebar
+    // const glossaryEl = target.closest('[data-glossary]') as HTMLElement | null;
+    // if (glossaryEl) {
+    //   const key = glossaryEl.getAttribute('data-glossary');
+    //   if (key) { setActiveGlossaryTerm(key); return; }
+    // }
     if (target.classList.contains('chat-drink-link') && target instanceof HTMLAnchorElement) {
       e.preventDefault(); e.stopPropagation();
       const href = target.getAttribute('href');
@@ -353,6 +360,8 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     handleInputPaste: ui.handleInputPaste,
     removePendingImage: ui.removePendingImage,
     restartConversation: conversation.restartConversation,
+    activeGlossaryTerm,
+    setActiveGlossaryTerm,
     handleChatClick,
     formatMessageTime,
     sanitizeExcessiveBreaks,
