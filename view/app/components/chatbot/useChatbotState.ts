@@ -52,7 +52,7 @@ import { useMenuData } from './hooks/useMenuData';
 import { useConversation, STORAGE_KEY } from './hooks/useConversation';
 import { useSpeech } from './hooks/useSpeech';
 import { useChatApi } from './hooks/useChatApi';
-import { detectChatLang, cancelSpeech } from '../../utils/chatHelpers';
+import { detectChatLang, cancelSpeech, getBrowserSpeechLang } from '../../utils/chatHelpers';
 import { useLoadingHint } from './hooks/useLoadingHint';
 import { useChatUI } from './hooks/useChatUI';
 import { getStoredUser } from '../../utils/api.base';
@@ -172,23 +172,30 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
 
   const hint = useLoadingHint(api.isLoading);
 
-  // Auto-detect recognition language from the user's own messages so the mic
-  // automatically switches to Malay/Chinese after the user types in that language.
+  // Auto-detect recognition language from messages sent in the current session only.
+  // Skip the initial fire so restored history from a previous session doesn't
+  // lock the mic to the last session's language on page load.
   const messages = conversation.messages;
+  const sessionStartedRef = useRef(false);
   useEffect(() => {
+    if (!sessionStartedRef.current) {
+      sessionStartedRef.current = true;
+      return;
+    }
     const lastUser = [...messages].reverse().find(m => m.isUser);
     if (!lastUser) return;
     const plain = lastUser.text.replace(/<[^>]+>/g, '').trim();
-    const detected = detectChatLang(plain);
-    if (detected !== 'en-US') speech.recognitionLangRef.current = detected;
+    speech.setSelectedSpeechLang(detectChatLang(plain));
   }, [messages]);
 
-  // Also watch the input field in real-time — so typing "nak..." already
-  // switches the mic to Malay before the message is even sent.
+  // Also watch the input field in real-time — so typing in any language already
+  // switches the mic before the message is even sent. Reset to en-US when cleared.
   useEffect(() => {
-    if (!input.trim()) return;
-    const detected = detectChatLang(input);
-    if (detected !== 'en-US') speech.recognitionLangRef.current = detected;
+    if (!input.trim()) {
+      speech.setSelectedSpeechLang(getBrowserSpeechLang());
+      return;
+    }
+    speech.setSelectedSpeechLang(detectChatLang(input));
   }, [input]);
 
   // ── Cross-hook effects ─────────────────────────────────────────────────────

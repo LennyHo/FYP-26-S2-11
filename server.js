@@ -40,6 +40,10 @@ console.log("[ROUTES] Purchase history routes mounted");
 const chatbotRoutes = require("./src/routes/chatbot.routes");
 app.use("/api", chatbotRoutes);
 
+// Voice transcription (ElevenLabs Scribe)
+const transcribeRoutes = require("./src/routes/transcribe.routes");
+app.use("/api", transcribeRoutes);
+
 // DripTea routes (authentication, users, etc.)
 const authRoutes = require("./src/routes/auth.routes");
 app.use("/api", authRoutes);

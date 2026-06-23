@@ -144,17 +144,35 @@ export function convertMarkdownBold(html: string): string {
 
 function detectSpeechLang(text: string): string {
   if (/[一-鿿]/.test(text)) return 'zh-CN';
+  if (/[஀-௿]/.test(text)) return 'ta-IN';
   if (/\b(nak|saya|mahu|boleh|dan|yang|ada|dengan|untuk|tidak|ini|itu|awak|anda|minuman|teh|gula|ais|besar|biasa|kurang|tanpa|panas|mutiara)\b/i.test(text)) return 'ms-MY';
-  return 'en-US';
+  return 'en-GB';
 }
 
 export function detectChatLang(text: string): string {
   return detectSpeechLang(text);
 }
 
+export function getBrowserSpeechLang(): string {
+  if (typeof window === 'undefined') return 'en-US';
+  const nav = (navigator.language || '').toLowerCase();
+  if (nav.startsWith('zh')) return 'zh-CN';
+  if (nav.startsWith('ta')) return 'ta-IN';
+  if (nav.startsWith('ms')) return 'ms-MY';
+  return 'en-GB';
+}
+
 // Module-level ref so cancelSpeech() can stop ElevenLabs audio elements too
 let _activeAudio: HTMLAudioElement | null = null;
 export function registerAudio(audio: HTMLAudioElement | null) { _activeAudio = audio; }
+
+// Hooks called by useSpeech so it can pause/resume MediaRecorder around TTS playback
+let _onTTSStart: (() => void) | null = null;
+let _onTTSEnd: (() => void) | null = null;
+export function setTTSHooks(onStart?: () => void, onEnd?: () => void): void {
+  _onTTSStart = onStart ?? null;
+  _onTTSEnd = onEnd ?? null;
+}
 
 export function cancelSpeech(): void {
   if (_activeAudio) { _activeAudio.pause(); _activeAudio.src = ''; _activeAudio = null; }
@@ -162,13 +180,15 @@ export function cancelSpeech(): void {
     const s = window.speechSynthesis;
     if (s.speaking || s.pending) { s.pause(); s.cancel(); }
   }
+  // Always fire the end hook so MediaRecorder resumes correctly after cancellation
+  _onTTSEnd?.();
 }
 
-export function speakText(text: string, onEndCallback?: () => void): void {
-  if (!('speechSynthesis' in window)) { onEndCallback?.(); return; }
+function _browserSpeak(text: string, onEndCallback?: () => void): void {
+  if (!('speechSynthesis' in window)) { _onTTSEnd?.(); onEndCallback?.(); return; }
   window.speechSynthesis.cancel();
   const lang = detectSpeechLang(text);
-  const utterance = new SpeechSynthesisUtterance(text.replace(/[*#]/g, ''));
+  const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang;
   const voices = window.speechSynthesis.getVoices();
   const langVoice = voices.find(v => v.lang === lang) ||
@@ -178,10 +198,52 @@ export function speakText(text: string, onEndCallback?: () => void): void {
   );
   utterance.voice = langVoice || fallbackVoice || null;
   utterance.pitch = 1.1;
-  utterance.rate = lang === 'zh-CN' ? 0.95 : 1.0;
-  utterance.onend = () => { onEndCallback?.(); };
-  utterance.onerror = () => { onEndCallback?.(); };
+  utterance.rate = (lang === 'zh-CN' || lang === 'ta-IN') ? 0.95 : 1.0;
+  utterance.onend = () => { _onTTSEnd?.(); onEndCallback?.(); };
+  utterance.onerror = () => { _onTTSEnd?.(); onEndCallback?.(); };
   window.speechSynthesis.speak(utterance);
+}
+
+export function speakText(text: string, onEndCallback?: () => void): void {
+  const clean = text.replace(/[*#]/g, '').trim();
+  if (!clean) { onEndCallback?.(); return; }
+
+  _onTTSStart?.();
+
+  fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: clean }),
+  })
+    .then(res => {
+      if (!res.ok) throw new Error(`TTS ${res.status}`);
+      return res.blob();
+    })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      registerAudio(audio);
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        registerAudio(null);
+        _onTTSEnd?.();
+        onEndCallback?.();
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        registerAudio(null);
+        // Only fall back if not cancelled (cancelSpeech sets _activeAudio=null first)
+        if (_activeAudio !== null) _browserSpeak(clean, onEndCallback);
+      };
+      audio.play().catch(() => {
+        registerAudio(null);
+        _browserSpeak(clean, onEndCallback);
+      });
+    })
+    .catch(() => {
+      // ElevenLabs unreachable — fall back to browser TTS silently
+      _browserSpeak(clean, onEndCallback);
+    });
 }
 
 export function parseDrinkFromHtml(html: string) {

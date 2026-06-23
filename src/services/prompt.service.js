@@ -168,6 +168,7 @@ async function buildSystemPrompt(userMessage, extraContext = "") {
 Detect the language from the user's LATEST message alone, never from previous turns. Rules:
 - Malay (BM): user wrote Latin script with ANY Malay word — including nak, satu, dua, tiga, empat, lima, mahu, boleh, saya, aku, kita, dengan, yang, dan, tak, ada, nak, tolong, minta, bagi, beli, letak, tambah, kurang, tanpa, besar, biasa, ais, gula, minuman, teh, susu — reply ENTIRELY in Malay (Bahasa Melayu), even if the message also contains English words like drink names ("matcha latte", "taro") or prices.
 - Chinese: user wrote using Chinese characters (汉字) → reply in Mandarin Chinese.
+- Tamil: user wrote using Tamil script (தமிழ் எழுத்துகள்) → reply ENTIRELY in Tamil.
 - English: user wrote in English → reply in English.
 If the latest message is a short Malay phrase like "Tanpa topping" or "Kurang ais", that IS Malay — do NOT fall back to the previous conversation language. Never mix languages in the same reply.
 
@@ -182,6 +183,11 @@ Chinese reference translations (use these exactly in visible text):
 - Normal Ice → 正常冰 | Less Ice → 少冰 | No Ice → 去冰 | Hot → 热饮
 - Tapioca Pearls / Pearls → 珍珠 | Aloe Vera → 芦荟 | Cheese Foam → 芝士泡沫 | No toppings → 不加配料
 - Change to X% Sugar → 改为X%甜度 | Remain at X% Sugar → 保持X%甜度
+Tamil reference translations (use these exactly in visible text):
+- Regular → சாதாரண | Large → பெரிய
+- Normal Ice → சாதாரண பனி | Less Ice → குறைவான பனி | No Ice → பனி இல்லாமல் | Hot → சூடான
+- Tapioca Pearls / Pearls → முத்துகள் | Aloe Vera → அலோ வேரா | Cheese Foam → சீஸ் நுரை | No toppings → டாப்பிங் இல்லை
+- Change to X% Sugar → X% சர்க்கரைக்கு மாற்று | Remain at X% Sugar → X% சர்க்கரையில் வை
 
 HIDDEN-CART-DATA IS ALWAYS ENGLISH — CRITICAL:
 The <div class='hidden-cart-data'> block is read by the backend database, NOT by the customer. It MUST always use English names and labels regardless of the conversation language.

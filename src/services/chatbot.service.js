@@ -217,6 +217,7 @@ function hasCustomizationWords(msg) {
 function detectMessageLanguage(message) {
     const msg = String(message || "");
     if (/[一-鿿]/.test(msg)) return "zh";
+    if (/[஀-௿]/.test(msg)) return "ta";
     if (/\b(nak|satu|dua|mahu|boleh|saya|aku|dengan|yang|dan|tak|ada|tolong|bagi|beli|letak|tambah|kurang|tanpa|besar|biasa|ais|gula|saiz|dan|keju|mutiara)\b/i.test(msg)) return "ms";
     return "en";
 }

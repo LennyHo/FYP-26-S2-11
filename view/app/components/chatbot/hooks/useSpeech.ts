@@ -1,13 +1,34 @@
 "use client";
 
 import { useRef, useState, useEffect } from 'react';
-import { speakText, cancelSpeech } from '../../../utils/chatHelpers';
+import { speakText, cancelSpeech, getBrowserSpeechLang, setTTSHooks } from '../../../utils/chatHelpers';
 import type { Message } from '../useChatbotState';
 
 interface UseSpeechProps {
-  // Ref populated by useChatbotState after useChatApi is ready, avoiding a
-  // circular dependency between useSpeech and useChatApi.
   sendOverlayMessageRef: React.MutableRefObject<((text: string, shouldSpeak?: boolean) => Promise<void>) | undefined>;
+}
+
+// Maps ElevenLabs ISO 639-1 code → BCP 47 locale used internally
+function elToLocale(lang: string): string {
+  const l = (lang || '').toLowerCase();
+  if (l.startsWith('zh')) return 'zh-CN';
+  if (l.startsWith('ta')) return 'ta-IN';
+  if (l.startsWith('ms')) return 'ms-MY';
+  return 'en-GB';
+}
+
+function getTranscribeUrl(): string {
+  if (process.env.NODE_ENV === 'development') return 'http://localhost:5000/api/transcribe';
+  const base = process.env.NEXT_PUBLIC_DRIPTEA_API_BASE?.trim() || 'https://driptea-trrn.onrender.com';
+  return `${base.replace(/\/$/, '')}/api/transcribe`;
+}
+
+async function transcribeBlob(blob: Blob): Promise<{ text: string; language: string }> {
+  const formData = new FormData();
+  formData.append('audio', blob, 'recording.webm');
+  const res = await fetch(getTranscribeUrl(), { method: 'POST', body: formData });
+  if (!res.ok) throw new Error(`Transcription failed: ${res.status}`);
+  return res.json();
 }
 
 export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
@@ -17,186 +38,277 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   const [overlayTranscript, setOverlayTranscript] = useState('');
   const [overlayMessages, setOverlayMessages] = useState<Message[]>([]);
   const [overlayLoading, setOverlayLoading] = useState(false);
+  const [selectedSpeechLang, setSelectedSpeechLang] = useState<string>(getBrowserSpeechLang);
 
-  // Refs let recognition event handlers (mounted once with [] deps) read
-  // current values without stale closures.
-  const recognitionRef = useRef<any>(null);
-  // Updated by useChatbotState whenever a bot reply arrives so the next mic
-  // session uses the right recognition language.
-  const recognitionLangRef = useRef<string>('en-US');
+  // Compat shim: useChatbotState calls recognitionRef.current.stop() when sidebar closes
+  const recognitionRef = useRef<any>({ stop: () => stopCapture() });
+  const recognitionLangRef = useRef<string>(getBrowserSpeechLang());
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const vadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isProcessingRef = useRef(false);
+  const ttsPausedRef = useRef(false); // true while bot TTS is playing
+
   const speakModeRef = useRef(false);
   const voiceConversationRef = useRef(false);
   const isListeningRef = useRef(false);
   const isRecognitionStartingRef = useRef(false);
-  const speechBaseRef = useRef('');
-  // Populated by useChatbotState so the recognition handler can update input state.
   const setInputRef = useRef<((value: string) => void) | undefined>(undefined);
-  // Speak-mode debounce: accumulate isFinal segments and send after a pause
+  // Keep for interface compat with useChatbotState (accumulatedText / send timer not used in EL mode)
   const accumulatedTextRef = useRef('');
   const sendDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Keep speakModeRef in sync with React state
   useEffect(() => { speakModeRef.current = isSpeakMode; }, [isSpeakMode]);
+  useEffect(() => { recognitionLangRef.current = selectedSpeechLang; }, [selectedSpeechLang]);
 
-  // Initialize Web Speech API once on mount
+  // Keep compat shim pointing at the latest stopCapture
   useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition ||
-      (window as any).mozSpeechRecognition ||
-      (window as any).msSpeechRecognition;
-    if (!SpeechRecognition) { console.warn('Speech Recognition API not supported'); return; }
-    if (recognitionRef.current) return;
+    recognitionRef.current = { stop: stopCapture };
+  });
 
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-      recognition.maxAlternatives = 1;
-
-      recognition.onstart = () => {
-        isRecognitionStartingRef.current = false;
-        setIsListening(true);
-        isListeningRef.current = true;
-      };
-      recognition.onend = () => {
-        isRecognitionStartingRef.current = false;
-        setIsListening(false);
-        isListeningRef.current = false;
-      };
-      recognition.onresult = (event: any) => {
-        if (speakModeRef.current) {
-          // Speak mode — debounce send so brief pauses don't cut the user off mid-sentence.
-          // Accumulate isFinal segments; only dispatch after 1.4 s of silence.
-          let interimText = '';
-          let newFinal = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const t = event.results[i][0].transcript.trim();
-            if (event.results[i].isFinal) newFinal += t + ' ';
-            else interimText += t;
-          }
-
-          if (newFinal) {
-            accumulatedTextRef.current = (accumulatedTextRef.current + ' ' + newFinal).trim();
-          }
-
-          // Show accumulated + live interim in the transcript line
-          const display = [accumulatedTextRef.current, interimText].filter(Boolean).join(' ');
-          setOverlayTranscript(display);
-
-          // Reset the send timer whenever speech activity arrives
-          if (accumulatedTextRef.current) {
-            if (sendDelayTimerRef.current) clearTimeout(sendDelayTimerRef.current);
-            sendDelayTimerRef.current = setTimeout(() => {
-              sendDelayTimerRef.current = null;
-              const text = accumulatedTextRef.current.trim();
-              accumulatedTextRef.current = '';
-              if (!text) return;
-              setOverlayTranscript('');
-              if (recognitionRef.current && isListeningRef.current) {
-                try { recognitionRef.current.stop(); } catch {}
-                setIsListening(false);
-                isListeningRef.current = false;
-              }
-              setOverlayMessages(prev => [...prev, { id: Date.now().toString(), text, isUser: true }]);
-              sendOverlayMessageRef.current?.(text, true);
-            }, 1400);
-          }
-        } else {
-          // Regular mic mode — rebuild full input from all session results
-          let allFinalized = '';
-          let currentInterim = '';
-          for (let i = 0; i < event.results.length; i++) {
-            if (event.results[i].isFinal) allFinalized += event.results[i][0].transcript.trim() + ' ';
-            else currentInterim += event.results[i][0].transcript.trim();
-          }
-          const parts = [speechBaseRef.current, allFinalized.trim(), currentInterim].filter(Boolean);
-          setInputRef.current?.(parts.join(' '));
+  // Pause/resume MediaRecorder around bot TTS to prevent feedback loop
+  useEffect(() => {
+    setTTSHooks(
+      () => {
+        ttsPausedRef.current = true;
+        if (vadTimerRef.current) { clearTimeout(vadTimerRef.current); vadTimerRef.current = null; }
+        if (mediaRecorderRef.current?.state === 'recording') {
+          try { mediaRecorderRef.current.stop(); } catch {}
+          audioChunksRef.current = []; // discard captured TTS audio
         }
-      };
-      recognition.onerror = (event: any) => {
-        console.error('✗ Speech recognition error:', event.error);
-        isRecognitionStartingRef.current = false;
-        setIsListening(false);
-        isListeningRef.current = false;
-      };
-      recognitionRef.current = recognition;
-    } catch (error) {
-      console.error('✗ Error initializing Speech Recognition:', error);
-    }
+      },
+      () => {
+        ttsPausedRef.current = false;
+        // Resume recording after TTS finishes (speak mode only)
+        setTimeout(() => {
+          if (speakModeRef.current && streamRef.current && !isProcessingRef.current) {
+            startSpeakChunk(streamRef.current);
+          }
+        }, 150);
+      }
+    );
+    return () => setTTSHooks();
   }, []);
 
-  // Delay mic start by 220 ms when speak mode activates so the overlay CSS
-  // transition can begin before the browser mic permission prompt appears.
+  // ── Shared helpers ─────────────────────────────────────────────────────────
+
+  function stopCapture() {
+    if (vadTimerRef.current) { clearTimeout(vadTimerRef.current); vadTimerRef.current = null; }
+    if (mediaRecorderRef.current?.state !== 'inactive') {
+      try { mediaRecorderRef.current?.stop(); } catch {}
+    }
+    mediaRecorderRef.current = null;
+    audioChunksRef.current = [];
+    if (audioContextRef.current) {
+      try { audioContextRef.current.close(); } catch {}
+      audioContextRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    setIsListening(false);
+    isListeningRef.current = false;
+    isRecognitionStartingRef.current = false;
+  }
+
+  async function getStream(): Promise<MediaStream> {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    streamRef.current = stream;
+    return stream;
+  }
+
+  async function flushChunks(chunks: Blob[], mode: 'mic' | 'speak') {
+    if (chunks.length === 0 || isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
+    if (mode === 'speak') {
+      setOverlayLoading(true);
+      setOverlayTranscript('');
+    }
+
+    try {
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      const { text: rawText, language } = await transcribeBlob(blob);
+      const text = rawText.replace(/\([^)]*\)/g, '').trim();
+
+      if (language) {
+        const locale = elToLocale(language);
+        setSelectedSpeechLang(locale);
+        recognitionLangRef.current = locale;
+      }
+
+      if (!text.trim()) return;
+
+      if (mode === 'mic') {
+        setInputRef.current?.(text.trim());
+      } else {
+        setOverlayMessages(prev => [...prev, { id: Date.now().toString(), text: text.trim(), isUser: true }]);
+        await sendOverlayMessageRef.current?.(text.trim(), true);
+      }
+    } catch (err) {
+      console.error('[Speech] Transcription error:', err);
+    } finally {
+      isProcessingRef.current = false;
+      if (mode === 'speak') setOverlayLoading(false);
+    }
+  }
+
+  // ── Mic button mode ────────────────────────────────────────────────────────
+
+  async function startMicRecording(textareaValue?: string) {
+    if (isListeningRef.current || isRecognitionStartingRef.current) return;
+    isRecognitionStartingRef.current = true;
+    try {
+      const stream = await getStream();
+      const chunks: Blob[] = [];
+      audioChunksRef.current = chunks;
+
+      const recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = async () => {
+        await flushChunks(chunks, 'mic');
+        stream.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+        mediaRecorderRef.current = null;
+        setIsListening(false);
+        isListeningRef.current = false;
+        isRecognitionStartingRef.current = false;
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(100);
+      setIsListening(true);
+      isListeningRef.current = true;
+      isRecognitionStartingRef.current = false;
+
+      // Auto-stop after 15 s
+      setTimeout(() => {
+        if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+      }, 15000);
+    } catch (err) {
+      isRecognitionStartingRef.current = false;
+      console.error('[Speech] Mic error:', err);
+      alert('Could not access microphone. Please allow microphone access and try again.');
+    }
+  }
+
+  // ── Speak mode ─────────────────────────────────────────────────────────────
+
+  function startSpeakChunk(stream: MediaStream) {
+    if (ttsPausedRef.current || !speakModeRef.current) return;
+    const chunks: Blob[] = [];
+    audioChunksRef.current = chunks;
+
+    let recorder: MediaRecorder;
+    try {
+      recorder = new MediaRecorder(stream);
+    } catch {
+      return;
+    }
+
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = async () => {
+      if (ttsPausedRef.current) { audioChunksRef.current = []; return; } // discard if TTS triggered the stop
+      await flushChunks(chunks, 'speak');
+      if (speakModeRef.current && !ttsPausedRef.current && !isProcessingRef.current) {
+        startSpeakChunk(stream);
+      }
+    };
+
+    mediaRecorderRef.current = recorder;
+    recorder.start(100);
+    setOverlayTranscript('Listening...');
+    setIsListening(true);
+    isListeningRef.current = true;
+  }
+
+  function startVAD(stream: MediaStream) {
+    try {
+      const audioCtx = new AudioContext();
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      audioCtx.createMediaStreamSource(stream).connect(analyser);
+      audioContextRef.current = audioCtx;
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const poll = () => {
+        if (!speakModeRef.current) return;
+
+        // Do nothing while TTS is playing
+        if (ttsPausedRef.current) { requestAnimationFrame(poll); return; }
+
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((a, b) => a + b, 0) / data.length;
+
+        if (avg > 12) {
+          // Voice detected — cancel any pending silence timeout
+          if (vadTimerRef.current) { clearTimeout(vadTimerRef.current); vadTimerRef.current = null; }
+        } else if (!vadTimerRef.current && mediaRecorderRef.current?.state === 'recording' && !isProcessingRef.current) {
+          // Silence — start 1.4 s countdown then flush chunk
+          vadTimerRef.current = setTimeout(() => {
+            vadTimerRef.current = null;
+            if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+          }, 600);
+        }
+
+        requestAnimationFrame(poll);
+      };
+      requestAnimationFrame(poll);
+    } catch (err) {
+      console.error('[Speech] VAD error:', err);
+    }
+  }
+
+  async function startSpeakMode() {
+    try {
+      const stream = await getStream();
+      startVAD(stream);
+      startSpeakChunk(stream);
+    } catch (err) {
+      console.error('[Speech] Speak mode error:', err);
+      alert('Could not access microphone. Please allow microphone access and try again.');
+      setIsSpeakMode(false);
+      speakModeRef.current = false;
+    }
+  }
+
+  // Start capture when speak mode activates
   useEffect(() => {
     if (!isSpeakMode) return;
     const t = setTimeout(() => {
-      if (recognitionRef.current && !isListeningRef.current && !isRecognitionStartingRef.current) {
-        requestRecognitionStart();
-      }
+      if (speakModeRef.current && !isListeningRef.current) startSpeakMode();
     }, 220);
     return () => clearTimeout(t);
   }, [isSpeakMode]);
 
-  const requestRecognitionStart = (textareaValue?: string) => {
-    if (!recognitionRef.current || isListeningRef.current || isRecognitionStartingRef.current) return;
-    isRecognitionStartingRef.current = true;
-    speechBaseRef.current = textareaValue ?? '';
-    try {
-      recognitionRef.current.lang = recognitionLangRef.current;
-      recognitionRef.current.start();
-      // Auto-stop after 15 s to prevent the mic staying open indefinitely
-      setTimeout(() => {
-        if (recognitionRef.current && isListeningRef.current) recognitionRef.current.stop();
-      }, 15000);
-    } catch (error) {
-      isRecognitionStartingRef.current = false;
-      console.error('✗ Error starting speech recognition:', error);
-    }
-  };
-
-  // Cancel TTS before starting the mic to avoid a feedback loop
-  const stopNarrationAndListen = () => {
-    const synth = window.speechSynthesis;
-    if (synth.speaking || synth.pending) synth.cancel();
-    if (isListeningRef.current || isRecognitionStartingRef.current || !recognitionRef.current) return;
-    setTimeout(() => {
-      if (!voiceConversationRef.current || !recognitionRef.current || isListeningRef.current || isRecognitionStartingRef.current) return;
-      requestRecognitionStart();
-    }, 120);
-  };
+  // ── Handlers exposed to UI ─────────────────────────────────────────────────
 
   const handleMicrophoneClick = (textareaValue?: string) => {
-    if (!recognitionRef.current) {
-      alert('Speech recognition is not available. This feature requires Chrome, Edge, or Safari.');
-      return;
-    }
-    try {
-      if (isListening) {
-        recognitionRef.current.stop();
-        setIsListening(false);
-        isListeningRef.current = false;
-        isRecognitionStartingRef.current = false;
-        speakModeRef.current = false;
-        voiceConversationRef.current = false;
-        setIsSpeakMode(false);
-        setHideQuickPrompts(false);
+    if (isListening) {
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.stop(); // onstop → flushChunks
       } else {
-        requestRecognitionStart(textareaValue);
+        stopCapture();
       }
-    } catch (error) {
-      console.error('✗ Error with microphone:', error);
-      setIsListening(false);
+      setIsSpeakMode(false);
+      speakModeRef.current = false;
+      voiceConversationRef.current = false;
+      setHideQuickPrompts(false);
+    } else {
+      startMicRecording(textareaValue);
     }
   };
 
   const handleSpeakClick = () => {
+    cancelSpeech();
     speakModeRef.current = true;
     voiceConversationRef.current = true;
     setIsSpeakMode(true);
     setHideQuickPrompts(true);
-    stopNarrationAndListen();
   };
 
   const clearSendTimer = () => {
@@ -204,22 +316,20 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     accumulatedTextRef.current = '';
   };
 
-  // closeOverlay uses overlayMessages from closure — no need to pass it as param
   const closeOverlay = (setMessages: React.Dispatch<React.SetStateAction<Message[]>>, storageKey: string) => {
     clearSendTimer();
     cancelSpeech();
-    if (recognitionRef.current && isListeningRef.current) {
-      try { recognitionRef.current.stop(); } catch {}
-    }
+    stopCapture();
     setIsSpeakMode(false);
     speakModeRef.current = false;
     voiceConversationRef.current = false;
     setHideQuickPrompts(false);
     if (overlayMessages.length > 0) {
       setMessages(prev => {
-        const updated = [...prev, ...overlayMessages];
-        try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch {}
-        return updated;
+        const ids = new Set(prev.map(m => m.id));
+        const merged = [...prev, ...overlayMessages.filter(m => !ids.has(m.id))];
+        try { localStorage.setItem(storageKey, JSON.stringify(merged)); } catch {}
+        return merged;
       });
     }
     setOverlayMessages([]);
@@ -230,14 +340,10 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   const handleOverlayMicClick = () => {
     clearSendTimer();
     cancelSpeech();
-    if (!recognitionRef.current) {
-      alert('Speech recognition is not available. This feature requires Chrome, Edge, or Safari.');
-      return;
-    }
     if (isListeningRef.current) {
-      try { recognitionRef.current.stop(); } catch {}
-    } else {
-      requestRecognitionStart();
+      if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+    } else if (streamRef.current) {
+      startSpeakChunk(streamRef.current);
     }
   };
 
@@ -245,6 +351,8 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     isListening,
     setIsListening,
     isListeningRef,
+    selectedSpeechLang,
+    setSelectedSpeechLang,
     recognitionLangRef,
     isSpeakMode,
     setIsSpeakMode,
