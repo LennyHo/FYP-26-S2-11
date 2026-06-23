@@ -373,3 +373,37 @@
     flex-wrap: wrap;
   }
 }
+
+.purchase-item-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  justify-content: center;
+}
+
+.purchase-order-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.purchase-order-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.purchase-feedback-btn {
+  padding: 5px 15px;
+  border-radius: 99px;
+  background: #6b3f24;
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.purchase-feedback-btn:hover {
+  background: #4d2a17;
+}

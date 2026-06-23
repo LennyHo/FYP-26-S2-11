@@ -1,0 +1,107 @@
+.feedback-page {
+    min-height: 100vh;
+    background: #f8efe6;
+}
+
+.feedback-main {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.feedback-back-btn {
+    border: none;
+    background: #5a321d;
+    color: white;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-bottom: 24px;
+}
+
+.feedback-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 12px 35px rgba(80, 45, 20, 0.12);
+}
+
+.feedback-card h1 {
+    margin: 0 0 24px;
+    font-size: 32px;
+}
+
+.feedback-item {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    padding: 18px;
+    border-radius: 18px;
+    background: #fff8f1;
+    margin-bottom: 28px;
+}
+
+.feedback-item-image {
+    width: 90px;
+    height: 90px;
+    border-radius: 16px;
+    object-fit: cover;
+}
+
+.feedback-section {
+    margin-bottom: 24px;
+}
+
+.feedback-section label {
+    display: block;
+    font-weight: 800;
+    color: #5a321d;
+    margin-bottom: 10px;
+}
+
+.feedback-stars {
+    display: flex;
+    gap: 8px;
+}
+
+.star {
+    border: none;
+    background: transparent;
+    font-size: 36px;
+    color: #d8c8ba;
+    cursor: pointer;
+}
+
+.star.active {
+    color: #f4a51c;
+}
+
+.feedback-section textarea {
+    width: 100%;
+    min-height: 140px;
+    resize: vertical;
+    border: 1px solid #e4cdbb;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 15px;
+    outline: none;
+}
+
+.feedback-submit-btn {
+    width: 100%;
+    border: none;
+    background: #6b3f24;
+    color: white;
+    padding: 15px;
+    border-radius: 16px;
+    font-weight: 900;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.feedback-message {
+    color: #8b4d22;
+    font-weight: 700;
+    margin-bottom: 18px;
+}

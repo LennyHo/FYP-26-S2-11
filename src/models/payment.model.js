@@ -57,6 +57,8 @@ paymentSchema.statics.getPurchaseHistory = async function getPurchaseHistory(use
           id: item._id.toString(),
           name: item.name,
           image: item.image,
+          menuItemId: item.menuItemId,
+          menuItemCode: item.menuItemCode,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           lineTotal: item.lineTotal,

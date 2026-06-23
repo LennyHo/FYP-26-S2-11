@@ -13,6 +13,7 @@
 //   #23  Checkout               → checkoutCart        → POST /api/checkout
 //   #19  Purchase history       → getPurchaseHistory  → GET /api/purchase-history
 //   #246 Update account         → updateUser          → PATCH /api/users/:id
+//   # Feedback                                         → POST /api/feedback
 //
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 
@@ -218,4 +219,31 @@ export function updateUser(userId: string, payload: { profilePic?: string; fullN
     `/api/users/${encodeURIComponent(userId)}`,
     { method: 'PATCH', body: JSON.stringify(payload) }
   );
+}
+
+// Receive Feedback
+export async function submitFeedback(payload: {
+  userId: string;
+  orderId: string;
+  menuItemId: string;
+  menuItemCode?: string;
+  drinkName: string;
+  rating: number;
+  comment?: string;
+}) {
+  const response = await fetch("http://localhost:5000/api/feedback", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to submit feedback.");
+  }
+
+  return data;
 }

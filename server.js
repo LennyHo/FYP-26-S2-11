@@ -44,6 +44,11 @@ app.use("/api", chatbotRoutes);
 const transcribeRoutes = require("./src/routes/transcribe.routes");
 app.use("/api", transcribeRoutes);
 
+// Feedback
+const feedbackRoutes = require("./src/routes/feedback.routes");
+app.use("/api", feedbackRoutes);
+console.log("[ROUTES] Feedback routes mounted");
+
 // DripTea routes (authentication, users, etc.)
 const authRoutes = require("./src/routes/auth.routes");
 app.use("/api", authRoutes);

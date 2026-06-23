@@ -218,6 +218,12 @@ export default function PurchaseHistory() {
                           Ready to Collect
                         </Link>
                       )}
+                      <Link
+                        href={`/feedback/${order.id}/0`}
+                        className="purchase-feedback-btn"
+                      >
+                        Feedback
+                      </Link>
                     </div>
                   </div>
 

@@ -54,6 +54,7 @@ const menuItemSchema = new mongoose.Schema(
       insulinImpact:  { type: String, default: "" },
     },
     rating: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
     isNewArrival: { type: Boolean, default: false },
   },
   { timestamps: true, collection: "menu_items" }
