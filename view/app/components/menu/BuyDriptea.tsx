@@ -21,14 +21,14 @@ const categories = [
   { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b004.jpg', desc: 'Creamy & classic' },
   { name: 'Matcha Teas', slug: 'matcha-teas', tone: 'catGreen', image: '/img/bubble_teas/b007.jpg', desc: 'Earthy & bold' },
   { name: 'Ice Blended', slug: 'ice-blended', tone: 'catBlue', image: '/img/bubble_teas/b012.jpg', desc: 'Cool & refreshing' },
-  { name: 'Local Favourites', slug: 'local-favorites', tone: 'catGold', image: '/img/bubble_teas/b011.jpg', desc: 'Taste of home' },
+  { name: 'Fruit Teas', slug: 'fruit-teas', tone: 'catGold', image: '/img/bubble_teas/b011.jpg', desc: 'Taste of home' },
 ];
 
 const moods = [
   { label: 'Cozy & Classic', slug: 'milk-tea',       icon: '🤎' },
   { label: 'Bold & Earthy',  slug: 'matcha-teas',    icon: '🍵' },
   { label: 'Cool Me Down',   slug: 'ice-blended',    icon: '❄️' },
-  { label: 'Taste of Home',  slug: 'local-favorites', icon: '🏡' },
+  { label: 'Taste of Home',  slug: 'fruit-teas',     icon: '🏡' },
 ];
 
 // #19 Helper Function
