@@ -7,9 +7,9 @@
 //      View: cart/page.tsx → Component: Cart.tsx (this file) → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCartItems, deleteCartItem, updateCartItemQuantity } from "../../utils/customerApi";
+import { getCartItems, getMenuItems, deleteCartItem, updateCartItemQuantity } from "../../utils/customerApi";
 import { getStoredUser, parseLocalCartLine } from "../../utils/api.base";
 import Header from "../layout/Header";
 import "./Cart.css";
@@ -30,6 +30,7 @@ interface DripTeaCartItem {
     sugar?: string;
     toppings?: string[];
     lang?: string;
+    nutritionInfo?: { sugarG?: number; [key: string]: unknown };
   };
 }
 
@@ -75,6 +76,21 @@ function tLabel(label: string, lang?: string): string {
   return CART_LABELS[lang]?.[label] ?? label;
 }
 
+const SUGAR_MULTIPLIERS: Record<string, number> = {
+  '0% Sugar': 0, '25% Sugar': 0.25, '50% Sugar': 0.5, '100% Sugar': 1.0, 'Normal Sweet': 1.0,
+};
+const TOPPING_SUGAR_G: Record<string, number> = { 'Tapioca Pearls': 15, 'Aloe Vera': 5, 'Cheese Foam': 8 };
+const WHO_LIMIT_G = 25;
+function sugarGrade(g: number): 'a' | 'b' | 'c' | 'd' {
+  if (g <= 25) return 'a'; if (g <= 37) return 'b'; if (g <= 50) return 'c'; return 'd';
+}
+const SUGAR_NUDGE: Record<'a' | 'b' | 'c' | 'd', string> = {
+  a: "You're within the recommended daily sugar limit. Great choice!",
+  b: 'Slightly over the daily limit. Consider reducing your sugar level.',
+  c: 'Noticeably over the daily limit. Try 25% or 50% sugar options.',
+  d: 'Well above the recommended limit. Consider sugar-free drinks.',
+};
+
 interface CartItem {
   backendId?: string;
   drinkId?: string;
@@ -84,6 +100,7 @@ interface CartItem {
   unitPrice: number;
   imageSrc?: string;
   quantity: number;
+  sugarPerUnit: number;
 }
 
 function getCartItemImage(item: CartItem) {
@@ -106,6 +123,11 @@ export default function Cart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  const totalSugarG = useMemo(() => {
+    if (isLoading || cartItems.length === 0) return null;
+    return cartItems.reduce((sum, item) => sum + item.sugarPerUnit * item.quantity, 0);
+  }, [cartItems, isLoading]);
   // #17 / #201 - Tracks which item is being deleted so the CSS fadeSlideOut animation
   // plays for that row before the API call and list refresh happen.
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -143,6 +165,7 @@ export default function Cart() {
               unitPrice,
               imageSrc: parsed.imageSrc,
               quantity,
+              sugarPerUnit: 0,
             } satisfies CartItem;
           })
           .filter((item): item is NonNullable<typeof item> => item !== null) as CartItem[];
@@ -152,30 +175,52 @@ export default function Cart() {
       }
 
       const userId = user?.id || "";
-      const response = await getCartItems(userId);
-      const backendItems: DripTeaCartItem[] = response.data || [];
+      const [cartResponse, menuResponse] = await Promise.all([
+        getCartItems(userId),
+        getMenuItems('active'),
+      ]);
+      const backendItems: DripTeaCartItem[] = cartResponse.data || [];
+      const menuItems = menuResponse.data || [];
+      const menuByCode = new Map(menuItems.map((m) => [m.id, m]));
 
       const parsedItems: CartItem[] = backendItems.map((item) => {
         const quantity = Number(item.quantity || 1);
         const lineTotal = Number(item.lineTotal || 0);
         const unitPrice = Number(item.unitPrice || lineTotal / quantity || 0);
 
-        const lang = item.customization?.lang;
-        const toppings = Array.isArray(item.customization?.toppings)
-          ? item.customization.toppings
-              .map((tp) => tLabel(tp.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim(), lang))
-              .join(", ")
-          : "";
+        const lang = item.customization?.lang as string | undefined;
+        const rawToppings = Array.isArray(item.customization?.toppings)
+          ? item.customization.toppings as string[]
+          : [];
+        const toppings = rawToppings
+          .map((tp) => tLabel(tp.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim(), lang))
+          .join(", ");
 
         const details = [
           `${tLabel("Qty", lang)} ${quantity}`,
-          tLabel(item.customization?.size || "Regular", lang),
-          tLabel(item.customization?.ice || "Normal Ice", lang),
-          tLabel(item.customization?.sugar || "Normal Sweet", lang),
+          tLabel((item.customization?.size as string) || "Regular", lang),
+          tLabel((item.customization?.ice as string) || "Normal Ice", lang),
+          tLabel((item.customization?.sugar as string) || "Normal Sweet", lang),
           toppings,
         ]
           .filter(Boolean)
           .join(" | ");
+
+        // Sugar calculation: use pre-computed value if available, else derive from menu data
+        let sugarPerUnit = 0;
+        if (item.customization?.nutritionInfo?.sugarG != null) {
+          sugarPerUnit = Number(item.customization.nutritionInfo.sugarG);
+        } else {
+          const menuItem = menuByCode.get(item.menuItemCode || '');
+          const baseSugar = Number(menuItem?.base_sugar_g ?? 0);
+          const sugarLevel = (item.customization?.sugar as string) || 'Normal Sweet';
+          const multiplier = SUGAR_MULTIPLIERS[sugarLevel] ?? 1.0;
+          const toppingSugar = rawToppings.reduce((sum, t) => {
+            const clean = t.replace(/\s*\(\+S\$[\d.]+\)/g, '').trim();
+            return sum + (TOPPING_SUGAR_G[clean] ?? 0);
+          }, 0);
+          sugarPerUnit = Math.round(baseSugar * multiplier) + toppingSugar;
+        }
 
         return {
           backendId: item.id || item._id,
@@ -186,6 +231,7 @@ export default function Cart() {
           unitPrice,
           imageSrc: item.image,
           quantity,
+          sugarPerUnit,
         };
       });
 
@@ -271,6 +317,10 @@ export default function Cart() {
     };
   }, []);
 
+  const sugarGradeKey = totalSugarG !== null ? sugarGrade(totalSugarG) : null;
+  const sugarFillPct  = totalSugarG !== null ? Math.min(100, totalSugarG) : 0;
+  const pctOfLimit    = totalSugarG !== null ? Math.round((totalSugarG / WHO_LIMIT_G) * 100) : 0;
+
   return (
     <main className="cart-page">
       <Header />
@@ -282,6 +332,44 @@ export default function Cart() {
       >
         Back to Menu
       </button>
+
+      {!isLoading && cartItems.length > 0 && totalSugarG !== null && sugarGradeKey && (
+        <div className="sugar-widget">
+          <div className="sugar-widget-header">
+            <span className="sugar-widget-title">Sugar Snapshot</span>
+            <span className="sugar-widget-limit-label">
+              <span className="sugar-limit-number">
+                {WHO_LIMIT_G}g
+                <em className="sugar-info-icon" title="WHO and Singapore MOH recommended added sugar limit per day">ℹ</em>
+              </span>
+              <span className="sugar-limit-text">WHO daily limit</span>
+            </span>
+          </div>
+          <p className="sugar-widget-subtitle">Track your daily sugar from DripTea orders</p>
+          <div className="sugar-widget-body">
+            <img src={`/grade_nutri_${sugarGradeKey}_full.png`} alt={`Nutri-Grade ${sugarGradeKey.toUpperCase()}`} className="sugar-grade-badge" />
+            <div className="sugar-compare">
+              <span key={totalSugarG} className={`sugar-current sugar-grade-${sugarGradeKey}`}>{totalSugarG}g</span>
+              <span className="sugar-arrow">&gt;</span>
+              <span className="sugar-who-limit">{WHO_LIMIT_G}g</span>
+            </div>
+            <span className={`sugar-pct-pill sugar-pill-${sugarGradeKey}`}>{pctOfLimit}% of limit</span>
+          </div>
+          <div className="sugar-track-wrap">
+            <progress className="sugar-track" max={100} value={sugarFillPct} />
+            <div className="sugar-who-marker" />
+          </div>
+          <div className="sugar-scale">
+            <span>0</span>
+            <span>50</span>
+            <span>100</span>
+            <span className="sugar-scale-limit-label">25g limit</span>
+          </div>
+          <p key={sugarGradeKey} className={`sugar-nudge sugar-nudge-${sugarGradeKey}`}>
+            {SUGAR_NUDGE[sugarGradeKey]}
+          </p>
+        </div>
+      )}
 
       <section className="cart-panel">
         <h1 className="cart-title">Shopping Cart</h1>
