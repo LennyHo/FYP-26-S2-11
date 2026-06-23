@@ -1437,7 +1437,7 @@ function fixMissingLineBreaks(reply) {
 // Handles quick-prompt button clicks: fetches the relevant drinks from the DB,
 // injects them as context, and lets Gemini write a natural response.
 // The drink cards are returned alongside the AI reply for the frontend to render.
-async function handleQuickPromptWithGemini({ safeMessage, activeConversationId, userId, history }) {
+async function handleQuickPromptWithGemini({ safeMessage, activeConversationId, userId, history: recentHistory }) {
     const msg = safeMessage.toLowerCase();
     const rankByCalorie = msg.includes('calorie') || msg.includes('calories') || msg.includes('cal');
     const wantLow = msg.includes('low') || msg.includes('least') || msg.includes('lowest') || msg.includes('healthier') || msg.includes('healthy');
@@ -1484,7 +1484,7 @@ ${drinkLines}
 Write a warm, natural 1–2 sentence intro for these recommendations. Reference the selection briefly but do not enumerate every drink — the cards handle the details. Speak as Avy, the friendly DripTea assistant.`;
 
     const systemPrompt = await buildSystemPrompt(safeMessage, drinkContext);
-    let reply = await aiClient.generateText(safeMessage, history, systemPrompt);
+    let reply = await aaiClient.generateText(safeMessage, recentHistory, systemPrompt)
     reply = fixMissingLineBreaks(reply);
 
     await ChatbotSession.appendToConversation(activeConversationId, userId, { role: 'user', content: safeMessage });
@@ -1551,12 +1551,13 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
     const activeConversationId = conversationId || `guest-${Date.now()}`;
     const history = await ChatbotSession.getConversationHistory(activeConversationId);
+    const recentHistory = history.slice(-6);
 
     // Quick prompt button clicks bypass all hardcoded routes and go directly to Gemini.
     // The relevant drinks are still fetched from the DB and injected as context so Gemini
     // can write a natural response, while the frontend still receives the cards to render.
     if (isQuickPrompt) {
-        return await handleQuickPromptWithGemini({ safeMessage, activeConversationId, userId, history });
+        return await handleQuickPromptWithGemini({ safeMessage, activeConversationId, userId, history: recentHistory });
     }
 
     // User Story #31: Ask About Nutri-Grade via chatbot
@@ -1810,7 +1811,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
             const contextPrompt = `The customer asked: "${safeMessage}"\n\nTop-rated drinks available:\n${drinkContext}\n\nRecommend 2-3 of these drinks naturally in 1-2 sentences. Do not list prices or item IDs.`;
             const systemPrompt = await buildSystemPrompt(safeMessage, "");
-            const reply = await aiClient.generateText(contextPrompt, history, systemPrompt);
+            const reply = await aiClient.generateText(contextPrompt, recentHistory, systemPrompt);
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -1846,7 +1847,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             : "The customer has no recent orders on record.";
 
         const systemPrompt = await buildSystemPrompt(safeMessage, orderContext);
-        const reply = await aiClient.generateText(safeMessage, history, systemPrompt);
+        const reply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt)
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
@@ -2729,7 +2730,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
     let reply = await aiClient.generateText(
         geminiInput,
-        history,
+        recentHistory,
         systemPrompt
     );
 
