@@ -23,6 +23,40 @@ function getTranscribeUrl(): string {
   return `${base.replace(/\/$/, '')}/api/transcribe`;
 }
 
+function deduplicateTranscript(text: string): string {
+  if (!text) return text;
+
+  // 1. Sentence-level dedup — split on punctuation used across all languages
+  const sentences: string[] = [];
+  let buf = '';
+  for (const ch of text) {
+    buf += ch;
+    if ('。！？!?.।؟'.includes(ch)) { sentences.push(buf.trim()); buf = ''; }
+  }
+  if (buf.trim()) sentences.push(buf.trim());
+
+  if (sentences.length > 1) {
+    const seen = new Set<string>();
+    const unique = sentences.filter(s => {
+      const key = s.replace(/[。！？!?.।؟\s]/g, '').toLowerCase();
+      return key && !seen.has(key) && seen.add(key);
+    });
+    if (unique.length < sentences.length) return unique.join(' ').trim();
+  }
+
+  // 2. Word-level dedup — catches unpunctuated repetitions like "hello hello"
+  //    or "I want milk tea I want milk tea"
+  const words = text.trim().split(/\s+/);
+  if (words.length >= 2 && words.length % 2 === 0) {
+    const half = words.length / 2;
+    const first = words.slice(0, half).join(' ').toLowerCase();
+    const second = words.slice(half).join(' ').toLowerCase();
+    if (first === second) return words.slice(0, half).join(' ');
+  }
+
+  return text;
+}
+
 async function transcribeBlob(blob: Blob): Promise<{ text: string; language: string }> {
   const formData = new FormData();
   formData.append('audio', blob, 'recording.webm');
@@ -39,6 +73,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   const [overlayMessages, setOverlayMessages] = useState<Message[]>([]);
   const [overlayLoading, setOverlayLoading] = useState(false);
   const [isTTSSpeaking, setIsTTSSpeaking] = useState(false);
+  const [isSpeakDetected, setIsSpeakDetected] = useState(false);
   const [selectedSpeechLang, setSelectedSpeechLang] = useState<string>(getBrowserSpeechLang);
 
   // Compat shim: useChatbotState calls recognitionRef.current.stop() when sidebar closes
@@ -57,6 +92,10 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   const voiceConversationRef = useRef(false);
   const isListeningRef = useRef(false);
   const isRecognitionStartingRef = useRef(false);
+  const chunkStartTimeRef = useRef(0);
+  const isSpeakDetectedRef = useRef(false);
+  const hadVoiceInChunkRef = useRef(false); // did real voice occur in the current recording chunk
+  const noiseFloorRef = useRef(8); // ambient noise baseline — calibrated during grace period
   const setInputRef = useRef<((value: string) => void) | undefined>(undefined);
   // Keep for interface compat with useChatbotState (accumulatedText / send timer not used in EL mode)
   const accumulatedTextRef = useRef('');
@@ -126,17 +165,17 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
   async function flushChunks(chunks: Blob[], mode: 'mic' | 'speak') {
     if (chunks.length === 0 || isProcessingRef.current) return;
+
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    // Skip transcription for truly empty blobs (< 1 KB) — nothing real to transcribe
+    if (blob.size < 1000) return;
+
     isProcessingRef.current = true;
 
-    if (mode === 'speak') {
-      setOverlayLoading(true);
-      setOverlayTranscript('');
-    }
-
     try {
-      const blob = new Blob(chunks, { type: 'audio/webm' });
       const { text: rawText, language } = await transcribeBlob(blob);
-      const text = rawText.replace(/\([^)]*\)/g, '').trim();
+      // Collapse all whitespace (incl. newlines from ElevenLabs) to single spaces
+      const text = deduplicateTranscript(rawText.replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim());
 
       if (language) {
         const locale = elToLocale(language);
@@ -144,7 +183,16 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
         recognitionLangRef.current = locale;
       }
 
+      // Silence chunk — nothing to do; stay in "Listening…" without touching loading state
       if (!text.trim()) return;
+
+      // Real speech confirmed — now enter the thinking state
+      if (mode === 'speak') {
+        setOverlayLoading(true);
+        setOverlayTranscript('');
+        setIsListening(false);
+        isListeningRef.current = false;
+      }
 
       if (mode === 'mic') {
         setInputRef.current?.(text.trim());
@@ -153,7 +201,8 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
         await sendOverlayMessageRef.current?.(text.trim(), true);
       }
     } catch (err) {
-      console.error('[Speech] Transcription error:', err);
+      // 400 means silence/too-short — expected, no need to log
+      if (!String(err).includes('400')) console.error('[Speech] Transcription error:', err);
     } finally {
       isProcessingRef.current = false;
       if (mode === 'speak') setOverlayLoading(false);
@@ -214,7 +263,14 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     }
 
     recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+
+    // Hard cap: force-stop after 10 s so a noisy environment never blocks forever
+    const maxTimer = setTimeout(() => {
+      if (mediaRecorderRef.current === recorder && recorder.state === 'recording') recorder.stop();
+    }, 10000);
+
     recorder.onstop = async () => {
+      clearTimeout(maxTimer);
       if (ttsPausedRef.current) { audioChunksRef.current = []; return; } // discard if TTS triggered the stop
       await flushChunks(chunks, 'speak');
       if (speakModeRef.current && !ttsPausedRef.current && !isProcessingRef.current) {
@@ -224,7 +280,9 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
     mediaRecorderRef.current = recorder;
     recorder.start(100);
-    setOverlayTranscript('Listening...');
+    chunkStartTimeRef.current = Date.now();
+    noiseFloorRef.current = 8;      // reset ambient baseline for each new chunk
+    hadVoiceInChunkRef.current = false; // reset voice flag for each new chunk
     setIsListening(true);
     isListeningRef.current = true;
   }
@@ -246,16 +304,32 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
         analyser.getByteFrequencyData(data);
         const avg = data.reduce((a, b) => a + b, 0) / data.length;
+        const elapsed = Date.now() - chunkStartTimeRef.current;
 
-        if (avg > 12) {
-          // Voice detected — cancel any pending silence timeout
+        // Calibrate noise floor during the grace period.
+        if (elapsed < 300) {
+          noiseFloorRef.current = 0.1 * avg + 0.9 * noiseFloorRef.current;
+        }
+
+        // Voice threshold: at least 20, or 2.5× the measured noise floor.
+        const voiceThreshold = Math.max(20, noiseFloorRef.current * 2.5);
+
+        if (avg > voiceThreshold) {
+          // Voice detected — mark it so silence timeout can be shorter
+          if (!isSpeakDetectedRef.current) { isSpeakDetectedRef.current = true; setIsSpeakDetected(true); }
+          hadVoiceInChunkRef.current = true;
           if (vadTimerRef.current) { clearTimeout(vadTimerRef.current); vadTimerRef.current = null; }
-        } else if (!vadTimerRef.current && mediaRecorderRef.current?.state === 'recording' && !isProcessingRef.current) {
-          // Silence — start 1.4 s countdown then flush chunk
-          vadTimerRef.current = setTimeout(() => {
-            vadTimerRef.current = null;
-            if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
-          }, 600);
+        } else {
+          if (isSpeakDetectedRef.current) { isSpeakDetectedRef.current = false; setIsSpeakDetected(false); }
+          // Silence — start countdown after 300 ms grace period.
+          // 500 ms if user actually spoke (fast response), 800 ms if no voice yet (conservative).
+          if (!vadTimerRef.current && elapsed > 300 && mediaRecorderRef.current?.state === 'recording' && !isProcessingRef.current) {
+            const silenceMs = hadVoiceInChunkRef.current ? 500 : 800;
+            vadTimerRef.current = setTimeout(() => {
+              vadTimerRef.current = null;
+              if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+            }, silenceMs);
+          }
         }
 
         requestAnimationFrame(poll);
@@ -342,11 +416,22 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
   const handleOverlayMicClick = () => {
     clearSendTimer();
-    cancelSpeech();
     if (isListeningRef.current) {
+      // Pause: stop recording without auto-restart
+      // speakModeRef = false FIRST so _onTTSEnd hook and onstop don't restart the recorder
+      speakModeRef.current = false;
+      cancelSpeech();
       if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
-    } else if (streamRef.current) {
-      startSpeakChunk(streamRef.current);
+      setIsListening(false);
+      isListeningRef.current = false;
+    } else if (ttsPausedRef.current) {
+      // Interrupt Avy mid-speech — cancelSpeech fires _onTTSEnd which restarts recording after 150ms
+      speakModeRef.current = true;
+      cancelSpeech();
+    } else {
+      // Paused or idle — resume listening
+      speakModeRef.current = true;
+      if (streamRef.current) startSpeakChunk(streamRef.current);
     }
   };
 
@@ -369,6 +454,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     overlayLoading,
     setOverlayLoading,
     isTTSSpeaking,
+    isSpeakDetected,
     voiceConversationRef,
     recognitionRef,
     setInputRef,

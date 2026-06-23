@@ -157,7 +157,7 @@ export function useChatApi({
 
       if (shouldSpeak) {
         const plainText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
-        const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i) ? plainText : `Sure — ${plainText}`;
+        const humaneIntro = plainText.match(/^(hello|hi|hey|sure|absolutely|of course|here's|here is)/i) ? plainText : `Sure, ${plainText}`;
         speakText(humaneIntro);
       }
       // #199 / #200 / #201 - Dispatch cartUpdated only when the backend confirms a real cart
@@ -198,7 +198,19 @@ export function useChatApi({
         purchaseHistory: payload.purchaseHistory && typeof payload.purchaseHistory === 'object' ? (payload.purchaseHistory as Message['purchaseHistory']) : null,
       };
       setOverlayMessages(prev => [...prev, botMsg]);
-      if (shouldSpeak) speakText(botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim());
+      if (shouldSpeak) {
+        const baseText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+        const drinks = botMsg.recommendedDrinks;
+        if (drinks && drinks.length > 0) {
+          const drinkList = drinks
+            .slice(0, 5)
+            .map(d => d.nutri_grade ? `${d.name}, Grade ${d.nutri_grade.toUpperCase()}` : d.name)
+            .join('. ');
+          speakText(`${baseText} We have: ${drinkList}. These are our options. What would you like?`);
+        } else {
+          speakText(baseText);
+        }
+      }
     } catch {
       const errorText = "I'm so sorry for the inconvenience! Our server seems to be unavailable right now. Please try again in a moment.";
       setOverlayMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: errorText, isUser: false }]);

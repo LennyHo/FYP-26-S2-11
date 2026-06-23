@@ -383,7 +383,7 @@ function formatDrinkCards(drinks) {
             category: drink.category,
             price: drink.price,
             description: drink.description || DRINK_TAGLINES[drink.itemId] || "",
-            image: drink.image || `/img/bubble_teas/${drink.itemId}.png`,
+            image: `/img/bubble_teas/${drink.itemId}.jpg`,
             tags: drink.tags || [],
             nutri_grade: nutrition.nutriGrade || null,
             base_sugar_g: nutrition.baseSugarG ?? null,

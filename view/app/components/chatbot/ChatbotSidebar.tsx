@@ -87,6 +87,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     overlayMessages,
     overlayLoading,
     isTTSSpeaking,
+    isSpeakDetected,
     welcomeGreeting,
     welcomeAnimationKey,
     isSearchOpen,
@@ -123,6 +124,11 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
 
   const [dismissedMsgId, setDismissedMsgId] = React.useState<string | null>(null);
   const photoInputRef = React.useRef<HTMLInputElement>(null);
+  const speakMsgAreaRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const el = speakMsgAreaRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [overlayMessages]);
 
   return (
     <aside className={styles.chatbotSidebar}>
@@ -696,8 +702,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               ✕
             </button>
             <span className={`${styles.speakOverlayText} ${isListening ? styles.listeningActive : ''}`}>
-              {overlayLoading ? 'Avy is thinking…' : isTTSSpeaking ? 'Avy is speaking…' : isListening ? 'Listening…' : 'Tap mic to speak'}
-              {isListening && (
+              {overlayLoading ? 'Avy is thinking…' : isTTSSpeaking ? 'Avy is speaking…' : isSpeakDetected ? 'Hearing you…' : isListening ? 'Listening…' : 'Tap mic to speak'}
+              {(overlayLoading || isTTSSpeaking || isListening) && (
                 <span className={styles.listeningBars} aria-hidden="true">
                   <span /><span /><span />
                 </span>
@@ -706,7 +712,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
           </div>
 
           {/* Messages — same classes as main chat */}
-          <div className={styles.speakMsgArea}>
+          <div className={styles.speakMsgArea} ref={speakMsgAreaRef}>
             {overlayMessages.map(msg => (
               <div key={msg.id} className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
                 {!msg.isUser && (
@@ -815,6 +821,19 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 </div>
               </div>
             ))}
+            {overlayLoading && (
+              <div className={`${styles.message} ${styles.botMessage}`}>
+                <div className={styles.botMeta}>
+                  <Image src={avyLogo} alt="Avy" width={18} height={18} className={styles.messageAvatar} />
+                  <span className={styles.assistantLabel}>Avy</span>
+                </div>
+                <div className={`${styles.botBubble} ${styles.typingBubble}`}>
+                  <span className={styles.typingIndicator} aria-label="Avy is thinking">
+                    <span></span><span></span><span></span>
+                  </span>
+                </div>
+              </div>
+            )}
             {overlayTranscript && !overlayLoading && (
               <div className={styles.speakLineContainer} aria-live="polite">
                 <span className={styles.speakLine}>{overlayTranscript}</span>
