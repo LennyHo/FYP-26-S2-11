@@ -105,3 +105,22 @@
     font-weight: 700;
     margin-bottom: 18px;
 }
+
+.feedback-item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.feedback-item-card {
+    border: 1px solid #ead8c7;
+    border-radius: 20px;
+    padding: 20px;
+    background: #fffaf5;
+}
+
+.feedback-order-no {
+    font-weight: 800;
+    color: #6b3f24;
+    margin-bottom: 20px;
+}
