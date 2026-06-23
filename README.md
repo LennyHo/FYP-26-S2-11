@@ -471,6 +471,14 @@ All backend routes are prefixed with `/api` except the chatbot.
 ### Footer Social Links Fix
 - Replaced placeholder external URLs with `#` and removed `target="_blank"` / `rel="noreferrer"` from social links to eliminate browser security warnings
 
+### Add Manual Feedback Function
+- Purchase History -> Feedback button -> Feedback Page -> Select 1-5 stars -> Write comment -> Submit -> POST /api/feedback -> MongoDB feedbacks collection -> Average rating updated in menu_items.rating
+- For example, A gives 5 stars for Classic Milk Tea, B gives 3 stars for Classic Milk Tea, the avarage rating shown in menu.items will be 4 stars.
+- Sequence Diagram flow: Customer -> FeedbackGUI -> Feedback.Controller -> Feedback.Model, MenuItem.Model
+
+### Multiple Languages Function
+- All languages works well in the whole ordering flow.
+
 ### UI & Frontend Improvements
 
 **Landing Page (`/`)**
@@ -524,7 +532,7 @@ Use these to verify the full ordering flow inside the chat widget:
 ### Voice & Multilingual Tests
 
 9. **English mic** — click the mic button, say "What drinks do you have?" in English
-10. **Malay mic** — click mic, say "Saya nak teh tarik satu"
+10. **Malay mic** — click mic, say "Saya nak satu teh matcha strawberi."
 11. **Chinese mic** — click mic, say "我想要一杯奶茶"
 12. **Tamil mic** — click mic, say "எனக்கு ஒரு தேநீர் வேண்டும்"
 13. **Speak mode (TTS)** — click the Speak button, ask for a recommendation; Avy should reply both in text and with ElevenLabs voice audio
