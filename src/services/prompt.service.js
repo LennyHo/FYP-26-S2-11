@@ -61,10 +61,27 @@ async function isMenuRequest(message) {
     msg.includes("what is") ||
     msg.includes("what are") ||
     msg.includes("tell me about") ||
+    // Chinese drink / ordering keywords
     msg.includes("饮料") ||
     msg.includes("菜单") ||
     msg.includes("推荐") ||
-    msg.includes("点");
+    msg.includes("点") ||
+    msg.includes("奶茶") ||   // milk tea
+    msg.includes("绿茶") ||   // green tea
+    msg.includes("乌龙") ||   // oolong
+    msg.includes("抹茶") ||   // matcha
+    msg.includes("草莓") ||   // strawberry
+    msg.includes("蔓越莓") || // cranberry
+    msg.includes("芋头") ||   // taro
+    msg.includes("桂花") ||   // osmanthus
+    msg.includes("巧克力") || // chocolate
+    msg.includes("经典") ||   // classic (经典奶茶)
+    msg.includes("一杯") ||   // a cup of (ordering intent)
+    msg.includes("我要") ||   // I want
+    msg.includes("我想") ||   // I would like
+    msg.includes("来一") ||   // gimme one
+    msg.includes("要一") ||   // want one
+    msg.includes("珍珠");     // pearl topping
 
   if (keywordMatch) return true;
 
@@ -167,7 +184,7 @@ async function buildSystemPrompt(userMessage, extraContext = "") {
     ? `LANGUAGE DETECTION — CRITICAL:
 Detect the language from the user's LATEST message alone, never from previous turns. Rules:
 - Malay (BM): user wrote Latin script with ANY Malay word — including nak, satu, dua, tiga, empat, lima, mahu, boleh, saya, aku, kita, dengan, yang, dan, tak, ada, nak, tolong, minta, bagi, beli, letak, tambah, kurang, tanpa, besar, biasa, ais, gula, minuman, teh, susu — reply ENTIRELY in Malay (Bahasa Melayu), even if the message also contains English words like drink names ("matcha latte", "taro") or prices.
-- Chinese: user wrote using Chinese characters (汉字) → reply in Mandarin Chinese.
+- Chinese: user wrote using Chinese characters (汉字) → reply ENTIRELY in Mandarin Chinese. This applies to ALL parts of your response — ordering steps, size/ice/sugar/topping options, confirmation text, health warnings, and button labels. Use the Chinese reference translations below for all option labels.
 - Tamil: user wrote using Tamil script (தமிழ் எழுத்துகள்) → reply ENTIRELY in Tamil.
 - English: user wrote in English → reply in English.
 If the latest message is a short Malay phrase like "Tanpa topping" or "Kurang ais", that IS Malay — do NOT fall back to the previous conversation language. Never mix languages in the same reply.
