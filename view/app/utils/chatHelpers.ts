@@ -205,7 +205,7 @@ function _browserSpeak(text: string, onEndCallback?: () => void): void {
 }
 
 export function speakText(text: string, onEndCallback?: () => void): void {
-  const clean = text.replace(/[*#]/g, '').trim();
+  const clean = text.replace(/[*#]/g, '').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
   if (!clean) { onEndCallback?.(); return; }
 
   _onTTSStart?.();

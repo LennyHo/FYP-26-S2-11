@@ -343,6 +343,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     overlayMessages: speech.overlayMessages,
     overlayLoading: speech.overlayLoading,
     isTTSSpeaking: speech.isTTSSpeaking,
+    isSpeakDetected: speech.isSpeakDetected,
     welcomeGreeting: conversation.welcomeGreeting,
     welcomeAnimationKey: conversation.welcomeAnimationKey,
     isSearchOpen: ui.isSearchOpen,

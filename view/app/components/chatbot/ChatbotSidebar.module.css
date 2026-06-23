@@ -576,6 +576,7 @@
 
 .userMessage {
   align-self: flex-end;
+  max-width: 75%;
   animation-name: messageInRight;
 }
 
