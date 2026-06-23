@@ -251,10 +251,12 @@ function parseCustomizationFromMessage(message) {
 // Detects recommendation intent keywords → queries menu_items → injects results into AI prompt.
 // All drink name associations — any of these words in a message signals a drink-related browse request
 const DRINK_ASSOCIATION_WORDS = [
-    "matcha", "taro", "chocolate", "choco", "cocoa",
-    "milo", "jasmine", "oolong", "osmanthus", "da hong bao",
-    "milk tea", "milktea", "frappe", "slush",
-    "strawberry", "cranberry", "latte",
+    "matcha", "jasmine", "oolong", "osmanthus", "da hong bao",
+    "milk tea", "milktea", "latte",
+    "strawberry", "cranberry",
+    "ice blended", "peach", "mango",
+    "lemon", "lychee", "grapefruit", "watermelon",
+    "fruit tea",
 ];
 
 function isRecommendationRequest(message) {
@@ -353,18 +355,23 @@ function isInfoRequest(message) {
 }
 
 const DRINK_TAGLINES = {
-    b001: "Our signature black tea steeped in sweet, creamy milk",
-    b002: "Delicate jasmine-scented green tea with a floral finish",
-    b003: "Smooth oolong balanced with fresh milk and light sweetness",
-    b004: "Rich, earthy matcha blended with creamy fresh milk",
-    b005: "Vibrant strawberry purée layered with earthy matcha",
-    b006: "Tart cranberry meets smooth matcha for a bold contrast",
-    b007: "Floral jasmine-infused green tea with earthy matcha depth",
-    b008: "Fragrant osmanthus flower tea with a soft, milky finish",
-    b009: "Premium Wuyi rock oolong with rich mineral notes and creamy milk",
-    b010: "Indulgent cocoa and chocolate syrup blended over ice",
-    b011: "Classic Milo chocolate-malt with fresh milk over ice",
-    b012: "Creamy purple taro blended into a thick, icy slush",
+    b001: "Our signature premium black tea blended with rich milk",
+    b002: "Light and refreshing jasmine green tea with subtle floral aroma",
+    b003: "Smooth oolong tea with a roasted aroma blended with milk",
+    b004: "Fragrant osmanthus-infused milk tea with a floral finish",
+    b005: "Premium Da Hong Bao oolong tea with deep, complex flavor",
+    b006: "Ceremonial grade Uji matcha layered with fresh milk",
+    b007: "Fresh strawberry purée layered with premium matcha",
+    b008: "Tangy cranberry paired with smooth matcha",
+    b009: "Floral jasmine tea blended with rich matcha",
+    b010: "Refreshing ice-blended green tea with sweet peach flavour",
+    b011: "Tropical mango blended with green tea over ice",
+    b012: "Refreshing black tea with lemon flavour, served chilled",
+    b013: "Refreshing green tea with sweet peach flavour",
+    b014: "Tropical mango tea with a sweet and refreshing fruit flavour",
+    b015: "Light jasmine tea with sweet lychee flavour",
+    b016: "Citrus grapefruit green tea, refreshing and light",
+    b017: "Rich watermelon flavour for a light and refreshing drink",
 };
 
 function formatDrinkCards(drinks) {
@@ -718,21 +725,28 @@ function resolveDrinkNameFromMessage(message) {
     if (msg.includes("strawberry matcha")) return "Strawberry Matcha Tea";
     if (msg.includes("cranberry matcha")) return "Cranberry Matcha Tea";
     if (msg.includes("matcha latte")) return "Matcha Latte";
-    if (msg.includes("double chocolate frappe")) return "Double Chocolate Frappe";
-    if (msg.includes("chocolate frappe")) return "Double Chocolate Frappe";
     if (msg.includes("classic milk tea")) return "Classic Milk Tea";
+    if (msg.includes("peach green tea ice blended")) return "Peach Green Tea Ice Blended";
+    if (msg.includes("mango green tea ice blended")) return "Mango Green Tea Ice Blended";
+    if (msg.includes("ice lemon tea") || msg.includes("lemon tea")) return "Ice Lemon Tea";
+    if (msg.includes("peach green tea")) return "Peach Green Tea";
+    if (msg.includes("mango fruit tea")) return "Mango Fruit Tea";
+    if (msg.includes("lychee jasmine")) return "Lychee Jasmine Tea";
+    if (msg.includes("grapefruit green tea")) return "Grapefruit Green Tea";
+    if (msg.includes("watermelon fruit tea")) return "Watermelon Fruit Tea";
     if (msg.includes("jasmine green")) return "Jasmine Green Tea";
-    if (msg.includes("taro slush")) return "Taro Slush";
-    if (msg.includes("milo dinosaur")) return "Milo Dinosaur";
-    if (msg.includes("milo")) return "Milo Dinosaur";
     if (msg.includes("matcha")) return "Matcha Latte";
     if (msg.includes("strawberry")) return "Strawberry Matcha Tea";
     if (msg.includes("cranberry")) return "Cranberry Matcha Tea";
-    if (msg.includes("frappe")) return "Double Chocolate Frappe";
-    if (msg.includes("chocolate")) return "Double Chocolate Frappe";
-    if (msg.includes("taro")) return "Taro Slush";
     if (msg.includes("jasmine")) return "Jasmine Green Tea";
     if (msg.includes("milk tea")) return "Classic Milk Tea";
+    if (msg.includes("watermelon")) return "Watermelon Fruit Tea";
+    if (msg.includes("grapefruit")) return "Grapefruit Green Tea";
+    if (msg.includes("lychee")) return "Lychee Jasmine Tea";
+    if (msg.includes("lemon")) return "Ice Lemon Tea";
+    if (msg.includes("mango")) return "Mango Fruit Tea";
+    if (msg.includes("peach")) return "Peach Green Tea";
+    if (msg.includes("ice blended")) return "Peach Green Tea Ice Blended";
 
     return null;
 }
@@ -1484,7 +1498,7 @@ ${drinkLines}
 Write a warm, natural 1–2 sentence intro for these recommendations. Reference the selection briefly but do not enumerate every drink — the cards handle the details. Speak as Avy, the friendly DripTea assistant.`;
 
     const systemPrompt = await buildSystemPrompt(safeMessage, drinkContext);
-    let reply = await aaiClient.generateText(safeMessage, recentHistory, systemPrompt)
+    let reply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt)
     reply = fixMissingLineBreaks(reply);
 
     await ChatbotSession.appendToConversation(activeConversationId, userId, { role: 'user', content: safeMessage });
@@ -1668,11 +1682,11 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         if (drinks.length === 0) {
             const FLAVOR_MAP = {
                 草莓: "strawberry", 蔓越莓: "cranberry", 抹茶: "matcha",
-                芋头: "taro", 巧克力: "chocolate", 可可: "cocoa",
                 茉莉: "jasmine", 乌龙: "oolong", 奶茶: "milk tea",
-                拿铁: "latte", 冰沙: "slush", 芒果: "mango",
-                strawberi: "strawberry", coklat: "chocolate",
-                matcha: "matcha", taro: "taro", oolong: "oolong",
+                拿铁: "latte", 芒果: "mango", 桃子: "peach", 柠檬: "lemon",
+                荔枝: "lychee", 西瓜: "watermelon", 柚子: "grapefruit",
+                strawberi: "strawberry", mangga: "mango", teh: "tea",
+                matcha: "matcha", oolong: "oolong",
             };
             for (const [foreign, english] of Object.entries(FLAVOR_MAP)) {
                 if (safeMessage.includes(foreign)) {
@@ -1684,31 +1698,6 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         const msg = safeMessage.toLowerCase();
 
-        const isChocolateRequest =
-            msg.includes("choco") ||
-            msg.includes("chocolate") ||
-            msg.includes("cocoa");
-
-        if (isChocolateRequest) {
-            drinks = drinks.filter((drink) => {
-                const searchable = [
-                    drink.name,
-                    drink.category,
-                    drink.description,
-                    ...(Array.isArray(drink.tags) ? drink.tags : []),
-                ]
-                    .filter(Boolean)
-                    .join(" ")
-                    .toLowerCase();
-
-                return (
-                    searchable.includes("choco") ||
-                    searchable.includes("chocolate") ||
-                    searchable.includes("cocoa")
-                );
-            });
-        }
-
         if (drinks.length > 0) {
             const msg = safeMessage.toLowerCase();
             const hasChinese = /[一-鿿]/.test(safeMessage);
@@ -1718,26 +1707,34 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             if (hasChinese) {
                 if (msg.includes("草莓") || msg.includes("蔓越莓")) intro = "为您推荐以下水果味饮品：";
                 else if (msg.includes("抹茶"))                       intro = "以下是我们的抹茶系列：";
-                else if (msg.includes("芋头"))                       intro = "芋头爱好者！以下是我们的芋头饮品：";
-                else if (msg.includes("巧克力") || msg.includes("可可")) intro = "以下是我们的巧克力饮品：";
+                else if (msg.includes("芒果"))                       intro = "以下是我们的芒果饮品：";
+                else if (msg.includes("桃子"))                       intro = "以下是我们的桃子饮品：";
+                else if (msg.includes("荔枝"))                       intro = "以下是我们的荔枝饮品：";
+                else if (msg.includes("西瓜"))                       intro = "以下是我们的西瓜饮品：";
                 else if (msg.includes("奶茶"))                       intro = "以下是我们的奶茶系列：";
                 else                                                 intro = "以下是一些您可能会喜欢的饮品：";
             } else if (hasMalay) {
                 if (msg.includes("strawberi"))  intro = "Berikut adalah pilihan minuman berperisa strawberi kami:";
-                else if (msg.includes("coklat")) intro = "Berikut adalah minuman coklat kami:";
                 else if (msg.includes("matcha")) intro = "Berikut adalah pilihan matcha kami:";
+                else if (msg.includes("mangga") || msg.includes("mango")) intro = "Berikut adalah minuman berperisa mango kami:";
                 else                             intro = "Berikut adalah beberapa minuman yang mungkin anda suka:";
             } else {
-                if (msg.includes("choco") || msg.includes("chocolate") || msg.includes("cocoa")) {
-                    intro = "Great pick — here are our chocolate drinks!";
-                } else if (msg.includes("matcha")) {
+                if (msg.includes("matcha")) {
                     intro = "Love that choice! Here are our matcha options:";
                 } else if (msg.includes("strawberry") || msg.includes("cranberry")) {
                     intro = "Something fruity — nice! Here's what we have:";
-                } else if (msg.includes("taro")) {
-                    intro = "Taro fan! Here's what we've got for you:";
-                } else if (msg.includes("milo")) {
-                    intro = "A local classic! Here's our Milo option:";
+                } else if (msg.includes("lychee")) {
+                    intro = "A floral favourite! Here's our lychee option:";
+                } else if (msg.includes("watermelon")) {
+                    intro = "Refreshing pick! Here's our watermelon option:";
+                } else if (msg.includes("grapefruit")) {
+                    intro = "Great citrus choice — here's our grapefruit option:";
+                } else if (msg.includes("mango")) {
+                    intro = "Tropical vibes! Here are our mango drinks:";
+                } else if (msg.includes("peach")) {
+                    intro = "Sweet and juicy — here are our peach drinks:";
+                } else if (msg.includes("lemon")) {
+                    intro = "Something citrusy! Here's our lemon option:";
                 } else if (msg.includes("jasmine")) {
                     intro = "Lovely choice — here are our jasmine drinks:";
                 } else if (msg.includes("oolong")) {
@@ -1748,8 +1745,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                     intro = "A premium pick — here's our Da Hong Bao option:";
                 } else if (msg.includes("milk tea") || msg.includes("milktea")) {
                     intro = "Classic milk tea — here's our range:";
-                } else if (msg.includes("frappe") || msg.includes("slush")) {
+                } else if (msg.includes("ice blended")) {
                     intro = "Something icy and refreshing — here's what we've got:";
+                } else if (msg.includes("fruit tea")) {
+                    intro = "Fresh and fruity — here are our fruit tea options:";
                 } else if (msg.includes("latte")) {
                     intro = "Here are our latte options:";
                 } else {
@@ -1776,8 +1775,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             };
         }
 
-        if (isChocolateRequest) {
-            const reply = "Hmm, we don't seem to have any chocolate drinks available at the moment — sorry about that! Can I help you find something else?";
+        {
+            const reply = "Hmm, I couldn't find a drink matching that. Can I help you find something else?";
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",

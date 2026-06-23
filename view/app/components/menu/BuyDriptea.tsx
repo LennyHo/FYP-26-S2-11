@@ -20,8 +20,8 @@ import { getMenuItems } from '../../utils/customerApi';
 const categories = [
   { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b004.jpg', desc: 'Creamy & classic' },
   { name: 'Matcha Teas', slug: 'matcha-teas', tone: 'catGreen', image: '/img/bubble_teas/b007.jpg', desc: 'Earthy & bold' },
-  { name: 'Ice Blended', slug: 'ice-blended', tone: 'catBlue', image: '/img/bubble_teas/b012.jpg', desc: 'Cool & refreshing' },
-  { name: 'Fruit Teas', slug: 'fruit-teas', tone: 'catGold', image: '/img/bubble_teas/b011.jpg', desc: 'Taste of home' },
+  { name: 'Ice Blended', slug: 'ice-blended', tone: 'catBlue', image: '/img/bubble_teas/b010.jpg', desc: 'Cool & refreshing' },
+  { name: 'Fruit Teas', slug: 'fruit-teas', tone: 'catGold', image: '/img/bubble_teas/b012.jpg', desc: 'Taste of home' },
 ];
 
 const moods = [

@@ -88,7 +88,8 @@
     "diabeticAdvice": "High in sugar. Choose 0-25% sugar level to reduce glucose spike.",
     "insulinImpact": "With milk and sugar, may cause moderate insulin response. Pair with food to slow absorption."
   },
-  "rating": 4.5
+  "rating": 4.5,
+  "isNewArrival": false
 },
 {
   "_id": {
@@ -180,7 +181,8 @@
     "diabeticAdvice": "Lower sugar option. Green tea supports stable blood sugar.",
     "insulinImpact": "Minimal insulin impact. Green tea can improve insulin sensitivity."
   },
-  "rating": 4.3
+  "rating": 4.3,
+  "isNewArrival": false
 },
 {
   "_id": {
@@ -272,7 +274,8 @@
     "diabeticAdvice": "Moderate sugar. Oolong has antioxidants that may help blood sugar control.",
     "insulinImpact": "Oolong supports gradual digestion; moderate insulin demand if you choose 25-50% sugar."
   },
-  "rating": 4.2
+  "rating": 4.2,
+  "isNewArrival": false
 },
 {
   "_id": {
@@ -364,7 +367,8 @@
     "diabeticAdvice": "Moderate sugar. Choose 0-25% sugar level to keep the floral milk tea lighter.",
     "insulinImpact": "Milk and added sugar may cause a moderate insulin response. Lower sugar helps reduce the spike."
   },
-  "rating": 4
+  "rating": 4,
+  "isNewArrival": false
 },
 {
   "_id": {
@@ -456,7 +460,8 @@
     "diabeticAdvice": "Moderate sugar. Da Hong Bao is tea-forward, so 0-25% sugar can preserve flavor with less glucose impact.",
     "insulinImpact": "Oolong tea with milk has moderate insulin demand when sweetened. Pair with food for steadier absorption."
   },
-  "rating": 4.4
+  "rating": 4.4,
+  "isNewArrival": false
 },
 {
   "_id": {
@@ -548,7 +553,8 @@
     "diabeticAdvice": "Very low sugar. Matcha provides slow-release energy without sharp glucose spike.",
     "insulinImpact": "Low insulin response. Matcha contains L-theanine which promotes stable blood sugar."
   },
-  "rating": 4.6
+  "rating": 4.6,
+  "isNewArrival": false
 },
 {
   "_id": {
@@ -640,7 +646,8 @@
     "diabeticAdvice": "Higher natural and added sugar from strawberry puree. Choose 0-25% sugar to reduce glucose spike.",
     "insulinImpact": "Fruit puree and milk can create a moderate insulin response. Lower sugar and no topping can help."
   },
-  "rating": 4.7
+  "rating": 4.7,
+  "isNewArrival": false
 },
 {
   "_id": {
@@ -732,7 +739,8 @@
     "diabeticAdvice": "Moderate sugar with tart cranberry flavor. Choose 0-25% sugar for better blood sugar control.",
     "insulinImpact": "Cranberry and milk may cause a moderate insulin response. Matcha can help slow the perceived energy crash."
   },
-  "rating": 4.1
+  "rating": 4.1,
+  "isNewArrival": false
 },
 {
   "_id": {
@@ -824,7 +832,8 @@
     "diabeticAdvice": "Moderate sugar. Jasmine and matcha flavors work well at 0-25% sugar.",
     "insulinImpact": "Milk and sweetener may cause a mild to moderate insulin response. Lower sugar keeps it steadier."
   },
-  "rating": 4.5
+  "rating": 4.5,
+  "isNewArrival": false
 },
 {
   "_id": {
@@ -888,16 +897,16 @@
       ]
     }
   ],
-  "description": "Rich dark chocolate blended with ice and milk.",
+  "description": ".A refreshing ice-blended green tea drink mixed with sweet peach flavour, creating a smooth, fruity, and cooling beverage perfect for a hot day.",
   "image": "/img/bubble_teas/b010.jpg",
-  "name": "Double Chocolate Frappe",
+  "name": "Peach Green Tea Ice Blended",
   "nutritionInfo": {
     "baseVolumeMl": 500,
     "baseCalories": 320,
     "baseSugarG": 25,
     "nutriGrade": "C"
   },
-  "price": 6.5,
+  "price": 6,
   "status": "active",
   "tags": [
     "chocolate",
@@ -905,7 +914,7 @@
     "frappe"
   ],
   "updatedAt": {
-    "$date": "2026-06-11T16:37:49.252Z"
+    "$date": "2026-06-21T17:08:16.194Z"
   },
   "drinkInfo": {
     "ingredients": [
@@ -917,106 +926,14 @@
     "diabeticAdvice": "High sugar and calories. Choose 0% sugar and avoid sweet toppings if you need tighter glucose control.",
     "insulinImpact": "Chocolate, milk, and sugar can cause a stronger insulin response. Best treated as an occasional dessert drink."
   },
-  "rating": 4.8
-},
-{
-  "_id": {
-    "$oid": "6a0d439f8f546218a1d6d32c"
-  },
-  "itemId": "b011",
-  "__v": 0,
-  "category": "Local Favorites",
-  "createdAt": {
-    "$date": "2026-05-20T05:16:15.824Z"
-  },
-  "customizationOptions": [
-    {
-      "name": "Sugar Level",
-      "type": "single",
-      "values": [
-        "No Sugar",
-        "Quarter Sugar",
-        "Half Sugar",
-        "Normal Sugar"
-      ]
-    },
-    {
-      "name": "Ice Level",
-      "type": "single",
-      "values": [
-        "No Ice",
-        "Less Ice",
-        "Normal Ice",
-        "Hot"
-      ]
-    },
-    {
-      "name": "Toppings",
-      "type": "multiple",
-      "values": [
-        {
-          "name": "Tapioca Pearls",
-          "price": 1.2,
-          "addedSugarG": 15,
-          "addedCalories": 150
-        },
-        {
-          "name": "Aloe Vera",
-          "price": 1,
-          "addedSugarG": 5,
-          "addedCalories": 30
-        },
-        {
-          "name": "Cheese Foam",
-          "price": 1.5,
-          "addedSugarG": 8,
-          "addedCalories": 120
-        },
-        {
-          "name": "No Topping",
-          "price": 0,
-          "addedSugarG": 0,
-          "addedCalories": 0
-        }
-      ]
-    }
-  ],
-  "description": "Classic iced Milo topped with a mountain of Milo powder.",
-  "image": "/img/bubble_teas/b011.jpg",
-  "name": "Milo Dinosaur",
-  "nutritionInfo": {
-    "baseVolumeMl": 500,
-    "baseCalories": 300,
-    "baseSugarG": 22,
-    "nutriGrade": "D"
-  },
-  "price": 5,
-  "status": "active",
-  "tags": [
-    "milo",
-    "chocolate",
-    "malt"
-  ],
-  "updatedAt": {
-    "$date": "2026-06-11T16:37:49.261Z"
-  },
-  "drinkInfo": {
-    "ingredients": [
-      "Milo",
-      "Milk",
-      "Ice",
-      "Milo powder"
-    ],
-    "diabeticAdvice": "High sugar and calories. Choose 0% sugar and no topping to reduce the overall glucose load.",
-    "insulinImpact": "Malt chocolate powder and milk can cause a stronger insulin response. Pair with food and choose a smaller size."
-  },
-  "rating": 4.9
+  "rating": 4.8,
+  "isNewArrival": false
 },
 {
   "_id": {
     "$oid": "6a0d439f8f546218a1d6d32d"
   },
-  "itemId": "b012",
+  "itemId": "b011",
   "__v": 0,
   "category": "Ice Blended",
   "createdAt": {
@@ -1074,9 +991,9 @@
       ]
     }
   ],
-  "description": "Creamy taro blended into a refreshing slush.",
+  "description": "Refreshing manago slushy.",
   "image": "/img/bubble_teas/b012.jpg",
-  "name": "Taro Slush",
+  "name": "Mango Green Tea Ice Blended",
   "nutritionInfo": {
     "baseVolumeMl": 500,
     "baseCalories": 200,
@@ -1091,7 +1008,7 @@
     "slush"
   ],
   "updatedAt": {
-    "$date": "2026-06-11T16:37:49.273Z"
+    "$date": "2026-06-21T17:08:17.217Z"
   },
   "drinkInfo": {
     "ingredients": [
@@ -1103,5 +1020,492 @@
     "diabeticAdvice": "Moderate to high sugar. Choose 0-25% sugar because taro-style drinks can be naturally starchy and sweet.",
     "insulinImpact": "Taro and sugar can cause a moderate insulin response. Lower sugar helps reduce glucose impact."
   },
-  "rating": 4.3
+  "rating": 4.3,
+  "isNewArrival": false
+},
+{
+  "_id": {
+    "$oid": "6a3a44233c053981824e0db3"
+  },
+  "itemId": "b012",
+  "category": "Fruit Teas",
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Refreshing black tea with lemon flavour, served chilled for a light citrus taste.",
+  "image": "/img/bubble_teas/b013.jpg",
+  "name": "Ice Lemon Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 110,
+    "baseSugarG": 8,
+    "nutriGrade": "B"
+  },
+  "price": 4.8,
+  "status": "active",
+  "tags": [
+    "fruit tea",
+    "lemon",
+    "refreshing",
+    "citrus"
+  ],
+  "drinkInfo": {
+    "ingredients": [
+      "Black tea",
+      "Lemon juice",
+      "Sugar syrup",
+      "Ice"
+    ],
+    "diabeticAdvice": "Contains sugar from syrup. Choose No Sugar or Quarter Sugar for a healthier option.",
+    "insulinImpact": "Lower than milk-based drinks if sugar is reduced. Normal Sugar may still cause a glucose spike."
+  },
+  "rating": 4.4,
+  "isNewArrival": true
+},
+{
+  "_id": {
+    "$oid": "6a3a45613c053981824e0db7"
+  },
+  "itemId": "b013",
+  "category": "Fruit Teas",
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Refreshing green tea with sweet peach flavour for a light fruity taste.",
+  "image": "/img/bubble_teas/b014.jpg",
+  "name": "Peach Green Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 115,
+    "baseSugarG": 9,
+    "nutriGrade": "B"
+  },
+  "price": 5.2,
+  "status": "active",
+  "tags": [
+    "fruit tea",
+    "peach",
+    "green tea",
+    "refreshing"
+  ],
+  "drinkInfo": {
+    "ingredients": [
+      "Green tea",
+      "Peach syrup",
+      "Sugar syrup",
+      "Ice"
+    ],
+    "diabeticAdvice": "Contains sugar from syrup. Choose No Sugar or Quarter Sugar for a healthier option.",
+    "insulinImpact": "Lower sugar levels help reduce glucose spike."
+  },
+  "rating": 4.4,
+  "isNewArrival": true
+},
+{
+  "_id": {
+    "$oid": "6a3a45a53c053981824e0db9"
+  },
+  "itemId": "b014",
+  "category": "Fruit Teas",
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Tropical mango tea with a sweet and refreshing fruit flavour.",
+  "image": "/img/bubble_teas/b015.jpg",
+  "name": "Mango Fruit Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 130,
+    "baseSugarG": 12,
+    "nutriGrade": "B"
+  },
+  "price": 5.5,
+  "status": "active",
+  "tags": [
+    "fruit tea",
+    "mango",
+    "tropical",
+    "refreshing"
+  ],
+  "drinkInfo": {
+    "ingredients": [
+      "Black tea",
+      "Mango syrup",
+      "Sugar syrup",
+      "Ice"
+    ],
+    "diabeticAdvice": "Contains fruit syrup. Choose No Sugar or Quarter Sugar for a healthier option.",
+    "insulinImpact": "Normal Sugar may cause a moderate glucose spike."
+  },
+  "rating": 4.5,
+  "isNewArrival": true
+},
+{
+  "_id": {
+    "$oid": "6a3a45c53c053981824e0dbb"
+  },
+  "itemId": "b015",
+  "category": "Fruit Teas",
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Light jasmine tea with sweet lychee flavour for a refreshing healthier option.",
+  "image": "/img/bubble_teas/b016.jpg",
+  "name": "Lychee Jasmine Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 105,
+    "baseSugarG": 7,
+    "nutriGrade": "B"
+  },
+  "price": 5.4,
+  "status": "active",
+  "tags": [
+    "fruit tea",
+    "lychee",
+    "jasmine",
+    "light"
+  ],
+  "drinkInfo": {
+    "ingredients": [
+      "Jasmine tea",
+      "Lychee syrup",
+      "Sugar syrup",
+      "Ice"
+    ],
+    "diabeticAdvice": "Choose No Sugar or Quarter Sugar to reduce sugar intake.",
+    "insulinImpact": "Light tea base has lower impact, but syrup can increase glucose response."
+  },
+  "rating": 4.4,
+  "isNewArrival": true
+},
+{
+  "_id": {
+    "$oid": "6a3a45e43c053981824e0dbd"
+  },
+  "itemId": "b016",
+  "category": "Fruit Teas",
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Citrus grapefruit green tea with a refreshing and healthier option.",
+  "image": "/img/bubble_teas/b017.jpg",
+  "name": "Grapefruit Green Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 100,
+    "baseSugarG": 8,
+    "nutriGrade": "B"
+  },
+  "price": 5.5,
+  "status": "active",
+  "tags": [
+    "fruit tea",
+    "grapefruit",
+    "green tea",
+    "citrus"
+  ],
+  "drinkInfo": {
+    "ingredients": [
+      "Green tea",
+      "Grapefruit syrup",
+      "Sugar syrup",
+      "Ice"
+    ],
+    "diabeticAdvice": "Choose No Sugar for the lowest sugar option.",
+    "insulinImpact": "Lower than milk-based drinks when sugar is reduced."
+  },
+  "rating": 4.3,
+  "isNewArrival": true
+},
+{
+  "_id": {
+    "$oid": "6a3a460f3c053981824e0dbf"
+  },
+  "itemId": "b017",
+  "category": "Fruit Teas",
+  "customizationOptions": [
+    {
+      "name": "Sugar Level",
+      "type": "single",
+      "values": [
+        "No Sugar",
+        "Quarter Sugar",
+        "Half Sugar",
+        "Normal Sugar"
+      ]
+    },
+    {
+      "name": "Ice Level",
+      "type": "single",
+      "values": [
+        "No Ice",
+        "Less Ice",
+        "Normal Ice"
+      ]
+    },
+    {
+      "name": "Toppings",
+      "type": "multiple",
+      "values": [
+        {
+          "name": "Tapioca Pearls",
+          "price": 1.2,
+          "addedSugarG": 15,
+          "addedCalories": 150
+        },
+        {
+          "name": "Aloe Vera",
+          "price": 1,
+          "addedSugarG": 5,
+          "addedCalories": 30
+        },
+        {
+          "name": "No Topping",
+          "price": 0,
+          "addedSugarG": 0,
+          "addedCalories": 0
+        }
+      ]
+    }
+  ],
+  "description": "Rich in watermelon flavour with a healthier option.",
+  "image": "/img/bubble_teas/b018.jpg",
+  "name": "Watermelon Fruit Tea",
+  "nutritionInfo": {
+    "baseVolumeMl": 500,
+    "baseCalories": 95,
+    "baseSugarG": 6,
+    "nutriGrade": "B"
+  },
+  "price": 5.6,
+  "status": "active",
+  "tags": [
+    "fruit tea",
+    "watermelon",
+    "refreshing",
+    "light"
+  ],
+  "drinkInfo": {
+    "ingredients": [
+      "Green tea",
+      "Watermelon syrup",
+      "Sugar syrup",
+      "Ice"
+    ],
+    "diabeticAdvice": "Choose No Sugar or Quarter Sugar for a healthier option.",
+    "insulinImpact": "Lower sugar levels help reduce glucose spike."
+  },
+  "rating": 4.2,
+  "isNewArrival": true
 }]
