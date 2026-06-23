@@ -86,6 +86,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     overlayTranscript,
     overlayMessages,
     overlayLoading,
+    isTTSSpeaking,
     welcomeGreeting,
     welcomeAnimationKey,
     isSearchOpen,
@@ -695,7 +696,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               ✕
             </button>
             <span className={`${styles.speakOverlayText} ${isListening ? styles.listeningActive : ''}`}>
-              {overlayLoading ? 'Avy is thinking…' : isListening ? 'Listening' : 'Tap mic to speak'}
+              {overlayLoading ? 'Avy is thinking…' : isTTSSpeaking ? 'Avy is speaking…' : isListening ? 'Listening…' : 'Tap mic to speak'}
               {isListening && (
                 <span className={styles.listeningBars} aria-hidden="true">
                   <span /><span /><span />

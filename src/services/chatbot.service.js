@@ -1403,6 +1403,10 @@ function parseOrderDetails(message) {
 function cleanAiReply(reply) {
     return String(reply || "")
     .replace(/<div class=['"]hidden-cart-data['"][^>]*>[\s\S]*?<\/div>/i, "")
+    // Strip leading hyphens used as bullet points (e.g. "- Regular" → "Regular")
+    .replace(/(^|<br\s*\/?>)\s*-\s+/gi, "$1")
+    // Replace em dashes (—) with a comma+space for natural reading
+    .replace(/\s*—\s*/g, ", ")
     .trim();
 }
 

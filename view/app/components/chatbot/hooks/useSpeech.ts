@@ -38,6 +38,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   const [overlayTranscript, setOverlayTranscript] = useState('');
   const [overlayMessages, setOverlayMessages] = useState<Message[]>([]);
   const [overlayLoading, setOverlayLoading] = useState(false);
+  const [isTTSSpeaking, setIsTTSSpeaking] = useState(false);
   const [selectedSpeechLang, setSelectedSpeechLang] = useState<string>(getBrowserSpeechLang);
 
   // Compat shim: useChatbotState calls recognitionRef.current.stop() when sidebar closes
@@ -74,6 +75,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     setTTSHooks(
       () => {
         ttsPausedRef.current = true;
+        setIsTTSSpeaking(true);
         if (vadTimerRef.current) { clearTimeout(vadTimerRef.current); vadTimerRef.current = null; }
         if (mediaRecorderRef.current?.state === 'recording') {
           try { mediaRecorderRef.current.stop(); } catch {}
@@ -82,6 +84,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
       },
       () => {
         ttsPausedRef.current = false;
+        setIsTTSSpeaking(false);
         // Resume recording after TTS finishes (speak mode only)
         setTimeout(() => {
           if (speakModeRef.current && streamRef.current && !isProcessingRef.current) {
@@ -365,6 +368,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     setOverlayMessages,
     overlayLoading,
     setOverlayLoading,
+    isTTSSpeaking,
     voiceConversationRef,
     recognitionRef,
     setInputRef,
