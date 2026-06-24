@@ -101,6 +101,8 @@ export type DripTeaOrder = {
     quantity: number;
     lineTotal: number;
     image: string;
+    menuItemId?: string;
+    menuItemCode?: string;
     customization: Record<string, unknown>;
   }>;
 };
@@ -121,6 +123,8 @@ export type DripTeaPurchaseHistoryItem = {
     quantity: number;
     unitPrice: number;
     lineTotal: number;
+    menuItemId?: string;
+    menuItemCode?: string;
     customization?: Record<string, unknown>;
   }>;
 };

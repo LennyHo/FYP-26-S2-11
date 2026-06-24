@@ -157,7 +157,14 @@ export default function OrderStatusPage() {
             text:
               "Thanks for collecting your order! What did you think of our drinks? Your feedback helps us improve.",
             feedbackOrderId: orderId,
-            feedbackItems: order?.items || [],
+            feedbackItems: (order?.items || []).map((item) => ({
+              name: item.name,
+              image: item.image,
+              quantity: item.quantity,
+              customization: item.customization,
+              menuItemId: item.menuItemId,
+              menuItemCode: item.menuItemCode,
+            })),
           },
         })
       );

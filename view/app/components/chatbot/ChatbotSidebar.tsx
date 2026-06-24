@@ -61,6 +61,7 @@ import { QUICK_PROMPTS, convertDrinkNamesToLinks, extractOrderingOptions, getOrd
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from '../menu/DrinkRecCards';
 import OrderReceiptCard from '../ui/OrderReceiptCard';
+import FeedbackPromptCard from "./FeedbackPromptCard";
 import CartSummaryCard from '../ui/CartSummaryCard';
 import PurchaseHistoryCard from '../ui/PurchaseHistoryCard';
 import DrinkCard from '../menu/DrinkCard';
@@ -414,6 +415,16 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                     </div>
                   )}
 
+                  {!msg.isUser &&
+                          (msg as any).feedbackOrderId &&
+                          (msg as any).feedbackItems?.length > 0 && (
+                            <FeedbackPromptCard
+                              orderId={(msg as any).feedbackOrderId}
+                              items={(msg as any).feedbackItems}
+                              onOpenPage={() => router.push(`/feedback/${(msg as any).feedbackOrderId}`)}
+                            />
+                  )}
+
                   {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && !msg.text.includes("startOrder") && (
                     <div className={styles.drinkCardList}>
                       {msg.recommendedDrinks.map((drink) => (
@@ -469,19 +480,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   )}
                 </div>
               </div>
-              
-              {!msg.isUser && msg.feedbackOrderId && msg.feedbackItems && msg.feedbackItems.length > 0 && (
-                <div className={styles.messageActionRow}>
-                  <button
-                    type="button"
-                    className={styles.messageActionBtn}
-                    onClick={() => router.push(`/feedback/${msg.feedbackOrderId}`)}
-                  >
-                    Rate Your Drinks
-                  </button>
-                </div>
-              )}
-              
+
               {!msg.isUser && (msg as any).showViewCart && (
                 <div className={styles.messageActionRow}>
                   <button
@@ -508,20 +507,9 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   )}
                 </div>
               )}
-              {!msg.isUser && (msg as any).feedbackOrderId && (
-                <div className={styles.messageActionRow}>
-                  <button
-                    type="button"
-                    className={styles.messageActionBtn}
-                    onClick={() => router.push(`/feedback/${(msg as any).feedbackOrderId}`)}
-                  >
-                    Leave Feedback
-                  </button>
-                </div>
-              )}
+
             </div>
-
-
+            
           </React.Fragment>
             );
           });

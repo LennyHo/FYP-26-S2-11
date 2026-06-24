@@ -2693,3 +2693,21 @@
   display: block;
   margin: 0 auto;
 }
+
+.feedbackPromptBox {
+  margin-top: 12px;
+}
+
+.feedbackPromptBtn {
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  padding: 9px 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.feedbackPromptBtn:hover {
+  background: rgba(255, 255, 255, 0.32);
+}

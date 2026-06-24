@@ -86,13 +86,16 @@ async function createOrderWithUniqueNumber(payload) {
 function toPublicOrderItem(item) {
     return {
         id: String(item._id),
+        menuItemId: item.menuItemId ? String(item.menuItemId) : "",
+        menuItemCode: item.menuItemCode || "",
         name: item.name || "Drink",
+        image: item.image || "",
         quantity: Number(item.quantity || 1),
+        unitPrice: Number(item.unitPrice || 0),
         lineTotal: Number(item.lineTotal || 0),
         customization: item.customization || {},
     };
 }
-
 function toPublicOrder(order, user, items, payment) {
     return {
         id: String(order._id),
