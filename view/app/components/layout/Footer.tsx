@@ -40,6 +40,9 @@ export default function Footer() {
           </p>
           </div>
         </div>
+        <p className={styles.disclaimer}>
+          <strong>Health &amp; Nutritional Disclaimer:</strong> The AI chatbot recommendations and nutritional information on this website are for general informational purposes only and do not constitute medical or dietary advice. Nutritional values are estimates and may vary. Individuals with medical conditions (including diabetes) should consult a qualified healthcare professional before making dietary decisions. Consume at your own risk. DripTea is not liable for any health consequences arising from reliance on this information.
+        </p>
       </div>
     </footer>
   );

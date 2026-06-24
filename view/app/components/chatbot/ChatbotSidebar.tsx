@@ -385,7 +385,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       <div className={styles.healthCardLabelRow}>
                         <span className={styles.healthCardLabel}>Current</span>
                         <span />
-                        <span className={styles.healthCardLabel}>Reduce to {msg.healthCard.recommendedSugarLevel}</span>
+                        <span className={styles.healthCardLabel}>Reduce to {msg.healthCard.recommendedSugar}g sugar</span>
                       </div>
                       <div className={styles.healthCardImagesRow}>
                         <Image
@@ -412,6 +412,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                         <span />
                         <span className={styles.healthCardRecommendedSugar}>{msg.healthCard.recommendedSugar}g sugar</span>
                       </div>
+                      <p className={styles.healthCardDisclaimer}>AI suggestion only — not medical advice. Drink at your own risk.</p>
                     </div>
                   )}
 
@@ -480,6 +481,31 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   )}
                 </div>
               </div>
+              
+              {!msg.isUser && msg.feedbackOrderId && msg.feedbackItems && msg.feedbackItems.length > 0 && (
+                <div className={styles.feedbackCard}>
+                  <div className={styles.feedbackCardStars}>★★★★★</div>
+                  <p className={styles.feedbackCardPrompt}>How was your order? Your feedback means a lot to us.</p>
+                  <div className={styles.feedbackCardBtns}>
+                    <button
+                      type="button"
+                      className={styles.feedbackBtnPrimary}
+                      onClick={() => router.push(`/feedback/${msg.feedbackOrderId}`)}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                      Rate Your Drinks
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.feedbackBtnSecondary}
+                      onClick={() => router.push(`/feedback/${msg.feedbackOrderId}`)}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                      Leave Feedback
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {!msg.isUser && (msg as any).showViewCart && (
                 <div className={styles.messageActionRow}>
@@ -507,7 +533,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   )}
                 </div>
               )}
-
             </div>
             
           </React.Fragment>
@@ -520,7 +545,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               <Image src={avyLogo} alt="Avy" width={18} height={18} className={styles.messageAvatar} />
               <span className={styles.assistantLabel}>Avy</span>
               <span className={styles.metaDivider}>•</span>
-              <span className={styles.messageTime}>typing...</span>
+              <span className={`${styles.messageTime} ${styles.messageTimePulsing}`}>typing...</span>
             </div>
             <div className={`${styles.botBubble} ${styles.typingBubble}`}>
               <span className={styles.typingIndicator}>
@@ -827,6 +852,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                           height={80}
                           className={styles.healthCardBadge}
                         />
+                        <p className={styles.healthCardDisclaimer}>AI suggestion only — not medical advice. Drink at your own risk.</p>
                       </div>
                     )}
 

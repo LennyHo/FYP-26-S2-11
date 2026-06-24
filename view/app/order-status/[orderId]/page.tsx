@@ -285,6 +285,9 @@ export default function OrderStatusPage() {
             )}
           </section>
         )}
+      <p className="page-disclaimer">
+        Nutritional information is provided for general reference only and is not a substitute for professional medical advice. Consume at your own risk. DripTea is not liable for any health consequences arising from your order.
+      </p>
       </main>
     </div>
   );

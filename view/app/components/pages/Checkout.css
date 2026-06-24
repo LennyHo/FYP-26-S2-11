@@ -631,3 +631,13 @@
         max-width: 100%;
     }
 }
+
+.page-disclaimer {
+  font-size: 0.78rem;
+  color: #999;
+  text-align: center;
+  margin: 24px auto 8px;
+  max-width: 640px;
+  line-height: 1.5;
+  padding: 0 16px;
+}

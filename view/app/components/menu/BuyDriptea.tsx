@@ -145,28 +145,24 @@ export default function BuyDripTeaPage() {
 
         {/* OUR MENU CATEGORIES SECTION */}
         <section className={styles.section} id="menu-section" ref={menuSectionRef}>
-          <div className={styles.sectionHeading}>
-            <h2 className={styles.menuTitle}>Our Menu</h2>
-            <div className={styles.menuTitleLine} aria-hidden="true" />
-            <p className={styles.sectionDesc}>
-              Whether you&apos;re craving something creamy, earthy, icy cool, or a taste of home, we have a blend that&apos;s just right for you. Browse our handcrafted categories, customize every sip to your liking, and discover your new favorite DripTea.
-            </p>
-          </div>
-          {/* Mood filter chips */}
-          <div className={styles.moodFilterRow}>
-            <span className={styles.moodFilterLabel}>I&apos;m in the mood for</span>
-            {moods.map(mood => (
-              <button
-                key={mood.slug}
-                type="button"
-                className={`${styles.moodChip} ${activeMood === mood.slug ? styles.moodChipActive : ''}`}
-                onClick={() => setActiveMood(activeMood === mood.slug ? null : mood.slug)}
-              >
-                <span className={styles.moodChipIcon}>{mood.icon}</span>
-                {mood.label}
-              </button>
-            ))}
-          </div>
+          <div className={styles.menuHeaderCard}>
+            <div className={styles.sectionHeading}>
+              <span className={styles.menuHeaderBadge}>✦ Now Brewing</span>
+              <h2 className={styles.menuTitle}>Our <span className={styles.menuTitleAccent}>Menu</span></h2>
+              <div className={styles.menuTitleLine} aria-hidden="true" />
+              <p className={styles.sectionDesc}>
+                Whether you&apos;re craving something creamy, earthy, icy cool, or a taste of home, we have a blend that&apos;s just right for you. Browse our handcrafted categories, customize every sip to your liking, and discover your new favorite DripTea.
+              </p>
+              <div className={styles.menuHeaderStats}>
+                <span className={styles.menuHeaderStat}><span className={styles.menuHeaderStatNum}>15+</span> Drinks</span>
+                <span className={styles.menuHeaderStatDot} aria-hidden="true" />
+                <span className={styles.menuHeaderStat}><span className={styles.menuHeaderStatNum}>4</span> Categories</span>
+                <span className={styles.menuHeaderStatDot} aria-hidden="true" />
+                <span className={styles.menuHeaderStat}><span className={styles.menuHeaderStatNum}>∞</span> Customisations</span>
+              </div>
+            </div>
+
+            <div className={styles.menuHeaderDivider} />
 
           <div className={styles.menuSearchContainer}>
             <svg className={styles.menuSearchIcon} viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -192,7 +188,7 @@ export default function BuyDripTeaPage() {
               Search
             </button>
           </div>
-
+          </div>{/* end menuHeaderCard */}
 
           {hasSearched && (
             <div className={styles.searchResultBlock}>

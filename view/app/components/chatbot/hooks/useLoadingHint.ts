@@ -19,7 +19,7 @@ export function useLoadingHint(isLoading: boolean) {
     const FADE_MS = 350;
     let idx = 0;
 
-    const show = (text: string) => { setDisplayedHintText(text); setHintVisible(true); };
+    const show = (text: string) => { setDisplayedHintText(text); requestAnimationFrame(() => setHintVisible(true)); };
     const cycle = () => {
       setHintVisible(false);
       setTimeout(() => { idx = (idx + 1) % SLOW_HINTS.length; show(SLOW_HINTS[idx]); }, FADE_MS);

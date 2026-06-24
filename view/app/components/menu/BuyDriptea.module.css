@@ -241,6 +241,77 @@
   gap: 18px;
 }
 
+.menuHeaderCard {
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 24px;
+  padding: 32px 36px 28px;
+  box-shadow: 0 6px 32px rgba(90, 50, 20, 0.09), 0 1px 0 rgba(255,255,255,0.9) inset;
+  margin-bottom: 36px;
+  position: relative;
+  overflow: hidden;
+}
+
+
+.menuHeaderBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, rgba(191,211,125,0.35), rgba(171,108,60,0.18));
+  color: #6b4c28;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(171,108,60,0.2);
+  width: fit-content;
+}
+
+.menuTitleAccent {
+  background: linear-gradient(135deg, #9b6d4a 0%, #c89a5a 50%, #bfd37d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.menuHeaderStats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.menuHeaderStat {
+  font-size: 0.82rem;
+  color: #8a6040;
+  font-weight: 500;
+}
+
+.menuHeaderStatNum {
+  font-weight: 800;
+  color: #5a3a1a;
+}
+
+.menuHeaderStatDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(141, 99, 63, 0.35);
+  flex-shrink: 0;
+}
+
+.menuHeaderDivider {
+  width: 100%;
+  height: 1px;
+  background: rgba(141, 99, 63, 0.12);
+  margin: 20px 0;
+}
+
 .sectionHeading {
   display: flex;
   flex-direction: column;
@@ -761,7 +832,7 @@
   display: flex;
   align-items: center;
   max-width: 580px;
-  margin: 20px 0 28px;
+  margin: 8px 0 0;
   padding: 8px 8px 8px 20px;
   border: 1.5px solid rgba(141, 99, 63, 0.22);
   border-radius: 20px;

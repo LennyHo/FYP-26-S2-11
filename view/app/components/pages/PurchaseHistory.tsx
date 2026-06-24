@@ -148,7 +148,7 @@ export default function PurchaseHistory() {
           </div>
         ) : (
           <div className="purchase-list">
-            {orders.map((order) => {
+            {orders.filter((order) => order.items && order.items.length > 0).map((order) => {
               const status = (order.status || "pending").toLowerCase();
               return (
                 <article key={order.id} className="purchase-order" data-status={status}>
