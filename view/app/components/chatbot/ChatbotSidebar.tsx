@@ -124,18 +124,18 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     handleSpeakClick,
   } = useChatbotState(props);
 
-  const LANG_OPTIONS: { code: string; locale: string }[] = [
-    { code: 'EN', locale: 'en-GB' },
-    { code: 'BM', locale: 'ms-MY' },
-    { code: 'ZH', locale: 'zh-CN' },
-    { code: 'TA', locale: 'ta-IN' },
+  const LANG_OPTIONS: { code: string; flag: string; locale: string }[] = [
+    { code: 'EN', flag: 'EN', locale: 'en-GB' },
+    { code: 'BM', flag: 'BM', locale: 'ms-MY' },
+    { code: 'ZH', flag: '中', locale: 'zh-CN' },
+    { code: 'TA', flag: 'த', locale: 'ta-IN' },
   ];
-  const currentLangCode =
-    selectedSpeechLang.startsWith('zh') ? 'ZH' :
-    selectedSpeechLang.startsWith('ms') ? 'BM' :
-    selectedSpeechLang.startsWith('ta') ? 'TA' : 'EN';
+  const currentLang =
+    selectedSpeechLang.startsWith('zh') ? LANG_OPTIONS[2] :
+    selectedSpeechLang.startsWith('ms') ? LANG_OPTIONS[1] :
+    selectedSpeechLang.startsWith('ta') ? LANG_OPTIONS[3] : LANG_OPTIONS[0];
   function cycleLang() {
-    const idx = LANG_OPTIONS.findIndex(l => l.code === currentLangCode);
+    const idx = LANG_OPTIONS.findIndex(l => l.code === currentLang.code);
     const next = LANG_OPTIONS[(idx + 1) % LANG_OPTIONS.length];
     setSelectedSpeechLang(next.locale);
   }
@@ -675,10 +675,10 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   type="button"
                   className={styles.langBtn}
                   onClick={cycleLang}
-                  title={`Mic language: ${currentLangCode} — click to switch`}
-                  aria-label={`Switch mic language (currently ${currentLangCode})`}
+                  title={`Mic language: ${currentLang.code} — click to switch`}
+                  aria-label={`Switch mic language (currently ${currentLang.code})`}
                 >
-                  {currentLangCode}
+                  {currentLang.flag}
                 </button>
                 <button
                   type="button"

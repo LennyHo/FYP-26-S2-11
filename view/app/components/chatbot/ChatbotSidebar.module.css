@@ -2015,8 +2015,9 @@
 
 
 .langBtn {
-  height: 28px;
-  padding: 0 9px;
+  width: 36px;
+  height: 32px;
+  padding: 0;
   border-radius: 999px;
   border: 1.5px solid rgba(171, 28, 110, 0.25);
   background: rgba(255, 255, 255, 0.82);
