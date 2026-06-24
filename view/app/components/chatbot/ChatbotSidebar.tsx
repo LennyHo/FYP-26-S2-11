@@ -384,7 +384,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       <div className={styles.healthCardLabelRow}>
                         <span className={styles.healthCardLabel}>Current</span>
                         <span />
-                        <span className={styles.healthCardLabel}>Reduce to {msg.healthCard.recommendedSugarLevel}</span>
+                        <span className={styles.healthCardLabel}>Reduce to {msg.healthCard.recommendedSugar}g sugar</span>
                       </div>
                       <div className={styles.healthCardImagesRow}>
                         <Image
@@ -411,6 +411,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                         <span />
                         <span className={styles.healthCardRecommendedSugar}>{msg.healthCard.recommendedSugar}g sugar</span>
                       </div>
+                      <p className={styles.healthCardDisclaimer}>AI suggestion only — not medical advice. Drink at your own risk.</p>
                     </div>
                   )}
 
@@ -532,7 +533,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               <Image src={avyLogo} alt="Avy" width={18} height={18} className={styles.messageAvatar} />
               <span className={styles.assistantLabel}>Avy</span>
               <span className={styles.metaDivider}>•</span>
-              <span className={styles.messageTime}>typing...</span>
+              <span className={`${styles.messageTime} ${styles.messageTimePulsing}`}>typing...</span>
             </div>
             <div className={`${styles.botBubble} ${styles.typingBubble}`}>
               <span className={styles.typingIndicator}>
@@ -839,6 +840,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                           height={80}
                           className={styles.healthCardBadge}
                         />
+                        <p className={styles.healthCardDisclaimer}>AI suggestion only — not medical advice. Drink at your own risk.</p>
                       </div>
                     )}
 

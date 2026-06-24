@@ -224,6 +224,9 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                             <div className={styles.drinkFlipCardBackTitle}>Insulin Impact:</div>
                             <div className={styles.drinkFlipCardBackText}>{menuMap[resolvedId].drinkInfo!.insulinImpact}</div>
                           </div>
+                          <div className={styles.drinkFlipCardDisclaimer}>
+                            For informational purposes only. Consult a healthcare professional. Consume at your own risk.
+                          </div>
                         </>
                       ) : (
                         <div className={styles.drinkFlipCardBackText}>

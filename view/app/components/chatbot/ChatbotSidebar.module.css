@@ -642,6 +642,15 @@
   font-weight: 600;
 }
 
+.messageTimePulsing {
+  animation: textPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes textPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
 .compactContent {
   align-items: flex-start;
   gap: 8px;
@@ -1230,6 +1239,16 @@
   font-size: 0.8rem;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.9);
+}
+
+.drinkFlipCardDisclaimer {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 6px;
 }
 
 .drinkFlipCardBackSection {
@@ -2692,4 +2711,13 @@
 .healthCardBadge {
   display: block;
   margin: 0 auto;
+}
+
+.healthCardDisclaimer {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  margin-top: 8px;
+  font-style: italic;
+  line-height: 1.4;
 }
