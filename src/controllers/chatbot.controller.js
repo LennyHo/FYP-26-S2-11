@@ -68,7 +68,7 @@ async function handleChat(req, res) {
     console.error("[ChatbotController] handleChat error:", error.message);
 
     return res.status(500).json({
-      reply: "Kitchen is busy, please try again.",
+      reply: "Apologies, I'm unable to process your request at the moment. Please try again shortly or take a look in our website for more information.",
       system_action: { ui_navigation: "none" },
     });
   }
