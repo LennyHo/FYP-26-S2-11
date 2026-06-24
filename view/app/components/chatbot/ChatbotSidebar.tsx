@@ -700,14 +700,19 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   disabled={isLoading}
                   aria-label={isSpeakMode ? 'Stop voice mode' : 'Speak to Avy'}
                 >
-                  <span className={styles.speakWave} aria-hidden="true">
-                    <span className={styles.speakWaveBar}></span>
-                    <span className={styles.speakWaveBar}></span>
-                    <span className={styles.speakWaveBar}></span>
-                    <span className={styles.speakWaveBar}></span>
-                    <span className={styles.speakWaveBar}></span>
-                  </span>
-                  <span className={styles.speakBtnText}>{isSpeakMode ? 'Stop' : 'Speak'}</span>
+                  <svg width="28" height="18" viewBox="0 0 58 24" fill="currentColor" aria-hidden="true">
+                    <rect x="0"    y="8.5" width="3" height="7"  rx="1.5"/>
+                    <rect x="5.5"  y="5"   width="3" height="14" rx="1.5"/>
+                    <rect x="11"   y="6.5" width="3" height="11" rx="1.5"/>
+                    <rect x="16.5" y="4"   width="3" height="16" rx="1.5"/>
+                    <rect x="22"   y="6"   width="3" height="12" rx="1.5"/>
+                    <rect x="27.5" y="3"   width="3" height="18" rx="1.5"/>
+                    <rect x="33"   y="0"   width="3" height="24" rx="1.5"/>
+                    <rect x="38.5" y="2.5" width="3" height="19" rx="1.5"/>
+                    <rect x="44"   y="5.5" width="3" height="13" rx="1.5"/>
+                    <rect x="49.5" y="4"   width="3" height="16" rx="1.5"/>
+                    <rect x="55"   y="8.5" width="3" height="7"  rx="1.5"/>
+                  </svg>
                 </button>
               </div>
             )}

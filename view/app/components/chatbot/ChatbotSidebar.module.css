@@ -2083,13 +2083,16 @@
   cursor: not-allowed;
 }
 
+@keyframes speakWavePulse {
+  0%, 100% { opacity: 1;   transform: scaleY(1); }
+  50%       { opacity: 0.6; transform: scaleY(0.75); }
+}
+
 .speakBtn {
-  width: auto;
   height: 36px;
+  padding: 0 12px;
   border-radius: 999px;
-  padding: 0 16px;
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.82);
@@ -2097,7 +2100,8 @@
   backdrop-filter: blur(8px);
   border: 1.5px solid rgba(171, 28, 110, 0.25);
   cursor: pointer;
-  margin: 0;
+  color: #AB1C6E;
+  flex-shrink: 0;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
 }
 .speakBtn:hover:not(:disabled) {
@@ -2105,21 +2109,22 @@
   border-color: rgba(171, 28, 110, 0.45);
   transform: scale(1.05);
 }
+.speakBtn:active:not(:disabled) {
+  transform: scale(0.95);
+}
 .speakBtnListening {
-  background: rgba(171, 28, 110, 0.12) !important;
+  background: rgba(171, 28, 110, 0.10) !important;
   border-color: rgba(171, 28, 110, 0.35) !important;
+}
+.speakBtnListening svg {
+  animation: speakWavePulse 0.7s ease-in-out infinite;
+  transform-origin: center bottom;
 }
 .speakWave {
   display: none;
 }
 .speakBtnText {
-  font-size: 11px;
-  color: #AB1C6E;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  margin: 0;
-  padding: 0;
-  line-height: 1;
+  display: none;
 }
 .sendBtn:active:not(:disabled) {
   transform: scale(0.95);
