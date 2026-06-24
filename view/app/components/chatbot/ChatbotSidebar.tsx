@@ -118,9 +118,27 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     sanitizeExcessiveBreaks,
     closeOverlay,
     handleOverlayMicClick,
+    selectedSpeechLang,
+    setSelectedSpeechLang,
     handleMicrophoneClick,
     handleSpeakClick,
   } = useChatbotState(props);
+
+  const LANG_OPTIONS: { code: string; locale: string }[] = [
+    { code: 'EN', locale: 'en-GB' },
+    { code: 'BM', locale: 'ms-MY' },
+    { code: 'ZH', locale: 'zh-CN' },
+    { code: 'TA', locale: 'ta-IN' },
+  ];
+  const currentLangCode =
+    selectedSpeechLang.startsWith('zh') ? 'ZH' :
+    selectedSpeechLang.startsWith('ms') ? 'BM' :
+    selectedSpeechLang.startsWith('ta') ? 'TA' : 'EN';
+  function cycleLang() {
+    const idx = LANG_OPTIONS.findIndex(l => l.code === currentLangCode);
+    const next = LANG_OPTIONS[(idx + 1) % LANG_OPTIONS.length];
+    setSelectedSpeechLang(next.locale);
+  }
 
   const [dismissedMsgId, setDismissedMsgId] = React.useState<string | null>(null);
   const photoInputRef = React.useRef<HTMLInputElement>(null);
@@ -612,7 +630,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 <button
                   type="button"
                   className={`${styles.micBtn} ${styles.listening}`}
-                  onClick={() => handleMicrophoneClick(input)}
+                  onClick={() => handleMicrophoneClick()}
                   disabled={isLoading}
                   aria-label="Stop voice input"
                 >
@@ -655,8 +673,17 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               <div className={styles.voiceButtons}>
                 <button
                   type="button"
+                  className={styles.langBtn}
+                  onClick={cycleLang}
+                  title={`Mic language: ${currentLangCode} — click to switch`}
+                  aria-label={`Switch mic language (currently ${currentLangCode})`}
+                >
+                  {currentLangCode}
+                </button>
+                <button
+                  type="button"
                   className={styles.micBtn}
-                  onClick={() => handleMicrophoneClick(input)}
+                  onClick={() => handleMicrophoneClick()}
                   disabled={isLoading}
                   aria-label="Start voice input"
                 >

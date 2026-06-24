@@ -5,7 +5,7 @@ import { speakText, cancelSpeech, getBrowserSpeechLang, setTTSHooks } from '../.
 import type { Message } from '../useChatbotState';
 
 interface UseSpeechProps {
-  sendOverlayMessageRef: React.MutableRefObject<((text: string, shouldSpeak?: boolean) => Promise<void>) | undefined>;
+  sendOverlayMessageRef: React.RefObject<((text: string, shouldSpeak?: boolean) => Promise<void>) | undefined>;
 }
 
 // Maps ElevenLabs ISO 639-1 code → BCP 47 locale used internally
@@ -211,9 +211,59 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
   // ── Mic button mode ────────────────────────────────────────────────────────
 
-  async function startMicRecording(textareaValue?: string) {
+  async function startMicRecording() {
     if (isListeningRef.current || isRecognitionStartingRef.current) return;
     isRecognitionStartingRef.current = true;
+
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (SpeechRecognitionAPI) {
+      // Primary path: native browser SpeechRecognition — text appears live, no network round trip
+      const recognition = new SpeechRecognitionAPI();
+      recognition.lang = recognitionLangRef.current;
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      let accumulated = '';
+
+      recognition.onresult = (event: any) => {
+        let interim = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const t = event.results[i][0].transcript;
+          if (event.results[i].isFinal) accumulated += t;
+          else interim = t;
+        }
+        setInputRef.current?.((accumulated + interim).trim());
+      };
+
+      recognition.onend = () => {
+        if (accumulated.trim()) setInputRef.current?.(accumulated.trim());
+        setIsListening(false);
+        isListeningRef.current = false;
+        isRecognitionStartingRef.current = false;
+      };
+
+      recognition.onerror = (event: any) => {
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          console.error('[Speech] Recognition error:', event.error);
+        }
+        setIsListening(false);
+        isListeningRef.current = false;
+        isRecognitionStartingRef.current = false;
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsListening(true);
+      isListeningRef.current = true;
+      isRecognitionStartingRef.current = false;
+
+      // Auto-stop after 15 s
+      setTimeout(() => { if (isListeningRef.current) try { recognition.stop(); } catch {} }, 15000);
+      return;
+    }
+
+    // Fallback path: ElevenLabs via MediaRecorder (non-Chrome browsers)
     try {
       const stream = await getStream();
       const chunks: Blob[] = [];
@@ -237,7 +287,6 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
       isListeningRef.current = true;
       isRecognitionStartingRef.current = false;
 
-      // Auto-stop after 15 s
       setTimeout(() => {
         if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
       }, 15000);
@@ -364,19 +413,16 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
   // ── Handlers exposed to UI ─────────────────────────────────────────────────
 
-  const handleMicrophoneClick = (textareaValue?: string) => {
+  const handleMicrophoneClick = () => {
     if (isListening) {
-      if (mediaRecorderRef.current?.state === 'recording') {
-        mediaRecorderRef.current.stop(); // onstop → flushChunks
-      } else {
-        stopCapture();
-      }
+      // Stops both native SpeechRecognition (primary) and MediaRecorder shim (fallback)
+      try { recognitionRef.current?.stop?.(); } catch {}
       setIsSpeakMode(false);
       speakModeRef.current = false;
       voiceConversationRef.current = false;
       setHideQuickPrompts(false);
     } else {
-      startMicRecording(textareaValue);
+      startMicRecording();
     }
   };
 

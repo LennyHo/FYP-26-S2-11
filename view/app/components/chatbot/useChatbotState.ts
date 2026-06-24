@@ -52,7 +52,7 @@ import { useMenuData } from './hooks/useMenuData';
 import { useConversation, STORAGE_KEY } from './hooks/useConversation';
 import { useSpeech } from './hooks/useSpeech';
 import { useChatApi } from './hooks/useChatApi';
-import { detectChatLang, cancelSpeech, getBrowserSpeechLang } from '../../utils/chatHelpers';
+import { detectChatLang, cancelSpeech } from '../../utils/chatHelpers';
 import { useLoadingHint } from './hooks/useLoadingHint';
 import { useChatUI } from './hooks/useChatUI';
 import { getStoredUser } from '../../utils/api.base';
@@ -167,7 +167,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     setOverlayLoading: speech.setOverlayLoading,
   });
 
-  // Populate the ref so speech recognition handlers can call sendOverlayMessage
+  // Populate the ref so speak-mode recognition handlers can call sendOverlayMessage
   sendOverlayMessageRef.current = api.sendOverlayMessage;
 
   const hint = useLoadingHint(api.isLoading);
@@ -189,12 +189,10 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
   }, [messages]);
 
   // Also watch the input field in real-time — so typing in any language already
-  // switches the mic before the message is even sent. Reset to en-US when cleared.
+  // switches the mic before the message is even sent. Don't reset on clear —
+  // clearing the input after send would overwrite the lang set by the messages effect.
   useEffect(() => {
-    if (!input.trim()) {
-      speech.setSelectedSpeechLang(getBrowserSpeechLang());
-      return;
-    }
+    if (!input.trim()) return;
     speech.setSelectedSpeechLang(detectChatLang(input));
   }, [input]);
 
@@ -374,6 +372,8 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     handleChatClick,
     formatMessageTime,
     sanitizeExcessiveBreaks,
+    selectedSpeechLang: speech.selectedSpeechLang,
+    setSelectedSpeechLang: speech.setSelectedSpeechLang,
     handleMicrophoneClick: speech.handleMicrophoneClick,
     handleSpeakClick: speech.handleSpeakClick,
     recognitionLangRef: speech.recognitionLangRef,
