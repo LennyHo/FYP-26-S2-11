@@ -557,6 +557,9 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
             </button>
             )}
           </div>
+          <p className={styles.pageDisclaimer}>
+            Nutritional information is for general reference only and is not medical advice. Consume at your own risk.
+          </p>
         </div>
       </div>
     </div>

@@ -362,6 +362,106 @@
   line-height: 1.5;
 }
 
+.storeCard {
+  padding: 20px 20px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid rgba(255, 185, 100, 0.6);
+  border-radius: 16px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.storeCardName {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.storeCardIcon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.storeCardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.storeCardRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: rgba(255, 235, 210, 0.65);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.storeCardLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 185, 100, 0.85);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+
+.storeCardLink:hover {
+  color: rgba(255, 210, 150, 1);
+}
+
+.voucherBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(255, 185, 100, 0.08);
+  border: 1px solid rgba(255, 185, 100, 0.25);
+  border-radius: 14px;
+  padding: 14px 18px;
+  max-width: 640px;
+  width: 100%;
+  text-align: left;
+}
+
+.voucherIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: rgba(255, 185, 100, 0.9);
+}
+
+.voucherText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.voucherTitle {
+  color: rgba(255, 210, 150, 0.95);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.voucherDesc {
+  color: rgba(255, 235, 210, 0.6);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 600px) {
   .overlay {
     padding: 24px 20px;

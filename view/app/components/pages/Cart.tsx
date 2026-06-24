@@ -336,7 +336,7 @@ export default function Cart() {
       {!isLoading && cartItems.length > 0 && totalSugarG !== null && sugarGradeKey && (
         <div className="sugar-widget">
           <div className="sugar-widget-header">
-            <span className="sugar-widget-title">Sugar Snapshot</span>
+            <span className="sugar-widget-title">Sugar Intake</span>
             <span className="sugar-widget-limit-label">
               <span className="sugar-limit-number">
                 {WHO_LIMIT_G}g
@@ -475,6 +475,9 @@ export default function Cart() {
           Proceed to checkout
         </button>
       </div>
+      <p className="page-disclaimer">
+        Nutritional information is provided for general reference only and is not a substitute for professional medical advice. Consume at your own risk. DripTea is not liable for any health consequences arising from your order.
+      </p>
       </div>
     </main>
   );

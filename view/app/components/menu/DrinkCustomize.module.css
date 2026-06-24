@@ -361,3 +361,13 @@
     font-size: 1.3rem;
   }
 }
+
+.pageDisclaimer {
+  font-size: 0.78rem;
+  color: #999;
+  text-align: center;
+  margin: 16px auto 0;
+  max-width: 640px;
+  line-height: 1.5;
+  padding: 0 16px 16px;
+}
