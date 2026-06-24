@@ -60,6 +60,7 @@ const CartItem = require("../models/cartItem.model");
 const MenuItem = require("../models/menuItem.model");
 const Payment = require("../models/payment.model");
 const Order = require("../models/order.model");
+const OrderItem = require("../models/orderItem.model");
 const Feedback = require("../models/feedback.model");
 
 // Common functions for most features
@@ -263,6 +264,9 @@ const DRINK_ASSOCIATION_WORDS = [
 
 function isRecommendationRequest(message) {
     const msg = String(message || "").toLowerCase();
+
+    // Order-tracking intent always takes priority — never treat as a drink search
+    if (isTrackOrderRequest(msg)) return false;
 
     // Explicit recommendation keywords always win, even if order-intent phrases are present
     // e.g. "I would like to have matcha today, any recommendations?"
@@ -631,21 +635,29 @@ function isTrackOrderRequest(message) {
         msg.includes("is my order ready") ||
         msg.includes("has my order") ||
         msg.includes("when will my order") ||
+        msg.includes("my order") ||
+        msg.includes("check my order") ||
+        msg.includes("what happened to my order") ||
+        msg.includes("other order") ||
+        msg.includes("any other order") ||
+        msg.includes("all my orders") ||
+        msg.includes("other orders") ||
+        msg.includes("how many orders") ||
+        msg.includes("do i have any orders") ||
         /\border\b.*\bready\b/i.test(msg) ||
         /\border\b.*\bstatus\b/i.test(msg)
     );
 }
 
-// #203 - Queries Order collection for the most recent active order (pending/preparing/ready),
-// falling back to the most recent completed order when no active one exists.
-async function getOrderStatus(userId) {
-    const activeOrder = await Order.findOne(
-        { userId, status: { $in: ["pending", "preparing", "ready"] } },
-        null,
-        { sort: { createdAt: -1 } }
-    ).lean();
-    if (activeOrder) return activeOrder;
-    return Order.findOne({ userId }, null, { sort: { createdAt: -1 } }).lean();
+// #203 - Queries Order collection for recent orders. Active orders (pending/preparing/ready)
+// are surfaced first; falls back to the 3 most recent orders of any status so the customer
+// can always clarify "do I have any other orders?".
+async function getRecentOrders(userId) {
+    const orders = await Order.find({ userId }, null, { sort: { createdAt: -1 }, limit: 3 }).lean();
+    return Promise.all(orders.map(async (order) => {
+        const items = await OrderItem.find({ orderId: order._id }).lean();
+        return { ...order, items };
+    }));
 }
 // End of User Story #203
 
@@ -1855,11 +1867,24 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             };
         }
 
-        const order = await getOrderStatus(userId);
+        const orders = await getRecentOrders(userId);
 
-        const orderContext = order
-            ? `Customer's most recent order:\nOrder No: ${order.orderNo}\nStatus: ${order.status}\nTotal: S$${Number(order.totalAmount || 0).toFixed(2)}`
-            : "The customer has no recent orders on record.";
+        const STATUS_LABELS = {
+            pending:    "Pending — your order has been placed and is waiting to be confirmed.",
+            paid:       "Paid — payment received, waiting to be prepared.",
+            preparing:  "Preparing — our baristas are making your order right now.",
+            ready:      "Ready — your order is ready for collection!",
+            completed:  "Completed — order has been collected.",
+            cancelled:  "Cancelled.",
+        };
+
+        const orderContext = orders.length === 0
+            ? "The customer has no orders on record."
+            : `[LIVE ORDER DATA — use this as the authoritative current status. Ignore any order status mentioned earlier in the conversation.]\n\nCustomer's recent orders (most recent first):\n` +
+              orders.map((o, i) => {
+                  const itemList = (o.items || []).map(it => `  • ${it.name} x${it.quantity}`).join("\n") || "  (no item details)";
+                  return `Order ${i + 1}: #${o.orderNo} — ${STATUS_LABELS[o.status] || o.status} — Total: S$${Number(o.totalAmount || 0).toFixed(2)}\nItems:\n${itemList}`;
+              }).join("\n\n");
 
         const systemPrompt = await buildSystemPrompt(safeMessage, orderContext);
         const reply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt)

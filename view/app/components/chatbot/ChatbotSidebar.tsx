@@ -472,17 +472,30 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               </div>
               
               {!msg.isUser && msg.feedbackOrderId && msg.feedbackItems && msg.feedbackItems.length > 0 && (
-                <div className={styles.messageActionRow}>
-                  <button
-                    type="button"
-                    className={styles.messageActionBtn}
-                    onClick={() => router.push(`/feedback/${msg.feedbackOrderId}`)}
-                  >
-                    Rate Your Drinks
-                  </button>
+                <div className={styles.feedbackCard}>
+                  <div className={styles.feedbackCardStars}>★★★★★</div>
+                  <p className={styles.feedbackCardPrompt}>How was your order? Your feedback means a lot to us.</p>
+                  <div className={styles.feedbackCardBtns}>
+                    <button
+                      type="button"
+                      className={styles.feedbackBtnPrimary}
+                      onClick={() => router.push(`/feedback/${msg.feedbackOrderId}`)}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                      Rate Your Drinks
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.feedbackBtnSecondary}
+                      onClick={() => router.push(`/feedback/${msg.feedbackOrderId}`)}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                      Leave Feedback
+                    </button>
+                  </div>
                 </div>
               )}
-              
+
               {!msg.isUser && (msg as any).showViewCart && (
                 <div className={styles.messageActionRow}>
                   <button
@@ -507,17 +520,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       Customize in detail
                     </button>
                   )}
-                </div>
-              )}
-              {!msg.isUser && (msg as any).feedbackOrderId && (
-                <div className={styles.messageActionRow}>
-                  <button
-                    type="button"
-                    className={styles.messageActionBtn}
-                    onClick={() => router.push(`/feedback/${(msg as any).feedbackOrderId}`)}
-                  >
-                    Leave Feedback
-                  </button>
                 </div>
               )}
             </div>

@@ -1278,6 +1278,81 @@
   padding-left: 26px;
 }
 
+.feedbackCard {
+  margin-top: 10px;
+  margin-left: 26px;
+  background: linear-gradient(135deg, rgba(171, 28, 110, 0.06) 0%, rgba(161, 94, 163, 0.08) 100%);
+  border: 1px solid rgba(171, 28, 110, 0.15);
+  border-radius: 14px;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feedbackCardStars {
+  font-size: 1rem;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, #AB1C6E, #A55EA3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.feedbackCardPrompt {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.feedbackCardBtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.feedbackBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #AB1C6E 0%, #A55EA3 100%);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.feedbackBtnPrimary:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.feedbackBtnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border: 1.5px solid rgba(171, 28, 110, 0.35);
+  border-radius: 20px;
+  background: transparent;
+  color: #AB1C6E;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.feedbackBtnSecondary:hover {
+  background: rgba(171, 28, 110, 0.06);
+  transform: translateY(-1px);
+}
+
 .messageActionBtn {
   background-color: #2b7da3;
   color: #fff;

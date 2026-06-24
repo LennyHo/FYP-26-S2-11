@@ -131,74 +131,74 @@ export default function FeedbackPage() {
         </button>
 
         <section className="feedback-card">
-            <h1>Feedback</h1>
+            <div className="feedback-card-header">
+                <h1 className="feedback-card-title">Leave a Review</h1>
+                {order && (
+                    <p className="feedback-order-no">Order #{order.displayOrderNo || order.orderNo}</p>
+                )}
+            </div>
 
-            {message && <p className="feedback-message">{message}</p>}
+            <div className="feedback-card-body">
+                {message && <p className="feedback-message">{message}</p>}
 
-            {order && (
-            <>
-                <p className="feedback-order-no">
-                Order #{order.displayOrderNo || order.orderNo}
-                </p>
-
-                <div className="feedback-item-list">
-                {order.items.map((item: any, index: number) => (
-                    <div key={`${item.name}-${index}`} className="feedback-item-card">
-                    <div className="feedback-item">
-                        <img
-                        src={item.image || "/img/no-image.png"}
-                        alt={item.name}
-                        className="feedback-item-image"
-                        />
-
-                        <div>
-                        <h2>{item.name}</h2>
-                        <p>Quantity: {item.quantity}</p>
+                {order && (
+                <>
+                    <div className="feedback-item-list">
+                    {order.items.map((item: any, index: number) => (
+                        <div key={`${item.name}-${index}`} className="feedback-item-card">
+                        <div className="feedback-item">
+                            <img
+                            src={item.image || "/img/no-image.png"}
+                            alt={item.name}
+                            className="feedback-item-image"
+                            />
+                            <div className="feedback-item-info">
+                                <h2>{item.name}</h2>
+                                <span className="feedback-item-qty">× {item.quantity}</span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="feedback-section">
-                        <label>Rating</label>
-
-                        <div className="feedback-stars">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                            key={star}
-                            type="button"
-                            className={
-                                star <= (forms[index]?.rating || 0)
-                                ? "star active"
-                                : "star"
-                            }
-                            onClick={() => updateRating(index, star)}
-                            >
-                            ★
-                            </button>
-                        ))}
+                        <div className="feedback-section">
+                            <label>Rating</label>
+                            <div className="feedback-stars">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                key={star}
+                                type="button"
+                                className={star <= (forms[index]?.rating || 0) ? "star active" : "star"}
+                                onClick={() => updateRating(index, star)}
+                                >
+                                ★
+                                </button>
+                            ))}
+                            </div>
+                            {!forms[index]?.rating && (
+                                <span className="feedback-star-hint">Tap a star to rate</span>
+                            )}
                         </div>
+
+                        <div className="feedback-section">
+                            <label>Comments (optional)</label>
+                            <textarea
+                            value={forms[index]?.comment || ""}
+                            onChange={(e) => updateComment(index, e.target.value)}
+                            placeholder={`What did you think of the ${item.name}?`}
+                            />
+                        </div>
+                        </div>
+                    ))}
                     </div>
 
-                    <div className="feedback-section">
-                        <label>Feedback optional</label>
-                        <textarea
-                        value={forms[index]?.comment || ""}
-                        onChange={(e) => updateComment(index, e.target.value)}
-                        placeholder={`Tell us what you think about ${item.name}...`}
-                        />
-                    </div>
-                    </div>
-                ))}
-                </div>
-
-                <button
-                type="button"
-                className="feedback-submit-btn"
-                onClick={handleSubmit}
-                >
-                Submit Feedback
-                </button>
-            </>
-            )}
+                    <button
+                    type="button"
+                    className="feedback-submit-btn"
+                    onClick={handleSubmit}
+                    >
+                    Submit Feedback
+                    </button>
+                </>
+                )}
+            </div>
         </section>
         </main>
     </div>
