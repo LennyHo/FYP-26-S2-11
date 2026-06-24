@@ -482,7 +482,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 </div>
               </div>
               
-              {!msg.isUser && msg.feedbackOrderId && msg.feedbackItems && msg.feedbackItems.length > 0 && (
+              {/*{!msg.isUser && msg.feedbackOrderId && msg.feedbackItems && msg.feedbackItems.length > 0 && (
                 <div className={styles.feedbackCard}>
                   <div className={styles.feedbackCardStars}>★★★★★</div>
                   <p className={styles.feedbackCardPrompt}>How was your order? Your feedback means a lot to us.</p>
@@ -505,7 +505,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                     </button>
                   </div>
                 </div>
-              )}
+              )}*/}
 
               {!msg.isUser && (msg as any).showViewCart && (
                 <div className={styles.messageActionRow}>
