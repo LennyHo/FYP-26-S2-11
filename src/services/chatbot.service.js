@@ -44,7 +44,8 @@
 //
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: order.model.js
-
+// #Feedback
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: order.model.js, feedback.model.js
 const {
     //isAddToCartRequest,
     extractBeverageId,
@@ -59,6 +60,7 @@ const CartItem = require("../models/cartItem.model");
 const MenuItem = require("../models/menuItem.model");
 const Payment = require("../models/payment.model");
 const Order = require("../models/order.model");
+const Feedback = require("../models/feedback.model");
 
 // Common functions for most features
 async function findDrinkByName(message) {
@@ -1277,6 +1279,20 @@ function buildCartSummaryReply(cartItems, { updated = true } = {}) {
     );
 }
 // End of User Story #201
+
+// Feedback
+function isFeedbackRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    return (
+        msg.includes("feedback") ||
+        msg.includes("review") ||
+        msg.includes("rate my drink") ||
+        msg.includes("rate my order") ||
+        msg.includes("give rating")
+    );
+}
+// End of Feedback
 
 function buildCartUpdatePayload(cartItems, message) {
     const total = cartItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
@@ -2592,6 +2608,49 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         }
     }
     // End of User Story #201
+
+    // Feedback
+    if (isFeedbackRequest(safeMessage)) {
+        if (!userId) {
+            return {
+                reply: "Please log in first before leaving feedback.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const latestCompletedOrder = await Order.findOne(
+            { userId, status: "completed" },
+            null,
+            { sort: { updatedAt: -1, createdAt: -1 } }
+        ).lean();
+
+        if (!latestCompletedOrder) {
+            return {
+                reply: "Please collect your order first. After collection, you can leave feedback for your drinks.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const existingFeedback = await Feedback.findOne({
+        userId,
+        orderId: latestCompletedOrder._id,
+        }).lean();
+
+        if (existingFeedback) {
+            return {
+                reply: "Thanks! You have already submitted feedback for your latest collected order.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        return {
+        reply:
+            "We’d love to hear what you thought about our drinks. Your feedback helps us improve and serve you better.",
+        feedbackOrderId: latestCompletedOrder._id.toString(),
+        system_action: { ui_navigation: "none" },
+        };
+    }
+    // End of Feedback
 
     // If the message is just a drink name (no other intent detected), treat it as an order.
     // Re-frame the message for Gemini so it starts Phase 2 immediately instead of guessing intent.

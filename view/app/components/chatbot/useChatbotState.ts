@@ -64,6 +64,8 @@ export interface Message {
   id: string;
   text: string;
   isUser: boolean;
+  feedbackOrderId?: string;
+  feedbackItems?: any[];
   recommendedDrinks?: {
     id: string;
     name: string;
@@ -319,6 +321,39 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     cleaned = cleaned.replace(/(?:<br\s*\/?>[\s]*(?:&nbsp;)*[\s]*){3,}/gi, '<br><br>');
     return cleaned;
   };
+
+  // Pop out feedback when customer click "Collect"
+  useEffect(() => {
+    function handleChatbotSystemMessage(event: Event) {
+      const customEvent = event as CustomEvent<{
+        text: string;
+        feedbackOrderId?: string;
+        feedbackItems?: any[];
+      }>;
+
+      const botMessage: Message = {
+          id: `${Date.now()}`,
+          text: customEvent.detail.text,
+          isUser: false,
+          feedbackOrderId: customEvent.detail.feedbackOrderId,
+          feedbackItems: customEvent.detail.feedbackItems || [],
+        };
+
+        conversation.setMessages((prev) => [...prev, botMessage]);
+    }
+
+    window.addEventListener(
+      "chatbotSystemMessage",
+      handleChatbotSystemMessage
+    );
+
+    return () => {
+      window.removeEventListener(
+        "chatbotSystemMessage",
+        handleChatbotSystemMessage
+      );
+    };
+  }, []);
 
   // ── Composed return (same shape as before — ChatbotSidebar.tsx unchanged) ──
   return {

@@ -8,6 +8,7 @@
 //
 // #198 Purchase History via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: payment.model.js (this file)
+// Feedback
 
 const mongoose = require("mongoose");
 
@@ -32,9 +33,11 @@ const paymentSchema = new mongoose.Schema(
 // #19  - As a customer, I want to be able to view the purchase history so that I can review my past orders.
 // #198 - As a customer, I want to browse my purchase history through the chatbot so that I can review my previous orders conveniently.
 // Queries orders by userId → joins order_items for drink details → returns full history sorted by date.
+// Feedback
 paymentSchema.statics.getPurchaseHistory = async function getPurchaseHistory(userId) {
   const Order = require("./order.model");
   const OrderItem = require("./orderItem.model");
+  const Feedback = require("./feedback.model");
 
   const orders = await Order.find({ userId })
     .sort({ createdAt: -1 })
@@ -45,6 +48,11 @@ paymentSchema.statics.getPurchaseHistory = async function getPurchaseHistory(use
       const items = await OrderItem.find({ orderId: order._id }).lean();
       const payment = await this.findOne({ orderId: order._id }).lean();
 
+      const feedbackCount = await Feedback.countDocuments({
+        userId,
+        orderId: order._id,
+      });
+
       return {
         id: order._id.toString(),
         orderNo: order.orderNo,
@@ -53,6 +61,9 @@ paymentSchema.statics.getPurchaseHistory = async function getPurchaseHistory(use
         status: order.status,
         totalAmount: order.totalAmount,
         paymentStatus: payment?.status || "unpaid",
+
+        hasFeedback: feedbackCount > 0,
+
         items: items.map((item) => ({
           id: item._id.toString(),
           name: item.name,

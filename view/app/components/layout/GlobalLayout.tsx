@@ -34,6 +34,14 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     return () => window.removeEventListener('openAvyChat', handler);
   }, []);
 
+  useEffect(() => {
+    const handler = () => setIsChatOpen(true);
+    window.addEventListener("chatbotSystemMessage", handler);
+    return () => {
+      window.removeEventListener("chatbotSystemMessage", handler);
+    };
+  }, []);
+
   const hideChatbot =
     pathname.startsWith('/user-admin') ||
     pathname.startsWith('/store-staff') ||

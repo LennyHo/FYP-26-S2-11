@@ -113,6 +113,7 @@ export type DripTeaPurchaseHistoryItem = {
   paymentStatus: string;
   totalAmount: number;
   createdAt?: string;
+  hasFeedback?: boolean;
   items: Array<{
     id?: string;
     name: string;

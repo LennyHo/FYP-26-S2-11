@@ -44,6 +44,8 @@
 //
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: Order.Model
+// # Feedback
+
 "use client";
 
 /**
@@ -467,7 +469,19 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   )}
                 </div>
               </div>
-
+              
+              {!msg.isUser && msg.feedbackOrderId && msg.feedbackItems && msg.feedbackItems.length > 0 && (
+                <div className={styles.messageActionRow}>
+                  <button
+                    type="button"
+                    className={styles.messageActionBtn}
+                    onClick={() => router.push(`/feedback/${msg.feedbackOrderId}`)}
+                  >
+                    Rate Your Drinks
+                  </button>
+                </div>
+              )}
+              
               {!msg.isUser && (msg as any).showViewCart && (
                 <div className={styles.messageActionRow}>
                   <button
@@ -492,6 +506,17 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       Customize in detail
                     </button>
                   )}
+                </div>
+              )}
+              {!msg.isUser && (msg as any).feedbackOrderId && (
+                <div className={styles.messageActionRow}>
+                  <button
+                    type="button"
+                    className={styles.messageActionBtn}
+                    onClick={() => router.push(`/feedback/${(msg as any).feedbackOrderId}`)}
+                  >
+                    Leave Feedback
+                  </button>
                 </div>
               )}
             </div>

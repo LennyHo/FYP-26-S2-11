@@ -407,3 +407,9 @@
 .purchase-feedback-btn:hover {
   background: #4d2a17;
 }
+
+.purchase-feedback-btn.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #9b8a7d;
+}

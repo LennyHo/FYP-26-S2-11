@@ -150,6 +150,17 @@ export default function OrderStatusPage() {
     try {
       await updateOrderStatus(orderId, "completed");
       setCollected(true);
+
+      window.dispatchEvent(
+        new CustomEvent("chatbotSystemMessage", {
+          detail: {
+            text:
+              "Thanks for collecting your order! What did you think of our drinks? Your feedback helps us improve.",
+            feedbackOrderId: orderId,
+            feedbackItems: order?.items || [],
+          },
+        })
+      );
     } catch (e) {
       console.error(e);
     }
@@ -234,6 +245,13 @@ export default function OrderStatusPage() {
 
             {collected ? (
               <div className="order-collected-actions">
+                <button
+                  type="button"
+                  className="order-more-btn"
+                  onClick={() => router.push(`/feedback/${orderId}`)}
+                >
+                  Leave Feedback
+                </button>
                 <button
                   type="button"
                   className="order-more-btn"

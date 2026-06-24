@@ -219,12 +219,19 @@ export default function PurchaseHistory() {
                         </Link>
                       )}
                       {status === "completed" && (
-                        <Link
-                          href={`/feedback/${order.id}`}
-                          className="purchase-feedback-btn"
-                        >
-                          Feedback
-                        </Link>
+                        order.hasFeedback ? (
+                          <button
+                            type="button"
+                            className="purchase-feedback-btn disabled"
+                            disabled
+                          >
+                            Feedback Submitted
+                          </button>
+                        ) : (
+                          <Link href={`/feedback/${order.id}`} className="purchase-feedback-btn">
+                            Feedback
+                          </Link>
+                        )
                       )}
                     </div>
                   </div>
