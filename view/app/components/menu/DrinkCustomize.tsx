@@ -411,22 +411,20 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
       <Header />
       <main className={styles.main}>
 
-        {/* Top: image left, info right */}
-        <div className={styles.topSection}>
-          <div className={styles.imageWrapper}>
-            <img
-              src={imageSrc || '/buy_dripTea_cover.jpg'}
-              alt={selectedDrink.name}
-              className={styles.drinkImage}
-              onError={() => {
-                if (imageSrc !== '/buy_dripTea_cover.jpg') {
-                  setImageSrc('/buy_dripTea_cover.jpg');
-                }
-              }}
-            />
-          </div>
-
-          <div className={styles.info}>
+        {/* Hero: full-width image with back button overlay */}
+        <div className={styles.heroSection}>
+          <img
+            src={imageSrc || '/buy_dripTea_cover.jpg'}
+            alt={selectedDrink.name}
+            className={styles.heroImage}
+            onError={() => {
+              if (imageSrc !== '/buy_dripTea_cover.jpg') {
+                setImageSrc('/buy_dripTea_cover.jpg');
+              }
+            }}
+          />
+          <div className={styles.heroOverlay} />
+          <div className={styles.heroBackBtnWrap}>
             <button
               type="button"
               className={styles.backBtn}
@@ -435,25 +433,27 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
               <span className={styles.backBtnArrow}>‹</span>
               {isEditMode ? "Back to Cart" : "Back to Category"}
             </button>
-            <h1 className={styles.drinkName}>{selectedDrink.name}</h1>
-            <p className={styles.drinkDesc}>{selectedDrink.description}</p>
+          </div>
+        </div>
 
-            {/* Live nutri info */}
+        {/* Drink info below hero */}
+        <div className={styles.info}>
+          <h1 className={styles.drinkName}>{selectedDrink.name}</h1>
+          <p className={styles.drinkDesc}>{selectedDrink.description}</p>
+          <div className={styles.infoMeta}>
             <div className={styles.nutriRow}>
               <span className={styles.nutriDetail}>Sugar: {totalSugarG}g</span>
               <span className={styles.nutriDetail}>{totalCalories} kcal</span>
             </div>
             {nutriGradeImage[selectedDrink.nutriGrade] && (
-              <div className={styles.nutriGradeWrapper}>
-                <Image
-                  src={nutriGradeImage[selectedDrink.nutriGrade]}
-                  alt={`Nutri-Grade ${selectedDrink.nutriGrade}`}
-                  width={160}
-                  height={80}
-                  className={styles.nutriGradeImg}
-                  style={{ width: 'auto', height: '80px' }}
-                />
-              </div>
+              <Image
+                src={nutriGradeImage[selectedDrink.nutriGrade]}
+                alt={`Nutri-Grade ${selectedDrink.nutriGrade}`}
+                width={160}
+                height={80}
+                className={styles.nutriGradeImg}
+                style={{ width: 'auto', height: '72px' }}
+              />
             )}
           </div>
         </div>
@@ -529,11 +529,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
           </div>
         </div>
 
-        <div className={styles.bottomSpacer} />
-      </main>
-
-      {/* Sticky footer — constrained to same width as main content */}
-      <div className={styles.footerOuter}>
+        {/* Footer — sits in flow directly below Toppings */}
         <div className={styles.footer}>
           <div className={styles.footerTop}>
             <span className={styles.totalPrice}>S$ {totalPrice.toFixed(2)}</span>
@@ -561,7 +557,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
             Nutritional information is for general reference only and is not medical advice. Consume at your own risk.
           </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

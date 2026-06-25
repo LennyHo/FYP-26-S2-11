@@ -135,7 +135,6 @@ export default function StoreStaffDashboardPage() {
 
   async function refreshOrders() {
     setIsRefreshing(true);
-
     try {
       const response = await getOrders('all');
       setOrders(response.data.map(toStaffOrderRow));
@@ -149,10 +148,20 @@ export default function StoreStaffDashboardPage() {
     }
   }
 
+  async function silentRefreshOrders() {
+    try {
+      const response = await getOrders('all');
+      setOrders(response.data.map(toStaffOrderRow));
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('[Store staff orders auto-refresh]', error);
+    }
+  }
+
   useEffect(() => {
     void refreshOrders();
     void loadInventory();
-    const timer = window.setInterval(() => void refreshOrders(), 3000);
+    const timer = window.setInterval(() => void silentRefreshOrders(), 3000);
     return () => window.clearInterval(timer);
   }, []);
 
