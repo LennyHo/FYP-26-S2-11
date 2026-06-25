@@ -151,6 +151,11 @@ export default function OrderStatusPage() {
       await updateOrderStatus(orderId, "completed");
       setCollected(true);
 
+      console.log("[OrderStatus] dispatch chatbotSystemMessage", {
+        orderId,
+        items: order?.items,
+      });
+      
       window.dispatchEvent(
         new CustomEvent("chatbotSystemMessage", {
           detail: {
