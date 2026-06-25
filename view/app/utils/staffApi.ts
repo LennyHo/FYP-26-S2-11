@@ -12,9 +12,9 @@
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 
 import { requestJson } from './api.base';
-import type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem } from './api.base';
+import type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem, DripTeaFeedback } from './api.base';
 
-export type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem };
+export type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem, DripTeaFeedback };
 
 // Fetches all orders filtered by status. GET /api/orders
 export function getOrders(status: string = 'all') {
@@ -49,6 +49,18 @@ export function updateMenuItemStatus(id: string, status: string) {
   return requestJson<{ ok: boolean; data: { id: string; mongoId: string; status: string } }>(
     `/api/menu-items/${encodeURIComponent(id)}/status`,
     { method: 'PATCH', body: JSON.stringify({ status }) }
+  );
+}
+
+// ── Feedback (staff view) ─────────────────────────────────────────────────────
+
+// Fetches feedback for a list of order IDs, grouped by orderId. GET /api/feedback/orders?ids=...
+export function getOrderFeedbacks(orderIds: string[]) {
+  if (!orderIds.length) {
+    return Promise.resolve({ ok: true, data: {} as Record<string, DripTeaFeedback[]> });
+  }
+  return requestJson<{ ok: boolean; data: Record<string, DripTeaFeedback[]> }>(
+    `/api/feedback/orders?ids=${orderIds.map(encodeURIComponent).join(',')}`
   );
 }
 

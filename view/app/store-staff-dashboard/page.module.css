@@ -511,6 +511,71 @@
 .btnSubmit:hover    { opacity: 0.88; transform: translateY(-1px); }
 .btnSubmit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
+/* ── Feedback column ─────────────────────────────────────── */
+.feedbackBtn {
+  padding: 4px 11px;
+  border: 1px solid rgba(141, 99, 63, 0.35);
+  border-radius: 99px;
+  background: rgba(141, 99, 63, 0.08);
+  color: #8d633f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.feedbackBtn:hover { background: rgba(141, 99, 63, 0.18); }
+
+.feedbackNone { color: #c4bab4; font-size: 0.88rem; }
+
+/* Feedback modal content */
+.feedbackList { display: flex; flex-direction: column; gap: 10px; }
+
+.feedbackItem {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(141, 99, 63, 0.05);
+  border: 1px solid rgba(220, 199, 180, 0.5);
+}
+
+.feedbackItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.feedbackDrink {
+  font-weight: 700;
+  color: #17110f;
+  font-size: 0.9rem;
+}
+
+.feedbackStars {
+  color: #c2690a;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+.feedbackComment {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #6b5744;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.feedbackEmpty {
+  text-align: center;
+  color: #9d948d;
+  font-size: 0.9rem;
+  padding: 16px 0;
+  margin: 0;
+}
+
 /* Detail view */
 .detailGrid {
   display: flex;

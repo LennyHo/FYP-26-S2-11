@@ -12,7 +12,7 @@
 
 import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getOrders,
   updateOrderStatus,
@@ -22,6 +22,8 @@ import {
   updateInventoryQty,
   deleteInventoryItem,
   type DripTeaInventoryItem,
+  getOrderFeedbacks,
+  type DripTeaFeedback,
 } from '../utils/staffApi';
 
 type StaffTab = 'orders' | 'completed' | 'inventory';
@@ -84,6 +86,11 @@ function formatDate(iso?: string) {
   });
 }
 
+function renderStars(rating: number) {
+  const full = Math.min(5, Math.max(0, Math.round(rating)));
+  return '★'.repeat(full) + '☆'.repeat(5 - full);
+}
+
 const EMPTY_FORM: CreateInventoryForm = {
   name: '',
   quantity: '0',
@@ -109,6 +116,11 @@ export default function StoreStaffDashboardPage() {
   const [createForm, setCreateForm] = useState<CreateInventoryForm>(EMPTY_FORM);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Feedback state
+  const [orderFeedbacks, setOrderFeedbacks] = useState<Record<string, DripTeaFeedback[]>>({});
+  const [feedbackModalOrder, setFeedbackModalOrder] = useState<StaffOrderRow | null>(null);
+  const loadedFeedbackIdsRef = useRef(new Set<string>());
 
   async function loadInventory() {
     try {
@@ -227,6 +239,24 @@ export default function StoreStaffDashboardPage() {
     [orders]
   );
 
+  async function loadOrderFeedbacks(ids: string[]) {
+    try {
+      const response = await getOrderFeedbacks(ids);
+      setOrderFeedbacks(prev => ({ ...prev, ...response.data }));
+    } catch (error) {
+      console.error('[Store staff feedback]', error);
+    }
+  }
+
+  useEffect(() => {
+    const newIds = completedOrders
+      .map(o => o.id)
+      .filter(id => !loadedFeedbackIdsRef.current.has(id));
+    if (!newIds.length) return;
+    newIds.forEach(id => loadedFeedbackIdsRef.current.add(id));
+    void loadOrderFeedbacks(newIds);
+  }, [completedOrders]);
+
   const visibleOrders = activeTab === 'completed' ? completedOrders : queueOrders;
 
   const filteredOrders = visibleOrders.filter(order => matchesOrderSearch(order, searchQuery));
@@ -339,6 +369,7 @@ export default function StoreStaffDashboardPage() {
                     <th>Customer</th>
                     <th>Status</th>
                     <th>Total</th>
+                    {activeTab === 'completed' && <th>Feedback</th>}
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -360,6 +391,21 @@ export default function StoreStaffDashboardPage() {
                           </span>
                         </td>
                         <td className={styles.total}>{order.total}</td>
+                        {activeTab === 'completed' && (
+                          <td>
+                            {(orderFeedbacks[order.id] ?? []).length > 0 ? (
+                              <button
+                                type="button"
+                                className={styles.feedbackBtn}
+                                onClick={() => setFeedbackModalOrder(order)}
+                              >
+                                ★ {(orderFeedbacks[order.id] ?? []).length}
+                              </button>
+                            ) : (
+                              <span className={styles.feedbackNone}>—</span>
+                            )}
+                          </td>
+                        )}
                         <td>
                           {flow && activeTab === 'orders' ? (
                             <button
@@ -377,7 +423,7 @@ export default function StoreStaffDashboardPage() {
                     );
                   }) : (
                     <tr>
-                      <td colSpan={5} className={styles.empty}>
+                      <td colSpan={activeTab === 'completed' ? 6 : 5} className={styles.empty}>
                         {activeTab === 'completed' ? 'No completed orders found' : 'No active orders found'}
                       </td>
                     </tr>
@@ -510,6 +556,38 @@ export default function StoreStaffDashboardPage() {
               <button type="button" className={styles.btnSubmit} onClick={() => void handleCreateSubmit()} disabled={isCreating}>
                 {isCreating ? 'Creating...' : 'Create'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Detail Modal */}
+      {feedbackModalOrder && (
+        <div className={styles.modalOverlay} onClick={() => setFeedbackModalOrder(null)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Feedback — Order {feedbackModalOrder.orderNo}</h2>
+              <button type="button" className={styles.modalClose} onClick={() => setFeedbackModalOrder(null)}>×</button>
+            </div>
+            <div className={styles.modalBody}>
+              {(orderFeedbacks[feedbackModalOrder.id] ?? []).length === 0 ? (
+                <p className={styles.feedbackEmpty}>No feedback for this order yet.</p>
+              ) : (
+                <div className={styles.feedbackList}>
+                  {(orderFeedbacks[feedbackModalOrder.id] ?? []).map(fb => (
+                    <div key={fb._id} className={styles.feedbackItem}>
+                      <div className={styles.feedbackItemHeader}>
+                        <span className={styles.feedbackDrink}>{fb.drinkName}</span>
+                        <span className={styles.feedbackStars}>{renderStars(fb.rating)} {fb.rating}/5</span>
+                      </div>
+                      {fb.comment && <p className={styles.feedbackComment}>"{fb.comment}"</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnCancel} onClick={() => setFeedbackModalOrder(null)}>Close</button>
             </div>
           </div>
         </div>

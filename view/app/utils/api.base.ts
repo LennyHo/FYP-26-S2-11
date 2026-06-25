@@ -107,6 +107,14 @@ export type DripTeaOrder = {
   }>;
 };
 
+export type DripTeaFeedback = {
+  _id: string;
+  drinkName: string;
+  rating: number;
+  comment: string;
+  createdAt?: string;
+};
+
 export type DripTeaInventoryItem = {
   _id: string;
   name: string;

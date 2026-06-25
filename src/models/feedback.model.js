@@ -107,6 +107,33 @@ feedbackSchema.statics.createFeedback = async function createFeedback(data) {
   };
 };
 
+feedbackSchema.statics.getByOrderIds = async function getByOrderIds(orderIds) {
+  const objectIds = orderIds
+    .filter((id) => mongoose.Types.ObjectId.isValid(id))
+    .map((id) => new mongoose.Types.ObjectId(id));
+
+  if (!objectIds.length) return {};
+
+  const feedbacks = await this.find({ orderId: { $in: objectIds } })
+    .select("orderId drinkName rating comment createdAt")
+    .sort({ createdAt: 1 })
+    .lean();
+
+  const grouped = {};
+  for (const fb of feedbacks) {
+    const key = fb.orderId.toString();
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push({
+      _id: fb._id.toString(),
+      drinkName: fb.drinkName,
+      rating: fb.rating,
+      comment: fb.comment,
+      createdAt: fb.createdAt,
+    });
+  }
+  return grouped;
+};
+
 feedbackSchema.statics.getAverageRating = async function getAverageRating(menuItemId) {
   const stats = await this.aggregate([
     { $match: { menuItemId: new mongoose.Types.ObjectId(menuItemId) } },
