@@ -54,11 +54,11 @@
 
 
 .chatbotSidebar {
-  --avy-chat-gradient: #ffffff;
+  --avy-chat-gradient: transparent;
   position: absolute;
   inset: 0;
   width: 100%;
-  max-width: min(420px, 100vw);
+  max-width: 100%;
   zoom: 0.97;
   background: var(--avy-chat-gradient);
   display: flex;
@@ -80,7 +80,9 @@
   width: 100%;
   overflow: hidden;
   border-radius: inherit;
-  background-color: white;
+  background:
+    linear-gradient(180deg, rgba(252, 246, 238, 0.92) 0%, rgba(247, 237, 222, 0.95) 100%),
+    url('/driptea_background.png') center / cover no-repeat;
 }
 
 .chatMessagesArea {
