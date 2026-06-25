@@ -8,7 +8,6 @@
 //
 // #198 Purchase History via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: payment.model.js (this file)
-// Feedback
 
 const mongoose = require("mongoose");
 
