@@ -5,16 +5,16 @@ import styles from './AvySection.module.css';
 
 const FEATURES = [
   {
-    label: 'Say it, get it',
-    desc: "Describe your craving — Avy searches the whole menu and finds your match instantly. No browsing, no scrolling.",
+    label: 'Just say it',
+    desc: "Tell Avy what you're craving and she'll find your perfect match instantly. No browsing, no scrolling required.",
   },
   {
-    label: 'Remembers your taste',
-    desc: "Your sugar level, your go-to topping, your usual order — Avy keeps it all ready for next time.",
+    label: 'Save your taste once',
+    desc: "Set your sugar level, go-to toppings, and usual order once. Avy remembers everything for next time.",
   },
   {
-    label: 'No queue, no wait',
-    desc: "Place your order any time in seconds. Avy's always on — even when the line isn't.",
+    label: 'Skip the queue',
+    desc: "Order in seconds, any time. Avy's always ready to take your order, even when the line isn't.",
   },
 ];
 
@@ -28,12 +28,12 @@ export default function AvySection() {
 
       <div className={styles.inner}>
         <div className={styles.copy}>
-          <p className={styles.eyebrow}>Your AI Barista</p>
+          <p className={styles.eyebrow}>Dripconcierge</p>
           <h2 className={styles.headline}>
             Order in seconds.<br />Talk to Avy.
           </h2>
           <p className={styles.sub}>
-            Tell Avy what you're in the mood for — she finds the perfect drink, remembers your preferences, and places your order without you lifting a finger.
+            Tell Avy what you're in the mood for, she finds the perfect drink, remembers your preferences, and places your order without you lifting a finger.
           </p>
 
           <ul className={styles.featureList}>
@@ -53,7 +53,7 @@ export default function AvySection() {
             className={styles.cta}
             onClick={() => window.dispatchEvent(new CustomEvent('openAvyChat'))}
           >
-            Talk to Avy
+            Meet Avy
           </button>
         </div>
 
