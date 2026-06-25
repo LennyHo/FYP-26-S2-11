@@ -322,6 +322,230 @@
 .doneLabel { font-size: 0.82rem; font-weight: 700; color: #059669; }
 
 /* ── Inventory specifics ──────────────────────────────────── */
+.itemNameLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-weight: 600;
+  color: #4b311f;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+
+.itemNameLink:hover { color: #8d633f; }
+
+.btnCreate {
+  border: 1.5px solid #8d633f;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4b311f, #2f2016);
+  color: #fff8f2;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.12s;
+  white-space: nowrap;
+}
+
+.btnCreate:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.btnDelete {
+  padding: 5px 12px;
+  border: 1px solid rgba(192, 50, 29, 0.35);
+  border-radius: 8px;
+  background: rgba(192, 50, 29, 0.07);
+  color: #c0321d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+  white-space: nowrap;
+}
+
+.btnDelete:hover    { background: rgba(192, 50, 29, 0.15); transform: scale(1.04); }
+.btnDelete:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ── Modal ──────────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 17, 15, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+  animation: fadeIn 0.18s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modalCard {
+  background: #fff8f2;
+  border-radius: 18px;
+  box-shadow: 0 12px 48px rgba(23, 17, 15, 0.22);
+  width: 100%;
+  max-width: 460px;
+  animation: slideUp 0.2s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(220, 199, 180, 0.5);
+}
+
+.modalTitle {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #17110f;
+  margin: 0;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: #9d948d;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  transition: color 0.15s;
+}
+
+.modalClose:hover { color: #4b311f; }
+
+.modalBody {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid rgba(220, 199, 180, 0.5);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.formLabel {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #8d633f;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.formInput {
+  padding: 9px 12px;
+  border: 1px solid rgba(220, 199, 180, 0.8);
+  border-radius: 9px;
+  font-size: 0.9rem;
+  background: rgba(255, 250, 245, 0.95);
+  color: #17110f;
+  outline: none;
+  transition: border 0.18s, box-shadow 0.18s;
+}
+
+.formInput::placeholder { color: #9d948d; }
+
+.formInput:focus {
+  border-color: #8d633f;
+  box-shadow: 0 0 0 3px rgba(141, 99, 63, 0.12);
+}
+
+.btnCancel {
+  padding: 9px 18px;
+  border: 1px solid rgba(220, 199, 180, 0.8);
+  border-radius: 9px;
+  background: rgba(255, 250, 245, 0.95);
+  color: #7f7067;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnCancel:hover { background: rgba(220, 199, 180, 0.3); }
+
+.btnSubmit {
+  padding: 9px 22px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #4b311f, #2f2016);
+  color: #fff8f2;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.12s;
+}
+
+.btnSubmit:hover    { opacity: 0.88; transform: translateY(-1px); }
+.btnSubmit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* Detail view */
+.detailGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(220, 199, 180, 0.3);
+}
+
+.detailRow:last-child { border-bottom: none; padding-bottom: 0; }
+
+.detailLabel {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #9d948d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.detailValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #17110f;
+  text-align: right;
+}
+
+/* ── Inventory specifics (original) ───────────────────────── */
 .itemName   { font-weight: 600; color: #17110f; }
 .unitCell   { color: #7f7067; font-size: 0.88rem; }
 

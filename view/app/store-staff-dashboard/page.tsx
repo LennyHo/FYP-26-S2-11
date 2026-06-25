@@ -13,7 +13,16 @@
 import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
 import { useEffect, useMemo, useState } from 'react';
-import { getOrders, updateOrderStatus, type DripTeaOrder } from '../utils/staffApi';
+import {
+  getOrders,
+  updateOrderStatus,
+  type DripTeaOrder,
+  getInventory,
+  createInventoryItem,
+  updateInventoryQty,
+  deleteInventoryItem,
+  type DripTeaInventoryItem,
+} from '../utils/staffApi';
 
 type StaffTab = 'orders' | 'completed' | 'inventory';
 
@@ -25,6 +34,14 @@ type StaffOrderRow = {
   total: string;
   totalAmount: number;
   itemSummary: string;
+};
+
+type CreateInventoryForm = {
+  name: string;
+  quantity: string;
+  unit: string;
+  lowStockThreshold: string;
+  description: string;
 };
 
 function formatStatus(status: string) {
@@ -59,6 +76,22 @@ function matchesOrderSearch(order: StaffOrderRow, query: string) {
     .some(value => value.toLowerCase().includes(normalizedQuery));
 }
 
+function formatDate(iso?: string) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('en-SG', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
+const EMPTY_FORM: CreateInventoryForm = {
+  name: '',
+  quantity: '0',
+  unit: '',
+  lowStockThreshold: '5',
+  description: '',
+};
+
 export default function StoreStaffDashboardPage() {
   const [activeTab, setActiveTab] = useState<StaffTab>('orders');
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,13 +100,26 @@ export default function StoreStaffDashboardPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [inventory, setInventory] = useState([
-    { id: 1, name: 'Oolong Tea', qty: 12, unit: 'bags' },
-    { id: 2, name: 'Tapioca Pearls', qty: 4, unit: 'kg' },
-    { id: 3, name: 'Aloe Vera', qty: 8, unit: 'pcs' },
-    { id: 4, name: 'Cheese Foam Mix', qty: 3, unit: 'packs' },
-    { id: 5, name: 'Honey Syrup', qty: 7, unit: 'btl' },
-  ]);
+
+  // Inventory state
+  const [inventory, setInventory] = useState<DripTeaInventoryItem[]>([]);
+  const [inventoryError, setInventoryError] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<DripTeaInventoryItem | null>(null);
+  const [createForm, setCreateForm] = useState<CreateInventoryForm>(EMPTY_FORM);
+  const [isCreating, setIsCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function loadInventory() {
+    try {
+      const response = await getInventory();
+      setInventory(response.data);
+      setInventoryError('');
+    } catch (error) {
+      console.error('[Store staff inventory]', error);
+      setInventoryError('Unable to load inventory from the backend.');
+    }
+  }
 
   async function refreshOrders() {
     setIsRefreshing(true);
@@ -93,6 +139,7 @@ export default function StoreStaffDashboardPage() {
 
   useEffect(() => {
     void refreshOrders();
+    void loadInventory();
     const timer = window.setInterval(() => void refreshOrders(), 3000);
     return () => window.clearInterval(timer);
   }, []);
@@ -117,10 +164,58 @@ export default function StoreStaffDashboardPage() {
     }
   };
 
-  const adjustQty = (id: number, delta: number) =>
-    setInventory(prev => prev.map(item => (
-      item.id === id ? { ...item, qty: Math.max(0, item.qty + delta) } : item
-    )));
+  const adjustQty = async (item: DripTeaInventoryItem, delta: number) => {
+    const newQty = Math.max(0, item.quantity + delta);
+    setInventory(prev => prev.map(i => i._id === item._id ? { ...i, quantity: newQty } : i));
+    try {
+      await updateInventoryQty(item._id, newQty);
+    } catch (error) {
+      console.error('[Store staff inventory adjust]', error);
+      setInventory(prev => prev.map(i => i._id === item._id ? { ...i, quantity: item.quantity } : i));
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    setInventoryError('');
+    try {
+      await deleteInventoryItem(id);
+      setInventory(prev => prev.filter(i => i._id !== id));
+      if (selectedItem?._id === id) setSelectedItem(null);
+    } catch (error) {
+      console.error('[Store staff inventory delete]', error);
+      setInventoryError('Failed to delete inventory item.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleCreateSubmit = async () => {
+    const name = createForm.name.trim();
+    const unit = createForm.unit.trim();
+    const quantity = Number(createForm.quantity);
+    const lowStockThreshold = Number(createForm.lowStockThreshold);
+    const description = createForm.description.trim();
+
+    if (!name || !unit) {
+      setInventoryError('Name and unit are required.');
+      return;
+    }
+
+    setIsCreating(true);
+    setInventoryError('');
+    try {
+      const response = await createInventoryItem({ name, quantity, unit, lowStockThreshold, description });
+      setInventory(prev => [...prev, response.data]);
+      setShowCreateModal(false);
+      setCreateForm(EMPTY_FORM);
+    } catch (error) {
+      console.error('[Store staff inventory create]', error);
+      setInventoryError('Failed to create inventory item.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const queueOrders = useMemo(
     () => orders.filter(order => QUEUE_STATUSES.has(order.status.toLowerCase())),
@@ -142,7 +237,7 @@ export default function StoreStaffDashboardPage() {
   const openCount = queueOrders.length;
   const completedCount = completedOrders.length;
   const preparingCount = orders.filter(order => order.status.toLowerCase() === 'preparing').length;
-  const lowStockCount = inventory.filter(item => item.qty <= 5).length;
+  const lowStockCount = inventory.filter(item => item.quantity <= item.lowStockThreshold).length;
 
   const searchPlaceholder = activeTab === 'inventory'
     ? 'Search inventory...'
@@ -199,7 +294,12 @@ export default function StoreStaffDashboardPage() {
           </div>
 
           <div className={styles.toolbarRight}>
-            <button type="button" className={styles.refreshBtn} onClick={() => void refreshOrders()} disabled={isRefreshing}>
+            {activeTab === 'inventory' && (
+              <button type="button" className={styles.btnCreate} onClick={() => { setInventoryError(''); setShowCreateModal(true); }}>
+                + New Item
+              </button>
+            )}
+            <button type="button" className={styles.refreshBtn} onClick={() => { void refreshOrders(); if (activeTab === 'inventory') void loadInventory(); }} disabled={isRefreshing}>
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
             <div className={styles.searchWrap}>
@@ -220,6 +320,12 @@ export default function StoreStaffDashboardPage() {
         {ordersError && (
           <div className={styles.errorBanner}>
             {ordersError}
+          </div>
+        )}
+
+        {inventoryError && activeTab === 'inventory' && (
+          <div className={styles.errorBanner}>
+            {inventoryError}
           </div>
         )}
 
@@ -292,26 +398,43 @@ export default function StoreStaffDashboardPage() {
                     <th>Stock</th>
                     <th>Unit</th>
                     <th>Adjust</th>
+                    <th>Delete</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredInventory.length > 0 ? filteredInventory.map(item => (
-                    <tr key={item.id} className={item.qty <= 5 ? styles.rowLowStock : ''}>
+                    <tr key={item._id} className={item.quantity <= item.lowStockThreshold ? styles.rowLowStock : ''}>
                       <td>
-                        <span className={styles.itemName}>{item.name}</span>
-                        {item.qty <= 5 && <span className={styles.lowBadge}>Low stock</span>}
+                        <button
+                          type="button"
+                          className={styles.itemNameLink}
+                          onClick={() => setSelectedItem(item)}
+                        >
+                          {item.name}
+                        </button>
+                        {item.quantity <= item.lowStockThreshold && <span className={styles.lowBadge}>Low stock</span>}
                       </td>
-                      <td className={`${styles.qtyCell} ${item.qty <= 5 ? styles.qtyLow : ''}`}>{item.qty}</td>
+                      <td className={`${styles.qtyCell} ${item.quantity <= item.lowStockThreshold ? styles.qtyLow : ''}`}>{item.quantity}</td>
                       <td className={styles.unitCell}>{item.unit}</td>
                       <td>
                         <div className={styles.qtyControls}>
-                          <button type="button" className={styles.qtyBtn} onClick={() => adjustQty(item.id, -1)} disabled={item.qty === 0}>-</button>
-                          <button type="button" className={`${styles.qtyBtn} ${styles.qtyBtnAdd}`} onClick={() => adjustQty(item.id, 1)}>+</button>
+                          <button type="button" className={styles.qtyBtn} onClick={() => void adjustQty(item, -1)} disabled={item.quantity === 0}>-</button>
+                          <button type="button" className={`${styles.qtyBtn} ${styles.qtyBtnAdd}`} onClick={() => void adjustQty(item, 1)}>+</button>
                         </div>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className={styles.btnDelete}
+                          onClick={() => void handleDelete(item._id)}
+                          disabled={deletingId === item._id}
+                        >
+                          {deletingId === item._id ? '...' : 'Delete'}
+                        </button>
                       </td>
                     </tr>
                   )) : (
-                    <tr><td colSpan={4} className={styles.empty}>No items found</td></tr>
+                    <tr><td colSpan={5} className={styles.empty}>No items found</td></tr>
                   )}
                 </tbody>
               </table>
@@ -319,6 +442,120 @@ export default function StoreStaffDashboardPage() {
           </div>
         )}
       </main>
+
+      {/* Create Inventory Modal */}
+      {showCreateModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowCreateModal(false)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>New Inventory Item</h2>
+              <button type="button" className={styles.modalClose} onClick={() => setShowCreateModal(false)}>×</button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Name *</label>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  placeholder="e.g. Oolong Tea"
+                  value={createForm.name}
+                  onChange={e => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Quantity *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className={styles.formInput}
+                    value={createForm.quantity}
+                    onChange={e => setCreateForm(prev => ({ ...prev, quantity: e.target.value }))}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Unit *</label>
+                  <input
+                    type="text"
+                    className={styles.formInput}
+                    placeholder="e.g. bags, kg, pcs"
+                    value={createForm.unit}
+                    onChange={e => setCreateForm(prev => ({ ...prev, unit: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Low Stock Threshold</label>
+                <input
+                  type="number"
+                  min="0"
+                  className={styles.formInput}
+                  value={createForm.lowStockThreshold}
+                  onChange={e => setCreateForm(prev => ({ ...prev, lowStockThreshold: e.target.value }))}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Description</label>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  placeholder="Optional notes"
+                  value={createForm.description}
+                  onChange={e => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnCancel} onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button type="button" className={styles.btnSubmit} onClick={() => void handleCreateSubmit()} disabled={isCreating}>
+                {isCreating ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inventory Detail Modal */}
+      {selectedItem && (
+        <div className={styles.modalOverlay} onClick={() => setSelectedItem(null)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>{selectedItem.name}</h2>
+              <button type="button" className={styles.modalClose} onClick={() => setSelectedItem(null)}>×</button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.detailGrid}>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Stock</span>
+                  <span className={`${styles.detailValue} ${selectedItem.quantity <= selectedItem.lowStockThreshold ? styles.qtyLow : ''}`}>
+                    {selectedItem.quantity} {selectedItem.unit}
+                    {selectedItem.quantity <= selectedItem.lowStockThreshold && (
+                      <span className={styles.lowBadge} style={{ marginLeft: 8 }}>Low stock</span>
+                    )}
+                  </span>
+                </div>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Unit</span>
+                  <span className={styles.detailValue}>{selectedItem.unit}</span>
+                </div>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Low Stock Alert</span>
+                  <span className={styles.detailValue}>≤ {selectedItem.lowStockThreshold} {selectedItem.unit}</span>
+                </div>
+                {selectedItem.description && (
+                  <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>Description</span>
+                    <span className={styles.detailValue}>{selectedItem.description}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnCancel} onClick={() => setSelectedItem(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

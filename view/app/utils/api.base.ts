@@ -107,6 +107,17 @@ export type DripTeaOrder = {
   }>;
 };
 
+export type DripTeaInventoryItem = {
+  _id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  lowStockThreshold: number;
+  description: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type DripTeaPurchaseHistoryItem = {
   id: string;
   orderNo: string;

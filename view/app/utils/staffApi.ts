@@ -12,9 +12,9 @@
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 
 import { requestJson } from './api.base';
-import type { DripTeaOrder, DripTeaMenuItem } from './api.base';
+import type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem } from './api.base';
 
-export type { DripTeaOrder, DripTeaMenuItem };
+export type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem };
 
 // Fetches all orders filtered by status. GET /api/orders
 export function getOrders(status: string = 'all') {
@@ -49,6 +49,43 @@ export function updateMenuItemStatus(id: string, status: string) {
   return requestJson<{ ok: boolean; data: { id: string; mongoId: string; status: string } }>(
     `/api/menu-items/${encodeURIComponent(id)}/status`,
     { method: 'PATCH', body: JSON.stringify({ status }) }
+  );
+}
+
+// ── Inventory management ──────────────────────────────────────────────────────
+
+// Fetches all inventory items. GET /api/inventory
+export function getInventory() {
+  return requestJson<{ ok: boolean; data: DripTeaInventoryItem[] }>('/api/inventory');
+}
+
+// Creates a new inventory item. POST /api/inventory
+export function createInventoryItem(payload: {
+  name: string;
+  quantity: number;
+  unit: string;
+  lowStockThreshold?: number;
+  description?: string;
+}) {
+  return requestJson<{ ok: boolean; data: DripTeaInventoryItem }>('/api/inventory', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+// Updates an inventory item's quantity (absolute value). PATCH /api/inventory/:id
+export function updateInventoryQty(id: string, quantity: number) {
+  return requestJson<{ ok: boolean; data: DripTeaInventoryItem }>(
+    `/api/inventory/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify({ quantity }) }
+  );
+}
+
+// Deletes an inventory item. DELETE /api/inventory/:id
+export function deleteInventoryItem(id: string) {
+  return requestJson<{ ok: boolean; data: { id: string } }>(
+    `/api/inventory/${encodeURIComponent(id)}`,
+    { method: 'DELETE' }
   );
 }
 

@@ -4,6 +4,7 @@ require("dotenv").config();
 
 const { connectMongo } = require("./src/config/mongo");
 const User = require("./src/models/user.model");
+const Inventory = require("./src/models/inventory.model");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,6 +15,10 @@ app.use(express.json({ limit: "10mb" }));
 // User Story 13: View Menu
 const menuRoutes = require("./src/routes/menu.routes");
 app.use("/api", menuRoutes);
+
+// Inventory management
+const inventoryRoutes = require("./src/routes/inventory.routes");
+app.use("/api", inventoryRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({
@@ -67,6 +72,7 @@ async function startServer() {
   try {
     await connectMongo();
     await User.initializeSeedUsers();
+    await Inventory.initializeSeedInventory();
 
     app.get("/", (req, res) => {
       res.send("DripTea backend is running");

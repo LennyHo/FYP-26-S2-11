@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node server.js)"
+      "Bash(node server.js)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Avis\\\\Documents\\\\GitHub\\\\FYP-26-S2-11\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(node -e \"const r = require\\('./src/routes/inventory.routes'\\); console.log\\('routes OK:', Object.keys\\(r\\)\\)\")",
+      "Bash(node -e \"const c = require\\('./src/controllers/inventory.controller'\\); console.log\\('controller OK:', Object.keys\\(c\\)\\)\")"
     ]
   }
 }
