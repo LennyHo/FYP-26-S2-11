@@ -79,6 +79,7 @@ function publicUser(user) {
     role: user.role,
     status: user.status,
     profilePic: user.profilePic || "",
+    address: user.address || "",
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -111,6 +112,7 @@ const userSchema = new mongoose.Schema(
       default: "active",
     },
     profilePic: { type: String, default: "" },
+    address: { type: String, default: "" },
     passwordHash: { type: String, required: true },
     passwordSalt: { type: String },
   },

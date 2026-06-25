@@ -18,6 +18,7 @@ export type DripTeaUser = {
   role: string;
   status: string;
   profilePic?: string;
+  address?: string;
   createdAt?: string;
   updatedAt?: string;
 };

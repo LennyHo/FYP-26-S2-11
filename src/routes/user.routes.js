@@ -57,6 +57,7 @@ function publicUser(user) {
     role: user.role,
     status: user.status,
     profilePic: user.profilePic || "",
+    address: user.address || "",
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -185,6 +186,10 @@ router.patch("/users/:id", async (req, res) => {
 
     if (req.body.profilePic !== undefined) {
       update.profilePic = String(req.body.profilePic || "");
+    }
+
+    if (req.body.address !== undefined) {
+      update.address = String(req.body.address || "");
     }
 
     if (Object.keys(update).length === 0) {

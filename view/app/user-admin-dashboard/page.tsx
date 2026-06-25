@@ -54,6 +54,7 @@ type UserFormState = {
   password: string;
   role: string;
   status: string;
+  address: string;
 };
 
 const roleOptions = [
@@ -97,6 +98,7 @@ function emptyForm(): UserFormState {
     password: '',
     role: 'customer',
     status: 'active',
+    address: '',
   };
 }
 
@@ -107,6 +109,7 @@ function formFromUser(user: DripTeaUser): UserFormState {
     password: '',
     role: user.role,
     status: user.status,
+    address: user.address ?? '',
   };
 }
 
@@ -208,6 +211,7 @@ export default function UserAdminDashboardPage() {
           email: formData.email,
           role: formData.role,
           status: formData.status,
+          address: formData.address,
         });
         setUsers(current => current.map(user => (user.id === response.data.id ? response.data : user)));
         setMessage('User updated.');
@@ -494,6 +498,7 @@ export default function UserAdminDashboardPage() {
                 <div><dt>Email</dt><dd>{viewingUser.email}</dd></div>
                 <div><dt>User Type</dt><dd>{roleLabel(viewingUser.role)}</dd></div>
                 <div><dt>Status</dt><dd>{statusLabel(viewingUser.status)}</dd></div>
+                <div><dt>Address</dt><dd>{viewingUser.address || '—'}</dd></div>
                 <div><dt>Created</dt><dd>{formatDate(viewingUser.createdAt)}</dd></div>
                 <div><dt>Last Updated</dt><dd>{formatDate(viewingUser.updatedAt)}</dd></div>
               </dl>
@@ -620,6 +625,14 @@ export default function UserAdminDashboardPage() {
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                </label>
+                <label>
+                  Address
+                  <input
+                    value={formData.address}
+                    onChange={(event) => updateFormField('address', event.target.value)}
+                    placeholder="Delivery address (optional)"
+                  />
                 </label>
               </div>
 
