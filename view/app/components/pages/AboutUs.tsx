@@ -10,7 +10,7 @@ const stats = [
     text: 'Crafted options across milk tea, matcha, blended, and local favorites.',
   },
   {
-    target: 8,
+    target: 2,
     label: 'outlets',
     text: 'Serving tea lovers through a growing network of neighborhood stores.',
   },
@@ -123,11 +123,14 @@ export default function AboutUs() {
 
           return (
           <article key={item.target} className={styles.statCard}>
-            <h3
-              className={`${styles.cups} ${directionClass} ${delayClass} ${animateNumbers ? styles.numberVisible : ''}`}
-            >
-              {displayValues[index]} {item.label}
-            </h3>
+            <div className={styles.statTop}>
+              <h3
+                className={`${styles.cups} ${directionClass} ${delayClass} ${animateNumbers ? styles.numberVisible : ''}`}
+              >
+                {displayValues[index]}
+              </h3>
+              <p className={styles.statLabel}>{item.label}</p>
+            </div>
             <span className={styles.statDivider} aria-hidden="true" />
             <p className={styles.cardText}>{item.text}</p>
           </article>

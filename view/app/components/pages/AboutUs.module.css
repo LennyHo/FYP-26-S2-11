@@ -16,44 +16,79 @@
   margin-top: 16px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 28px 24px;
+  gap: 24px;
 }
 
 .statCard {
-  min-height: 240px;
+  min-height: 220px;
   border-radius: 24px;
-  border: 1px solid rgba(200, 175, 148, 0.48);
-  background: rgba(255, 250, 245, 0.72);
-  padding: 28px 32px;
+  border: 1px solid rgba(155, 109, 74, 0.16);
+  background: linear-gradient(145deg, #ffffff 0%, rgba(250, 243, 234, 0.55) 100%);
+  padding: 32px 36px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 4px 18px rgba(59, 39, 26, 0.05);
+  gap: 14px;
+  box-shadow:
+    0 2px 20px rgba(59, 39, 26, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  position: relative;
+  overflow: hidden;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.statCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #9b6d4a 0%, #c8956a 60%, rgba(155, 109, 74, 0.1) 100%);
+  border-radius: 24px 24px 0 0;
 }
 
 .statCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(59, 39, 26, 0.1);
+  box-shadow:
+    0 16px 40px rgba(59, 39, 26, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.statTop {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .cups {
   margin: 0;
-  color: #050d1f;
-  font-size: clamp(1.8rem, 2.2vw, 2.3rem);
-  line-height: 1.08;
+  font-size: clamp(2.6rem, 4vw, 3.8rem);
+  line-height: 1;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #050d1f 0%, #3d2010 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   will-change: transform, opacity;
+}
+
+.statLabel {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9b6d4a;
 }
 
 .statDivider {
   display: block;
-  width: 36px;
-  height: 3px;
+  width: 40px;
+  height: 2px;
   border-radius: 99px;
-  background: linear-gradient(90deg, #9b6d4a, rgba(155, 109, 74, 0.3));
+  background: linear-gradient(90deg, #9b6d4a, rgba(155, 109, 74, 0.2));
   flex-shrink: 0;
 }
 
@@ -149,8 +184,8 @@
 
   .statCard {
     min-height: unset;
-    gap: 14px;
-    padding: 24px;
+    gap: 12px;
+    padding: 28px 28px;
   }
 
   .leftNumber.numberVisible,

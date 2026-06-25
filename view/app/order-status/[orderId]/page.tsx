@@ -160,7 +160,7 @@ export default function OrderStatusPage() {
         new CustomEvent("chatbotSystemMessage", {
           detail: {
             text:
-              "Thanks for collecting your order! What did you think of our drinks? Your feedback helps us improve.",
+              "We hope you enjoyed your order. We'd love to hear your thoughts — your feedback helps us deliver a better experience every time.",
             feedbackOrderId: orderId,
             feedbackItems: (order?.items || []).map((item) => ({
               name: item.name,
