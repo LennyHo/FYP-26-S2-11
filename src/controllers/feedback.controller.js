@@ -72,18 +72,18 @@ async function getAverageRating(req, res) {
 }
 
 async function getOrderFeedbacks(req, res) {
-  try {
+    try {
     const ids = String(req.query.ids || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
     const grouped = await Feedback.getByOrderIds(ids);
     res.json({ ok: true, data: grouped });
-  } catch (error) {
+    } catch (error) {
     console.error("[FeedbackController] getOrderFeedbacks error:", error.message);
     res.status(500).json({ ok: false, message: "Failed to load order feedbacks." });
-  }
+    }
 }
 
 module.exports = {
