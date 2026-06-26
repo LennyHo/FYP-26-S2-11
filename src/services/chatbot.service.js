@@ -1,4 +1,4 @@
-// User Story Architecture Trace — chatbot.service.js
+﻿// User Story Architecture Trace — chatbot.service.js
 //
 // #25  Chat with AI Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: chatbotSession.model.js
@@ -1549,7 +1549,18 @@ function parseQuantityFromMessage(message) {
 
 // #199 - Detects messages that order multiple distinct drinks in one request.
 // Matches: "and another X", "and have another X", "plus another X", "and also X",
-//          "and one/two/[n] X" (quantity-style), "both X and Y" shared-customization orders.
+//          "and one/two/[n] X" (quantity-style), "both X and Y" shared-customization orders,
+//          "and a/an [size] X" or "and a/an [drink-keyword] X" natural phrasing.
+const MULTI_ORDER_DRINK_KEYWORDS = [
+    'regular', 'large', 'small',
+    'matcha', 'jasmine', 'oolong', 'osmanthus', 'classic', 'strawberry', 'cranberry',
+    'milk\\s+tea', 'latte', 'lemon', 'mango', 'peach', 'lychee',
+    'grapefruit', 'watermelon', 'ice\\s+blended', 'da\\s+hong\\s+bao',
+];
+const MULTI_ORDER_AND_A_RE = new RegExp(
+    `\\band\\s+an?\\s+(?:${MULTI_ORDER_DRINK_KEYWORDS.join('|')})\\b`, 'i'
+);
+
 function isMultiItemOrder(message) {
     const msg = String(message || "").toLowerCase();
     return (
@@ -1557,16 +1568,26 @@ function isMultiItemOrder(message) {
         /\bplus\s+(?:a\s+|an\s+|another\s+|one\s+more\s+)\w/i.test(msg) ||
         /\band\s+also\s+(?:(?:a|an|one)\s+)?\w/i.test(msg) ||
         // "and one/two/three/[n] [drink]" — excludes "and one more" / "and one of"
-        /\band\s+(?:one|two|three|four|five|\d+)\s+(?!more\b|of\b)\w/i.test(msg)
+        /\band\s+(?:one|two|three|four|five|\d+)\s+(?!more\b|of\b)\w/i.test(msg) ||
+        // "and a/an [size or drink keyword]" — e.g. "and a regular classic milk tea"
+        MULTI_ORDER_AND_A_RE.test(msg)
     );
 }
 
 // #199 - Splits a multi-item order message into individual item segments.
 // e.g. "one jasmine matcha tea and one matcha latte, both regular, less ice"
 //   → ["one jasmine matcha tea", "matcha latte, both regular, less ice"]
+// The split consumes the connector phrase; a lookahead is used for "and a/an [size/drink]"
+// so the size/drink keyword is preserved in the second segment for customization parsing.
+const MULTI_ORDER_AND_A_SPLIT_RE = new RegExp(
+    `\\s+and\\s+an?\\s+(?=(?:${MULTI_ORDER_DRINK_KEYWORDS.join('|')})\\b)`, 'gi'
+);
+
 function splitMultiItemOrder(message) {
-    const parts = message.split(
-        /\s+(?:and\s+(?:have\s+)?another|plus\s+(?:a|an|another|one\s+more)|and\s+also\s+(?:a|an|one)?|and\s+(?:one|two|three|four|five|\d+)(?=\s+(?!more\b|of\b)))\s+/gi
+    // Replace "and a/an [size/drink]" connectors with a placeholder first, then split on all connectors.
+    const normalized = message.replace(MULTI_ORDER_AND_A_SPLIT_RE, ' __SPLIT__ ');
+    const parts = normalized.split(
+        /\s*__SPLIT__\s*|\s+(?:and\s+(?:have\s+)?another|plus\s+(?:a|an|another|one\s+more)|and\s+also\s+(?:a|an|one)?|and\s+(?:one|two|three|four|five|\d+)(?=\s+(?!more\b|of\b)))\s+/gi
     );
     return parts.map(p => p.trim()).filter(Boolean);
 }
@@ -1579,6 +1600,119 @@ function extractBothCustomization(message) {
     if (bothIdx === -1) return null;
     return parseCustomizationFromMessage(message.substring(bothIdx + 5));
 }
+
+// Multilingual short reply strings for hardcoded (non-Gemini) response paths.
+// Gemini-based paths are already localised via the language instruction in the system prompt.
+const REPLY_STRINGS = {
+    loginForCart: {
+        en: "You'll need to log in to see your cart. Go ahead and log in and I'll show you what's in there!",
+        zh: "请先登录以查看您的购物车！",
+        ms: "Sila log masuk untuk melihat troli anda!",
+        ta: "உங்கள் கார்ட்டைப் பார்க்க முதலில் உள்நுழையுங்கள்!",
+    },
+    emptyCart: {
+        en: "Your cart is empty.",
+        zh: "您的购物车是空的。",
+        ms: "Troli anda kosong.",
+        ta: "உங்கள் கார்ட் காலியாக உள்ளது.",
+    },
+    viewCart: {
+        en: "Here's your current cart:",
+        zh: "以下是您目前的购物车：",
+        ms: "Ini adalah troli semasa anda:",
+        ta: "இது உங்கள் தற்போதைய கார்ட்:",
+    },
+    cartCleared: {
+        en: "Your cart has been cleared.",
+        zh: "您的购物车已清空。",
+        ms: "Troli anda telah dikosongkan.",
+        ta: "உங்கள் கார்ட் அழிக்கப்பட்டது.",
+    },
+    cartUpdated: {
+        en: "Done! Your cart has been updated.",
+        zh: "完成！您的购物车已更新。",
+        ms: "Selesai! Troli anda telah dikemaskini.",
+        ta: "முடிந்தது! உங்கள் கார்ட் புதுப்பிக்கப்பட்டது.",
+    },
+    purchaseRecentTitle: {
+        en: "Your Most Recent Order",
+        zh: "您最近的订单",
+        ms: "Pesanan Terbaru Anda",
+        ta: "உங்கள் சமீபத்திய ஆர்டர்",
+    },
+    purchaseRecent: {
+        en: "Here's your most recent order.",
+        zh: "以下是您最近的订单。",
+        ms: "Ini adalah pesanan terbaru anda.",
+        ta: "இது உங்கள் சமீபத்திய ஆர்டர்.",
+    },
+    loginForHistory: {
+        en: "You'll need to be logged in to see your purchase history. Log in and I'll pull it up for you!",
+        zh: "请先登录以查看购买记录！",
+        ms: "Sila log masuk untuk melihat sejarah pembelian anda!",
+        ta: "கொள்முதல் வரலாற்றைப் பார்க்க உள்நுழையுங்கள்!",
+    },
+    noHistory: {
+        en: "Looks like you haven't placed an order with us yet — but there's always a first time! 😊",
+        zh: "您还没有下过订单，期待您的光临！",
+        ms: "Nampaknya anda belum membuat pesanan — datanglah mencuba!",
+        ta: "நீங்கள் இன்னும் ஆர்டர் செய்யவில்லை — வாருங்கள் முயற்சிக்கலாம்!",
+    },
+    loginForFeedback: {
+        en: "Please log in first before leaving feedback.",
+        zh: "请先登录后再提交反馈。",
+        ms: "Sila log masuk dahulu sebelum meninggalkan maklum balas.",
+        ta: "கருத்து தெரிவிக்க முதலில் உள்நுழையுங்கள்.",
+    },
+    collectFirst: {
+        en: "Please collect your order first. After collection, you can leave feedback for your drinks.",
+        zh: "请先取餐，取餐后即可为您的饮品留下评价。",
+        ms: "Sila ambil pesanan anda dahulu sebelum meninggalkan maklum balas.",
+        ta: "முதலில் ஆர்டரை வாங்குங்கள். பின்னர் கருத்து தெரிவிக்கலாம்.",
+    },
+    feedbackAlready: {
+        en: "Thanks! You have already submitted feedback for your latest collected order.",
+        zh: "谢谢！您已经为最近的订单提交了反馈。",
+        ms: "Terima kasih! Anda telah menghantar maklum balas untuk pesanan terbaru.",
+        ta: "நன்றி! ஏற்கனவே கருத்து சமர்ப்பிக்கப்பட்டது.",
+    },
+    feedbackPrompt: {
+        en: "We'd love to hear what you thought about our drinks. Your feedback helps us improve and serve you better.",
+        zh: "我们很想听听您对饮品的评价，您的反馈将帮助我们持续改进。",
+        ms: "Kami ingin mendengar pendapat anda tentang minuman kami. Maklum balas anda amat dihargai.",
+        ta: "உங்கள் பானங்களைப் பற்றிய கருத்தை தெரிந்துகொள்ள விரும்புகிறோம். உங்கள் கருத்து மிகவும் பயனுள்ளது.",
+    },
+    loginForCart2: {
+        en: "You'll need to log in before I can add that to your cart — shouldn't take a second!",
+        zh: "请先登录后，我才能将商品加入您的购物车！",
+        ms: "Sila log masuk sebelum saya dapat menambah ke troli anda!",
+        ta: "கார்ட்டில் சேர்க்க முதலில் உள்நுழையுங்கள்!",
+    },
+    loginForCartMulti: {
+        en: "You'll need to log in before I can add items to your cart!",
+        zh: "请先登录后，我才能将商品加入您的购物车！",
+        ms: "Sila log masuk sebelum saya boleh menambah item ke troli anda!",
+        ta: "கார்ட்டில் சேர்க்க முதலில் உள்நுழையுங்கள்!",
+    },
+    loginForCartEdit: {
+        en: "Please log in first before editing your cart.",
+        zh: "请先登录后再编辑购物车。",
+        ms: "Sila log masuk dahulu sebelum mengedit troli anda.",
+        ta: "கார்ட்டை திருத்த முதலில் உள்நுழையுங்கள்.",
+    },
+    loginForCartClear: {
+        en: "You'll need to log in to manage your cart!",
+        zh: "请先登录以管理您的购物车！",
+        ms: "Sila log masuk untuk mengurus troli anda!",
+        ta: "கார்ட்டை நிர்வகிக்க உள்நுழையுங்கள்!",
+    },
+    loginForReorder: {
+        en: "You'll need to log in before I can reorder your previous items.",
+        zh: "请先登录后，我才能重新订购您之前的商品。",
+        ms: "Sila log masuk sebelum saya boleh membuat semula pesanan anda.",
+        ta: "முந்தைய ஆர்டரை மீண்டும் செய்ய உள்நுழையுங்கள்.",
+    },
+};
 
 // Main chatbot message handler
 async function handleChatMessage({ message, conversationId, userId, isQuickPrompt = false }) {
@@ -1595,6 +1729,18 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     const history = await ChatbotSession.getConversationHistory(activeConversationId);
     const recentHistory = history.slice(-6);
 
+    // Detect language and translate to English for intent matching.
+    // All keyword-matching functions only understand English, so non-English messages are
+    // translated internally before intent detection. The original safeMessage is kept for
+    // Gemini (which replies in the user's language via the system prompt instruction).
+    const detectedLang = detectMessageLanguage(safeMessage);
+    const intentMessage = detectedLang !== 'en'
+        ? await aiClient.translateToEnglish(safeMessage).catch(() => safeMessage)
+        : safeMessage;
+
+    // Shorthand for localised short replies on non-Gemini paths.
+    const t = (key) => REPLY_STRINGS[key]?.[detectedLang] ?? REPLY_STRINGS[key]?.en ?? key;
+
     // Quick prompt button clicks bypass all hardcoded routes and go directly to Gemini.
     // The relevant drinks are still fetched from the DB and injected as context so Gemini
     // can write a natural response, while the frontend still receives the cards to render.
@@ -1603,8 +1749,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     }
 
     // User Story #31: Ask About Nutri-Grade via chatbot
-    if (isNutriGradeQuestion(safeMessage)) {
-        const drink = await findDrinkByName(safeMessage);
+    if (isNutriGradeQuestion(intentMessage)) {
+        const drink = await findDrinkByName(intentMessage);
         const orderDetails = parseOrderDetails(safeMessage);
 
         if (!drink) {
@@ -1657,8 +1803,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // End of User Story #31
 
     // Health ranking query: "which beverage has lower sugar?", "healthiest drink", etc.
-    if (isHealthRankingQuery(safeMessage)) {
-        const msg = safeMessage.toLowerCase();
+    if (isHealthRankingQuery(intentMessage)) {
+        const msg = intentMessage.toLowerCase();
         const wantHigh =
             msg.includes("high sugar") || msg.includes("higher sugar") || msg.includes("most sugar") || msg.includes("highest sugar") ||
             msg.includes("high calorie") || msg.includes("higher calorie") || msg.includes("most calorie") || msg.includes("highest calorie");
@@ -1702,8 +1848,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     }
 
     // User Story #32: Recommend beverages based on user message
-    if (isRecommendationRequest(safeMessage)) {
-        let drinks = await MenuItem.recommendByMessage(safeMessage);
+    if (isRecommendationRequest(intentMessage)) {
+        let drinks = await MenuItem.recommendByMessage(intentMessage);
 
         // For non-English queries (Chinese/Malay), recommendByMessage won't match English menu names.
         // Map common foreign-language flavor words to English keywords and retry.
@@ -1859,7 +2005,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     }
 
     // User Story #203: Track current order status via chatbot
-    if (isTrackOrderRequest(safeMessage)) {
+    if (isTrackOrderRequest(intentMessage)) {
         if (!userId) {
             return {
                 reply: "Please log in to track your order status.",
@@ -1900,10 +2046,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // End of User Story #203
 
     // User Story #198: View Purchase History
-    if (isReorderPurchaseHistoryRequest(safeMessage)) {
+    if (isReorderPurchaseHistoryRequest(intentMessage)) {
         if (!userId) {
             return {
-                reply: "You'll need to log in before I can reorder your previous items.",
+                reply: t('loginForReorder'),
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -1917,7 +2063,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             };
         }
 
-        const dateQuery = extractDateFromMessage(safeMessage);
+        const dateQuery = extractDateFromMessage(intentMessage);
         const matchedOrders = findOrdersByDateQuery(allOrders, dateQuery);
 
         if (!matchedOrders.length) {
@@ -2007,10 +2153,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         };
     }
 
-    if (isPurchaseHistory(safeMessage)) {
+    if (isPurchaseHistory(intentMessage)) {
         if (!userId) {
             return {
-                reply: "You'll need to be logged in to see your purchase history. Log in and I'll pull it up for you!",
+                reply: t('loginForHistory'),
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -2019,13 +2165,13 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         if (!allOrders.length) {
             return {
-                reply: "Looks like you haven't placed an order with us yet — but there's always a first time! 😊",
+                reply: t('noHistory'),
                 system_action: { ui_navigation: "none" },
             };
         }
 
         // Check if the customer is asking about a specific date
-        const dateQuery = extractDateFromMessage(safeMessage);
+        const dateQuery = extractDateFromMessage(intentMessage);
         let reply = "";
         let matchedOrders = [];
         let title = "";
@@ -2100,8 +2246,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         } else {
             // No date — return most recent order
             matchedOrders = [allOrders[0]];
-            title = "Your Most Recent Order";
-            reply = "Here's your most recent order.";
+            title = t('purchaseRecentTitle');
+            reply = t('purchaseRecent');
         }
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
@@ -2131,13 +2277,13 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
     // User Story #199: Multi-item add-to-cart
     // "I want X with less ice and have another Y with regular sugar"
-    if (isMultiItemOrder(safeMessage) && isAddToCartRequest(safeMessage)) {
-        const segments = splitMultiItemOrder(safeMessage);
+    if (isMultiItemOrder(intentMessage) && isAddToCartRequest(intentMessage)) {
+        const segments = splitMultiItemOrder(intentMessage);
 
         if (segments.length >= 2) {
             if (!userId) {
                 return {
-                    reply: "You'll need to log in before I can add items to your cart!",
+                    reply: t('loginForCartMulti'),
                     system_action: { ui_navigation: "none" },
                 };
             }
@@ -2146,7 +2292,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             let lastBeverageId = null;
             // Shared customization from "both regular, less ice, ..." applies to all segments
             // that don't carry their own customization keywords.
-            const bothCustomization = extractBothCustomization(safeMessage);
+            const bothCustomization = extractBothCustomization(intentMessage);
 
             for (const segment of segments) {
                 let beverageId = await resolveBeverageId(segment);
@@ -2225,10 +2371,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // End of multi-item #199
 
     // User Story #199: Add to Cart Intent
-    if (isAddToCartRequest(safeMessage)) {
+    if (isAddToCartRequest(intentMessage)) {
         if (!userId) {
             return {
-                reply: "You'll need to log in before I can add that to your cart — shouldn't take a second!",
+                reply: t('loginForCart2'),
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -2236,11 +2382,11 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         // #199 - If the customer did not specify any customisation (size / ice / sugar / toppings),
         // fall through to the Gemini ordering flow so it asks step-by-step before adding to cart.
         // Without this guard, "help me to add one jasmine" would silently add with all defaults.
-        if (!hasCustomizationWords(safeMessage)) {
+        if (!hasCustomizationWords(intentMessage)) {
             // falls through to the Gemini handler below
         } else {
 
-        let beverageId = await resolveBeverageId(safeMessage);
+        let beverageId = await resolveBeverageId(intentMessage);
 
         if (!beverageId) {
             const lastDrinkName = resolveLastDrinkFromHistory(history);
@@ -2257,8 +2403,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             };
         }
 
-        const customization = parseCustomizationFromMessage(safeMessage);
-        const quantity = parseQuantityFromMessage(safeMessage);
+        const customization = parseCustomizationFromMessage(intentMessage);
+        const quantity = parseQuantityFromMessage(intentMessage);
 
         const cartItem = await CartItem.addToCart(userId, beverageId, { quantity, customization });
 
@@ -2311,10 +2457,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // End of #199
 
     // User Story #200: View Cart Intent
-    if (isViewCartRequest(safeMessage)) {
+    if (isViewCartRequest(intentMessage)) {
         if (!userId) {
             return {
-                reply: "You'll need to log in to see your cart. Go ahead and log in and I'll show you what's in there!",
+                reply: t('loginForCart'),
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -2322,31 +2468,33 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         const { cartItems, cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
 
         if (!cartItems.length) {
+            const emptyMsg = t('emptyCart');
             return {
-                reply: "Your cart is empty.",
-                cartUpdate: buildCartUpdatePayload([], "Your cart is empty."),
+                reply: emptyMsg,
+                cartUpdate: buildCartUpdatePayload([], emptyMsg),
                 system_action: { ui_navigation: "none" },
             };
         }
 
+        const viewCartMsg = t('viewCart');
         return {
-            reply: "Here's your current cart:",
-            cartUpdate: buildCartUpdatePayload(cartItems, "Here's your current cart:"),
+            reply: viewCartMsg,
+            cartUpdate: buildCartUpdatePayload(cartItems, viewCartMsg),
             system_action: { ui_navigation: "none" },
         };
     }
 
     // User Story #201: Clear entire cart through chatbot
-    if (isClearCartRequest(safeMessage)) {
+    if (isClearCartRequest(intentMessage)) {
         if (!userId) {
             return {
-                reply: "You'll need to log in to manage your cart!",
+                reply: t('loginForCartClear'),
                 system_action: { ui_navigation: "none" },
             };
         }
         const allItems = await CartItem.getCart(userId);
         await Promise.all(allItems.map(item => CartItem.removeFromCart(item._id)));
-        const reply = "Your cart has been cleared.";
+        const reply = t('cartCleared');
         await ChatbotSession.appendToConversation(activeConversationId, userId, {
             role: "user",
             content: safeMessage,
@@ -2367,23 +2515,23 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // (3) last item from conversation history. For increase/decrease, drink name takes
     // priority over history so "add one more strawberry" doesn't accidentally increment
     // a different item that was last discussed.
-    if (isCartUpdateRequest(safeMessage)) {
+    if (isCartUpdateRequest(intentMessage)) {
         if (!userId) {
             return {
-                reply: "Please log in first before editing your cart.",
+                reply: t('loginForCartEdit'),
                 system_action: { ui_navigation: "none" },
             };
         }
 
-        const intent = getCartUpdateIntent(safeMessage);
+        const intent = getCartUpdateIntent(intentMessage);
 
         // Disambiguation follow-up: "the first one" / "the first strawberry" / "the second strawberry matcha tea"
         // after the bot asked "Could you be more specific?" — the reply carries no action, so we
         // restore action + drink name from the PREVIOUS user message in conversation history.
         // Guard: only fire when no explicit edit verb is present (i.e. "change the first matcha to 50%"
         // should NOT be treated as a disambiguation reply).
-        const ordinalForDisambig = extractOrdinalIndex(safeMessage);
-        const hasExplicitEditVerb = /\b(remove|delete|increase|decrease|add one more|add another|plus one|minus one|change|switch|update|edit|modify)\b/i.test(safeMessage);
+        const ordinalForDisambig = extractOrdinalIndex(intentMessage);
+        const hasExplicitEditVerb = /\b(remove|delete|increase|decrease|add one more|add another|plus one|minus one|change|switch|update|edit|modify)\b/i.test(intentMessage);
         if (intent.action === "updateCustomization" && !hasExplicitEditVerb && ordinalForDisambig >= 0) {
             const lastUserMsg = [...history].reverse().find(m => m.role === "user");
             if (lastUserMsg) {
@@ -2426,7 +2574,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         }
 
         if (!targetItem) {
-            const ordinalIndex = extractOrdinalIndex(safeMessage);
+            const ordinalIndex = extractOrdinalIndex(intentMessage);
 
             if (ordinalIndex >= 0) {
                 // Determine whether the user is referencing the full-cart position ("the third drink" /
@@ -2434,11 +2582,11 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 // / "the first one"). Generic words like "drink"/"item"/"order" without a specific drink name
                 // imply the user is counting across the whole cart; pronoun "one" or a specific drink name
                 // imply counting within the same-name group.
-                const drinkNameInMsg = resolveDrinkNameFromMessage(safeMessage);
+                const drinkNameInMsg = resolveDrinkNameFromMessage(intentMessage);
                 const isFullCartRef =
                     !drinkNameInMsg &&
-                    /\b(drink|item|order)\b/i.test(safeMessage) &&
-                    !/\bone\b/i.test(safeMessage);
+                    /\b(drink|item|order)\b/i.test(intentMessage) &&
+                    !/\bone\b/i.test(intentMessage);
 
                 if (intent.targetName && !isFullCartRef) {
                     // "the second strawberry matcha" / "the first one" → ordinal within same-name items
@@ -2505,7 +2653,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
             cartItems = await CartItem.getCart(userId);
 
-            const reply = "Done! Your cart has been updated.";
+            const reply = t('cartUpdated');
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -2536,7 +2684,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
             cartItems = await CartItem.getCart(userId);
 
-            const reply = "Done! Your cart has been updated.";
+            const reply = t('cartUpdated');
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -2550,7 +2698,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
             return {
                 reply,
-                cartUpdate: buildCartUpdatePayload(cartItems, "Done! Your cart has been updated."),
+                cartUpdate: buildCartUpdatePayload(cartItems, reply),
                 system_action: { ui_navigation: "none" },
             };
         } else if (Object.keys(intent.newCustomization).length === 0 && intent.action === "updateCustomization") {
@@ -2576,7 +2724,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
             // If user targets a specific unit ("second drink", "one of them") and qty > 1,
             // split the item so only one unit gets the new customization.
-            const hasOrdinal = /\b(one of|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\b/i.test(safeMessage);
+            const hasOrdinal = /\b(one of|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|1st|2nd|3rd|4th|5th|6th|7th|8th|9th|10th)\b/i.test(intentMessage);
 
             console.log('[chatbot split debug]', {
                 safeMessage,
@@ -2613,7 +2761,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
             cartItems = await CartItem.getCart(userId);
 
-            const reply = `Done! Your cart has been updated.<div class="hidden-last-cart-item" style="display:none;">${targetItem._id}</div>`;
+            const reply = `${t('cartUpdated')}<div class="hidden-last-cart-item" style="display:none;">${targetItem._id}</div>`;
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "user",
@@ -2635,10 +2783,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // End of User Story #201
 
     // Feedback
-    if (isFeedbackRequest(safeMessage)) {
+    if (isFeedbackRequest(intentMessage)) {
         if (!userId) {
             return {
-                reply: "Please log in first before leaving feedback.",
+                reply: t('loginForFeedback'),
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -2651,7 +2799,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         if (!latestCompletedOrder) {
             return {
-                reply: "Please collect your order first. After collection, you can leave feedback for your drinks.",
+                reply: t('collectFirst'),
                 system_action: { ui_navigation: "none" },
             };
         }
@@ -2663,14 +2811,13 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         if (existingFeedback) {
             return {
-                reply: "Thanks! You have already submitted feedback for your latest collected order.",
+                reply: t('feedbackAlready'),
                 system_action: { ui_navigation: "none" },
             };
         }
 
         return {
-        reply:
-            "We’d love to hear what you thought about our drinks. Your feedback helps us improve and serve you better.",
+        reply: t('feedbackPrompt'),
         feedbackOrderId: latestCompletedOrder._id.toString(),
         system_action: { ui_navigation: "none" },
         };
@@ -2679,13 +2826,15 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
     // If the message is just a drink name (no other intent detected), treat it as an order.
     // Re-frame the message for Gemini so it starts Phase 2 immediately instead of guessing intent.
-    const drinkNameMatch = await findDrinkByName(safeMessage);
-    const msgNormalized = safeMessage.toLowerCase().trim();
+    // Use intentMessage (English) to match English drink names in the DB; keep safeMessage as
+    // the Gemini input so Gemini can detect the user's language and reply accordingly.
+    const drinkNameMatch = await findDrinkByName(intentMessage);
+    const msgNormalized = intentMessage.toLowerCase().trim();
     const isDrinkNameOnly =
         drinkNameMatch &&
         msgNormalized === String(drinkNameMatch.name || "").toLowerCase().trim();
 
-    const effectiveMessage = isDrinkNameOnly
+    const effectiveMessage = (isDrinkNameOnly && detectedLang === 'en')
         ? `I want to order a ${drinkNameMatch.name}`
         : safeMessage;
 
@@ -2697,15 +2846,17 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     let nutritionBlock = "";
     let healthCardData = null;
 
-    // Suppress health card when user has responded to the sugar warning (either kept or changed it)
-    const isRemainAtSugar = /^remain at \d+%\s*sugar$/i.test(safeMessage.trim());
-    const isChangingSugar = /^change to \d+%\s*sugar$/i.test(safeMessage.trim());
+    // Suppress health card when user has responded to the sugar warning (either kept or changed it).
+    // Use intentMessage so Chinese/Malay button clicks ("保持50%甜度", "Tukar kepada 25% Gula") are
+    // translated to English before the regex test.
+    const isRemainAtSugar = /^remain at \d+%\s*sugar$/i.test(intentMessage.trim());
+    const isChangingSugar = /^change to \d+%\s*sugar$/i.test(intentMessage.trim());
     const suppressHealthCard = isRemainAtSugar || isChangingSugar;
 
     if (orderDetails.sugar) {
         // Current message takes priority — e.g. "add matcha latte with 50% sugar" should show Matcha Latte,
         // not the last drink from history (Taro Slush etc.)
-        let drink = await findDrinkByName(safeMessage);
+        let drink = await findDrinkByName(intentMessage);
         if (!drink) {
             const lastDrinkName = resolveLastDrinkFromHistory(history);
             if (lastDrinkName) {
@@ -2935,13 +3086,13 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // When the user asks for information about drinks (not just ordering or browsing),
     // detect which drinks the AI mentions and surface them as recommendation cards.
     let drinkCardsForInfo = [];
-    if (addedItems.length === 0 && isInfoRequest(safeMessage)) {
+    if (addedItems.length === 0 && isInfoRequest(intentMessage)) {
         try {
             const replyLower = reply.toLowerCase();
             // Cross-reference: a drink must BOTH appear in Gemini's reply AND match the
             // user's own query keywords. This prevents drinks casually mentioned in history
             // (or referenced in passing) from inflating the card list on each follow-up.
-            const queryMatches = await MenuItem.recommendByMessage(safeMessage);
+            const queryMatches = await MenuItem.recommendByMessage(intentMessage);
             const queryIds = new Set(queryMatches.map(d => d.itemId));
             const mentionedDrinks = queryMatches.filter(drink =>
                 replyLower.includes(drink.name.toLowerCase()) && queryIds.has(drink.itemId)
