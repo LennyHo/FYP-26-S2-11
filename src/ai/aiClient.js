@@ -113,6 +113,19 @@ async function callGroqText(userMessage, history, systemPrompt) {
   return response.data.choices[0].message.content;
 }
 
+async function translateToEnglish(text) {
+  try {
+    const result = await callGeminiTextWithRotation(
+      text,
+      [],
+      "Translate the user message to English. Output ONLY the English translation, nothing else. If it is already in English, output it unchanged."
+    );
+    return result.trim() || text;
+  } catch {
+    return text;
+  }
+}
+
 async function generateImageAnalysis(base64, mimeType, textPrompt, systemPrompt = "") {
   const geminiKeys = getGeminiKeys();
   if (geminiKeys.length === 0) throw new Error("No Gemini keys available.");
@@ -145,4 +158,5 @@ async function generateImageAnalysis(base64, mimeType, textPrompt, systemPrompt 
 module.exports = {
   generateText,
   generateImageAnalysis,
+  translateToEnglish,
 };
