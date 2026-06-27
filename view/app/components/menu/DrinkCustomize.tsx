@@ -177,6 +177,16 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
     }
   }, [drinkId, isEditMode]);
 
+  useEffect(() => {
+    if (isEditMode) return;
+
+    const orderType = window.localStorage.getItem("driptea_order_type");
+
+    if (orderType !== "pickup" && orderType !== "delivery") {
+      router.replace("/order-type");
+    }
+  }, [isEditMode, router]);
+
   if (loading) {
     return (
       <div className={styles.page}>

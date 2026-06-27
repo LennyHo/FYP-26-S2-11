@@ -15,6 +15,7 @@ import Header from '../layout/Header';
 import styles from './BuyDriptea.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { getMenuItems } from '../../utils/customerApi';
 
 const categories = [
@@ -46,11 +47,20 @@ type MenuSearchItem = {
 };
 
 export default function BuyDripTeaPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [allItems, setAllItems] = useState<MenuSearchItem[]>([]);
   const [searchError, setSearchError] = useState('');
   const [activeMood, setActiveMood] = useState<string | null>(null);
   const menuSectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const orderType = window.localStorage.getItem("driptea_order_type");
+
+    if (orderType !== "pickup" && orderType !== "delivery") {
+      router.replace("/order-type");
+    }
+  }, [router]);
 
   // Load all menu items once on mount for instant client-side search
   useEffect(() => {

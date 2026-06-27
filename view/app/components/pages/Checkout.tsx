@@ -25,6 +25,20 @@ type Confirmation = {
     details: string;
 };
 
+type DeliveryData = {
+    type: string;
+    outletName: string;
+    outletAddress: string;
+    outletLat: number;
+    outletLng: number;
+    customerLat: number;
+    customerLng: number;
+    customerAddress?: string;
+    distanceKm: number;
+    deliveryFee: number;
+    deliveryStatus: string;
+};
+
 function parseLocalCart(): CheckoutItem[] {
     if (typeof window === "undefined") return [];
 
@@ -32,77 +46,79 @@ function parseLocalCart(): CheckoutItem[] {
     if (!savedData) return [];
 
     return savedData
-    .split("\n")
-    .map((line) => {
-        const parsedCartLine = parseLocalCartLine(line);
+        .split("\n")
+        .map((line) => {
+            const parsedCartLine = parseLocalCartLine(line);
 
-        if (parsedCartLine) {
-        return {
-            name: parsedCartLine.name,
-            details: parsedCartLine.details,
-            price: parsedCartLine.price,
-            image: parsedCartLine.imageSrc,
-        };
-        }
+            if (parsedCartLine) {
+                return {
+                    name: parsedCartLine.name,
+                    details: parsedCartLine.details,
+                    price: parsedCartLine.price,
+                    image: parsedCartLine.imageSrc,
+                };
+            }
 
-        const parts = line.split("|");
-        if (parts.length < 3) return null;
+            const parts = line.split("|");
+            if (parts.length < 3) return null;
 
-        const price = Number(parts[2].replace(/[^0-9.]/g, ""));
-        if (Number.isNaN(price)) return null;
+            const price = Number(parts[2].replace(/[^0-9.]/g, ""));
+            if (Number.isNaN(price)) return null;
 
-        return {
-        name: parts[0].replace(/\s*\([^)]*\)\s*$/, "").trim(),
-        details: parts[1].trim(),
-        price,
-        };
-    })
-    .filter((item): item is CheckoutItem => Boolean(item));
+            return {
+                name: parts[0].replace(/\s*\([^)]*\)\s*$/, "").trim(),
+                details: parts[1].trim(),
+                price,
+            };
+        })
+        .filter((item): item is CheckoutItem => Boolean(item));
 }
 
 function fromBackendCart(items: DripTeaCartItem[]): CheckoutItem[] {
     return items.map((item) => {
-    const toppings = Array.isArray(item.customization?.toppings)
-        ? (item.customization.toppings as string[]).join(", ")
-        : "";
+        const toppings = Array.isArray(item.customization?.toppings)
+            ? (item.customization.toppings as string[]).join(", ")
+            : "";
 
-    const details = [
-        item.quantity ? `x${item.quantity}` : "",
-        typeof item.customization?.size === "string" ? item.customization.size : "",
-        typeof item.customization?.ice === "string" ? item.customization.ice : "",
-        typeof item.customization?.sugar === "string" ? item.customization.sugar : "",
-        toppings,
-    ]
-        .filter(Boolean)
-        .join(", ");
+        const details = [
+            item.quantity ? `x${item.quantity}` : "",
+            typeof item.customization?.size === "string" ? item.customization.size : "",
+            typeof item.customization?.ice === "string" ? item.customization.ice : "",
+            typeof item.customization?.sugar === "string" ? item.customization.sugar : "",
+            toppings,
+        ]
+            .filter(Boolean)
+            .join(", ");
 
-    const fields: Array<{ label: string; value: string }> = [];
-    if (item.quantity) fields.push({ label: "Quantity", value: String(item.quantity) });
-    if (typeof item.customization?.size === "string") fields.push({ label: "Size", value: item.customization.size });
-    if (typeof item.customization?.ice === "string") fields.push({ label: "Ice Level", value: item.customization.ice });
-    if (typeof item.customization?.sugar === "string") fields.push({ label: "Sugar", value: item.customization.sugar });
-    if (toppings) fields.push({ label: "Toppings", value: toppings });
+        const fields: Array<{ label: string; value: string }> = [];
+        if (item.quantity) fields.push({ label: "Quantity", value: String(item.quantity) });
+        if (typeof item.customization?.size === "string") fields.push({ label: "Size", value: item.customization.size });
+        if (typeof item.customization?.ice === "string") fields.push({ label: "Ice Level", value: item.customization.ice });
+        if (typeof item.customization?.sugar === "string") fields.push({ label: "Sugar", value: item.customization.sugar });
+        if (toppings) fields.push({ label: "Toppings", value: toppings });
 
-    return {
-        name: item.name,
-        details,
-        price: Number(item.lineTotal || 0),
-        image: item.image,
-        fields,
-    };
+        return {
+            name: item.name,
+            details,
+            price: Number(item.lineTotal || 0),
+            image: item.image,
+            fields,
+        };
     });
 }
 
-function buildOrderDetails(items: CheckoutItem[]) {
-    if (!items.length) return "No customization recorded";
+function buildOrderDetails(items: CheckoutItem[], delivery: DeliveryData | null) {
+    const itemDetails = items.length
+        ? items.map((item) => `${item.name}: ${item.details}`).join(" | ")
+        : "No customization recorded";
 
-    return items
-    .map((item) => `${item.name}: ${item.details}`)
-    .join(" | ");
+    if (!delivery) return itemDetails;
+
+    return `${itemDetails} | Delivery to ${delivery.customerLat.toFixed(5)}, ${delivery.customerLng.toFixed(5)} | Distance ${delivery.distanceKm.toFixed(2)} km`;
 }
 
 function makeGuestOrderNo() {
-  return String(Math.floor(Math.random() * 9000) + 1000).padStart(4, "0");
+    return String(Math.floor(Math.random() * 9000) + 1000).padStart(4, "0");
 }
 
 function getProgressStep(status: string) {
@@ -118,7 +134,7 @@ function getCustomerStatusLabel(status: string) {
         case "preparing":
             return "Drinks in progress";
         case "ready":
-            return "Ready for collection";
+            return "Ready";
         case "completed":
             return "Completed";
         case "cancelled":
@@ -132,6 +148,7 @@ export default function Checkout() {
     const router = useRouter();
 
     const [items, setItems] = useState<CheckoutItem[]>([]);
+    const [delivery, setDelivery] = useState<DeliveryData | null>(null);
     const [paymentMethod] = useState("fake_card");
     const [voucherCode, setVoucherCode] = useState("");
     const [cardNumber, setCardNumber] = useState("");
@@ -152,27 +169,43 @@ export default function Checkout() {
         setCvv("123");
     }
 
-    const total = items.reduce((sum, item) => sum + item.price, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+    const deliveryFee = delivery?.deliveryFee ?? 0;
+    const total = subtotal + deliveryFee;
+    const isDeliveryOrder = Boolean(delivery);
 
     useEffect(() => {
-    async function loadCheckoutCart() {
-        const currentUser = getStoredUser();
+        async function loadCheckoutCart() {
+            const currentUser = getStoredUser();
 
-        if (currentUser) {
-        try {
-            const response = await getCartItems(currentUser.id);
-            setItems(fromBackendCart(response.data || []));
-            return;
-        } catch (error) {
-            console.error("[DripTea checkout cart]", error);
+            if (currentUser) {
+                try {
+                    const response = await getCartItems(currentUser.id);
+                    setItems(fromBackendCart(response.data || []));
+                    return;
+                } catch (error) {
+                    console.error("[DripTea checkout cart]", error);
+                }
+            }
+
+            setItems(parseLocalCart());
         }
+
+        void loadCheckoutCart();
+    }, []);
+
+    useEffect(() => {
+        const savedDelivery = window.localStorage.getItem("driptea_delivery");
+
+        if (savedDelivery) {
+            try {
+                setDelivery(JSON.parse(savedDelivery));
+            } catch (error) {
+                console.error("[DripTea delivery data]", error);
+                window.localStorage.removeItem("driptea_delivery");
+            }
         }
-
-        setItems(parseLocalCart());
-    }
-
-    void loadCheckoutCart();
-}, []);
+    }, []);
 
     useEffect(() => {
         if (!confirmation || confirmation.orderId.startsWith("GUEST-")) return;
@@ -209,7 +242,6 @@ export default function Checkout() {
         };
     }, [confirmation?.orderId]);
 
-    // Sequential phase timer: 8 s (order sent) → 20 s countdown → ready for collection
     useEffect(() => {
         if (!confirmation) return;
 
@@ -223,13 +255,17 @@ export default function Checkout() {
             setPhase(2);
             count = 20;
             setCountdown(count);
+
             activeTimer = window.setInterval(() => {
                 if (!running) return;
+
                 count--;
                 setCountdown(count);
+
                 if (count <= 0) {
                     window.clearInterval(activeTimer);
                     setPhase(3);
+
                     if (!confirmation.orderId.startsWith("GUEST-")) {
                         void updateOrderStatus(confirmation.orderId, "ready").catch(console.error);
                     }
@@ -239,8 +275,10 @@ export default function Checkout() {
 
         activeTimer = window.setInterval(() => {
             if (!running) return;
+
             count--;
             setCountdown(count);
+
             if (count <= 0) {
                 window.clearInterval(activeTimer);
                 startPhase2();
@@ -258,337 +296,417 @@ export default function Checkout() {
         setIsProcessing(true);
 
         try {
-        const currentUser = getStoredUser();
-        const orderDetails = buildOrderDetails(items);
+            const currentUser = getStoredUser();
+            const orderDetails = buildOrderDetails(items, delivery);
 
-        if (currentUser) {
-            const result = await checkoutCart(
-            currentUser.id,
-            paymentMethod,
-            voucherCode ? voucherCode.trim() : undefined
-            );
+            if (currentUser) {
+                const result = await checkoutCart(
+                    currentUser.id,
+                    paymentMethod,
+                    voucherCode ? voucherCode.trim() : undefined
+                );
+
+                window.localStorage.removeItem("dripTeaCartData");
+                window.localStorage.removeItem("driptea_delivery");
+                window.dispatchEvent(new Event("cartUpdated"));
+                setItems([]);
+
+                setConfirmation({
+                    orderId: result.order.id,
+                    orderNo: result.order.orderNo || result.order.displayOrderNo || result.order.id,
+                    paymentStatus: result.payment.status,
+                    status: result.order.status,
+                    total: Number(result.order.totalAmount || subtotal) + deliveryFee,
+                    details: orderDetails,
+                });
+
+                return;
+            }
+
+            const fakeOrderId = `GUEST-${Date.now().toString(36).toUpperCase()}`;
 
             window.localStorage.removeItem("dripTeaCartData");
+            window.localStorage.removeItem("driptea_delivery");
             window.dispatchEvent(new Event("cartUpdated"));
             setItems([]);
 
             setConfirmation({
-            orderId: result.order.id,
-            orderNo: result.order.orderNo || result.order.displayOrderNo || result.order.id,
-            paymentStatus: result.payment.status,
-            status: result.order.status,
-            total: result.order.totalAmount,
-            details: orderDetails,
+                orderId: fakeOrderId,
+                orderNo: `GUEST-${makeGuestOrderNo()}`,
+                paymentStatus: "paid",
+                status: "pending",
+                total,
+                details: orderDetails,
             });
-
-            return;
+        } catch (error) {
+            setStatusMessage(error instanceof Error ? error.message : "Payment failed.");
+        } finally {
+            setIsProcessing(false);
         }
-
-    const fakeOrderId = `GUEST-${Date.now().toString(36).toUpperCase()}`;
-
-    window.localStorage.removeItem("dripTeaCartData");
-    window.dispatchEvent(new Event("cartUpdated"));
-    setItems([]);
-
-    setConfirmation({
-        orderId: fakeOrderId,
-        orderNo: `GUEST-${makeGuestOrderNo()}`,
-        paymentStatus: "paid",
-        status: "pending",
-        total,
-        details: orderDetails,
-    });
-    } catch (error) {
-    setStatusMessage(error instanceof Error ? error.message : "Payment failed.");
-    } finally {
-    setIsProcessing(false);
     }
-}
 
-return (
-    <div className="checkout-page">
-    <Header />
+    return (
+        <div className="checkout-page">
+            <Header />
 
-    <main className="checkout-main">
-        {!confirmation && (
-        <button
-            type="button"
-            className="checkout-back-btn"
-            onClick={() => router.push("/cart")}
-        >
-            ← Back to cart
-        </button>
-        )}
-
-        {confirmation ? (
-        <section className="order-status-page">
-            {/* Progress bar — driven by phase */}
-            <div className="order-progress">
-            <div className={`progress-step ${phase >= 1 ? "active" : ""}`}>
-                <span>1</span>
-                <strong>Order sent!</strong>
-            </div>
-            <div className={`progress-line ${phase >= 2 ? "active" : ""}`} />
-            <div className={`progress-step ${phase >= 2 ? "active" : ""}`}>
-                <span>2</span>
-                <strong>Drinks in<br />progress..</strong>
-            </div>
-            <div className={`progress-line ${phase >= 3 ? "active" : ""}`} />
-            <div className={`progress-step ${phase >= 3 ? "active" : ""}`}>
-                <span>3</span>
-                <strong>Ready for<br />collection!</strong>
-            </div>
-            </div>
-
-            {/* Phase 1 — order sent notification with cover image */}
-            {phase === 1 && (
-            <div className="order-status-content">
-                <img
-                src="/buy_dripTea_cover.png"
-                alt="Order sent"
-                className="order-sent-img"
-                />
-                <div className="order-info">
-                <h1>Order #{confirmation.orderNo}</h1>
-                <p>Your order has been sent to our baristas!</p>
-                <p><strong>Total Price:</strong> S$ {confirmation.total.toFixed(2)}</p>
-                <p className="order-phase1-hint">Preparing in {countdown}s…</p>
-                </div>
-            </div>
-            )}
-
-            {/* Phase 2 — 2:50 countdown */}
-            {phase === 2 && (
-            <div className="order-status-content">
-                <div className="clock-visual">
-                {countdown > 0
-                    ? `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, "0")}`
-                    : "Done!"}
-                </div>
-                <div className="order-info">
-                <h1>Order #{confirmation.orderNo}</h1>
-                <p><strong>Customization:</strong> {confirmation.details}</p>
-                <p><strong>Total Price:</strong> S$ {confirmation.total.toFixed(2)}</p>
-                <p><strong>Estimated Time:</strong> 20 sec</p>
-                <p><strong>Status:</strong> Drinks in progress…</p>
-                </div>
-            </div>
-            )}
-
-            {/* Phase 3 — ready for collection */}
-            {phase === 3 && !collected && (
-            <div className="order-status-content">
-                <div className="clock-visual-ready">Ready for<br />collection!</div>
-                <div className="order-info">
-                <h1>Order #{confirmation.orderNo}</h1>
-                <p>Your drink is ready! Please collect at the counter.</p>
-                <p><strong>Total Price:</strong> S$ {confirmation.total.toFixed(2)}</p>
-                <button
-                    type="button"
-                    className="collect-btn"
-                    onClick={async () => {
-                        if (!confirmation.orderId.startsWith("GUEST-")) {
-                            await updateOrderStatus(confirmation.orderId, "completed").catch(console.error);
-                        }
-                        setCollected(true);
-                    }}
-                >
-                    Click to Collect
-                </button>
-                </div>
-            </div>
-            )}
-
-            {/* Collected — affirmative message */}
-            {collected && (
-            <div className="order-collected">
-                <div className="order-collected-icon">✓</div>
-                <h2>Collected! Enjoy your drink!</h2>
-                <p>Thank you for your order. We hope to see you again!</p>
-            </div>
-            )}
-
-            {collected ? (
-            <div className="order-collected-actions">
-                <button
-                type="button"
-                className="order-more-btn"
-                onClick={() => router.push("/buy-driptea")}
-                >
-                Order More
-                </button>
-                <button
-                type="button"
-                className="back-menu-wide-btn"
-                onClick={() => router.push("/purchase-history")}
-                >
-                Back to Purchase History
-                </button>
-            </div>
-            ) : (
-            <button
-                type="button"
-                className="back-menu-wide-btn"
-                onClick={() => router.push("/buy-driptea")}
-            >
-                Back to Menu
-            </button>
-            )}
-        </section>
-
-        ) : (
-        <section className="checkout-card">
-            <div className="checkout-two-col">
-
-            {/* LEFT — payment form */}
-            <div className="checkout-form-col">
-                <div className="checkout-form-header">
-                    <p className="checkout-label">Credit Card</p>
-                    <div className="checkout-card-logos">
-                        {/* Mastercard */}
-                        <svg width="38" height="24" viewBox="0 0 38 24" aria-label="Mastercard">
-                            <circle cx="14" cy="12" r="10" fill="#EB001B" />
-                            <circle cx="24" cy="12" r="10" fill="#F79E1B" />
-                            <path d="M19 4.8a10 10 0 0 1 0 14.4A10 10 0 0 1 19 4.8z" fill="#FF5F00" />
-                        </svg>
-                        {/* Amex */}
-                        <svg width="38" height="24" viewBox="0 0 38 24" aria-label="American Express">
-                            <rect width="38" height="24" rx="4" fill="#2557D6" />
-                            <text x="19" y="16" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="bold" fontFamily="Arial">AMEX</text>
-                        </svg>
-                    </div>
-                </div>
-
-                <button type="button" className="checkout-fill-btn" onClick={fillFakeDetails}>
-                    Fill Demo Details
-                </button>
-
-                <label className="checkout-field">
-                    Credit Card Number
-                    <input
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value)}
-                        placeholder="Key in the full credit card number"
-                        maxLength={19}
-                    />
-                </label>
-
-                <label className="checkout-field">
-                    Name
-                    <input
-                        value={cardName}
-                        onChange={(e) => setCardName(e.target.value)}
-                        placeholder="Key in your full name on the credit card"
-                    />
-                </label>
-
-                <div className="checkout-row">
-                    <label className="checkout-field">
-                        Expiry Date
-                        <input
-                            value={expiryDate}
-                            onChange={(e) => setExpiryDate(e.target.value)}
-                            placeholder="MM/YYYY"
-                            maxLength={7}
-                        />
-                    </label>
-                    <label className="checkout-field">
-                        CVV
-                        <input
-                            value={cvv}
-                            onChange={(e) => setCvv(e.target.value)}
-                            placeholder="CVV"
-                            maxLength={4}
-                            type="password"
-                        />
-                    </label>
-                </div>
-
-                <label className="checkout-field">
-                    Voucher
-                    <input
-                        value={voucherCode}
-                        onChange={(e) => setVoucherCode(e.target.value)}
-                        placeholder="Key in the voucher code"
-                    />
-                </label>
-
-                {/* Mobile only — confirm button after the payment form */}
-                {statusMessage && (
-                    <p role="alert" className="checkout-error checkout-confirm-mobile">{statusMessage}</p>
-                )}
-                <div className="checkout-confirm-row checkout-confirm-mobile">
+            <main className="checkout-main">
+                {!confirmation && (
                     <button
                         type="button"
-                        className="checkout-confirm-btn"
-                        onClick={handleFakePayment}
-                        disabled={items.length === 0 || isProcessing}
+                        className="checkout-back-btn"
+                        onClick={() => router.push("/cart")}
                     >
-                        {isProcessing ? "Processing..." : "Confirm Payment"}
+                        ← Back to cart
                     </button>
-                </div>
-            </div>
+                )}
 
-            {/* RIGHT — cart summary */}
-            <div className="checkout-cart-col">
-                <h2>Your Shopping Cart</h2>
+                {confirmation ? (
+                    <section className="order-status-page">
+                        <div className="order-progress">
+                            <div className={`progress-step ${phase >= 1 ? "active" : ""}`}>
+                                <span>1</span>
+                                <strong>Order sent!</strong>
+                            </div>
 
-                <div className="checkout-items">
-                    {items.length === 0 ? (
-                        <p>Your cart is empty.</p>
-                    ) : (
-                        items.map((item, index) => (
-                            <div key={`${item.name}-${index}`} className="checkout-item">
-                                <div className="checkout-item-index">{index + 1}.</div>
-                                <img
-                                    src={item.image || "/img/no-image.png"}
-                                    alt={item.name}
-                                    className="checkout-item-img"
-                                />
-                                <div className="checkout-item-info">
-                                    <strong>{item.name}</strong>
-                                    {item.fields && item.fields.length > 0 ? (
-                                        <div className="checkout-item-fields">
-                                            {item.fields.map(f => (
-                                                <p key={f.label}><span className="checkout-item-field-label">{f.label}:</span> {f.value}</p>
-                                            ))}
-                                        </div>
+                            <div className={`progress-line ${phase >= 2 ? "active" : ""}`} />
+
+                            <div className={`progress-step ${phase >= 2 ? "active" : ""}`}>
+                                <span>2</span>
+                                <strong>Drinks in<br />progress..</strong>
+                            </div>
+
+                            <div className={`progress-line ${phase >= 3 ? "active" : ""}`} />
+
+                            <div className={`progress-step ${phase >= 3 ? "active" : ""}`}>
+                                <span>3</span>
+                                <strong>
+                                    {isDeliveryOrder ? (
+                                        <>
+                                            Out for<br />delivery!
+                                        </>
                                     ) : (
-                                        <p>{item.details}</p>
+                                        <>
+                                            Ready for<br />collection!
+                                        </>
+                                    )}
+                                </strong>
+                            </div>
+                        </div>
+
+                        {phase === 1 && (
+                            <div className="order-status-content">
+                                <img
+                                    src="/buy_dripTea_cover.png"
+                                    alt="Order sent"
+                                    className="order-sent-img"
+                                />
+
+                                <div className="order-info">
+                                    <h1>Order #{confirmation.orderNo}</h1>
+                                    <p>Your order has been sent to our baristas!</p>
+                                    <p><strong>Total Price:</strong> S$ {confirmation.total.toFixed(2)}</p>
+
+                                    {delivery && (
+                                        <p>
+                                            <strong>Delivery Fee:</strong> S$ {delivery.deliveryFee.toFixed(2)}
+                                        </p>
+                                    )}
+
+                                    <p className="order-phase1-hint">Preparing in {countdown}s...</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {phase === 2 && (
+                            <div className="order-status-content">
+                                <div className="clock-visual">
+                                    {countdown > 0
+                                        ? `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, "0")}`
+                                        : "Done!"}
+                                </div>
+
+                                <div className="order-info">
+                                    <h1>Order #{confirmation.orderNo}</h1>
+                                    <p><strong>Customization:</strong> {confirmation.details}</p>
+                                    <p><strong>Total Price:</strong> S$ {confirmation.total.toFixed(2)}</p>
+                                    <p><strong>Estimated Time:</strong> 20 sec</p>
+                                    <p><strong>Status:</strong> Drinks in progress...</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {phase === 3 && !collected && (
+                            <div className="order-status-content">
+                                <div className="clock-visual-ready">
+                                    {isDeliveryOrder ? (
+                                        <>
+                                            Out for<br />delivery!
+                                        </>
+                                    ) : (
+                                        <>
+                                            Ready for<br />collection!
+                                        </>
                                     )}
                                 </div>
-                                <strong className="checkout-item-price">S$ {item.price.toFixed(2)}</strong>
+
+                                <div className="order-info">
+                                    <h1>Order #{confirmation.orderNo}</h1>
+
+                                    {isDeliveryOrder ? (
+                                        <>
+                                            <p>Your drink is on the way.</p>
+                                            {delivery && (
+                                                <>
+                                                    <p><strong>Outlet:</strong> {delivery.outletName}</p>
+                                                    <p><strong>Deliver to:</strong> {delivery.customerAddress || `${delivery.customerLat.toFixed(5)}, ${delivery.customerLng.toFixed(5)}`}</p>
+                                                    <p><strong>Distance:</strong> {delivery.distanceKm.toFixed(2)} km</p>
+                                                </>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <p>Your drink is ready! Please collect at the counter.</p>
+                                    )}
+
+                                    <p><strong>Total Price:</strong> S$ {confirmation.total.toFixed(2)}</p>
+
+                                    <button
+                                        type="button"
+                                        className="collect-btn"
+                                        onClick={async () => {
+                                            if (!confirmation.orderId.startsWith("GUEST-")) {
+                                                await updateOrderStatus(confirmation.orderId, "completed").catch(console.error);
+                                            }
+
+                                            setCollected(true);
+                                        }}
+                                    >
+                                        {isDeliveryOrder ? "Mark as Received" : "Click to Collect"}
+                                    </button>
+                                </div>
                             </div>
-                        ))
-                    )}
-                </div>
+                        )}
 
-                <div className="checkout-total">
-                    <span>Total Price:</span>
-                    <strong>S$ {total.toFixed(2)}</strong>
-                </div>
+                        {collected && (
+                            <div className="order-collected">
+                                <div className="order-collected-icon">✓</div>
+                                <h2>
+                                    {isDeliveryOrder
+                                        ? "Delivered! Enjoy your drink!"
+                                        : "Collected! Enjoy your drink!"}
+                                </h2>
+                                <p>Thank you for your order. We hope to see you again!</p>
+                            </div>
+                        )}
 
-                {/* Desktop only — hidden on mobile so button sits below the payment form */}
-                {statusMessage && (
-                    <p role="alert" className="checkout-error checkout-confirm-desktop">{statusMessage}</p>
+                        {collected ? (
+                            <div className="order-collected-actions">
+                                <button
+                                    type="button"
+                                    className="order-more-btn"
+                                    onClick={() => router.push("/buy-driptea")}
+                                >
+                                    Order More
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="back-menu-wide-btn"
+                                    onClick={() => router.push("/purchase-history")}
+                                >
+                                    Back to Purchase History
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                className="back-menu-wide-btn"
+                                onClick={() => router.push("/buy-driptea")}
+                            >
+                                Back to Menu
+                            </button>
+                        )}
+                    </section>
+                ) : (
+                    <section className="checkout-card">
+                        <div className="checkout-two-col">
+                            <div className="checkout-form-col">
+                                <div className="checkout-form-header">
+                                    <p className="checkout-label">Credit Card</p>
+
+                                    <div className="checkout-card-logos">
+                                        <svg width="38" height="24" viewBox="0 0 38 24" aria-label="Mastercard">
+                                            <circle cx="14" cy="12" r="10" fill="#EB001B" />
+                                            <circle cx="24" cy="12" r="10" fill="#F79E1B" />
+                                            <path d="M19 4.8a10 10 0 0 1 0 14.4A10 10 0 0 1 19 4.8z" fill="#FF5F00" />
+                                        </svg>
+
+                                        <svg width="38" height="24" viewBox="0 0 38 24" aria-label="American Express">
+                                            <rect width="38" height="24" rx="4" fill="#2557D6" />
+                                            <text x="19" y="16" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="bold" fontFamily="Arial">AMEX</text>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <button type="button" className="checkout-fill-btn" onClick={fillFakeDetails}>
+                                    Fill Demo Details
+                                </button>
+
+                                <label className="checkout-field">
+                                    Credit Card Number
+                                    <input
+                                        value={cardNumber}
+                                        onChange={(e) => setCardNumber(e.target.value)}
+                                        placeholder="Key in the full credit card number"
+                                        maxLength={19}
+                                    />
+                                </label>
+
+                                <label className="checkout-field">
+                                    Name
+                                    <input
+                                        value={cardName}
+                                        onChange={(e) => setCardName(e.target.value)}
+                                        placeholder="Key in your full name on the credit card"
+                                    />
+                                </label>
+
+                                <div className="checkout-row">
+                                    <label className="checkout-field">
+                                        Expiry Date
+                                        <input
+                                            value={expiryDate}
+                                            onChange={(e) => setExpiryDate(e.target.value)}
+                                            placeholder="MM/YYYY"
+                                            maxLength={7}
+                                        />
+                                    </label>
+
+                                    <label className="checkout-field">
+                                        CVV
+                                        <input
+                                            value={cvv}
+                                            onChange={(e) => setCvv(e.target.value)}
+                                            placeholder="CVV"
+                                            maxLength={4}
+                                            type="password"
+                                        />
+                                    </label>
+                                </div>
+
+                                <label className="checkout-field">
+                                    Voucher
+                                    <input
+                                        value={voucherCode}
+                                        onChange={(e) => setVoucherCode(e.target.value)}
+                                        placeholder="Key in the voucher code"
+                                    />
+                                </label>
+
+                                {statusMessage && (
+                                    <p role="alert" className="checkout-error checkout-confirm-mobile">{statusMessage}</p>
+                                )}
+
+                                <div className="checkout-confirm-row checkout-confirm-mobile">
+                                    <button
+                                        type="button"
+                                        className="checkout-confirm-btn"
+                                        onClick={handleFakePayment}
+                                        disabled={items.length === 0 || isProcessing}
+                                    >
+                                        {isProcessing ? "Processing..." : "Confirm Payment"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="checkout-cart-col">
+                                <h2>Your Shopping Cart</h2>
+
+                                <div className="checkout-items">
+                                    {items.length === 0 ? (
+                                        <p>Your cart is empty.</p>
+                                    ) : (
+                                        items.map((item, index) => (
+                                            <div key={`${item.name}-${index}`} className="checkout-item">
+                                                <div className="checkout-item-index">{index + 1}.</div>
+
+                                                <img
+                                                    src={item.image || "/img/no-image.png"}
+                                                    alt={item.name}
+                                                    className="checkout-item-img"
+                                                />
+
+                                                <div className="checkout-item-info">
+                                                    <strong>{item.name}</strong>
+
+                                                    {item.fields && item.fields.length > 0 ? (
+                                                        <div className="checkout-item-fields">
+                                                            {item.fields.map(f => (
+                                                                <p key={f.label}>
+                                                                    <span className="checkout-item-field-label">{f.label}:</span> {f.value}
+                                                                </p>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p>{item.details}</p>
+                                                    )}
+                                                </div>
+
+                                                <strong className="checkout-item-price">S$ {item.price.toFixed(2)}</strong>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {delivery && (
+                                    <div className="checkout-delivery-box">
+                                        <h3>Delivery Details</h3>
+                                        <p><strong>Outlet:</strong> {delivery.outletName}</p>
+                                        <p><strong>Address:</strong> {delivery.outletAddress}</p>
+                                        <p>
+                                            <strong>Deliver to:</strong> {delivery.customerLat.toFixed(5)}, {delivery.customerLng.toFixed(5)}
+                                        </p>
+                                        <p><strong>Distance:</strong> {delivery.distanceKm.toFixed(2)} km</p>
+                                    </div>
+                                )}
+
+                                <div className="checkout-price-breakdown">
+                                    <div className="checkout-price-row">
+                                        <span>Subtotal:</span>
+                                        <strong>S$ {subtotal.toFixed(2)}</strong>
+                                    </div>
+
+                                    {delivery && (
+                                        <div className="checkout-price-row">
+                                            <span>Delivery Fee:</span>
+                                            <strong>S$ {deliveryFee.toFixed(2)}</strong>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="checkout-total">
+                                    <span>Total Price:</span>
+                                    <strong>S$ {total.toFixed(2)}</strong>
+                                </div>
+
+                                {statusMessage && (
+                                    <p role="alert" className="checkout-error checkout-confirm-desktop">{statusMessage}</p>
+                                )}
+
+                                <div className="checkout-confirm-row checkout-confirm-desktop">
+                                    <button
+                                        type="button"
+                                        className="checkout-confirm-btn"
+                                        onClick={handleFakePayment}
+                                        disabled={items.length === 0 || isProcessing}
+                                    >
+                                        {isProcessing ? "Processing..." : "Confirm Payment"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 )}
-
-                <div className="checkout-confirm-row checkout-confirm-desktop">
-                    <button
-                        type="button"
-                        className="checkout-confirm-btn"
-                        onClick={handleFakePayment}
-                        disabled={items.length === 0 || isProcessing}
-                    >
-                        {isProcessing ? "Processing..." : "Confirm Payment"}
-                    </button>
-                </div>
-            </div>
-
-            </div>
-        </section>
-        )}
-    </main>
-    </div>
+            </main>
+        </div>
     );
 }

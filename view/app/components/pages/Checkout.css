@@ -641,3 +641,35 @@
   line-height: 1.5;
   padding: 0 16px;
 }
+
+.checkout-delivery-box {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 14px;
+    background: #fff8f1;
+    border: 1px solid rgba(155, 109, 74, 0.25);
+}
+
+.checkout-delivery-box h3 {
+    margin-bottom: 10px;
+    color: #31231a;
+}
+
+.checkout-delivery-box p {
+    margin: 6px 0;
+    color: #6e6050;
+    font-size: 14px;
+}
+
+.checkout-price-breakdown {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(155, 109, 74, 0.2);
+}
+
+.checkout-price-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    color: #31231a;
+}
