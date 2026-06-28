@@ -11,6 +11,9 @@
 //
 // #32  Get Recommendations via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Svc: prompt.service.js (this file) → Model: menuItem.model.js
+// 
+// #305 Fallback to Human Agent via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Svc: prompt.service.js (this file) → Model: chatbotSession.model.js
 
 const MenuItem = require("../models/menuItem.model");
 

@@ -45,7 +45,7 @@
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js (this file) → Svc: chatbot.service.js → Model: order.model.js
 //
-// Feedback via Chatbot
+// #308 Feedback via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: feedback.model.js, menuItem.model.js
 
 const chatbotService = require("../services/chatbot.service");

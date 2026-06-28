@@ -13,7 +13,7 @@
 //   #23  Checkout               → checkoutCart        → POST /api/checkout
 //   #19  Purchase history       → getPurchaseHistory  → GET /api/purchase-history
 //   #246 Update account         → updateUser          → PATCH /api/users/:id
-//   # Feedback                                         → POST /api/feedback
+//   #307 Feedback                                         → POST /api/feedback
 //
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 

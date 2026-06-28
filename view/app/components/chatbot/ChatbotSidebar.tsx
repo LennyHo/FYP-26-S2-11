@@ -44,7 +44,8 @@
 //
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: Order.Model
-// # Feedback via Chatbot
+//
+// #308 - As a customer, I want to provide feedback via the chatbot so that I can share my experience conveniently.
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: Feedback.Model, MenuItem.Model
 "use client";
 

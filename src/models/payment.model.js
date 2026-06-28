@@ -32,7 +32,8 @@ const paymentSchema = new mongoose.Schema(
 // #19  - As a customer, I want to be able to view the purchase history so that I can review my past orders.
 // #198 - As a customer, I want to browse my purchase history through the chatbot so that I can review my previous orders conveniently.
 // Queries orders by userId → joins order_items for drink details → returns full history sorted by date.
-// Feedback
+// #307 - As a customer, I want to provide feedback manually so that I can share my experience with the service.
+// #308 - As a customer, I want to provide feedback via the chatbot so that I can share my experience conveniently.
 paymentSchema.statics.getPurchaseHistory = async function getPurchaseHistory(userId) {
   const Order = require("./order.model");
   const OrderItem = require("./orderItem.model");

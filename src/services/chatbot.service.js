@@ -44,7 +44,8 @@
 //
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: order.model.js
-// #Feedback
+//
+// #308 Provide Feedback via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: order.model.js, feedback.model.js
 const {
     //isAddToCartRequest,
@@ -1292,7 +1293,7 @@ function buildCartSummaryReply(cartItems, { updated = true } = {}) {
 }
 // End of User Story #201
 
-// Feedback
+// #308 - As a customer, I want to provide feedback via the chatbot so that I can share my experience conveniently.
 function isFeedbackRequest(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -2782,7 +2783,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     }
     // End of User Story #201
 
-    // Feedback
+    // #308 - As a customer, I want to provide feedback via the chatbot so that I can share my experience conveniently.
     if (isFeedbackRequest(intentMessage)) {
         if (!userId) {
             return {
