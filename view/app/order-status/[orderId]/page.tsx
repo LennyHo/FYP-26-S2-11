@@ -15,6 +15,16 @@ import "../../components/pages/Checkout.css";
 
 const PHASE1_MS = 8_000;
 const TOTAL_MS = 28_000;
+const LS_COLLECTED_KEY = "driptea_collected_orders";
+
+function markCollectedLocally(id: string) {
+  try {
+    const ids = JSON.parse(localStorage.getItem(LS_COLLECTED_KEY) ?? "[]") as string[];
+    if (!ids.includes(id)) {
+      localStorage.setItem(LS_COLLECTED_KEY, JSON.stringify([...ids, id]));
+    }
+  } catch {}
+}
 
 function formatOrderDetails(items: DripTeaOrder["items"]) {
   return items
@@ -79,6 +89,7 @@ export default function OrderStatusPage() {
         if (status === "completed") {
           setPhase(3);
           setCollected(true);
+          markCollectedLocally(orderId);
           setIsLoading(false);
           return;
         }
@@ -149,6 +160,7 @@ export default function OrderStatusPage() {
   async function handleCollect() {
     try {
       await updateOrderStatus(orderId, "completed");
+      markCollectedLocally(orderId);
       setCollected(true);
 
       console.log("[OrderStatus] dispatch chatbotSystemMessage", {

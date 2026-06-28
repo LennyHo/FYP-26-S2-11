@@ -10,6 +10,17 @@ import "./PurchaseHistory.css";
 
 const TRACK_STATUSES = new Set(["pending", "preparing"]);
 const COLLECT_STATUSES = new Set(["ready"]);
+const LS_COLLECTED_KEY = "driptea_collected_orders";
+
+function getLocalCollectedIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(LS_COLLECTED_KEY);
+    return new Set<string>(raw ? (JSON.parse(raw) as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
 
 function formatDate(value?: string) {
   if (!value) return "Not recorded";
@@ -48,6 +59,20 @@ export default function PurchaseHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [localCollectedIds, setLocalCollectedIds] = useState<Set<string>>(getLocalCollectedIds);
+
+  // Re-sync localStorage when the customer navigates back from the order-status page
+  useEffect(() => {
+    function syncFromStorage() {
+      setLocalCollectedIds(getLocalCollectedIds());
+    }
+    window.addEventListener("focus", syncFromStorage);
+    document.addEventListener("visibilitychange", syncFromStorage);
+    return () => {
+      window.removeEventListener("focus", syncFromStorage);
+      document.removeEventListener("visibilitychange", syncFromStorage);
+    };
+  }, []);
 
   useEffect(() => {
     const user = getStoredUser();
@@ -150,6 +175,11 @@ export default function PurchaseHistory() {
           <div className="purchase-list">
             {orders.filter((order) => order.items && order.items.length > 0).map((order) => {
               const status = (order.status || "pending").toLowerCase();
+              const isCompleted = status === "completed";
+              const customerCollected = localCollectedIds.has(order.id);
+              // Show Collect until the customer explicitly clicks it (tracked in localStorage)
+              const showCollect = COLLECT_STATUSES.has(status) || (isCompleted && !customerCollected && !order.hasFeedback);
+              const showFeedback = isCompleted && (customerCollected || !!order.hasFeedback);
               return (
                 <article key={order.id} className="purchase-order" data-status={status}>
 
@@ -213,12 +243,12 @@ export default function PurchaseHistory() {
                           Track Order
                         </Link>
                       )}
-                      {COLLECT_STATUSES.has(status) && (
+                      {showCollect && (
                         <Link href={`/order-status/${order.id}`} className="purchase-collect-btn">
-                          Ready to Collect
+                          {COLLECT_STATUSES.has(status) ? "Ready to Collect" : "Collect"}
                         </Link>
                       )}
-                      {status === "completed" && (
+                      {showFeedback && (
                         order.hasFeedback ? (
                           <button
                             type="button"
