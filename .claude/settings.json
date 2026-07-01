@@ -59,7 +59,18 @@
       "Bash(taskkill //F //PID 34776 //T)",
       "Bash(taskkill //F //PID 45292 //T)",
       "Bash(taskkill //F //PID 48740 //T)",
-      "Bash(taskkill //F //PID 49716 //T)"
+      "Bash(taskkill //F //PID 49716 //T)",
+      "Bash(find ./delivery -type f)",
+      "Bash(find ./contact -type f)",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Bring me to Purchase History page\",\"conversationId\":\"debug4-en\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Bring me to Purchase History page\",\"conversationId\":\"debug5-en-retry\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Bring me to Purchase History page\",\"conversationId\":\"debug6-en\"}')",
+      "Bash(taskkill //F //PID 23408)",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Bring me to Purchase History page\",\"conversationId\":\"final-en1\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Where is the Cart page?\",\"conversationId\":\"final-en2\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Lead me to Menu page.\",\"conversationId\":\"final-en3\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Bawa saya ke halaman troli\",\"conversationId\":\"final-ms\"}')",
+      "Bash(taskkill //F //PID 48708)"
     ]
   }
 }

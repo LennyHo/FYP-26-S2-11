@@ -1609,7 +1609,9 @@ function extractBothCustomization(message) {
 const PAGE_DIRECTORY = [
     { key: "home", route: "/", aliases: ["home page", "homepage", "main page", "landing page", "home"],
         labels: { en: "Home", ms: "Laman Utama", zh: "首页", ta: "முகப்பு" } },
-    { key: "menu", route: "/menu", aliases: ["menu page", "beverage menu", "drinks menu", "drink menu", "menu"],
+    // Route is /buy-driptea, not /menu — /menu is a dead stub that just redirects to /order-type.
+    // /buy-driptea itself redirects to /order-type if no pickup/delivery choice is stored yet, so this is safe either way.
+    { key: "menu", route: "/buy-driptea", aliases: ["menu page", "beverage menu", "drinks menu", "drink menu", "menu"],
         labels: { en: "Menu", ms: "Menu", zh: "菜单", ta: "மெனு" } },
     { key: "cart", route: "/cart", aliases: ["cart page", "shopping cart", "basket page", "cart", "basket"],
         labels: { en: "Cart", ms: "Troli", zh: "购物车", ta: "கார்ட்" } },
@@ -1639,7 +1641,7 @@ const PAGE_DIRECTORY = [
 // Weak verbs ("go to", "open") only count as navigation when paired with the word "page",
 // so they don't collide with existing intents like isRecommendationRequest's "show me X drinks".
 const NAV_STRONG_TRIGGER_RE = /\b(lead me to|guide me to|take me to|bring me to|navigate to|direct me to|redirect me to|switch to the)\b/i;
-const NAV_WEAK_TRIGGER_RE = /\b(go to|open|jump to)\b/i;
+const NAV_WEAK_TRIGGER_RE = /\b(go to|open|jump to|where is|where's|where are)\b/i;
 const NAV_PAGE_WORD_RE = /\bpage\b/i;
 
 function isNavigationRequest(message) {
@@ -1699,6 +1701,91 @@ const NAV_REPLY_TEMPLATES = {
     ms: (label) => `Baiklah! Membawa anda ke halaman ${label} sekarang.`,
     zh: (label) => `好的！马上带您前往${label}页面。`,
     ta: (label) => `சரி! இப்போது உங்களை ${label} பக்கத்திற்கு அழைத்துச் செல்கிறேன்.`,
+};
+
+const NAV_STEPS_HEADING_TEMPLATES = {
+    en: (label) => `To head to the ${label} page manually:`,
+    ms: (label) => `Untuk ke halaman ${label} secara manual:`,
+    zh: (label) => `手动前往${label}页面的方法：`,
+    ta: (label) => `${label} பக்கத்திற்கு கைமுறையாகச் செல்ல:`,
+};
+
+// Manual click-paths, verified against the actual UI (Header.tsx, Cart.tsx, PurchaseHistory.tsx, login/page.tsx).
+// Only pages with a real, reachable path are listed here — e.g. /contact has no link anywhere in the app,
+// so it's deliberately omitted rather than inventing a path that doesn't exist.
+const PAGE_MANUAL_STEPS = {
+    home: {
+        en: "1. Click the DripTea logo at the top of any page.",
+        ms: "1. Klik logo DripTea di bahagian atas mana-mana halaman.",
+        zh: "1. 点击任意页面顶部的 DripTea 标志。",
+        ta: "1. எந்தப் பக்கத்தின் மேற்பகுதியிலும் உள்ள DripTea லோகோவைக் கிளிக் செய்யவும்.",
+    },
+    menu: {
+        en: "1. Click \"BUY DRIPTEA\" in the top menu.\n2. Choose Pickup or Delivery.",
+        ms: "1. Klik \"BUY DRIPTEA\" pada menu atas.\n2. Pilih Pickup atau Delivery.",
+        zh: "1. 点击顶部菜单中的“BUY DRIPTEA”。\n2. 选择自取或外送。",
+        ta: "1. மேல் மெனுவில் \"BUY DRIPTEA\" என்பதைக் கிளிக் செய்யவும்.\n2. Pickup அல்லது Delivery-ஐத் தேர்ந்தெடுக்கவும்.",
+    },
+    cart: {
+        en: "1. Click \"Cart\" at the top right of any page.",
+        ms: "1. Klik \"Cart\" di penjuru kanan atas mana-mana halaman.",
+        zh: "1. 点击任意页面右上角的“Cart”。",
+        ta: "1. எந்தப் பக்கத்தின் வலது மேல் மூலையில் உள்ள \"Cart\" ஐக் கிளிக் செய்யவும்.",
+    },
+    checkout: {
+        en: "1. Go to your Cart.\n2. Click \"Proceed to Checkout\" (pickup orders only).",
+        ms: "1. Pergi ke Troli anda.\n2. Klik \"Proceed to Checkout\" (untuk pesanan ambil sendiri sahaja).",
+        zh: "1. 前往您的购物车。\n2. 点击“Proceed to Checkout”（仅限自取订单）。",
+        ta: "1. உங்கள் கார்ட்டிற்குச் செல்லவும்.\n2. \"Proceed to Checkout\" ஐக் கிளிக் செய்யவும் (Pickup ஆர்டர்களுக்கு மட்டும்).",
+    },
+    "purchase-history": {
+        en: "1. At the main page, click your profile photo.\n2. Click Purchase History.",
+        ms: "1. Di halaman utama, klik gambar profil anda.\n2. Klik Purchase History.",
+        zh: "1. 在主页面，点击您的个人头像。\n2. 点击 Purchase History。",
+        ta: "1. முதன்மைப் பக்கத்தில், உங்கள் சுயவிவரப் படத்தைக் கிளிக் செய்யவும்.\n2. Purchase History ஐக் கிளிக் செய்யவும்.",
+    },
+    "order-status": {
+        en: "1. Click your profile photo, then Purchase History.\n2. Click \"Track Order\" or \"Collect\" on your order.",
+        ms: "1. Klik gambar profil anda, kemudian Purchase History.\n2. Klik \"Track Order\" atau \"Collect\" pada pesanan anda.",
+        zh: "1. 点击您的个人头像，然后点击 Purchase History。\n2. 在您的订单上点击“Track Order”或“Collect”。",
+        ta: "1. உங்கள் சுயவிவரப் படத்தைக் கிளிக் செய்து, பின்னர் Purchase History ஐக் கிளிக் செய்யவும்.\n2. உங்கள் ஆர்டரில் \"Track Order\" அல்லது \"Collect\" ஐக் கிளிக் செய்யவும்.",
+    },
+    profile: {
+        en: "1. Click your profile photo.\n2. Click Settings.",
+        ms: "1. Klik gambar profil anda.\n2. Klik Settings.",
+        zh: "1. 点击您的个人头像。\n2. 点击 Settings。",
+        ta: "1. உங்கள் சுயவிவரப் படத்தைக் கிளிக் செய்யவும்.\n2. Settings ஐக் கிளிக் செய்யவும்.",
+    },
+    "our-story": {
+        en: "1. Click \"OUR STORY\" in the top menu.",
+        ms: "1. Klik \"OUR STORY\" pada menu atas.",
+        zh: "1. 点击顶部菜单中的“OUR STORY”。",
+        ta: "1. மேல் மெனுவில் \"OUR STORY\" என்பதைக் கிளிக் செய்யவும்.",
+    },
+    "global-stores": {
+        en: "1. Click \"STORES\" in the top menu.",
+        ms: "1. Klik \"STORES\" pada menu atas.",
+        zh: "1. 点击顶部菜单中的“STORES”。",
+        ta: "1. மேல் மெனுவில் \"STORES\" என்பதைக் கிளிக் செய்யவும்.",
+    },
+    delivery: {
+        en: "1. Click \"BUY DRIPTEA\" in the top menu.\n2. Choose Delivery.\n3. Add items to your cart, then click \"Proceed to Checkout\".",
+        ms: "1. Klik \"BUY DRIPTEA\" pada menu atas.\n2. Pilih Delivery.\n3. Tambah barang ke troli anda, kemudian klik \"Proceed to Checkout\".",
+        zh: "1. 点击顶部菜单中的“BUY DRIPTEA”。\n2. 选择外送 (Delivery)。\n3. 将商品加入购物车，然后点击“Proceed to Checkout”。",
+        ta: "1. மேல் மெனுவில் \"BUY DRIPTEA\" என்பதைக் கிளிக் செய்யவும்.\n2. Delivery-ஐத் தேர்ந்தெடுக்கவும்.\n3. பொருட்களை கார்ட்டில் சேர்த்து, \"Proceed to Checkout\" ஐக் கிளிக் செய்யவும்.",
+    },
+    login: {
+        en: "1. Click \"Log in\" at the top right of any page.",
+        ms: "1. Klik \"Log in\" di penjuru kanan atas mana-mana halaman.",
+        zh: "1. 点击任意页面右上角的“Log in”。",
+        ta: "1. எந்தப் பக்கத்தின் வலது மேல் மூலையில் உள்ள \"Log in\" ஐக் கிளிக் செய்யவும்.",
+    },
+    register: {
+        en: "1. Click \"Log in\" at the top right.\n2. Click \"Register for free\".",
+        ms: "1. Klik \"Log in\" di penjuru kanan atas.\n2. Klik \"Register for free\".",
+        zh: "1. 点击右上角的“Log in”。\n2. 点击“Register for free”。",
+        ta: "1. வலது மேல் மூலையில் உள்ள \"Log in\" ஐக் கிளிக் செய்யவும்.\n2. \"Register for free\" ஐக் கிளிக் செய்யவும்.",
+    },
 };
 // End of User Story #26
 
@@ -1869,7 +1956,15 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         if (page) {
             const label = page.labels[detectedLang] || page.labels.en;
             const templateFn = NAV_REPLY_TEMPLATES[detectedLang] || NAV_REPLY_TEMPLATES.en;
-            const reply = templateFn(label);
+            let reply = templateFn(label);
+
+            // Also show the manual click-path, so voice-mode customers (or anyone who wants
+            // to remember it for next time) know how to get there without the auto-navigation.
+            const steps = PAGE_MANUAL_STEPS[page.key]?.[detectedLang] || PAGE_MANUAL_STEPS[page.key]?.en;
+            if (steps) {
+                const headingFn = NAV_STEPS_HEADING_TEMPLATES[detectedLang] || NAV_STEPS_HEADING_TEMPLATES.en;
+                reply += `<br><br>${headingFn(label)}<br>${steps.replace(/\n/g, "<br>")}`;
+            }
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
                 role: "assistant",
