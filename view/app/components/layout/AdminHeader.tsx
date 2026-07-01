@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import styles from './AdminHeader.module.css';
 
@@ -24,12 +23,6 @@ export default function AdminHeader() {
           />
           <span className={styles.brandText}>Admin Panel</span>
         </div>
-
-        <nav className={styles.nav}>
-          <Link href="/user-admin-dashboard" className={styles.navLink}>
-            Dashboard
-          </Link>
-        </nav>
 
         <div className={styles.actions}>
           <button

@@ -1,4 +1,4 @@
-.background {
+﻿.background {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -6,8 +6,8 @@
   border-radius: 24px;
   background:
     radial-gradient(circle at top left, rgba(227, 100, 71, 0.18), transparent 36%),
-    radial-gradient(circle at bottom right, rgba(123, 168, 106, 0.18), transparent 40%),
-    linear-gradient(135deg, #f7efe4 0%, #ead7c2 100%);
+    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.18), transparent 40%),
+    linear-gradient(135deg, #eff6ff 0%, #fff7ed 100%);
 }
 
 .svg {

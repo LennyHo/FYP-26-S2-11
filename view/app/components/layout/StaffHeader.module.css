@@ -1,150 +1,134 @@
-.header {
-  background: linear-gradient(135deg, #4b311f 0%, #2f2016 100%);
-  border-bottom: 2px solid rgba(196, 162, 130, 0.4);
-  padding: 16px 0;
+﻿.header {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 2px solid rgba(59, 130, 246, 0.18);
+  padding: 0;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(59, 39, 26, 0.2);
+  box-shadow: 0 2px 16px rgba(59, 130, 246, 0.08);
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 36px;
+  height: 68px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 32px;
+  gap: 40px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   cursor: pointer;
   flex-shrink: 0;
+  text-decoration: none;
 }
 
 .logoSvg {
-  width: 50px;
-  height: auto;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
 }
 
-
 .brandText {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #f5e6d8;
-  letter-spacing: 0.05em;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(59, 130, 246, 0.2);
+  flex-shrink: 0;
 }
 
 .nav {
   display: flex;
-  gap: 24px;
-  flex: 1;
+  gap: 4px;
+  align-items: center;
 }
 
 .navLink {
-  color: #ddc9b4;
+  color: #475569;
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 600;
-  transition: all 0.2s ease;
-  position: relative;
-  padding-bottom: 4px;
-  border-bottom: 2px solid transparent;
+  padding: 8px 16px;
+  border-radius: 9px;
+  transition: all 0.18s ease;
 }
 
 .navLink:hover {
-  color: #fff8f2;
-  border-bottom-color: rgba(196, 162, 130, 0.7);
+  color: #ea580c;
+  background: rgba(234, 88, 12, 0.08);
+}
+
+.navLink.active {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+  font-weight: 700;
 }
 
 .actions {
   display: flex;
   gap: 12px;
+  align-items: center;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .logoutBtn {
-  padding: 8px 16px;
-  border: 1px solid rgba(196, 162, 130, 0.5);
+  padding: 9px 22px;
+  border: 1.5px solid rgba(59, 130, 246, 0.45);
   background: transparent;
-  color: #f5e6d8;
-  border-radius: 6px;
+  color: #3b82f6;
+  border-radius: 9px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .logoutBtn:hover {
-  background: rgba(196, 162, 130, 0.15);
-  border-color: rgba(196, 162, 130, 0.8);
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
 }
 
 @media (max-width: 720px) {
   .container {
-    gap: 16px;
-    padding: 0 14px;
+    height: 60px;
+    padding: 0 20px;
+    gap: 24px;
   }
 
-  .brand {
-    gap: 8px;
-  }
-
-  .logoSvg {
-    width: 40px;
-  }
-
-  .brandText {
-    font-size: 0.9rem;
-  }
-
-  .nav {
-    gap: 12px;
-    flex: none;
-  }
-
-  .navLink {
-    font-size: 0.85rem;
-    padding: 0;
-  }
-
-  .logoutBtn {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-  }
+  .logoSvg { width: 38px; height: 38px; }
+  .brandText { font-size: 0.95rem; }
+  .navLink { font-size: 0.88rem; padding: 7px 12px; }
+  .logoutBtn { padding: 7px 16px; font-size: 0.85rem; }
 }
 
 @media (max-width: 480px) {
   .container {
-    gap: 8px;
-    padding: 0 10px;
+    height: 56px;
+    padding: 0 14px;
+    gap: 12px;
   }
 
-  .brand {
-    gap: 6px;
-  }
-
-  .logoSvg {
-    width: 35px;
-  }
-
-  .brandText {
-    display: none;
-  }
-
-  .nav {
-    display: none;
-  }
-
-  .logoutBtn {
-    padding: 6px 10px;
-    font-size: 0.75rem;
-  }
+  .logoSvg { width: 34px; height: 34px; }
+  .brandText { display: none; }
+  .divider { display: none; }
+  .nav { display: none; }
+  .logoutBtn { padding: 6px 12px; font-size: 0.8rem; }
 }
