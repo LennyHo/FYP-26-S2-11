@@ -321,42 +321,47 @@ export default function UserAdminDashboardPage() {
 
         <section className={styles.tabsSection}>
           <div className={styles.tabsBar}>
-            <div className={styles.tabsNav}>
-              <button
-                type="button"
-                className={`${styles.tab} ${activeTab === 'profiles' ? styles.active : ''}`}
-                onClick={() => setActiveTab('profiles')}
-              >
-                User Profiles
-              </button>
-              <button
-                type="button"
-                className={`${styles.tab} ${activeTab === 'accounts' ? styles.active : ''}`}
-                onClick={() => setActiveTab('accounts')}
-              >
-                User Accounts
+            <div className={styles.tabsLeft}>
+              <div className={styles.tabsNav}>
+                <button
+                  type="button"
+                  className={`${styles.tab} ${activeTab === 'profiles' ? styles.active : ''}`}
+                  onClick={() => setActiveTab('profiles')}
+                >
+                  User Profiles
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.tab} ${activeTab === 'accounts' ? styles.active : ''}`}
+                  onClick={() => setActiveTab('accounts')}
+                >
+                  User Accounts
+                </button>
+              </div>
+              <button type="button" className={styles.actionButton} onClick={openCreateModal}>
+                <FaPlus /> New User
               </button>
             </div>
 
             <div className={styles.searchWrapper}>
-              <FaSearch className={styles.searchIcon} />
-              <input
-                type="text"
-                placeholder={activeTab === 'profiles' ? 'Search profiles by name or email...' : 'Search accounts by username or email...'}
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className={styles.searchInput}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  className={styles.searchClear}
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Clear search"
-                >
-                  <FaTimes />
-                </button>
-              )}
+                <FaSearch className={styles.searchIcon} />
+                <input
+                  type="text"
+                  placeholder={activeTab === 'profiles' ? 'Search profiles by name or email...' : 'Search accounts by username or email...'}
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className={styles.searchInput}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className={styles.searchClear}
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                  >
+                    <FaTimes />
+                  </button>
+                )}
             </div>
           </div>
         </section>
@@ -367,9 +372,6 @@ export default function UserAdminDashboardPage() {
           <section className={styles.tabContent}>
             <div className={styles.sectionHeader}>
               <h2>User Profiles Management</h2>
-              <button type="button" className={styles.actionButton} onClick={openCreateModal}>
-                <FaPlus /> Create New Profile
-              </button>
             </div>
 
             <div className={styles.tableContainer}>
@@ -441,9 +443,6 @@ export default function UserAdminDashboardPage() {
           <section className={styles.tabContent}>
             <div className={styles.sectionHeader}>
               <h2>User Accounts Management</h2>
-              <button type="button" className={styles.actionButton} onClick={openCreateModal}>
-                <FaPlus /> Create New Account
-              </button>
             </div>
 
             <div className={styles.tableContainer}>
@@ -579,7 +578,7 @@ export default function UserAdminDashboardPage() {
             <div className={styles.modalBody}>
               <div className={styles.modalHeader}>
                 <div className={styles.modalAvatar}>
-                  {formMode === 'create' ? '➕' : '✏️'}
+                  {formMode === 'create' ? <FaPlus /> : <FaPen />}
                 </div>
                 <div className={styles.modalHeaderText}>
                   <h2 id="edit-user-title">{formMode === 'create' ? 'Create User' : 'Edit User'}</h2>
@@ -611,7 +610,7 @@ export default function UserAdminDashboardPage() {
                   />
                 </label>
                 {formMode === 'create' && (
-                  <label>
+                  <label className={styles.formGridFull}>
                     Password
                     <input
                       type="password"
@@ -639,7 +638,7 @@ export default function UserAdminDashboardPage() {
                     ))}
                   </select>
                 </label>
-                <label>
+                <label className={styles.formGridFull}>
                   Address
                   <input
                     value={formData.address}
