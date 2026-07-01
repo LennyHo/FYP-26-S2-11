@@ -1,11 +1,13 @@
 .page {
-  position: relative;
-  min-height: 100vh;
-  padding: 24px;
-  display: grid;
-  place-items: center;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
-  background: #f5e8d8;
+  padding: 20px 16px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #eff6ff 0%, #fff7ed 100%);
   animation: pageEnter 0.5s ease-out;
 }
 
@@ -18,12 +20,12 @@
   left: -50%;
   z-index: 0;
   background:
-    radial-gradient(ellipse at 30% 40%, #f0d9cb 0%, transparent 55%),
-    radial-gradient(ellipse at 72% 28%, #ecdce8 0%, transparent 50%),
-    radial-gradient(ellipse at 55% 75%, #f9e6d5 0%, transparent 55%),
-    radial-gradient(ellipse at 18% 72%, #e6d0d8 0%, transparent 52%),
-    radial-gradient(ellipse at 80% 80%, #f0d9cb 0%, transparent 50%),
-    #f7efe4;
+    radial-gradient(ellipse at 30% 40%, rgba(59, 130, 246, 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 72% 28%, rgba(234, 88, 12, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 55% 75%, rgba(59, 130, 246, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 18% 72%, rgba(234, 88, 12, 0.08) 0%, transparent 52%),
+    radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.10) 0%, transparent 50%),
+    #eff6ff;
   animation: bgDrift 20s ease-in-out infinite;
   will-change: transform;
 }
@@ -50,34 +52,34 @@
 .shell {
   position: relative;
   z-index: 1;
-  width: min(1120px, 100%);
+  width: min(1060px, 100%);
   margin: 0 auto;
 }
 
 .card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr);
-  border-radius: 28px;
+  border-radius: 24px;
   overflow: hidden;
-  background: rgba(255, 250, 245, 0.94);
-  border: 1px solid rgba(220, 199, 180, 0.9);
-  box-shadow: 0 20px 48px rgba(86, 55, 39, 0.18);
-  max-width: 1060px;
+  background: rgba(255, 250, 245, 0.96);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  box-shadow: 0 20px 48px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 39, 26, 0.06);
+  max-width: 960px;
 }
 
 .copyPanel {
-  padding: 28px 28px 24px;
+  padding: 24px 26px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  background: linear-gradient(180deg, rgba(255, 253, 248, 0.95), rgba(250, 241, 232, 0.94));
+  gap: 12px;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(239, 246, 255, 0.9));
 }
 
 .brandTop {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
 }
 
 .brandMark {
@@ -88,7 +90,7 @@
 .logoFrame {
   display: inline-flex;
   align-items: center;
-  width: 72px;
+  width: 64px;
   max-width: 100%;
 }
 
@@ -101,13 +103,13 @@
 .heroCopy {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   max-width: 26rem;
 }
 
 .title {
-  color: #3b2714;
-  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  color: #1e3a5f;
+  font-size: clamp(1.6rem, 2.5vw, 2.1rem);
   line-height: 1.15;
   letter-spacing: -0.04em;
   font-weight: 800;
@@ -116,40 +118,40 @@
 .subtitle {
   max-width: 24rem;
   color: #9d8878;
-  font-size: 0.875rem;
-  line-height: 1.55;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   max-width: 26rem;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 .label {
   color: #1f1814;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
 .input {
   width: 100%;
-  min-height: 42px;
+  min-height: 40px;
   padding: 0 12px;
-  border-radius: 13px;
-  border: 1px solid rgba(220, 199, 180, 0.95);
+  border-radius: 10px;
+  border: 1.5px solid rgba(220, 199, 180, 0.95);
   background: rgba(255, 255, 255, 0.92);
   color: #17110f;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .input::placeholder {
@@ -157,8 +159,8 @@
 }
 
 .input:focus {
-  border-color: rgba(160, 116, 77, 0.9);
-  box-shadow: 0 0 0 4px rgba(160, 116, 77, 0.12);
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
 }
 
 .inputError {
@@ -198,8 +200,8 @@
 }
 
 .togglePassword:hover {
-  color: #6b4f37;
-  background: rgba(160, 116, 77, 0.1);
+  color: #ea580c;
+  background: rgba(234, 88, 12, 0.08);
 }
 
 .actionsRow {
@@ -210,48 +212,62 @@
 .forgot {
   border: 0;
   background: transparent;
-  color: #9c6f48;
+  color: #ea580c;
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
 }
 
+.forgot:hover {
+  text-decoration: underline;
+}
+
 .button {
-  min-height: 44px;
+  min-height: 42px;
   padding: 0 18px;
   border: 0;
-  border-radius: 13px;
-  background: linear-gradient(135deg, #4b311f, #2f2016);
-  color: #fff8f2;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  color: #fff;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 18px rgba(59, 39, 26, 0.14);
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.28);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 24px rgba(59, 39, 26, 0.17);
+  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.38);
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .footerRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
   color: #7f7067;
   font-size: 0.8rem;
 }
 
 .registerLink {
-  color: #8d633f;
+  color: #ea580c;
   font-weight: 800;
 }
 
+.registerLink:hover {
+  text-decoration: underline;
+}
+
 .testButtons {
-  margin-top: 8px;
-  padding-top: 12px;
+  margin-top: 6px;
+  padding-top: 10px;
   border-top: 1px solid rgba(220, 199, 180, 0.5);
 }
 
@@ -259,7 +275,7 @@
   font-size: 0.75rem;
   color: #9d948d;
   font-weight: 700;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -267,44 +283,43 @@
 .testButtonsGroup {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
 .testButton {
-  padding: 8px 10px;
-  border: 1px solid rgba(160, 116, 77, 0.4);
+  padding: 6px 8px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 8px;
-  background: rgba(255, 248, 242, 0.6);
-  color: #8d633f;
-  font-size: 0.78rem;
+  background: rgba(239, 246, 255, 0.6);
+  color: #3b82f6;
+  font-size: 0.76rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .testButton:hover {
-  background: rgba(160, 116, 77, 0.08);
-  border-color: rgba(160, 116, 77, 0.7);
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.6);
   transform: translateY(-1px);
 }
 
 .testButton:active {
   transform: translateY(0);
-  background: rgba(160, 116, 77, 0.12);
 }
 
 .visualPanel {
   padding: 10px 10px 10px 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(248, 220, 198, 0.24));
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.3), rgba(254, 215, 170, 0.2));
 }
 
 .visualFrame {
   position: relative;
   height: 100%;
-  min-height: 420px;
-  border-radius: 22px;
+  min-height: 300px;
+  border-radius: 18px;
   overflow: hidden;
-  background: linear-gradient(180deg, #8a5d84 0%, #e6a77b 28%, #f5d491 60%, #f6e7c9 100%);
+  background: linear-gradient(180deg, #3b82f6 0%, #e6a77b 40%, #f5d491 72%, #f6e7c9 100%);
 }
 
 .visualGlow {
@@ -345,7 +360,7 @@
   position: absolute;
   bottom: -10px;
   right: -10px;
-  width: 160px;
+  width: 140px;
   height: auto;
   object-fit: contain;
   pointer-events: none;
@@ -357,11 +372,11 @@
   }
 
   .visualPanel {
-    padding: 0 14px 14px;
+    padding: 0 12px 12px;
   }
 
   .visualFrame {
-    min-height: 420px;
+    min-height: 220px;
   }
 
   .form {
@@ -379,16 +394,16 @@
   }
 
   .copyPanel {
-    padding: 22px 18px 18px;
-    gap: 12px;
+    padding: 18px 16px 16px;
+    gap: 10px;
   }
 
   .brandTop {
-    gap: 8px;
+    gap: 6px;
   }
 
   .logoFrame {
-    width: 64px;
+    width: 56px;
   }
 
   .title {
@@ -396,96 +411,12 @@
   }
 
   .subtitle {
-    font-size: 0.82rem;
-  }
-
-  .form {
-    gap: 10px;
-    max-width: 100%;
-  }
-
-  .field {
-    gap: 6px;
-  }
-
-  .input {
-    min-height: 40px;
-    padding: 0 11px;
-    font-size: 16px;
-  }
-
-  .label {
-    font-size: 0.82rem;
-  }
-
-  .button {
-    min-height: 42px;
-    font-size: 0.88rem;
-  }
-
-  .footerRow {
-    font-size: 0.78rem;
-    gap: 4px;
-  }
-
-  .testButtons {
-    margin-top: 6px;
-    padding-top: 10px;
-  }
-
-  .testLabel {
-    font-size: 0.72rem;
-    margin-bottom: 6px;
-  }
-
-  .testButtonsGroup {
-    gap: 6px;
-  }
-
-  .testButton {
-    padding: 7px 8px;
-    font-size: 0.75rem;
-  }
-
-  .visualPanel {
-    padding: 0 10px 10px;
-  }
-
-  .visualFrame {
-    min-height: 320px;
-  }
-}
-
-@media (max-width: 480px) {
-  .page {
-    padding: 12px;
-  }
-
-  .copyPanel {
-    padding: 18px 14px 14px;
-    gap: 10px;
-  }
-
-  .brandTop {
-    gap: 8px;
-  }
-
-  .logoFrame {
-    width: 60px;
-  }
-
-  .title {
-    font-size: 1.3rem;
-    white-space: normal;
-  }
-
-  .subtitle {
     font-size: 0.8rem;
-    line-height: 1.4;
   }
 
   .form {
-    gap: 9px;
+    gap: 8px;
+    max-width: 100%;
   }
 
   .field {
@@ -494,9 +425,8 @@
 
   .input {
     min-height: 38px;
-    padding: 0 10px;
+    padding: 0 11px;
     font-size: 16px;
-    border-radius: 10px;
   }
 
   .label {
@@ -505,16 +435,12 @@
 
   .button {
     min-height: 40px;
-    padding: 0 14px;
-    font-size: 0.85rem;
-  }
-
-  .forgot {
-    font-size: 0.75rem;
+    font-size: 0.87rem;
   }
 
   .footerRow {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
+    gap: 4px;
   }
 
   .testButtons {
@@ -523,8 +449,73 @@
   }
 
   .testLabel {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     margin-bottom: 5px;
+  }
+
+  .testButtonsGroup {
+    gap: 5px;
+  }
+
+  .testButton {
+    padding: 6px 6px;
+    font-size: 0.74rem;
+  }
+
+  .visualPanel {
+    padding: 0 10px 10px;
+  }
+
+  .visualFrame {
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 10px;
+  }
+
+  .copyPanel {
+    padding: 16px 13px 13px;
+    gap: 9px;
+  }
+
+  .logoFrame {
+    width: 52px;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .subtitle {
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .form {
+    gap: 7px;
+  }
+
+  .input {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 16px;
+    border-radius: 9px;
+  }
+
+  .button {
+    min-height: 38px;
+    font-size: 0.85rem;
+  }
+
+  .forgot {
+    font-size: 0.74rem;
+  }
+
+  .footerRow {
+    font-size: 0.75rem;
   }
 
   .testButtonsGroup {
@@ -533,11 +524,11 @@
   }
 
   .testButton {
-    padding: 6px 6px;
+    padding: 5px 5px;
     font-size: 0.7rem;
   }
 
   .visualFrame {
-    min-height: 280px;
+    min-height: 180px;
   }
 }
