@@ -39,7 +39,7 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
 import { createUserAccount, getUsers, suspendUser, updateUser } from '../utils/adminApi';
 import { clearStoredUser, type DripTeaUser } from '../utils/api.base';
@@ -320,31 +320,44 @@ export default function UserAdminDashboardPage() {
         </div>
 
         <section className={styles.tabsSection}>
-          <div className={styles.tabsNav}>
-            <button
-              type="button"
-              className={`${styles.tab} ${activeTab === 'profiles' ? styles.active : ''}`}
-              onClick={() => setActiveTab('profiles')}
-            >
-              User Profiles
-            </button>
-            <button
-              type="button"
-              className={`${styles.tab} ${activeTab === 'accounts' ? styles.active : ''}`}
-              onClick={() => setActiveTab('accounts')}
-            >
-              User Accounts
-            </button>
-          </div>
+          <div className={styles.tabsBar}>
+            <div className={styles.tabsNav}>
+              <button
+                type="button"
+                className={`${styles.tab} ${activeTab === 'profiles' ? styles.active : ''}`}
+                onClick={() => setActiveTab('profiles')}
+              >
+                User Profiles
+              </button>
+              <button
+                type="button"
+                className={`${styles.tab} ${activeTab === 'accounts' ? styles.active : ''}`}
+                onClick={() => setActiveTab('accounts')}
+              >
+                User Accounts
+              </button>
+            </div>
 
-          <div className={styles.searchContainer}>
-            <input
-              type="text"
-              placeholder={activeTab === 'profiles' ? 'Search profiles by name or email...' : 'Search accounts by username or email...'}
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              className={styles.searchInput}
-            />
+            <div className={styles.searchWrapper}>
+              <FaSearch className={styles.searchIcon} />
+              <input
+                type="text"
+                placeholder={activeTab === 'profiles' ? 'Search profiles by name or email...' : 'Search accounts by username or email...'}
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className={styles.searchInput}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className={styles.searchClear}
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </div>
           </div>
         </section>
 
