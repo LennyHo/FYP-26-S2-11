@@ -158,6 +158,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     pendingImages: ui.pendingImages,
     setPendingImages: ui.setPendingImages,
     setInput,
+    router,
     isListening: speech.isListening,
     setIsListening: speech.setIsListening,
     isListeningRef: speech.isListeningRef,

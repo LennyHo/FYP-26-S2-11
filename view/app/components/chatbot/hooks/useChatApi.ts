@@ -11,6 +11,7 @@
 "use client";
 
 import { useState } from 'react';
+import type { useRouter } from 'next/navigation';
 import { getStoredUser } from '../../../utils/api.base';
 import { sendChatMessage, sendChatImage } from '../../../utils/chatbotApi';
 import { createConversationId, speakText } from '../../../utils/chatHelpers';
@@ -28,6 +29,7 @@ interface UseChatApiProps {
   pendingImages: Array<{ name: string; previewUrl: string; source: string }>;
   setPendingImages: React.Dispatch<React.SetStateAction<any[]>>;
   setInput: (value: string) => void;
+  router: ReturnType<typeof useRouter>;
   // Speech refs needed to stop mic when sending in speak mode
   isListening: boolean;
   setIsListening: (v: boolean) => void;
@@ -47,6 +49,7 @@ export function useChatApi({
   pendingImages,
   setPendingImages,
   setInput,
+  router,
   isListening,
   setIsListening,
   isListeningRef,
@@ -81,9 +84,11 @@ export function useChatApi({
       ? (payload.cartUpdate as Message['cartUpdate']) : null;
     const purchaseHistory = payload.purchaseHistory && typeof payload.purchaseHistory === 'object'
       ? (payload.purchaseHistory as Message['purchaseHistory']) : null;
+    const systemAction = payload.system_action && typeof payload.system_action === 'object'
+      ? (payload.system_action as { ui_navigation?: string }) : null;
     const strippedReply = rawReply.replace(/<div[^>]*class="[^"]*hidden-cart-data[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
     const sanitizedReply = strippedReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
-    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, showViewCart: payload.showViewCart };
+    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, showViewCart: payload.showViewCart, systemAction };
   }
 
   async function sendMessage(messageText: string, shouldSpeak: boolean = false, isQuickPrompt: boolean = false) {
@@ -151,9 +156,14 @@ export function useChatApi({
 
     try {
       const response = await sendChatMessage({ message: messageText, conversationId: convId, userId: getCurrentUserId(), isQuickPrompt });
-      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, showViewCart } = parsePayload(await response.json());
+      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, showViewCart, systemAction } = parsePayload(await response.json());
       const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory };
       setMessages(prev => [...prev, botMsg]);
+
+      // #26 - Navigate Website via Chatbot: backend resolved a destination page, jump there now.
+      if (systemAction?.ui_navigation && systemAction.ui_navigation !== 'none') {
+        router.push(systemAction.ui_navigation);
+      }
 
       if (shouldSpeak) {
         const plainText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
@@ -198,6 +208,13 @@ export function useChatApi({
         purchaseHistory: payload.purchaseHistory && typeof payload.purchaseHistory === 'object' ? (payload.purchaseHistory as Message['purchaseHistory']) : null,
       };
       setOverlayMessages(prev => [...prev, botMsg]);
+
+      // #26 - Navigate Website via Chatbot: also honour navigation intents spoken in speak mode.
+      const overlaySystemAction = payload.system_action && typeof payload.system_action === 'object'
+        ? (payload.system_action as { ui_navigation?: string }) : null;
+      if (overlaySystemAction?.ui_navigation && overlaySystemAction.ui_navigation !== 'none') {
+        router.push(overlaySystemAction.ui_navigation);
+      }
       if (shouldSpeak) {
         const baseText = botMsg.text.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
         const drinks = botMsg.recommendedDrinks;

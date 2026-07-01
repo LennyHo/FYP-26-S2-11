@@ -10,7 +10,7 @@
 //      View: cart/edit/[cartItemId]/page.tsx → Route: cart.routes.js (this file) → Ctrl: cart.controller.js → Model: cartItem.model.js
 //
 // #199 Add to Cart via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Route: cart.routes.js (this file) → Ctrl: cart.controller.js → Model: cartItem.model.js
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Route: cart.routes.js (this file) → Ctrl: cart.controller.js → Model: menuItem.model.js, cartItem.model.js
 //
 // #200 View Cart via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Route: cart.routes.js (this file) → Ctrl: cart.controller.js → Model: cartItem.model.js

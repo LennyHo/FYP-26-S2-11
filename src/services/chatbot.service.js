@@ -1602,6 +1602,106 @@ function extractBothCustomization(message) {
     return parseCustomizationFromMessage(message.substring(bothIdx + 5));
 }
 
+// #26 - As a customer, I want the chatbot to navigate me to a page on the website so that I can find what I need quickly.
+// Directory of destinations the chatbot can jump the customer to. `aliases` are matched against
+// intentMessage, which is already translated to English (see detectMessageLanguage/translateToEnglish
+// in handleChatMessage), so this list only needs English phrasing to support EN/MS/ZH/TA input.
+const PAGE_DIRECTORY = [
+    { key: "home", route: "/", aliases: ["home page", "homepage", "main page", "landing page", "home"],
+        labels: { en: "Home", ms: "Laman Utama", zh: "首页", ta: "முகப்பு" } },
+    { key: "menu", route: "/menu", aliases: ["menu page", "beverage menu", "drinks menu", "drink menu", "menu"],
+        labels: { en: "Menu", ms: "Menu", zh: "菜单", ta: "மெனு" } },
+    { key: "cart", route: "/cart", aliases: ["cart page", "shopping cart", "basket page", "cart", "basket"],
+        labels: { en: "Cart", ms: "Troli", zh: "购物车", ta: "கார்ட்" } },
+    { key: "checkout", route: "/checkout", aliases: ["checkout page", "payment page", "checkout"],
+        labels: { en: "Checkout", ms: "Daftar Keluar", zh: "结账", ta: "செக்அவுட்" } },
+    { key: "purchase-history", route: "/purchase-history", aliases: ["purchase history page", "purchase history", "order history page", "order history", "my orders page", "my orders"],
+        labels: { en: "Purchase History", ms: "Sejarah Pembelian", zh: "购买记录", ta: "கொள்முதல் வரலாறு" } },
+    { key: "order-status", route: "/order-status", aliases: ["order status page", "order status", "track order page", "track my order", "tracking page"],
+        labels: { en: "Order Status", ms: "Status Pesanan", zh: "订单状态", ta: "ஆர்டர் நிலை" } },
+    { key: "profile", route: "/profile", aliases: ["profile page", "my profile", "account page", "account settings", "profile"],
+        labels: { en: "Profile", ms: "Profil", zh: "个人资料", ta: "சுயவிவரம்" } },
+    { key: "our-story", route: "/our-story", aliases: ["our story page", "our story", "about us page", "about page", "about us"],
+        labels: { en: "Our Story", ms: "Kisah Kami", zh: "我们的故事", ta: "எங்கள் கதை" } },
+    { key: "contact", route: "/contact", aliases: ["contact us page", "contact page", "contact us", "contact"],
+        labels: { en: "Contact Us", ms: "Hubungi Kami", zh: "联系我们", ta: "எங்களை தொடர்பு கொள்ளுங்கள்" } },
+    { key: "global-stores", route: "/global-stores", aliases: ["store locator", "stores page", "store locations", "outlets page", "nearby stores", "find a store"],
+        labels: { en: "Store Locator", ms: "Lokasi Kedai", zh: "门店位置", ta: "கடை இருப்பிடங்கள்" } },
+    { key: "delivery", route: "/delivery", aliases: ["delivery page", "delivery"],
+        labels: { en: "Delivery", ms: "Penghantaran", zh: "外送", ta: "டெலிவரி" } },
+    { key: "login", route: "/login", aliases: ["login page", "log in page", "sign in page", "log in", "login"],
+        labels: { en: "Login", ms: "Log Masuk", zh: "登录", ta: "உள்நுழைவு" } },
+    { key: "register", route: "/register", aliases: ["register page", "sign up page", "registration page", "sign up", "register"],
+        labels: { en: "Register", ms: "Daftar", zh: "注册", ta: "பதிவு" } },
+];
+
+// Strong verbs are unambiguous navigation intent on their own ("lead me to the cart").
+// Weak verbs ("go to", "open") only count as navigation when paired with the word "page",
+// so they don't collide with existing intents like isRecommendationRequest's "show me X drinks".
+const NAV_STRONG_TRIGGER_RE = /\b(lead me to|guide me to|take me to|bring me to|navigate to|direct me to|redirect me to|switch to the)\b/i;
+const NAV_WEAK_TRIGGER_RE = /\b(go to|open|jump to)\b/i;
+const NAV_PAGE_WORD_RE = /\bpage\b/i;
+
+function isNavigationRequest(message) {
+    const msg = String(message || "").toLowerCase();
+    if (NAV_STRONG_TRIGGER_RE.test(msg)) return true;
+    return NAV_WEAK_TRIGGER_RE.test(msg) && NAV_PAGE_WORD_RE.test(msg);
+}
+
+// Finds the destination whose alias is the longest match found in the message —
+// longer aliases are more specific ("order history" beats a bare "order").
+function matchPageFromMessage(message) {
+    const msg = String(message || "").toLowerCase();
+    let best = null;
+    let bestLen = 0;
+    for (const page of PAGE_DIRECTORY) {
+        for (const alias of page.aliases) {
+            if (alias.length > bestLen && msg.includes(alias)) {
+                best = page;
+                bestLen = alias.length;
+            }
+        }
+    }
+    return best;
+}
+
+// Sequence: ChatbotGUI → POST /chat → ChatbotService.generateNavigationResponse(prompt) → Gemini API → systemAction.
+// Keyword matching handles the vast majority of requests instantly and for free; Gemini is only
+// consulted when the customer clearly wants to navigate (isNavigationRequest passed) but phrased
+// the destination in a way no alias covers (e.g. "bring me back to where I can see what I bought").
+async function generateNavigationResponse(intentMessage) {
+    const matched = matchPageFromMessage(intentMessage);
+    if (matched) return matched;
+
+    try {
+        const pageKeys = PAGE_DIRECTORY.map((p) => p.key).join(", ");
+        const prompt =
+            `The customer wants to navigate to a page on our bubble tea ordering website. ` +
+            `Available page keys: ${pageKeys}. Customer message: "${intentMessage}". ` +
+            `Reply with ONLY the single best matching page key from the list, or reply with NONE if nothing matches well.`;
+
+        const raw = await aiClient.generateText(
+            prompt,
+            [],
+            "You are a strict page-name classifier for a website chatbot. Respond with exactly one word: a page key or NONE. No punctuation, no explanation."
+        );
+
+        const key = String(raw || "").trim().toLowerCase().replace(/[^a-z-]/g, "");
+        return PAGE_DIRECTORY.find((p) => p.key === key) || null;
+    } catch (error) {
+        console.warn("[ChatbotService] generateNavigationResponse Gemini fallback failed:", error.message);
+        return null;
+    }
+}
+
+const NAV_REPLY_TEMPLATES = {
+    en: (label) => `Sure! Taking you to the ${label} page now.`,
+    ms: (label) => `Baiklah! Membawa anda ke halaman ${label} sekarang.`,
+    zh: (label) => `好的！马上带您前往${label}页面。`,
+    ta: (label) => `சரி! இப்போது உங்களை ${label} பக்கத்திற்கு அழைத்துச் செல்கிறேன்.`,
+};
+// End of User Story #26
+
 // Multilingual short reply strings for hardcoded (non-Gemini) response paths.
 // Gemini-based paths are already localised via the language instruction in the system prompt.
 const REPLY_STRINGS = {
@@ -1713,6 +1813,12 @@ const REPLY_STRINGS = {
         ms: "Sila log masuk sebelum saya boleh membuat semula pesanan anda.",
         ta: "முந்தைய ஆர்டரை மீண்டும் செய்ய உள்நுழையுங்கள்.",
     },
+    navigationNotFound: {
+        en: "Sorry, I couldn't find that page. You can ask me to take you to the Menu, Cart, Checkout, Purchase History, Order Status, Profile, or Contact Us page.",
+        zh: "抱歉，我找不到该页面。您可以让我带您前往菜单、购物车、结账、购买记录、订单状态、个人资料或联系我们页面。",
+        ms: "Maaf, saya tidak dapat menemui halaman itu. Anda boleh minta saya bawa anda ke halaman Menu, Troli, Daftar Keluar, Sejarah Pembelian, Status Pesanan, Profil, atau Hubungi Kami.",
+        ta: "மன்னிக்கவும், அந்தப் பக்கத்தை என்னால் கண்டுபிடிக்க முடியவில்லை. மெனு, கார்ட், செக்அவுட், கொள்முதல் வரலாறு, ஆர்டர் நிலை, சுயவிவரம் அல்லது எங்களை தொடர்பு கொள்ளுங்கள் பக்கத்திற்கு அழைத்துச் செல்லும்படி என்னிடம் கேட்கலாம்.",
+    },
 };
 
 // Main chatbot message handler
@@ -1748,6 +1854,48 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     if (isQuickPrompt) {
         return await handleQuickPromptWithGemini({ safeMessage, activeConversationId, userId, history: recentHistory });
     }
+
+    // User Story #26: Navigate Website via Chatbot
+    // Checked before every other intent so phrases like "lead me to Purchase history page"
+    // aren't swallowed by isPurchaseHistory/isViewCartRequest, which also match "purchase history"/"cart".
+    if (isNavigationRequest(intentMessage)) {
+        const page = await generateNavigationResponse(intentMessage);
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "user",
+            content: safeMessage,
+        });
+
+        if (page) {
+            const label = page.labels[detectedLang] || page.labels.en;
+            const templateFn = NAV_REPLY_TEMPLATES[detectedLang] || NAV_REPLY_TEMPLATES.en;
+            const reply = templateFn(label);
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "assistant",
+                content: reply,
+            });
+
+            return {
+                reply,
+                system_action: { ui_navigation: page.route },
+            };
+        }
+
+        // Iterative flow: No Result Found — Gemini couldn't match a real page, fall back to a helpful reply.
+        const fallback = t("navigationNotFound");
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "assistant",
+            content: fallback,
+        });
+
+        return {
+            reply: fallback,
+            system_action: { ui_navigation: "none" },
+        };
+    }
+    // End of User Story #26
 
     // User Story #31: Ask About Nutri-Grade via chatbot
     if (isNutriGradeQuestion(intentMessage)) {
@@ -3204,4 +3352,5 @@ ${menuSummary}`;
 module.exports = {
     handleChatMessage,
     handleImageMessage,
+    generateNavigationResponse,
 };
