@@ -42,6 +42,14 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     };
   }, []);
 
+  // Lets any page react (via plain CSS) to the chatbot actually being open —
+  // container/viewport queries can't tell, since .mainPane often still stays
+  // wide enough for .main to hit its own max-width cap either way.
+  useEffect(() => {
+    document.body.classList.toggle('driptea-chat-open', isChatOpen);
+    return () => document.body.classList.remove('driptea-chat-open');
+  }, [isChatOpen]);
+
   const hideChatbot =
     pathname.startsWith('/user-admin') ||
     pathname.startsWith('/store-staff') ||

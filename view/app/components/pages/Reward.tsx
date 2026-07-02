@@ -57,21 +57,26 @@ export default function Reward() {
       <Header />
 
       <main className="reward-main">
-        {/* Header */}
-        <div className="reward-header">
-          <div className="reward-header-top">
-            <div className="reward-header-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 12v9H4v-9" />
-                <path d="M2 7h20v5H2z" />
-                <path d="M12 22V7" />
-                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
-                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
-              </svg>
-            </div>
-            <h1>Rewards</h1>
+        {/* Highlight banner — pillar-style callout showing how many rewards are ready */}
+        <div className="reward-highlight">
+          <div className="reward-highlight-pillar">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 12v9H4v-9" />
+              <path d="M2 7h20v5H2z" />
+              <path d="M12 22V7" />
+              <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+              <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+            </svg>
           </div>
-          <p className="reward-header-sub">Redeem vouchers on your next order</p>
+          <div className="reward-highlight-body">
+            <strong>{VOUCHERS.length} rewards waiting for you</strong>
+            <span>Redeem them on your next order before they expire</span>
+          </div>
+          <div className="reward-highlight-decor" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
         </div>
 
         {/* Sub tabs */}

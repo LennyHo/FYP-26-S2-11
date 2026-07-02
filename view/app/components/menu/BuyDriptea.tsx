@@ -14,22 +14,14 @@ import { useState, useEffect, useRef } from "react";
 import Header from '../layout/Header';
 import styles from './BuyDriptea.module.css';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getMenuItems } from '../../utils/customerApi';
 
 const categories = [
-  { name: 'Milk Tea', slug: 'milk-tea', tone: 'catBrown', image: '/img/bubble_teas/b004.jpg', desc: 'Creamy & classic' },
-  { name: 'Matcha Teas', slug: 'matcha-teas', tone: 'catGreen', image: '/img/bubble_teas/b007.jpg', desc: 'Earthy & bold' },
-  { name: 'Ice Blended', slug: 'ice-blended', tone: 'catBlue', image: '/img/bubble_teas/b010.jpg', desc: 'Cool & refreshing' },
-  { name: 'Fruit Teas', slug: 'fruit-teas', tone: 'catGold', image: '/img/bubble_teas/b012.jpg', desc: 'Taste of home' },
-];
-
-const moods = [
-  { label: 'Cozy & Classic', slug: 'milk-tea',       icon: '🤎' },
-  { label: 'Bold & Earthy',  slug: 'matcha-teas',    icon: '🍵' },
-  { label: 'Cool Me Down',   slug: 'ice-blended',    icon: '❄️' },
-  { label: 'Taste of Home',  slug: 'fruit-teas',     icon: '🏡' },
+  { name: 'Milk Tea', slug: 'milk-tea' },
+  { name: 'Matcha Teas', slug: 'matcha-teas' },
+  { name: 'Ice Blended', slug: 'ice-blended' },
+  { name: 'Fruit Teas', slug: 'fruit-teas' },
 ];
 
 // #19 Helper Function
@@ -51,7 +43,7 @@ export default function BuyDripTeaPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [allItems, setAllItems] = useState<MenuSearchItem[]>([]);
   const [searchError, setSearchError] = useState('');
-  const [activeMood, setActiveMood] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState(categories[0].slug);
   const menuSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -156,13 +148,26 @@ export default function BuyDripTeaPage() {
         {/* OUR MENU CATEGORIES SECTION */}
         <section className={styles.section} id="menu-section" ref={menuSectionRef}>
           <div className={styles.menuHeaderCard}>
+            <svg className={styles.menuHeaderArt} viewBox="0 0 200 240" fill="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="menuHeaderArtGradient" x1="0" y1="0" x2="200" y2="240" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#9b6d4a" />
+                  <stop offset="55%" stopColor="#c89a5a" />
+                  <stop offset="100%" stopColor="#7fae3f" />
+                </linearGradient>
+              </defs>
+              <path d="M50 70h100l-14 140a12 12 0 0 1-12 10H76a12 12 0 0 1-12-10L50 70Z" stroke="url(#menuHeaderArtGradient)" strokeWidth="4" strokeLinejoin="round" />
+              <path d="M50 70h100" stroke="url(#menuHeaderArtGradient)" strokeWidth="4" strokeLinecap="round" />
+              <path d="M108 70 128 20" stroke="url(#menuHeaderArtGradient)" strokeWidth="4" strokeLinecap="round" />
+              <circle cx="86" cy="148" r="6" fill="url(#menuHeaderArtGradient)" />
+              <circle cx="112" cy="150" r="6" fill="url(#menuHeaderArtGradient)" />
+              <circle cx="98" cy="168" r="6" fill="url(#menuHeaderArtGradient)" />
+              <circle cx="90" cy="188" r="6" fill="url(#menuHeaderArtGradient)" />
+            </svg>
+
             <div className={styles.sectionHeading}>
               <span className={styles.menuHeaderBadge}>✦ Now Brewing</span>
               <h2 className={styles.menuTitle}>Our <span className={styles.menuTitleAccent}>Menu</span></h2>
-              <div className={styles.menuTitleLine} aria-hidden="true" />
-              <p className={styles.sectionDesc}>
-                Whether you&apos;re craving something creamy, earthy, icy cool, or a taste of home, we have a blend that&apos;s just right for you. Browse our handcrafted categories, customize every sip to your liking, and discover your new favorite DripTea.
-              </p>
               <div className={styles.menuHeaderStats}>
                 <span className={styles.menuHeaderStat}><span className={styles.menuHeaderStatNum}>15+</span> Drinks</span>
                 <span className={styles.menuHeaderStatDot} aria-hidden="true" />
@@ -247,32 +252,73 @@ export default function BuyDripTeaPage() {
               )}
             </div>
           )}
-          {!searchTerm.trim() && <div className={styles.cardGrid}>
-            {categories.map((cat) => (
-              <Link
-                href={`/menu/${cat.slug}`}
-                key={cat.name}
-                className={`${styles.categoryCard} ${styles[cat.tone]} ${activeMood && activeMood !== cat.slug ? styles.categoryCardDimmed : ''}`}
-              >
-                <div className={styles.categoryVisual}>
-                  <Image
-                    src={cat.image}
-                    alt={cat.name}
-                    fill
-                    className={styles.categoryDrinkImage}
-                    sizes="(max-width: 960px) 100vw, 25vw"
-                  />
-                </div>
-                <div className={styles.categoryFooter}>
-                  <div className={styles.categoryFooterText}>
-                    <h3>{cat.name}</h3>
-                    <p className={styles.categoryDesc}>{cat.desc}</p>
+          {!searchTerm.trim() && (
+            <div className={styles.seriesBrowser}>
+              <aside className={styles.seriesSidebar}>
+                <h3 className={styles.seriesSidebarTitle}>Tea Series</h3>
+                <nav className={styles.seriesNav}>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.slug}
+                      type="button"
+                      className={`${styles.seriesNavItem} ${selectedCategory === cat.slug ? styles.seriesNavItemActive : ''}`}
+                      onClick={() => setSelectedCategory(cat.slug)}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </nav>
+              </aside>
+
+              {(() => {
+                const drinks = allItems.filter((item) => toCategorySlug(item.category) === selectedCategory);
+
+                if (drinks.length === 0) {
+                  return (
+                    <p key={selectedCategory} className={`${styles.noSearchResult} ${styles.seriesContentFade}`}>
+                      No drinks found for this category yet.
+                    </p>
+                  );
+                }
+
+                return (
+                  <div key={selectedCategory} className={`${styles.searchCardGrid} ${styles.seriesContentFade}`}>
+                    {drinks.map((drink) => (
+                      <article key={drink.id} className={styles.searchDrinkCard}>
+                        <div className={styles.searchImageWrapper}>
+                          <img
+                            src={drink.image || `/img/bubble_teas/${drink.id}.png`}
+                            alt={drink.name}
+                            className={styles.searchDrinkImage}
+                            onError={(event) => {
+                              event.currentTarget.src = "/img/bubble_teas/b001.png";
+                            }}
+                          />
+                          <span className={styles.searchPriceTag}>
+                            S$ {Number(drink.price || 0).toFixed(2)}
+                          </span>
+                        </div>
+
+                        <div className={styles.searchDrinkInfo}>
+                          <h3>{drink.name}</h3>
+                          <p>{drink.description}</p>
+                        </div>
+
+                        <div className={styles.searchCardFooter}>
+                          <Link
+                            href={`/menu/${selectedCategory}/${drink.id}`}
+                            className={styles.searchAddButton}
+                          >
+                            Customize &amp; Add
+                          </Link>
+                        </div>
+                      </article>
+                    ))}
                   </div>
-                  <span className={styles.categoryArrow}>Browse <span className={styles.categoryArrowIcon}>›</span></span>
-                </div>
-              </Link>
-            ))}
-          </div>}
+                );
+              })()}
+            </div>
+          )}
         </section>
 
         {/*

@@ -10,46 +10,72 @@
   padding: 40px 0 96px;
 }
 
-/* ── Page header ─────────────────────────────── */
-.reward-header {
-  margin-bottom: 24px;
-}
-
-.reward-header-top {
+/* ── Highlight banner ──────────────────────────── */
+.reward-highlight {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 4px;
+  gap: 18px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  border-radius: 20px;
+  background: linear-gradient(120deg, #5b351f 0%, #7a4b2a 55%, #9a6a3d 100%);
+  box-shadow: 0 8px 22px rgba(91, 53, 31, 0.25);
+  overflow: hidden;
 }
 
-.reward-header-icon {
-  width: 44px;
-  height: 44px;
-  background: #5b351f;
+.reward-highlight-pillar {
+  flex-shrink: 0;
+  width: 52px;
+  height: 68px;
   border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #ffe9c7;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.reward-highlight-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.reward-highlight-body strong {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.reward-highlight-body span {
+  color: rgba(255, 240, 224, 0.82);
+  font-size: 13px;
+}
+
+/* Decorative stacked pillars, echoing the shape of the icon block on the left */
+.reward-highlight-decor {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.reward-header-icon svg {
-  color: #fff;
+.reward-highlight-decor span {
+  display: block;
+  width: 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.22);
 }
 
-.reward-header h1 {
-  margin: 0;
-  color: #2c1810;
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-}
-
-.reward-header-sub {
-  margin: 2px 0 0 58px;
-  color: #9a7a65;
-  font-size: 14px;
-}
+.reward-highlight-decor span:nth-child(1) { height: 26px; }
+.reward-highlight-decor span:nth-child(2) { height: 42px; background: rgba(255, 255, 255, 0.32); }
+.reward-highlight-decor span:nth-child(3) { height: 58px; background: rgba(255, 233, 199, 0.55); }
 
 /* ── Sub tabs (underline) ─────────────────────── */
 .reward-subtabs {
@@ -197,6 +223,10 @@
 
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 640px) {
+  .reward-highlight-decor {
+    display: none;
+  }
+
   .reward-card {
     grid-template-columns: 1fr;
   }

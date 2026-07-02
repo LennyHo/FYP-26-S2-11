@@ -56,7 +56,7 @@ const TIMELINE = [
   {
     year: '2026',
     title: 'Today & Tomorrow',
-    text: 'With over 35 locations worldwide, DripTea continues to innovate alongside Avy. Our vision remains: to craft exceptional beverages that bring joy to every cup, while honouring our planet and communities.',
+    text: 'AS DripTea continues to innovate and expand worldwide alongside Avy, our vision remains: to craft exceptional beverages that bring joy to every cup, while honouring our planet and communities.',
     icon: (
       <>
         <circle cx="12" cy="12" r="10" />
@@ -132,7 +132,7 @@ export default function OurStory() {
             From one small shop<br />to a cup you crave.
           </h1>
           <p className={styles.heroSub}>
-            A decade of passion, craft, and community — brewed into every drop.
+            A decade of passion, craft, and community, brewed into every drop.
           </p>
           <div className={styles.heroRule} />
         </div>

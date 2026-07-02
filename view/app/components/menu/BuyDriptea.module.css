@@ -255,6 +255,23 @@
 }
 
 
+.menuHeaderArt {
+  position: absolute;
+  right: 48px;
+  top: 8px;
+  width: 130px;
+  height: auto;
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (max-width: 960px) {
+  .menuHeaderArt {
+    display: none;
+  }
+}
+
 .menuHeaderBadge {
   display: inline-flex;
   align-items: center;
@@ -310,6 +327,8 @@
   height: 1px;
   background: rgba(141, 99, 63, 0.12);
   margin: 20px 0;
+  position: relative;
+  z-index: 1;
 }
 
 .sectionHeading {
@@ -361,43 +380,10 @@
   z-index: 1;
 }
 
-.menuTitleLine {
-  width: 52px;
-  height: 3px;
-  background: linear-gradient(90deg, #9b6d4a, #bfd37d);
-  border-radius: 999px;
-  position: relative;
-  z-index: 1;
-}
-
 .bundlePanel h2,
 .offerPanel h2 {
   font-size: clamp(1.6rem, 4vw, 2.4rem);
   color: var(--foreground);
-}
-
-.sectionDesc {
-  color: #7a6252;
-  font-size: 0.97rem;
-  line-height: 1.65;
-  max-width: 540px;
-  margin: 0;
-  font-weight: 500;
-  position: relative;
-  z-index: 1;
-}
-
-.cardGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-  align-items: start;
-}
-
-@media (min-width: 700px) {
-  .cardGrid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
 }
 
 .bundlePanel,
@@ -601,10 +587,6 @@
     grid-template-columns: 1fr;
   }
 
-  .cardGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .metaRow {
     grid-template-columns: 1fr;
   }
@@ -629,184 +611,91 @@
   }
 }
 
-/* ── Mood filter ──────────────────────────────────────────────── */
+/* ── Tea series browser (sidebar + drink grid) ──────────────────── */
 
-.moodFilterRow {
+.seriesBrowser {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
+  align-items: flex-start;
+  gap: 40px;
+  /* Lets the drink grid react to the space actually available to it — not just
+     the viewport — so it still reflows correctly when the chatbot panel is
+     open and squeezes .mainPane well below the viewport width. */
+  container-type: inline-size;
+  container-name: seriesBrowser;
 }
 
-.moodFilterLabel {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #9a7560;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
+.seriesSidebar {
+  flex: 0 0 190px;
+  position: sticky;
+  top: 24px;
+}
+
+.seriesSidebarTitle {
+  margin: 0 0 18px;
+  color: #2c1810;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
-.moodChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 9px 18px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(155, 109, 74, 0.24);
-  background: rgba(254, 250, 246, 0.72);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  color: #6b4020;
-  font-size: 0.83rem;
-  font-weight: 600;
-  cursor: pointer;
-  letter-spacing: 0.01em;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.moodChip:hover {
-  border-color: rgba(155, 109, 74, 0.50);
-  background: rgba(155, 109, 74, 0.10);
-}
-
-.moodChipActive {
-  background: rgba(155, 109, 74, 0.88);
-  border-color: rgba(155, 109, 74, 0.88);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(155, 109, 74, 0.28);
-}
-
-.moodChipActive:hover {
-  background: rgba(107, 62, 34, 0.92);
-  border-color: rgba(107, 62, 34, 0.92);
-}
-
-.moodChipIcon {
-  font-size: 1rem;
-  line-height: 1;
-}
-
-/* ── Category cards ───────────────────────────────────────────── */
-
-.categoryCard {
-  position: relative;
-  height: 380px;
-  border-radius: 22px;
-  border: 1.5px solid rgba(220, 199, 180, 0.40);
-  overflow: hidden;
-  text-decoration: none;
-  color: inherit;
-  box-shadow: 0 4px 18px rgba(59, 39, 26, 0.08);
-  transition: opacity 0.3s ease, filter 0.3s ease;
-}
-
-.categoryCardDimmed {
-  opacity: 0.32;
-  filter: grayscale(0.25);
-}
-
-
-/* Image fills entire card */
-.categoryVisual {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-/* Per-category background fallback (shows while image loads) */
-.catBrown .categoryVisual { background: linear-gradient(145deg, #fef0d2, #f5c878); }
-.catGreen .categoryVisual { background: linear-gradient(145deg, #e6f8d6, #a8d870); }
-.catBlue  .categoryVisual { background: linear-gradient(145deg, #daeefb, #88c6f0); }
-.catGold  .categoryVisual { background: linear-gradient(145deg, #fffad8, #f5d840); }
-
-.categoryDrinkImage {
-  object-fit: cover;
-  object-position: center center;
-}
-
-.catGold .categoryDrinkImage {
-  object-position: center 15%;
-}
-
-/* Frosted glass footer — overlays bottom of image */
-.categoryFooter {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  min-height: 72px;
-  padding: 14px 18px 16px;
-  background: rgba(255, 252, 247, 0.82);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
-  backdrop-filter: blur(14px) saturate(1.3);
-  border-top: 1px solid rgba(255, 255, 255, 0.55);
-  z-index: 2;
-}
-
-.categoryFooterText {
+.seriesNav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+  gap: 16px;
 }
 
-.categoryCard h3 {
-  color: #1e130e;
-  font-size: 1rem;
-  font-weight: 800;
-  margin: 0;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-}
-
-.categoryDesc {
+.seriesNavItem {
+  width: fit-content;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  padding: 0 0 8px;
   color: #9a7560;
-  font-size: 0.76rem;
-  font-weight: 500;
-  font-style: italic;
-  margin: 0;
-  letter-spacing: 0.01em;
+  font-size: 0.98rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.categoryDesc::before {
-  content: '· ';
-  font-style: normal;
-  color: rgba(155, 109, 74, 0.55);
+.seriesNavItem:active {
+  transform: translateX(2px);
 }
 
-.categoryArrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  background: rgba(155, 109, 74, 0.82);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.20);
-  color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
-  transition: background 0.2s ease, transform 0.2s ease;
+.seriesNavItem:hover {
+  color: #6b4020;
 }
 
-.categoryArrow:hover {
-  background: rgba(107, 62, 34, 0.92);
-  transform: scale(1.05);
+.seriesNavItemActive {
+  color: #5b351f;
+  border-bottom-color: #5b351f;
+  font-weight: 800;
 }
 
-.categoryArrowIcon {
-  font-size: 1.05rem;
-  font-weight: 400;
-  line-height: 1;
+/* Re-triggered on every category switch via a `key={selectedCategory}` remount */
+.seriesContentFade {
+  animation: fadeSlideIn 0.28s ease-out both;
+}
+
+@media (max-width: 760px) {
+  .seriesBrowser {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .seriesSidebar {
+    flex: none;
+    position: static;
+    width: 100%;
+  }
+
+  .seriesNav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+  }
 }
 
 /* Offer panel badge */
@@ -822,17 +711,13 @@
   text-transform: uppercase;
 }
 
-@media (max-width: 960px) {
-  .categoryCard {
-    max-width: 100%;
-  }
-}
-
 .menuSearchContainer {
   display: flex;
   align-items: center;
-  max-width: 580px;
+  max-width: 640px;
   margin: 8px 0 0;
+  position: relative;
+  z-index: 1;
   padding: 8px 8px 8px 20px;
   border: 1.5px solid rgba(141, 99, 63, 0.22);
   border-radius: 20px;
@@ -933,6 +818,8 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
+  flex: 1;
+  min-width: 0;
 }
 
 .searchDrinkCard {
@@ -1050,27 +937,6 @@
     border-radius: 18px;
   }
 
-  .categoryCard {
-    height: 280px;
-  }
-
-  .categoryCard h3 {
-    font-size: 0.88rem;
-  }
-
-  .categoryDesc {
-    font-size: 0.7rem;
-  }
-
-  .categoryArrow {
-    padding: 5px 10px;
-    font-size: 0.72rem;
-  }
-
-  .cardGrid {
-    gap: 12px;
-  }
-
   .searchCardGrid {
     grid-template-columns: 1fr;
   }
@@ -1084,4 +950,43 @@
     padding: 10px 18px;
     font-size: 0.95rem;
   }
+}
+
+/* Tea series grid: react to the actual width left over next to the sidebar
+   (e.g. when the Avy chatbot panel is open and shrinks .mainPane), instead of
+   only the viewport width, which stays wide even though the grid is cramped. */
+@container seriesBrowser (max-width: 820px) {
+  .searchCardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container seriesBrowser (max-width: 460px) {
+  .seriesBrowser {
+    flex-direction: column;
+  }
+
+  .seriesSidebar {
+    flex: none;
+    position: static;
+    width: 100%;
+  }
+
+  .seriesNav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+  }
+
+  .searchCardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* On desktop, .main is often capped at its own max-width regardless of the
+   chatbot panel, so the container query above can't always tell open from
+   closed. This reacts to the chatbot's real state (see GlobalLayout.tsx) and
+   always wins on specificity, so it's the authoritative "chat is open" rule. */
+:global(.driptea-chat-open) .searchCardGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }

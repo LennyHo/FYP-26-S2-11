@@ -65,7 +65,7 @@ export default function AvySection() {
             src="/avy_flying.png"
             alt="Avy"
             width={320}
-            height={420}
+            height={496}
             className={styles.avyImg}
             priority
           />

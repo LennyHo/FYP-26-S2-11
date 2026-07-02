@@ -63,7 +63,7 @@
   background: var(--avy-chat-gradient);
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 16px rgba(2, 23, 46, 0.12);
+  box-shadow: -2px 0 8px rgba(2, 23, 46, 0.06);
   z-index: 1210;
   pointer-events: auto;
   font-family: "Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -1971,7 +1971,7 @@
     height: calc(100vh - env(safe-area-inset-top) - 12px);
     border-radius: 16px 16px 0 0;
     zoom: 1;
-    box-shadow: 0 -8px 24px rgba(2, 23, 46, 0.12);
+    box-shadow: 0 -4px 12px rgba(2, 23, 46, 0.06);
     background: #ffffff;
     box-sizing: border-box;
   }
