@@ -39,6 +39,10 @@ const SEED_USERS = [
     email: "customer@gmail.com",
     password: "Customer@123",
     role: "customer",
+    addresses: [
+      { label: "Home", address: "130 Cantonment Road, The Beacon, #17-05, Singapore 089775", isDefault: true },
+      { label: "Work", address: "1 Raffles Place, One Raffles Place, Singapore 048616", isDefault: false },
+    ],
   },
 ];
 
@@ -79,11 +83,22 @@ function publicUser(user) {
     role: user.role,
     status: user.status,
     profilePic: user.profilePic || "",
-    address: user.address || "",
+    addresses: user.addresses || [],
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
 }
+
+// A user can save more than one delivery address (e.g. Home, Work); isDefault
+// marks which one pre-fills at checkout.
+const addressSchema = new mongoose.Schema(
+  {
+    label: { type: String, default: "", trim: true },
+    address: { type: String, required: true, trim: true },
+    isDefault: { type: Boolean, default: false },
+  },
+  { _id: true }
+);
 
 // #01/#06 - Create user profile/account → stores fullName, email, role, passwordHash, passwordSalt in users collection.
 // #02/#07 - View user profile/account → reads from users collection (passwordHash excluded from response).
@@ -112,7 +127,7 @@ const userSchema = new mongoose.Schema(
       default: "active",
     },
     profilePic: { type: String, default: "" },
-    address: { type: String, default: "" },
+    addresses: { type: [addressSchema], default: [] },
     passwordHash: { type: String, required: true },
     passwordSalt: { type: String },
   },
@@ -258,6 +273,7 @@ userSchema.statics.initializeSeedUsers = async function initializeSeedUsers() {
           email,
           role: seedUser.role,
           status: "active",
+          addresses: seedUser.addresses || [],
           ...createPasswordRecord(seedUser.password),
         });
 
@@ -294,6 +310,7 @@ userSchema.statics.createUserAccount = async function createUserAccount(userData
     role,
     status: userData.status || "active",
     profilePic: userData.profilePic || "",
+    addresses: userData.addresses || [],
     ...createPasswordRecord(userData.password || "Password@123"),
   });
 };

@@ -12,9 +12,9 @@
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 
 import { requestJson } from './api.base';
-import type { DripTeaUser } from './api.base';
+import type { DripTeaAddress, DripTeaUser } from './api.base';
 
-export type { DripTeaUser };
+export type { DripTeaAddress, DripTeaUser };
 
 // ── User management ───────────────────────────────────────────────────────────
 
@@ -31,6 +31,7 @@ export function createUserAccount(payload: {
   password: string;
   role: string;
   status: string;
+  addresses?: DripTeaAddress[];
 }) {
   return requestJson<{ ok: boolean; data: DripTeaUser }>('/api/users', {
     method: 'POST',
@@ -39,7 +40,7 @@ export function createUserAccount(payload: {
 }
 
 // Updates a user's profile fields. PATCH /api/users/:id
-export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'fullName' | 'email' | 'role' | 'status' | 'profilePic' | 'address'>>) {
+export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'fullName' | 'email' | 'role' | 'status' | 'profilePic' | 'addresses'>>) {
   return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),

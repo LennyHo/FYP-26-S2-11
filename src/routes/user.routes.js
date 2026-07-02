@@ -57,10 +57,24 @@ function publicUser(user) {
     role: user.role,
     status: user.status,
     profilePic: user.profilePic || "",
-    address: user.address || "",
+    addresses: user.addresses || [],
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
+}
+
+// Strips an incoming addresses payload down to the fields the schema allows,
+// so callers can't inject arbitrary keys into address subdocuments.
+function sanitizeAddresses(rawAddresses) {
+  if (!Array.isArray(rawAddresses)) return [];
+
+  return rawAddresses
+    .map((entry) => ({
+      label: String(entry?.label || "").trim(),
+      address: String(entry?.address || "").trim(),
+      isDefault: Boolean(entry?.isDefault),
+    }))
+    .filter((entry) => entry.address.length > 0);
 }
 
 // #02 - As a user admin, I want to view a user profile so that I can access user information.
@@ -130,6 +144,7 @@ router.post("/users", async (req, res) => {
       email,
       role,
       status,
+      addresses: sanitizeAddresses(req.body.addresses),
       ...makePasswordHash(password),
     });
 
@@ -188,8 +203,8 @@ router.patch("/users/:id", async (req, res) => {
       update.profilePic = String(req.body.profilePic || "");
     }
 
-    if (req.body.address !== undefined) {
-      update.address = String(req.body.address || "");
+    if (req.body.addresses !== undefined) {
+      update.addresses = sanitizeAddresses(req.body.addresses);
     }
 
     if (Object.keys(update).length === 0) {

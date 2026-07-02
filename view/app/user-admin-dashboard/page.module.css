@@ -613,6 +613,136 @@
   border-color: rgba(234, 88, 12, 0.4);
 }
 
+.addressViewList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.addressEditor {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(147, 197, 253, 0.35);
+  display: grid;
+  gap: 10px;
+}
+
+.addressEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #3b82f6;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.addressEditorEmpty {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.addAddressButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px dashed rgba(147, 197, 253, 0.85);
+  border-radius: 8px;
+  background: white;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.addAddressButton:hover {
+  background: rgba(234, 88, 12, 0.06);
+  border-color: #ea580c;
+}
+
+.addressRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.addressRow input {
+  min-height: 40px;
+  border: 1.5px solid rgba(147, 197, 253, 0.8);
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.9);
+  color: #1e293b;
+  font-size: 0.85rem;
+  font-family: inherit;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.addressRow input:focus {
+  border-color: #ea580c;
+  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.12);
+  background: #fff;
+}
+
+.addressLabelInput {
+  width: 100%;
+}
+
+.addressLineInput {
+  width: 100%;
+}
+
+.addressDefaultToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #3b82f6;
+  white-space: nowrap;
+}
+
+.addressDefaultToggle input {
+  min-height: 16px;
+  width: 16px;
+}
+
+.removeAddressButton {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(147, 197, 253, 0.75);
+  border-radius: 50%;
+  background: white;
+  color: #ef4444;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.removeAddressButton:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: #ef4444;
+}
+
+@media (max-width: 620px) {
+  .addressRow {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Responsive */
 @media (max-width: 1080px) {
   .hero {

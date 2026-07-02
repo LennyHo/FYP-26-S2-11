@@ -11,6 +11,13 @@
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type DripTeaAddress = {
+  _id?: string;
+  label?: string;
+  address: string;
+  isDefault?: boolean;
+};
+
 export type DripTeaUser = {
   id: string;
   fullName: string;
@@ -18,7 +25,7 @@ export type DripTeaUser = {
   role: string;
   status: string;
   profilePic?: string;
-  address?: string;
+  addresses?: DripTeaAddress[];
   createdAt?: string;
   updatedAt?: string;
 };

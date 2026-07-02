@@ -42,7 +42,7 @@ import { useRouter } from 'next/navigation';
 import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
 import { createUserAccount, getUsers, suspendUser, updateUser } from '../utils/adminApi';
-import { clearStoredUser, type DripTeaUser } from '../utils/api.base';
+import { clearStoredUser, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
 import styles from './page.module.css';
 
 type ActiveTab = 'profiles' | 'accounts';
@@ -54,7 +54,7 @@ type UserFormState = {
   password: string;
   role: string;
   status: string;
-  address: string;
+  addresses: DripTeaAddress[];
 };
 
 const roleOptions = [
@@ -98,7 +98,7 @@ function emptyForm(): UserFormState {
     password: '',
     role: 'customer',
     status: 'active',
-    address: '',
+    addresses: [],
   };
 }
 
@@ -109,7 +109,7 @@ function formFromUser(user: DripTeaUser): UserFormState {
     password: '',
     role: user.role,
     status: user.status,
-    address: user.address ?? '',
+    addresses: user.addresses ? user.addresses.map(a => ({ ...a })) : [],
   };
 }
 
@@ -191,8 +191,40 @@ export default function UserAdminDashboardPage() {
     setFormData(emptyForm());
   }
 
-  function updateFormField(field: keyof UserFormState, value: string) {
+  function updateFormField(field: Exclude<keyof UserFormState, 'addresses'>, value: string) {
     setFormData(current => ({ ...current, [field]: value }));
+  }
+
+  function addAddress() {
+    setFormData(current => ({
+      ...current,
+      addresses: [...current.addresses, { label: '', address: '', isDefault: current.addresses.length === 0 }],
+    }));
+  }
+
+  function removeAddress(index: number) {
+    setFormData(current => {
+      const addresses = current.addresses.filter((_, i) => i !== index);
+      // If the removed entry was the default, promote the first remaining one.
+      if (current.addresses[index]?.isDefault && addresses.length > 0 && !addresses.some(a => a.isDefault)) {
+        addresses[0] = { ...addresses[0], isDefault: true };
+      }
+      return { ...current, addresses };
+    });
+  }
+
+  function updateAddressField(index: number, field: 'label' | 'address', value: string) {
+    setFormData(current => ({
+      ...current,
+      addresses: current.addresses.map((entry, i) => (i === index ? { ...entry, [field]: value } : entry)),
+    }));
+  }
+
+  function setDefaultAddress(index: number) {
+    setFormData(current => ({
+      ...current,
+      addresses: current.addresses.map((entry, i) => ({ ...entry, isDefault: i === index })),
+    }));
   }
 
   async function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
@@ -211,7 +243,7 @@ export default function UserAdminDashboardPage() {
           email: formData.email,
           role: formData.role,
           status: formData.status,
-          address: formData.address,
+          addresses: formData.addresses,
         });
         setUsers(current => current.map(user => (user.id === response.data.id ? response.data : user)));
         setMessage('User updated.');
@@ -510,7 +542,20 @@ export default function UserAdminDashboardPage() {
                 <div><dt>Email</dt><dd>{viewingUser.email}</dd></div>
                 <div><dt>User Type</dt><dd>{roleLabel(viewingUser.role)}</dd></div>
                 <div><dt>Status</dt><dd>{statusLabel(viewingUser.status)}</dd></div>
-                <div><dt>Address</dt><dd>{viewingUser.address || '—'}</dd></div>
+                <div>
+                  <dt>Addresses</dt>
+                  <dd>
+                    {viewingUser.addresses && viewingUser.addresses.length > 0 ? (
+                      <ul className={styles.addressViewList}>
+                        {viewingUser.addresses.map((entry, index) => (
+                          <li key={entry._id ?? index}>
+                            <strong>{entry.label || 'Address'}{entry.isDefault ? ' (Default)' : ''}:</strong> {entry.address}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : '—'}
+                  </dd>
+                </div>
                 <div><dt>Created</dt><dd>{formatDate(viewingUser.createdAt)}</dd></div>
                 <div><dt>Last Updated</dt><dd>{formatDate(viewingUser.updatedAt)}</dd></div>
               </dl>
@@ -638,14 +683,54 @@ export default function UserAdminDashboardPage() {
                     ))}
                   </select>
                 </label>
-                <label className={styles.formGridFull}>
-                  Address
-                  <input
-                    value={formData.address}
-                    onChange={(event) => updateFormField('address', event.target.value)}
-                    placeholder="Delivery address (optional)"
-                  />
-                </label>
+              </div>
+
+              <div className={styles.addressEditor}>
+                <div className={styles.addressEditorHeader}>
+                  <span>Saved Addresses</span>
+                  <button type="button" className={styles.addAddressButton} onClick={addAddress}>
+                    <FaPlus /> Add Address
+                  </button>
+                </div>
+
+                {formData.addresses.length === 0 && (
+                  <p className={styles.addressEditorEmpty}>No saved addresses yet.</p>
+                )}
+
+                {formData.addresses.map((entry, index) => (
+                  <div key={index} className={styles.addressRow}>
+                    <input
+                      value={entry.label ?? ''}
+                      onChange={(event) => updateAddressField(index, 'label', event.target.value)}
+                      placeholder="Label (e.g. Home, Work)"
+                      className={styles.addressLabelInput}
+                    />
+                    <input
+                      value={entry.address}
+                      onChange={(event) => updateAddressField(index, 'address', event.target.value)}
+                      placeholder="Full address"
+                      className={styles.addressLineInput}
+                      required
+                    />
+                    <label className={styles.addressDefaultToggle}>
+                      <input
+                        type="radio"
+                        name="defaultAddress"
+                        checked={Boolean(entry.isDefault)}
+                        onChange={() => setDefaultAddress(index)}
+                      />
+                      Default
+                    </label>
+                    <button
+                      type="button"
+                      className={styles.removeAddressButton}
+                      onClick={() => removeAddress(index)}
+                      aria-label="Remove address"
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                ))}
               </div>
 
               <div className={styles.modalActions}>
