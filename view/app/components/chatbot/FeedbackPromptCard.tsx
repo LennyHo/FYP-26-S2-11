@@ -1,21 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./FeedbackPromptCard.module.css";
 import { submitFeedback } from "../../utils/customerApi";
+import { getOrderFeedbacks } from "../../utils/staffApi";
 import { getStoredUser } from "../../utils/api.base";
 
 type Props = {
     orderId: string;
     items: any[];
+    initialSubmitted?: boolean;
     onOpenPage: () => void;
+    onSubmitted?: () => void;
 };
 
-export default function FeedbackPromptCard({ orderId, items, onOpenPage }: Props) {
+export default function FeedbackPromptCard({ orderId, items, initialSubmitted, onOpenPage, onSubmitted }: Props) {
     const [ratings, setRatings] = useState<Record<number, number>>({});
     const [comment, setComment] = useState("");
-    const [message, setMessage] = useState("");
-    const [submitted, setSubmitted] = useState(false);
+    const [message, setMessage] = useState(
+        initialSubmitted ? "You've already submitted feedback for this order." : ""
+    );
+    const [submitted, setSubmitted] = useState(!!initialSubmitted);
+
+    // Backstop for chat history saved before this order's feedback state was
+    // tracked on the message itself — confirm against the server once.
+    useEffect(() => {
+        if (initialSubmitted) return;
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const { data: grouped } = await getOrderFeedbacks([orderId]);
+                if (!cancelled && grouped[orderId]?.length) {
+                    setSubmitted(true);
+                    setMessage("You've already submitted feedback for this order.");
+                    onSubmitted?.();
+                }
+            } catch {
+                // Network hiccup — fall back to letting the user submit normally.
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [orderId, initialSubmitted]);
 
     async function handleSubmit() {
         const user = getStoredUser();
@@ -48,6 +78,7 @@ export default function FeedbackPromptCard({ orderId, items, onOpenPage }: Props
 
         setSubmitted(true);
         setMessage("Thank you! Your feedback has been submitted.");
+        onSubmitted?.();
     } catch (error) {
         setMessage(error instanceof Error ? error.message : "Failed to submit feedback.");
     }

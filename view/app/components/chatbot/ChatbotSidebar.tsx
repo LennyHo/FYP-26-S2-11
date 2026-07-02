@@ -75,6 +75,7 @@ const avyLogo = '/img/Group 2.svg';
 
 export default function ChatbotSidebar(props: ChatbotSidebarProps) {
   const {
+    setMessages,
     input,
     setInput,
     isLoading,
@@ -423,7 +424,15 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                             <FeedbackPromptCard
                               orderId={(msg as any).feedbackOrderId}
                               items={(msg as any).feedbackItems}
+                              initialSubmitted={(msg as any).feedbackSubmitted}
                               onOpenPage={() => router.push(`/feedback/${(msg as any).feedbackOrderId}`)}
+                              onSubmitted={() =>
+                                setMessages((prev: any) =>
+                                  prev.map((m: any) =>
+                                    m.id === msg.id ? { ...m, feedbackSubmitted: true } : m
+                                  )
+                                )
+                              }
                             />
                   )}
 

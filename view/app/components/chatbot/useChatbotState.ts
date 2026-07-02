@@ -66,6 +66,7 @@ export interface Message {
   isUser: boolean;
   feedbackOrderId?: string;
   feedbackItems?: any[];
+  feedbackSubmitted?: boolean;
   recommendedDrinks?: {
     id: string;
     name: string;
@@ -359,6 +360,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
   // ── Composed return (same shape as before — ChatbotSidebar.tsx unchanged) ──
   return {
     messages: conversation.messages,
+    setMessages: conversation.setMessages,
     addedIds: ui.addedIds,
     input,
     setInput,
