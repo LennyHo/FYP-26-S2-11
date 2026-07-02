@@ -74,7 +74,8 @@
       "Bash(curl -s http://localhost:3000/rewards)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/purchase-history)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/order-type)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/order-type)",
+      "Bash(git -C \"c:\\\\Users\\\\Avis\\\\Documents\\\\GitHub\\\\FYP-26-S2-11\" log --oneline -20)"
     ]
   }
 }

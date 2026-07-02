@@ -1623,6 +1623,8 @@ const PAGE_DIRECTORY = [
         labels: { en: "Order Status", ms: "Status Pesanan", zh: "订单状态", ta: "ஆர்டர் நிலை" } },
     { key: "profile", route: "/profile", aliases: ["profile page", "my profile", "account page", "account settings", "profile"],
         labels: { en: "Profile", ms: "Profil", zh: "个人资料", ta: "சுயவிவரம்" } },
+    { key: "rewards", route: "/rewards", aliases: ["rewards page", "reward page", "vouchers page", "voucher page", "coupons page", "coupon page", "rewards", "reward", "vouchers", "voucher", "coupons", "coupon"],
+        labels: { en: "Rewards", ms: "Ganjaran", zh: "奖励", ta: "வெகுமதிகள்" } },
     { key: "our-story", route: "/our-story", aliases: ["our story page", "our story", "about us page", "about page", "about us"],
         labels: { en: "Our Story", ms: "Kisah Kami", zh: "我们的故事", ta: "எங்கள் கதை" } },
     { key: "contact", route: "/contact", aliases: ["contact us page", "contact page", "contact us", "contact"],
@@ -1755,6 +1757,12 @@ const PAGE_MANUAL_STEPS = {
         ms: "1. Klik gambar profil anda.\n2. Klik Settings.",
         zh: "1. 点击您的个人头像。\n2. 点击 Settings。",
         ta: "1. உங்கள் சுயவிவரப் படத்தைக் கிளிக் செய்யவும்.\n2. Settings ஐக் கிளிக் செய்யவும்.",
+    },
+    rewards: {
+        en: "1. Click your profile photo.\n2. Click Rewards.",
+        ms: "1. Klik gambar profil anda.\n2. Klik Rewards.",
+        zh: "1. 点击您的个人头像。\n2. 点击 Rewards。",
+        ta: "1. உங்கள் சுயவிவரப் படத்தைக் கிளிக் செய்யவும்.\n2. Rewards ஐக் கிளிக் செய்யவும்.",
     },
     "our-story": {
         en: "1. Click \"OUR STORY\" in the top menu.",
