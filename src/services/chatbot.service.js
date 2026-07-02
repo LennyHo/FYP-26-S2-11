@@ -188,6 +188,68 @@ function isHealthRankingQuery(message) {
     );
 }
 
+// #32 (extension) - As a customer, I want the chatbot to suggest drinks based on how I'm feeling
+// (flu, sore throat, indigestion, fatigue, stress) so that I can pick something comforting.
+// Keyword-detects a symptom category → maps to a curated set of itemIds (see getDrinksByItemIds)
+// → returns drink cards plus a short disclaimer. This is a comfort/flavour suggestion, not medical advice.
+const SYMPTOM_CATEGORIES = [
+    {
+        key: "cold_flu",
+        keywords: [
+            "flu", "cold", "sore throat", "cough", "coughing", "stuffy nose", "runny nose",
+            "blocked nose", "fever", "under the weather", "feeling sick", "feel sick",
+            "feeling unwell", "not feeling well", "phlegm",
+        ],
+        itemIds: ["b012", "b016", "b013", "b004"],
+        intro: "Sorry to hear you're not feeling well! These soothing, vitamin C-rich picks might help you feel a little better:",
+    },
+    {
+        key: "digestion",
+        keywords: [
+            "constipation", "constipated", "bloated", "bloating", "indigestion",
+            "stomach ache", "stomachache", "upset stomach", "digestion", "digestive",
+            "can't poop", "cant poop", "trouble pooping",
+        ],
+        itemIds: ["b003", "b005", "b002", "b015"],
+        intro: "These teas are often enjoyed to help with digestion — you can also add Aloe Vera topping for extra fibre:",
+    },
+    {
+        key: "fatigue",
+        keywords: [
+            "fatigue", "fatigued", "low energy", "sleepy", "exhausted",
+            "no energy", "need energy", "need a boost", "feeling drained", "worn out",
+            "so tired", "very tired", "really tired", "feeling tired",
+        ],
+        itemIds: ["b006", "b005", "b003", "b001"],
+        intro: "Feeling low on energy? These caffeine-forward picks should help perk you up:",
+    },
+    {
+        key: "stress",
+        keywords: [
+            "stressed", "stressed out", "feeling stressed", "anxious", "anxiety",
+            "can't sleep", "cant sleep", "cannot sleep", "trouble sleeping", "insomnia",
+            "need to relax", "feeling overwhelmed", "need to unwind", "overwhelmed",
+        ],
+        itemIds: ["b004", "b002", "b015"],
+        intro: "Here are some lighter, calming picks to help you unwind:",
+    },
+];
+
+const SYMPTOM_DISCLAIMER =
+    "These are comfort picks, not medical advice — please see a doctor if your symptoms persist.";
+
+function detectSymptomCategory(message) {
+    const msg = String(message || "").toLowerCase();
+    for (const category of SYMPTOM_CATEGORIES) {
+        if (category.keywords.some((kw) => msg.includes(kw))) return category;
+    }
+    return null;
+}
+
+function isSymptomRequest(message) {
+    return detectSymptomCategory(message) !== null;
+}
+
 const ORDER_CUSTOMIZATION_WORDS = [
     "regular", "large", "small",
     "no ice", "less ice", "normal ice", "more ice", "extra ice",
@@ -398,6 +460,14 @@ function formatDrinkCards(drinks) {
             rating: drink.rating ?? 0,
         };
     });
+}
+
+// Fetches active menu items by itemId, preserving the requested order (used by
+// symptom-based recommendations to keep the curated best-pick-first ordering).
+async function getDrinksByItemIds(itemIds) {
+    const drinks = await MenuItem.find({ itemId: { $in: itemIds }, status: "active" }).lean();
+    const byId = new Map(drinks.map((d) => [d.itemId, d]));
+    return itemIds.map((id) => byId.get(id)).filter(Boolean);
 }
 // End of User Story #32
 
@@ -2053,6 +2123,32 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         };
     }
     // End of User Story #31
+
+    // User Story #32 (extension): Symptom-based recommendations — "I have a flu", "feeling bloated", etc.
+    // Runs before the generic recommendation/health-ranking checks since phrases like
+    // "what should I drink for a cough" would otherwise be caught by isRecommendationRequest.
+    if (isSymptomRequest(intentMessage)) {
+        const category = detectSymptomCategory(intentMessage);
+        const drinks = await getDrinksByItemIds(category.itemIds);
+
+        const reply = `${category.intro}<br><br>${SYMPTOM_DISCLAIMER}`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "user",
+            content: safeMessage,
+        });
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, {
+            role: "assistant",
+            content: reply,
+        });
+
+        return {
+            reply,
+            recommendedDrinks: formatDrinkCards(drinks),
+            system_action: { ui_navigation: "none" },
+        };
+    }
 
     // Health ranking query: "which beverage has lower sugar?", "healthiest drink", etc.
     if (isHealthRankingQuery(intentMessage)) {

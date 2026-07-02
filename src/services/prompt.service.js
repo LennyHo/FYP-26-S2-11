@@ -64,6 +64,41 @@ async function isMenuRequest(message) {
     msg.includes("what is") ||
     msg.includes("what are") ||
     msg.includes("tell me about") ||
+    // Symptom / how-are-you-feeling phrasing — loads menu context so Gemini can still
+    // recommend real drinks when the customer describes feeling unwell in a way the
+    // rigid keyword matcher (isSymptomRequest in chatbot.service.js) doesn't catch.
+    msg.includes("not feeling") ||
+    msg.includes("feeling unwell") ||
+    msg.includes("feel unwell") ||
+    msg.includes("under the weather") ||
+    msg.includes("sick") ||
+    msg.includes("flu") ||
+    msg.includes("cold") ||
+    msg.includes("cough") ||
+    msg.includes("sore throat") ||
+    msg.includes("throat") ||
+    msg.includes("fever") ||
+    msg.includes("stuffy") ||
+    msg.includes("runny nose") ||
+    msg.includes("bloated") ||
+    msg.includes("bloating") ||
+    msg.includes("constipat") ||
+    msg.includes("indigestion") ||
+    msg.includes("stomach") ||
+    msg.includes("tummy") ||
+    msg.includes("digestion") ||
+    msg.includes("tired") ||
+    msg.includes("fatigue") ||
+    msg.includes("sleepy") ||
+    msg.includes("exhausted") ||
+    msg.includes("low energy") ||
+    msg.includes("no energy") ||
+    msg.includes("stressed") ||
+    msg.includes("anxious") ||
+    msg.includes("anxiety") ||
+    msg.includes("trouble sleeping") ||
+    msg.includes("can't sleep") ||
+    msg.includes("overwhelmed") ||
     // Chinese drink / ordering keywords
     msg.includes("饮料") ||
     msg.includes("菜单") ||
@@ -369,6 +404,15 @@ If the customer asks what an ingredient, flavour, or food item is:
 - Give a short, friendly explanation (2–3 sentences) using your own knowledge.
 - Relate it back to DripTea where natural (e.g. "We use matcha powder in our Matcha Latte and matcha tea range!").
 - After answering, suggest a drink that features that ingredient.
+
+WELLNESS / SYMPTOM-BASED RECOMMENDATION RULES:
+A simple keyword matcher already intercepts common, direct phrasings (e.g. "I have a flu", "I'm constipated", "feeling stressed") and replies with curated drink cards before you ever see the message. You only need to handle it yourself when the customer describes feeling unwell in a more indirect, paraphrased, or conversational way that the matcher would miss — e.g. "my throat's killing me", "I've been so gassy lately", "ugh I can barely keep my eyes open today", "work has been draining me". Be flexible: use judgement on intent, not exact phrases.
+When this happens, recommend 2–3 real drinks from AVAILABLE DRINKS CONTEXT that fit the feeling, using this mapping as a guide (never invent drinks not in the context):
+- Cold / flu / sore throat / cough / feeling under the weather → citrusy or floral picks such as Ice Lemon Tea, Grapefruit Green Tea, Peach Green Tea, Osmanthus Milk Tea.
+- Bloating / constipation / indigestion / stomach trouble → Oolong Milk Tea, Da Hong Bao Milk Tea, Jasmine Green Tea, Lychee Jasmine Tea; you may suggest adding Aloe Vera topping for extra fibre.
+- Fatigue / low energy / sleepy / exhausted → caffeine-forward picks such as Matcha Latte, Da Hong Bao Milk Tea, Oolong Milk Tea, Classic Milk Tea.
+- Stressed / anxious / trouble sleeping / overwhelmed → lighter, calming picks such as Osmanthus Milk Tea, Jasmine Green Tea, Lychee Jasmine Tea.
+Always speak warmly and briefly (1–2 sentences), never sound clinical, and end with a short, plain, non-alarming disclaimer such as "These are just comfort picks, not medical advice — do see a doctor if it persists!" Never diagnose, never claim a drink treats or cures an illness — frame everything as comfort, flavour, or mood-based suggestions.
 
 NUTRI-GRADE MATH:
 Base Volume is 500ml. Added Sugar: 0%=0g | 25%=10g | 50%=20g | 100%=40g.
