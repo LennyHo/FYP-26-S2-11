@@ -3,12 +3,12 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #fffaf5;
+  background: var(--background);
 }
 
 /* ─── Hero ──────────────────────────────────────── */
 .hero {
-  background: var(--background, #fffaf5);
+  background: var(--background);
   border-bottom: 1px solid rgba(200, 175, 148, 0.25);
   padding: 56px 40px 48px;
   text-align: center;
@@ -68,85 +68,108 @@
 .cardsRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 28px;
 }
 
 .card {
-  border-radius: 20px;
-  border: 1px solid rgba(200, 175, 148, 0.3);
+  border-radius: 24px;
+  border: 1px solid rgba(200, 175, 148, 0.22);
   background: #fff;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 32px rgba(10, 24, 50, 0.08);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.card:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
-  transform: translateY(-2px);
 }
 
 .cardAccent {
-  height: 5px;
+  height: 6px;
   width: 100%;
 }
 
-.card_blue .cardAccent { background: #0257AD; }
-.card_red  .cardAccent { background: #F43B03; }
+.card_blue .cardAccent { background: linear-gradient(90deg, #0257AD, #4a9de0); }
+.card_red  .cardAccent { background: linear-gradient(90deg, #F43B03, #ff8a5c); }
 
 .card_blue .infoIcon { stroke: #0257AD; }
 .card_red  .infoIcon { stroke: #F43B03; }
 
 .cardBody {
-  padding: 28px 28px 32px;
+  padding: 30px 30px 34px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .cardCode {
-  font-size: 0.72rem;
+  display: inline-block;
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #aaa;
+  color: #9a8b78;
+  background: rgba(200, 175, 148, 0.14);
+  padding: 4px 10px;
+  border-radius: 999px;
   margin: 0;
 }
 
 .cardName {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 800;
   color: #0a1832;
   margin: 0;
   line-height: 1.2;
 }
 
+.cardDivider {
+  height: 1px;
+  background: rgba(200, 175, 148, 0.22);
+  margin: 2px 0 4px;
+}
+
 /* ─── Info rows ─────────────────────────────────── */
 .infoRow {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 0.9rem;
-  color: #444;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.92rem;
+  color: #3a3a3a;
   line-height: 1.5;
 }
 
+.infoIconChip {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card_blue .infoIconChip { background: rgba(2, 87, 173, 0.09); }
+.card_red  .infoIconChip { background: rgba(244, 59, 3, 0.09); }
+
 .infoIcon {
   flex-shrink: 0;
-  margin-top: 2px;
 }
 
 .hoursBlock {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .infoRowIndented {
-  padding-left: 26px;
-  font-size: 0.9rem;
-  color: #444;
+  padding-left: 44px;
+  font-size: 0.92rem;
+  color: #666;
   line-height: 1.5;
 }
 
