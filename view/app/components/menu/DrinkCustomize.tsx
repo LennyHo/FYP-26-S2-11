@@ -37,7 +37,7 @@ const sweetnessOptions = [
 const toppingOptions = [
   { key: 'none', name: 'No Topping', price: 0, sugarG: 0, calories: 0 },
   { key: 'pearls', name: 'Tapioca Pearls', price: 1.20, sugarG: 15, calories: 150 },
-  { key: 'aloe', name: 'Aloe Vera', price: 1.00, sugarG: 5, calories: 30 },
+  { key: 'brownsugar', name: 'Brown Sugar', price: 1.00, sugarG: 12, calories: 70 },
   { key: 'cheese', name: 'Cheese Foam', price: 1.50, sugarG: 8, calories: 120 },
 ];
 

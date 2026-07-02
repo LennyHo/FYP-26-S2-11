@@ -117,9 +117,9 @@ function calculateNutrition(drink, sugarLevel, toppings = []) {
         calories += 60;
     }
 
-    if (toppings.includes("Aloe Vera")) {
-        sugar += 4;
-        calories += 20;
+    if (toppings.includes("Brown Sugar")) {
+        sugar += 12;
+        calories += 70;
     }
 
     if (toppings.includes("Cheese Foam")) {
@@ -211,7 +211,7 @@ const SYMPTOM_CATEGORIES = [
             "can't poop", "cant poop", "trouble pooping",
         ],
         itemIds: ["b003", "b005", "b002", "b015"],
-        intro: "These teas are often enjoyed to help with digestion — you can also add Aloe Vera topping for extra fibre:",
+        intro: "These teas are often enjoyed to help with digestion:",
     },
     {
         key: "fatigue",
@@ -255,7 +255,7 @@ const ORDER_CUSTOMIZATION_WORDS = [
     "no ice", "less ice", "normal ice", "more ice", "extra ice",
     "0%", "25%", "50%", "70%", "100%", "no sugar", "less sweet", "less sugar", "full sweet",
     "zero percent", "twenty five percent", "twenty-five percent", "fifty percent", "hundred percent",
-    "aloe", "pearl", "boba", "cheese foam", "tapioca", "no topping",
+    "brown sugar", "pearl", "boba", "cheese foam", "tapioca", "no topping",
 ];
 
 // Parses sugar level from natural language — handles both numeric (50%) and spoken (fifty percent) forms.
@@ -304,7 +304,7 @@ function parseCustomizationFromMessage(message) {
 
     const toppings = [];
     if (!msg.includes("no topping")) {
-        if (msg.includes("aloe")) toppings.push("Aloe Vera");
+        if (msg.includes("brown sugar")) toppings.push("Brown Sugar");
         if (msg.includes("pearl") || msg.includes("boba") || msg.includes("tapioca")) toppings.push("Tapioca Pearls");
         if (msg.includes("cheese")) toppings.push("Cheese Foam");
     }
@@ -972,7 +972,7 @@ function resolveCustomizationFromHistory(history) {
         const msg = history[i];
         if (msg.role !== 'assistant') continue;
         const content = String(msg.content || '');
-        if (!/tapioca|aloe vera|cheese foam|mutiara|busa keju|珍珠|芦荟|芝士泡沫|tanpa topping|no topping/i.test(content)) continue;
+        if (!/tapioca|brown sugar|cheese foam|mutiara|busa keju|gula perang|珍珠|黑糖|芝士泡沫|tanpa topping|no topping/i.test(content)) continue;
 
         let size = 'Regular';
         if (/\b(large|besar|大杯)\b/i.test(content)) size = 'Large';
@@ -987,8 +987,8 @@ function resolveCustomizationFromHistory(history) {
         if (pctMatch) sugar = `${pctMatch[1]}% Sugar`;
 
         // Detect lang from the Phase 5 content so the Cart page can translate labels
-        const hasMs = /besar|biasa|kurang ais|tanpa ais|ais normal|panas|mutiara|busa keju|tanpa topping/i.test(content);
-        const hasZh = /大杯|中杯|少冰|去冰|正常冰|热饮|珍珠|芦荟|芝士泡沫|不加配料/.test(content);
+        const hasMs = /besar|biasa|kurang ais|tanpa ais|ais normal|panas|mutiara|busa keju|gula perang|tanpa topping/i.test(content);
+        const hasZh = /大杯|中杯|少冰|去冰|正常冰|热饮|珍珠|黑糖|芝士泡沫|不加配料/.test(content);
         const lang = hasMs ? 'ms' : hasZh ? 'zh' : 'en';
 
         return { size, ice, sugar, lang };
@@ -999,7 +999,7 @@ function resolveCustomizationFromHistory(history) {
 function normalizeToppingName(raw) {
     const t = String(raw || '').toLowerCase().trim().replace(/\s*\(\+s\$[\d.]+\)/i, '');
     if (/pearl|mutiara|珍珠|tapioca|boba/.test(t)) return 'Tapioca Pearls';
-    if (/aloe/.test(t))                            return 'Aloe Vera';
+    if (/brown sugar|gula perang|黑糖/.test(t))    return 'Brown Sugar';
     if (/cheese|busa keju|芝士/.test(t))           return 'Cheese Foam';
     return null; // no toppings
 }
@@ -1147,7 +1147,7 @@ function isCartUpdateRequest(message) {
 
     // Ordering-flow step responses — no drink name, no ordinal = Gemini ordering option, not a cart edit
     if (/^(change to \d+%\s*sugar|remain at \d+%\s*sugar)$/i.test(msg.trim())) return false;
-    // "Change to Aloe Vera" / "Switch to Tapioca Pearls" at topping step
+    // "Change to Brown Sugar" / "Switch to Tapioca Pearls" at topping step
     if (
         /^(change to|switch to)\s+\w/i.test(msg.trim()) &&
         !resolveDrinkNameFromMessage(msg) &&
@@ -1249,8 +1249,8 @@ function getCartUpdateIntent(message) {
         intent.newCustomization.toppings = [];
     } else if (changeText.includes("pearl") || changeText.includes("pearls")) {
         intent.newCustomization.toppings = ["Tapioca Pearls"];
-    } else if (changeText.includes("aloe")) {
-        intent.newCustomization.toppings = ["Aloe Vera"];
+    } else if (changeText.includes("brown sugar")) {
+        intent.newCustomization.toppings = ["Brown Sugar"];
     } else if (changeText.includes("cheese")) {
         intent.newCustomization.toppings = ["Cheese Foam"];
     }
@@ -1302,7 +1302,7 @@ function calculateCartUnitPrice(basePrice, customization = {}) {
         const name = String(topping).toLowerCase();
 
         if (name.includes("pearl")) price += 1.2;
-        else if (name.includes("aloe")) price += 1.0;
+        else if (name.includes("brown sugar")) price += 1.0;
         else if (name.includes("cheese")) price += 1.5;
     });
 
@@ -1424,8 +1424,8 @@ function parseCustomization(details) {
         .filter(Boolean);
 
     // Detect ordering language from Malay/Chinese keywords so Cart can translate labels back
-    const hasMs = /besar|biasa|kurang ais|tanpa ais|ais normal|panas|mutiara|busa keju|tanpa topping/i.test(text);
-    const hasZh = /大杯|中杯|少冰|去冰|正常冰|热饮|珍珠|芦荟|芝士泡沫|不加配料/.test(text);
+    const hasMs = /besar|biasa|kurang ais|tanpa ais|ais normal|panas|mutiara|busa keju|gula perang|tanpa topping/i.test(text);
+    const hasZh = /大杯|中杯|少冰|去冰|正常冰|热饮|珍珠|黑糖|芝士泡沫|不加配料/.test(text);
     const lang = hasMs ? "ms" : hasZh ? "zh" : "en";
 
     // --- SIZE ---
@@ -1476,7 +1476,7 @@ function parseCustomization(details) {
         .map((t) => {
             const clean = t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim();
             if (/pearl|mutiara|珍珠|boba|tapioca/i.test(clean)) return "Tapioca Pearls";
-            if (/aloe/i.test(clean))                             return "Aloe Vera";
+            if (/brown sugar|gula perang|黑糖/i.test(clean))     return "Brown Sugar";
             if (/cheese|busa keju|芝士/i.test(clean))            return "Cheese Foam";
             return clean;
         })
@@ -1505,7 +1505,7 @@ function parseOrderDetails(message) {
     else {
     const found = [];
         if (/pearl|pearls|tapioca/.test(msg)) found.push("Tapioca Pearls");
-        if (/aloe/.test(msg)) found.push("Aloe Vera");
+        if (/brown sugar/.test(msg)) found.push("Brown Sugar");
         if (/cheese foam|foam/.test(msg)) found.push("Cheese Foam");
         if (found.length > 0) toppings = found;
         }
@@ -1528,7 +1528,7 @@ function fixMissingLineBreaks(reply) {
         .replace(/Here is your order summary:/gi, "Here is your order summary:<br>")
         .replace(/(summary:)([A-Z])/gi, "$1<br>$2")
         .replace(/(S\$[0-9.]+)(Regular|Large)/gi, "$1<br>$2")
-        .replace(/(No toppings|Cheese Foam|Aloe Vera|Pearls)(sugar:)/gi, "$1<br>$2")
+        .replace(/(No toppings|Cheese Foam|Brown Sugar|Pearls)(sugar:)/gi, "$1<br>$2")
         .replace(/(Nutri-Grade:\s*[A-D])(Total Price:)/gi, "$1<br>$2")
         .replace(/(Total Price:\s*S\$[0-9.]+)(Added to your cart)/gi, "$1<br><br>$2")
         .replace(/(successfully\.)(Your current cart:)/gi, "$1<br><br>$2")
@@ -3300,11 +3300,11 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
     const systemPrompt = await buildSystemPrompt(effectiveMessage, nutritionContext + cartContext);
 
-    // When the user's message is a bare topping selection (e.g. "Aloe Vera (+S$1.00)", "珍珠",
+    // When the user's message is a bare topping selection (e.g. "Brown Sugar (+S$1.00)", "珍珠",
     // "Mutiara", "No toppings"), Gemini tends to shortcut to "added to your cart" without
     // producing the required Phase 6 hidden-cart-data block.  Appending an explicit reminder
     // to the message that Gemini sees (but not to the stored history) reliably fixes this.
-    const TOPPING_SELECTION = /^(pearls?|tapioca pearls?|aloe vera|cheese foam|no toppings?|mutiara|busa keju|珍珠|芦荟|芝士泡沫|不加配料|tanpa topping)(\s*\(\+S\$[\d.]+\))?$/i;
+    const TOPPING_SELECTION = /^(pearls?|tapioca pearls?|brown sugar|cheese foam|no toppings?|mutiara|busa keju|gula perang|珍珠|黑糖|芝士泡沫|不加配料|tanpa topping)(\s*\(\+S\$[\d.]+\))?$/i;
     const toppingMatch = TOPPING_SELECTION.exec(safeMessage.trim());
     const geminiInput = toppingMatch
         ? effectiveMessage + "\n[REMINDER: Customer selected a topping. Immediately output the complete Phase 6 order summary including the hidden-cart-data block. Do NOT say \"added to your cart\".]"

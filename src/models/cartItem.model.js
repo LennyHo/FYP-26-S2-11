@@ -65,7 +65,7 @@ function calculateCustomizedPrice(basePrice, customization = {}) {
     const name = String(topping).toLowerCase();
 
     if (name.includes("pearl")) price += 1.2;
-    else if (name.includes("aloe")) price += 1.0;
+    else if (name.includes("brown sugar")) price += 1.0;
     else if (name.includes("cheese")) price += 1.5;
   });
 

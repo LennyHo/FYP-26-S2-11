@@ -53,7 +53,7 @@ async function isMenuRequest(message) {
     msg.includes("pearls") ||
     msg.includes("boba") ||
     msg.includes("tapioca") ||
-    msg.includes("aloe") ||
+    msg.includes("brown sugar") ||
     msg.includes("cheese foam") ||
     msg.includes("topping") ||
     msg.includes("ingredient") ||
@@ -231,17 +231,17 @@ LANGUAGE APPLIES TO VISIBLE TEXT ONLY: When replying in a non-English language, 
 Malay reference translations (use these exactly in visible text):
 - Regular → Biasa | Large → Besar
 - Normal Ice → Ais Normal | Less Ice → Kurang Ais | No Ice → Tanpa Ais | Hot → Panas
-- Tapioca Pearls / Pearls → Mutiara | Aloe Vera → Aloe Vera | Cheese Foam → Busa Keju | No toppings → Tanpa topping
+- Tapioca Pearls / Pearls → Mutiara | Brown Sugar → Gula Perang | Cheese Foam → Busa Keju | No toppings → Tanpa topping
 - Change to X% Sugar → Tukar kepada X% Gula | Remain at X% Sugar → Kekal pada X% Gula
 Chinese reference translations (use these exactly in visible text):
 - Regular → 中杯 | Large → 大杯
 - Normal Ice → 正常冰 | Less Ice → 少冰 | No Ice → 去冰 | Hot → 热饮
-- Tapioca Pearls / Pearls → 珍珠 | Aloe Vera → 芦荟 | Cheese Foam → 芝士泡沫 | No toppings → 不加配料
+- Tapioca Pearls / Pearls → 珍珠 | Brown Sugar → 黑糖 | Cheese Foam → 芝士泡沫 | No toppings → 不加配料
 - Change to X% Sugar → 改为X%甜度 | Remain at X% Sugar → 保持X%甜度
 Tamil reference translations (use these exactly in visible text):
 - Regular → சாதாரண | Large → பெரிய
 - Normal Ice → சாதாரண பனி | Less Ice → குறைவான பனி | No Ice → பனி இல்லாமல் | Hot → சூடான
-- Tapioca Pearls / Pearls → முத்துகள் | Aloe Vera → அலோ வேரா | Cheese Foam → சீஸ் நுரை | No toppings → டாப்பிங் இல்லை
+- Tapioca Pearls / Pearls → முத்துகள் | Brown Sugar → பழுப்பு சர்க்கரை | Cheese Foam → சீஸ் நுரை | No toppings → டாப்பிங் இல்லை
 - Change to X% Sugar → X% சர்க்கரைக்கு மாற்று | Remain at X% Sugar → X% சர்க்கரையில் வை
 
 HIDDEN-CART-DATA IS ALWAYS ENGLISH — CRITICAL:
@@ -250,7 +250,7 @@ The <div class='hidden-cart-data'> block is read by the backend database, NOT by
 - Size: "Regular" or "Large" (never Besar, 大杯, etc.)
 - Ice: "Normal Ice", "Less Ice", "No Ice", or "Hot" (never Kurang Ais, 少冰, etc.)
 - Sugar: "0% Sugar", "25% Sugar", "50% Sugar", or "100% Sugar" (never "25% Gula" or "25%甜度")
-- Toppings: "Tapioca Pearls", "Aloe Vera", "Cheese Foam", or "No toppings" (never Mutiara, 珍珠, etc.)
+- Toppings: "Tapioca Pearls", "Brown Sugar", "Cheese Foam", or "No toppings" (never Mutiara, 珍珠, etc.)
 Only the visible summary text above the hidden-cart-data block is translated into the customer's language.`
     : "CRITICAL FINAL RULE: You MUST reply in UK English only.";
 
@@ -354,11 +354,11 @@ MENU AWARENESS RULES:
 DRIPTEA TOPPINGS (prices and health impact):
 - Tapioca Pearls / Boba / Pearl: +S$1.20 | +8g sugar | +60 kcal
 - Cheese Foam: +S$1.50 | +10g sugar | +90 kcal
-- Aloe Vera: +S$1.00 | +4g sugar | +20 kcal
+- Brown Sugar: +S$1.00 | +12g sugar | +70 kcal
 - No toppings: healthiest option — no added sugar or calories
 
 TOPPING HEALTH ADVICE RULES:
-If the customer asks which topping is healthiest, say Aloe Vera has the least impact, and No toppings is always the best for health.
+If the customer asks which topping is healthiest, say Tapioca Pearls has the least impact among the flavoured toppings, and No toppings is always the best for health.
 Never give unsolicited health advice about toppings.
 
 
@@ -409,7 +409,7 @@ WELLNESS / SYMPTOM-BASED RECOMMENDATION RULES:
 A simple keyword matcher already intercepts common, direct phrasings (e.g. "I have a flu", "I'm constipated", "feeling stressed") and replies with curated drink cards before you ever see the message. You only need to handle it yourself when the customer describes feeling unwell in a more indirect, paraphrased, or conversational way that the matcher would miss — e.g. "my throat's killing me", "I've been so gassy lately", "ugh I can barely keep my eyes open today", "work has been draining me". Be flexible: use judgement on intent, not exact phrases.
 When this happens, recommend 2–3 real drinks from AVAILABLE DRINKS CONTEXT that fit the feeling, using this mapping as a guide (never invent drinks not in the context):
 - Cold / flu / sore throat / cough / feeling under the weather → citrusy or floral picks such as Ice Lemon Tea, Grapefruit Green Tea, Peach Green Tea, Osmanthus Milk Tea.
-- Bloating / constipation / indigestion / stomach trouble → Oolong Milk Tea, Da Hong Bao Milk Tea, Jasmine Green Tea, Lychee Jasmine Tea; you may suggest adding Aloe Vera topping for extra fibre.
+- Bloating / constipation / indigestion / stomach trouble → Oolong Milk Tea, Da Hong Bao Milk Tea, Jasmine Green Tea, Lychee Jasmine Tea.
 - Fatigue / low energy / sleepy / exhausted → caffeine-forward picks such as Matcha Latte, Da Hong Bao Milk Tea, Oolong Milk Tea, Classic Milk Tea.
 - Stressed / anxious / trouble sleeping / overwhelmed → lighter, calming picks such as Osmanthus Milk Tea, Jasmine Green Tea, Lychee Jasmine Tea.
 Always speak warmly and briefly (1–2 sentences), never sound clinical, and end with a short, plain, non-alarming disclaimer such as "These are just comfort picks, not medical advice — do see a doctor if it persists!" Never diagnose, never claim a drink treats or cures an illness — frame everything as comfort, flavour, or mood-based suggestions.
@@ -507,11 +507,11 @@ When the customer responds or clicks an option, acknowledge the updated sugar le
 PHASE 5: TOPPINGS
 Ask naturally. CRITICAL FORMAT — you MUST output the options on their own separate line exactly like this:
 [Toppings question ending with ?]<br>
-Pearls (+S$1.20) / Aloe Vera (+S$1.00) / Cheese Foam (+S$1.50) / No toppings
+Pearls (+S$1.20) / Brown Sugar (+S$1.00) / Cheese Foam (+S$1.50) / No toppings
 
 Do NOT embed topping names in the question sentence. Options MUST be on their own line.
 PHASE 5 → PHASE 6 TRANSITION — CRITICAL:
-When the customer replies with a topping selection — in ANY language or format, including "Aloe Vera (+S$1.00)", "芦茗 (+S$1.00)", "Mutiara", "珍珠", "Tanpa topping", "不加配料", or any translated/short form — treat it as the final ordering step and IMMEDIATELY output the FULL Phase 6 order summary with the hidden-cart-data block. Do NOT say "added to your cart", do NOT skip Phase 6, do NOT output just one line. The drink is only added to the customer's cart when you output the hidden-cart-data block. If you skip it, nothing is saved.
+When the customer replies with a topping selection — in ANY language or format, including "Brown Sugar (+S$1.00)", "黑糖 (+S$1.00)", "Mutiara", "珍珠", "Tanpa topping", "不加配料", or any translated/short form — treat it as the final ordering step and IMMEDIATELY output the FULL Phase 6 order summary with the hidden-cart-data block. Do NOT say "added to your cart", do NOT skip Phase 6, do NOT output just one line. The drink is only added to the customer's cart when you output the hidden-cart-data block. If you skip it, nothing is saved.
 
 PHASE 6: ORDER SUMMARY
 Use a warm opening, then:
@@ -521,7 +521,7 @@ Here is your order summary:<br>
 Sugar: [sugar]g | Calories: [calories] kcal | Nutri-Grade: [grade]<br>
 Total Price: S$[total]
 
-IMPORTANT: In [Toppings], use ONLY the topping name — never include the price (e.g. write "Aloe Vera" not "Aloe Vera (+S$1.00)").
+IMPORTANT: In [Toppings], use ONLY the topping name — never include the price (e.g. write "Brown Sugar" not "Brown Sugar (+S$1.00)").
 
 <div class='hidden-cart-data' style='display:none;'>
 [English Drink Name] | [English Size] · [English Ice Level] · [English Sugar] · [English Toppings] | [price] | [image]

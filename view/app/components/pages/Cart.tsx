@@ -49,7 +49,7 @@ const CART_LABELS: Record<string, Record<string, string>> = {
     "50% Sugar": "50% Gula",
     "100% Sugar": "100% Gula",
     "Tapioca Pearls": "Mutiara",
-    "Aloe Vera": "Aloe Vera",
+    "Brown Sugar": "Gula Perang",
     "Cheese Foam": "Busa Keju",
   },
   zh: {
@@ -66,7 +66,7 @@ const CART_LABELS: Record<string, Record<string, string>> = {
     "50% Sugar": "50%糖",
     "100% Sugar": "100%糖",
     "Tapioca Pearls": "珍珠",
-    "Aloe Vera": "芦荟",
+    "Brown Sugar": "黑糖",
     "Cheese Foam": "芝士泡沫",
   },
 };
@@ -86,7 +86,7 @@ const SUGAR_MULTIPLIERS: Record<string, number> = {
 
 const TOPPING_SUGAR_G: Record<string, number> = {
   "Tapioca Pearls": 15,
-  "Aloe Vera": 5,
+  "Brown Sugar": 12,
   "Cheese Foam": 8,
 };
 
