@@ -70,7 +70,11 @@
       "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Where is the Cart page?\",\"conversationId\":\"final-en2\"}')",
       "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Lead me to Menu page.\",\"conversationId\":\"final-en3\"}')",
       "Bash(curl -s -X POST http://localhost:5000/api/chat -H \"Content-Type: application/json\" -d '{\"message\":\"Bawa saya ke halaman troli\",\"conversationId\":\"final-ms\"}')",
-      "Bash(taskkill //F //PID 48708)"
+      "Bash(taskkill //F //PID 48708)",
+      "Bash(curl -s http://localhost:3000/rewards)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/purchase-history)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/order-type)"
     ]
   }
 }

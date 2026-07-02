@@ -1,0 +1,217 @@
+.reward-page {
+  min-height: 100vh;
+  background: #f5f0ea;
+}
+
+/* ── Main layout ─────────────────────────────── */
+.reward-main {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 96px;
+}
+
+/* ── Page header ─────────────────────────────── */
+.reward-header {
+  margin-bottom: 24px;
+}
+
+.reward-header-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.reward-header-icon {
+  width: 44px;
+  height: 44px;
+  background: #5b351f;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reward-header-icon svg {
+  color: #fff;
+}
+
+.reward-header h1 {
+  margin: 0;
+  color: #2c1810;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.reward-header-sub {
+  margin: 2px 0 0 58px;
+  color: #9a7a65;
+  font-size: 14px;
+}
+
+/* ── Sub tabs (underline) ─────────────────────── */
+.reward-subtabs {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid rgba(220, 199, 180, 0.7);
+  margin-bottom: 20px;
+}
+
+.reward-subtab {
+  border: none;
+  background: transparent;
+  padding: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #9a7a65;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.reward-subtab.active {
+  color: #5b351f;
+  border-bottom-color: #5b351f;
+}
+
+/* ── Voucher list ──────────────────────────────── */
+.reward-list {
+  display: grid;
+  gap: 16px;
+}
+
+.reward-card {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  align-items: center;
+  gap: 18px;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid rgba(220, 199, 180, 0.8);
+  box-shadow: 0 2px 12px rgba(72, 43, 24, 0.06);
+  padding: 16px 20px;
+}
+
+.reward-card-image {
+  width: 120px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(220, 199, 180, 0.7);
+  background: #f5f0ea;
+}
+
+.reward-card-body {
+  min-width: 0;
+}
+
+.reward-card-title {
+  margin: 0 0 6px;
+  color: #2c1810;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.reward-card-validity {
+  margin: 0 0 6px;
+  color: #9a7a65;
+  font-size: 13px;
+}
+
+.reward-card-code {
+  margin: 0 0 6px;
+  color: #5b351f;
+  font-size: 13px;
+}
+
+.reward-card-code strong {
+  letter-spacing: 0.03em;
+}
+
+.reward-card-terms {
+  margin: 0;
+  color: #9a7a65;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.reward-card-actions {
+  flex-shrink: 0;
+}
+
+.reward-use-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #10b981;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.reward-use-btn:hover {
+  background: #059669;
+}
+
+/* ── Empty states ──────────────────────────────── */
+.reward-empty {
+  text-align: center;
+  padding: 72px 24px;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid rgba(220, 199, 180, 0.8);
+}
+
+.reward-empty-icon {
+  width: 64px;
+  height: 64px;
+  background: #f5f0ea;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: #c4a98a;
+}
+
+.reward-empty h2 {
+  margin: 0 0 8px;
+  color: #2c1810;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.reward-empty p {
+  margin: 0;
+  color: #9a7a65;
+  font-size: 14px;
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 640px) {
+  .reward-card {
+    grid-template-columns: 1fr;
+  }
+
+  .reward-card-image {
+    width: 100%;
+    height: 140px;
+  }
+
+  .reward-card-actions {
+    display: flex;
+  }
+
+  .reward-use-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

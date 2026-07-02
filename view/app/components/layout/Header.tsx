@@ -329,6 +329,9 @@ function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
           <Link href="/profile" className={styles.profileDropdownItem} onClick={() => setOpen(false)}>
             Settings
           </Link>
+          <Link href="/rewards" className={styles.profileDropdownItem} onClick={() => setOpen(false)}>
+            Rewards
+          </Link>
           <Link href="/purchase-history" className={styles.profileDropdownItem} onClick={() => setOpen(false)}>
             Purchase History
           </Link>
