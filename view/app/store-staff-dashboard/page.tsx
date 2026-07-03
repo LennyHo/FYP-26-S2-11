@@ -8,6 +8,21 @@
 //
 // #38  Logout (Store Staff)
 //      View: store-staff-dashboard/page.tsx (this file) — client-side: JWT cleared from localStorage
+//
+// #310 Create Inventory Item (Store Staff)
+//      View: store-staff-dashboard/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
+//
+// #311  View Inventory (Store Staff)
+//      View: store-staff-dashboard/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
+//
+// #312  Update Inventory (Store Staff)
+//      View: store-staff-dashboard/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
+//
+// #313  Delete Inventory Item (Store Staff)
+//     View: store-staff-dashboard/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
+// #314  View Order Feedback (Store Staff)
+//     View: store-staff-dashboard/page.tsx (this file) → Route: feedback.routes.js → Ctrl: feedback.controller.js → Model: feedback.model.js
+
 'use client';
 
 import StaffHeader from '../components/layout/StaffHeader';
