@@ -19,6 +19,7 @@ const OrderItem = require("../models/orderItem.model");
 const Payment = require("../models/payment.model");
 const CartItem = require("../models/cartItem.model");
 const User = require("../models/user.model");
+const Voucher = require("../models/voucher.model");
 
 function toObjectId(id) {
     return mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
@@ -134,10 +135,26 @@ async function processPayment(req, res) {
         });
     }
 
-    const totalAmount = cartItems.reduce(
+    const subtotal = cartItems.reduce(
         (sum, item) => sum + Number(item.lineTotal || 0),
         0
     );
+
+    // Recompute the discount server-side rather than trusting a client-supplied
+    // amount — the voucher code is the only input we accept for the charge.
+    let discountAmount = 0;
+    let appliedVoucherCode = null;
+
+    if (voucherCode) {
+        const voucher = await Voucher.findValidByCode(voucherCode);
+
+        if (voucher && subtotal >= Number(voucher.minSpend || 0)) {
+            discountAmount = Voucher.calculateDiscount(voucher, subtotal);
+            appliedVoucherCode = voucher.code;
+        }
+    }
+
+    const totalAmount = Math.round((subtotal - discountAmount) * 100) / 100;
 
     const order = await createOrderWithUniqueNumber({
         userId,
@@ -153,7 +170,8 @@ async function processPayment(req, res) {
         totalAmount,
         orderType: "online",
         status: "pending",
-        voucherCode: voucherCode || null,
+        voucherCode: appliedVoucherCode,
+        discountAmount,
     });
 
     const orderItems = cartItems.map((item) => ({

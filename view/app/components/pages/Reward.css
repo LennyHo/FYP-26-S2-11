@@ -168,6 +168,10 @@
   flex-shrink: 0;
 }
 
+.reward-card-history {
+  grid-template-columns: 1fr;
+}
+
 .reward-use-btn {
   display: inline-flex;
   align-items: center;

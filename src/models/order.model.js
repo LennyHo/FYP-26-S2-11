@@ -26,6 +26,7 @@ const orderSchema = new mongoose.Schema(
     totalAmount: { type: Number, required: true },
     currency: { type: String, default: "SGD" },
     voucherCode: { type: String, default: null },
+    discountAmount: { type: Number, default: 0 },
   },
   { timestamps: true, collection: "orders" }
 );

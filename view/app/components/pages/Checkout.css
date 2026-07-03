@@ -112,6 +112,36 @@
     font-weight: 400;
 }
 
+/* Chrome/Edge payment-form heuristics can inject an autofill icon and
+   center-align text in fields that look like expiry/CVV inputs — force
+   left alignment so they match the other fields regardless. */
+.checkout-row .checkout-field input {
+    text-align: left;
+}
+
+.checkout-voucher-select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(141, 99, 63, 0.35);
+    background: #fdf8f4;
+    font-size: 14px;
+    font-weight: 400;
+    color: #2c1810;
+}
+
+.checkout-voucher-select:disabled {
+    opacity: 0.6;
+}
+
+.checkout-voucher-message {
+    margin: 2px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #7a4a1f;
+}
+
 .checkout-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -672,4 +702,8 @@
     justify-content: space-between;
     margin: 8px 0;
     color: #31231a;
+}
+
+.checkout-price-row-discount {
+    color: #2f7d4a;
 }

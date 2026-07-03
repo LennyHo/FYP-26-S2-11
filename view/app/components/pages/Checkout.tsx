@@ -1,11 +1,12 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../layout/Header";
-import { checkoutCart, getCartItems } from "../../utils/customerApi";
+import { checkoutCart, getCartItems, getVouchers, applyVoucher } from "../../utils/customerApi";
+import type { DripTeaVoucher } from "../../utils/api.base";
 import { getOrder, updateOrderStatus } from "../../utils/staffApi";
-import { getStoredUser, parseLocalCartLine, type DripTeaCartItem } from "../../utils/api.base";
+import { getStoredUser, parseLocalCartLine, PENDING_VOUCHER_KEY, type DripTeaCartItem } from "../../utils/api.base";
 import "./Checkout.css";
 
 type CheckoutItem = {
@@ -150,7 +151,11 @@ export default function Checkout() {
     const [items, setItems] = useState<CheckoutItem[]>([]);
     const [delivery, setDelivery] = useState<DeliveryData | null>(null);
     const [paymentMethod] = useState("fake_card");
+    const [vouchers, setVouchers] = useState<DripTeaVoucher[]>([]);
     const [voucherCode, setVoucherCode] = useState("");
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [voucherMessage, setVoucherMessage] = useState("");
+    const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
     const [cardNumber, setCardNumber] = useState("");
     const [cardName, setCardName] = useState("");
     const [expiryDate, setExpiryDate] = useState("");
@@ -171,8 +176,68 @@ export default function Checkout() {
 
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
     const deliveryFee = delivery?.deliveryFee ?? 0;
-    const total = subtotal + deliveryFee;
+    const total = Math.max(subtotal - discountAmount, 0) + deliveryFee;
     const isDeliveryOrder = Boolean(delivery);
+
+    useEffect(() => {
+        async function loadVouchers() {
+            try {
+                const response = await getVouchers();
+                setVouchers(response.data || []);
+            } catch (error) {
+                console.error("[DripTea vouchers]", error);
+            }
+        }
+
+        void loadVouchers();
+    }, []);
+
+    // Pre-select the voucher the customer chose via "USE NOW" on the Reward page.
+    // Waits for both the voucher catalogue and the cart (for the subtotal) to load,
+    // then applies it once — items.length gates against firing on an empty cart.
+    const pendingVoucherAppliedRef = useRef(false);
+    useEffect(() => {
+        if (pendingVoucherAppliedRef.current) return;
+        if (!vouchers.length || !items.length) return;
+
+        const pendingCode = window.localStorage.getItem(PENDING_VOUCHER_KEY);
+        if (!pendingCode) return;
+
+        pendingVoucherAppliedRef.current = true;
+        window.localStorage.removeItem(PENDING_VOUCHER_KEY);
+        void handleVoucherChange(pendingCode);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [vouchers, items]);
+
+    async function handleVoucherChange(code: string) {
+        setVoucherCode(code);
+        setVoucherMessage("");
+
+        if (!code) {
+            setDiscountAmount(0);
+            return;
+        }
+
+        setIsApplyingVoucher(true);
+
+        try {
+            const currentUser = getStoredUser();
+            const response = await applyVoucher({
+                userId: currentUser?.id,
+                voucherCode: code,
+                subtotal,
+            });
+
+            setDiscountAmount(response.data.discountAmount);
+            setVoucherMessage(`"${response.data.voucher.title}" applied — S$ ${response.data.discountAmount.toFixed(2)} off.`);
+        } catch (error) {
+            setDiscountAmount(0);
+            setVoucherCode("");
+            setVoucherMessage(error instanceof Error ? error.message : "Failed to apply voucher.");
+        } finally {
+            setIsApplyingVoucher(false);
+        }
+    }
 
     useEffect(() => {
         async function loadCheckoutCart() {
@@ -578,6 +643,7 @@ export default function Checkout() {
                                             onChange={(e) => setExpiryDate(e.target.value)}
                                             placeholder="MM/YYYY"
                                             maxLength={7}
+                                            autoComplete="off"
                                         />
                                     </label>
 
@@ -589,17 +655,27 @@ export default function Checkout() {
                                             placeholder="CVV"
                                             maxLength={4}
                                             type="password"
+                                            autoComplete="off"
                                         />
                                     </label>
                                 </div>
 
                                 <label className="checkout-field">
                                     Voucher
-                                    <input
+                                    <select
+                                        className="checkout-voucher-select"
                                         value={voucherCode}
-                                        onChange={(e) => setVoucherCode(e.target.value)}
-                                        placeholder="Key in the voucher code"
-                                    />
+                                        disabled={isApplyingVoucher}
+                                        onChange={(e) => void handleVoucherChange(e.target.value)}
+                                    >
+                                        <option value="">No voucher</option>
+                                        {vouchers.map((voucher) => (
+                                            <option key={voucher.code} value={voucher.code}>
+                                                {voucher.title} ({voucher.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {voucherMessage && <p className="checkout-voucher-message">{voucherMessage}</p>}
                                 </label>
 
                                 {statusMessage && (
@@ -674,6 +750,13 @@ export default function Checkout() {
                                         <span>Subtotal:</span>
                                         <strong>S$ {subtotal.toFixed(2)}</strong>
                                     </div>
+
+                                    {discountAmount > 0 && (
+                                        <div className="checkout-price-row checkout-price-row-discount">
+                                            <span>Voucher ({voucherCode}):</span>
+                                            <strong>- S$ {discountAmount.toFixed(2)}</strong>
+                                        </div>
+                                    )}
 
                                     {delivery && (
                                         <div className="checkout-price-row">

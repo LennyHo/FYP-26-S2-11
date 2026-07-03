@@ -3,7 +3,7 @@
 // User Story Architecture Trace — checkout/page.tsx
 //
 // #18  Apply Vouchers
-//      View: checkout/page.tsx (this file) → Route: checkout.routes.js → Ctrl: order.controller.js → Model: order.model.js
+//      View: checkout/page.tsx (this file) → Route: checkout.routes.js → Ctrl: cart.controller.js → Model: voucher.model.js
 //
 // #23  Make Payment
 //      View: checkout/page.tsx (this file) → Route: checkout.routes.js → Ctrl: order.controller.js → Model: order.model.js, payment.model.js

@@ -24,6 +24,7 @@ import type {
   DripTeaCartItemResponse,
   DripTeaMenuItem,
   DripTeaPurchaseHistoryItem,
+  DripTeaVoucher,
 } from './api.base';
 
 
@@ -188,6 +189,42 @@ export async function syncStoredCartFromBackend(userId: string): Promise<DripTea
   }
 
   return response.data || [];
+}
+
+// ── Vouchers ──────────────────────────────────────────────────────────────────
+
+// Fetches all vouchers the customer can apply at checkout. GET /api/vouchers
+export function getVouchers() {
+  return requestJson<{ ok: boolean; data: DripTeaVoucher[] }>('/api/vouchers');
+}
+
+// Validates a voucher against the cart and previews the discount. POST /api/cart/apply-voucher
+export function applyVoucher(payload: { userId?: string; voucherCode: string; subtotal?: number }) {
+  return requestJson<{
+    ok: boolean;
+    message?: string;
+    data: {
+      voucher: { code: string; title: string; discountType: 'percentage' | 'fixed'; discountValue: number };
+      subtotal: number;
+      discountAmount: number;
+      total: number;
+    };
+  }>('/api/cart/apply-voucher', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+// Fetches the vouchers a customer has actually redeemed on past orders. GET /api/vouchers/used
+export function getUsedVouchers(userId: string) {
+  return requestJson<{
+    ok: boolean;
+    data: Array<{
+      orderId: string;
+      orderNo: string;
+      voucherCode: string;
+      voucherTitle: string;
+      discountAmount: number;
+      usedAt?: string;
+    }>;
+  }>(`/api/vouchers/used?userId=${encodeURIComponent(userId)}`);
 }
 
 // ── Checkout ──────────────────────────────────────────────────────────────────

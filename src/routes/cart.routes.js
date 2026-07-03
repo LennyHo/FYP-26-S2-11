@@ -9,6 +9,9 @@
 // #17  Edit Cart
 //      View: cart/edit/[cartItemId]/page.tsx → Route: cart.routes.js (this file) → Ctrl: cart.controller.js → Model: cartItem.model.js
 //
+// #18  Apply Vouchers
+//      View: checkout/page.tsx → Route: cart.routes.js (this file) → Ctrl: cart.controller.js → Model: voucher.model.js, cartItem.model.js
+//
 // #199 Add to Cart via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Route: cart.routes.js (this file) → Ctrl: cart.controller.js → Model: menuItem.model.js, cartItem.model.js
 //
@@ -35,5 +38,10 @@ router.get("/cart-items/:id", cartController.getCartItem);
 // #201 - As a customer, I want to edit items in my cart through the chatbot so that I can modify my order before payment.
 router.patch("/cart-items/:id", cartController.updateCartItem);
 router.delete("/cart-items/:id", cartController.removeFromCart);
+
+// #18  Apply Vouchers
+router.get("/vouchers", cartController.getActiveVouchers);
+router.post("/cart/apply-voucher", cartController.applyVoucher);
+router.get("/vouchers/used", cartController.getUsedVouchers);
 
 module.exports = router;

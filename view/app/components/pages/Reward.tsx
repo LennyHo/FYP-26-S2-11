@@ -1,54 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../layout/Header";
+import { getVouchers, getUsedVouchers } from "../../utils/customerApi";
+import { getStoredUser, PENDING_VOUCHER_KEY } from "../../utils/api.base";
+import type { DripTeaVoucher } from "../../utils/api.base";
 import "./Reward.css";
 
-type Voucher = {
-  id: string;
-  title: string;
-  image: string;
-  validity: string;
-  code: string;
-  terms: string;
+// Client-only display details (image + validity copy) for each voucher code.
+// Title, code, and terms all come from the vouchers collection — this map must
+// NOT duplicate those, it only adds what the database has no field for.
+const VOUCHER_DISPLAY: Record<string, { image: string; validity: string }> = {
+  BOGO2026: { image: "/img/bubble_teas/b001.jpg", validity: "Valid until 31 Dec 2026" },
+  HALF50: { image: "/img/bubble_teas/b006.jpg", validity: "Valid until 31 Dec 2026" },
+  FREE1CUP: { image: "/img/bubble_teas/b013.jpg", validity: "Valid until 31 Dec 2026" },
+  SAVE5: { image: "/img/bubble_teas/b002.jpg", validity: "Valid until 31 Dec 2026" },
+  WELCOME15: { image: "/img/bubble_teas/b009.jpg", validity: "Valid until 31 Dec 2026" },
+  TOPUP20: { image: "/img/bubble_teas/b017.jpg", validity: "Valid until 31 Dec 2026" },
+};
+const DEFAULT_DISPLAY = { image: "/img/bubble_teas/b001.jpg", validity: "Valid while stocks last" };
+
+type UsedVoucher = {
+  orderId: string;
+  orderNo: string;
+  voucherCode: string;
+  voucherTitle: string;
+  discountAmount: number;
+  usedAt?: string;
 };
 
-// Static voucher catalogue — no backend yet, matches the 3 rewards the customer asked for.
-const VOUCHERS: Voucher[] = [
-  {
-    id: "bogo",
-    title: "Buy 1 Get 1 FREE",
-    image: "/img/bubble_teas/b001.jpg",
-    validity: "Valid until 31 Dec 2026",
-    code: "BOGO2026",
-    terms: "Valid on any regular-sized drink. Lowest-priced drink is free. Not combinable with other vouchers.",
-  },
-  {
-    id: "half-off",
-    title: "50% OFF 1 Drink",
-    image: "/img/bubble_teas/b006.jpg",
-    validity: "Valid until 31 Dec 2026",
-    code: "HALF50",
-    terms: "50% off one regular-sized drink of your choice. Not combinable with other vouchers.",
-  },
-  {
-    id: "free-regular",
-    title: "1 Free Regular Drink",
-    image: "/img/bubble_teas/b013.jpg",
-    validity: "Valid until 31 Dec 2026",
-    code: "FREE1CUP",
-    terms: "One free regular-sized drink, any flavour. Toppings charged separately.",
-  },
-];
-
 const SUB_TABS = ["My Vouchers", "Vouchers History"] as const;
+
+function formatUsedDate(iso?: string) {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" });
+}
 
 export default function Reward() {
   const router = useRouter();
   const [activeSubTab, setActiveSubTab] = useState<typeof SUB_TABS[number]>("My Vouchers");
+  const [vouchers, setVouchers] = useState<DripTeaVoucher[]>([]);
+  const [usedVouchers, setUsedVouchers] = useState<UsedVoucher[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  const handleUseNow = () => {
+  useEffect(() => {
+    async function loadVouchers() {
+      try {
+        const response = await getVouchers();
+        setVouchers(response.data || []);
+      } catch (error) {
+        console.error("[DripTea reward vouchers]", error);
+      }
+    }
+
+    void loadVouchers();
+  }, []);
+
+  useEffect(() => {
+    const currentUser = getStoredUser();
+    if (!currentUser) return;
+
+    async function loadHistory() {
+      setIsLoadingHistory(true);
+      try {
+        const response = await getUsedVouchers(currentUser.id);
+        setUsedVouchers(response.data || []);
+      } catch (error) {
+        console.error("[DripTea voucher history]", error);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    }
+
+    void loadHistory();
+  }, []);
+
+  const handleUseNow = (code: string) => {
+    window.localStorage.setItem(PENDING_VOUCHER_KEY, code);
     router.push("/order-type");
   };
 
@@ -69,7 +100,7 @@ export default function Reward() {
             </svg>
           </div>
           <div className="reward-highlight-body">
-            <strong>{VOUCHERS.length} rewards waiting for you</strong>
+            <strong>{vouchers.length} rewards waiting for you</strong>
             <span>Redeem them on your next order before they expire</span>
           </div>
           <div className="reward-highlight-decor" aria-hidden="true">
@@ -95,21 +126,40 @@ export default function Reward() {
 
         {activeSubTab === "My Vouchers" ? (
           <div className="reward-list">
-            {VOUCHERS.map((voucher) => (
-              <article key={voucher.id} className="reward-card">
-                <img src={voucher.image} alt={voucher.title} className="reward-card-image" />
+            {vouchers.map((voucher) => {
+              const display = VOUCHER_DISPLAY[voucher.code] || DEFAULT_DISPLAY;
+
+              return (
+                <article key={voucher.code} className="reward-card">
+                  <img src={display.image} alt={voucher.title} className="reward-card-image" />
+                  <div className="reward-card-body">
+                    <h2 className="reward-card-title">{voucher.title}</h2>
+                    <p className="reward-card-validity">{display.validity}</p>
+                    <p className="reward-card-code">
+                      Referral code: <strong>{voucher.code}</strong>
+                    </p>
+                    <p className="reward-card-terms">{voucher.description}</p>
+                  </div>
+                  <div className="reward-card-actions">
+                    <button type="button" className="reward-use-btn" onClick={() => handleUseNow(voucher.code)}>
+                      USE NOW
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : usedVouchers.length > 0 ? (
+          <div className="reward-list">
+            {usedVouchers.map((used) => (
+              <article key={used.orderId} className="reward-card reward-card-history">
                 <div className="reward-card-body">
-                  <h2 className="reward-card-title">{voucher.title}</h2>
-                  <p className="reward-card-validity">{voucher.validity}</p>
+                  <h2 className="reward-card-title">{used.voucherTitle}</h2>
+                  <p className="reward-card-validity">Used on {formatUsedDate(used.usedAt)} · Order #{used.orderNo}</p>
                   <p className="reward-card-code">
-                    Referral code: <strong>{voucher.code}</strong>
+                    Referral code: <strong>{used.voucherCode}</strong>
                   </p>
-                  <p className="reward-card-terms">{voucher.terms}</p>
-                </div>
-                <div className="reward-card-actions">
-                  <button type="button" className="reward-use-btn" onClick={handleUseNow}>
-                    USE NOW
-                  </button>
+                  <p className="reward-card-terms">S$ {used.discountAmount.toFixed(2)} discount applied.</p>
                 </div>
               </article>
             ))}
@@ -124,7 +174,7 @@ export default function Reward() {
               </svg>
             </div>
             <h2>No voucher history yet</h2>
-            <p>Vouchers you've used or that have expired will appear here.</p>
+            <p>{isLoadingHistory ? "Loading..." : "Vouchers you've used will appear here."}</p>
           </div>
         )}
       </main>

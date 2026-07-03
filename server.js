@@ -5,6 +5,7 @@ require("dotenv").config();
 const { connectMongo } = require("./src/config/mongo");
 const User = require("./src/models/user.model");
 const Inventory = require("./src/models/inventory.model");
+const Voucher = require("./src/models/voucher.model");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -73,6 +74,7 @@ async function startServer() {
     await connectMongo();
     await User.initializeSeedUsers();
     await Inventory.initializeSeedInventory();
+    await Voucher.initializeSeedVouchers();
 
     app.get("/", (req, res) => {
       res.send("DripTea backend is running");
