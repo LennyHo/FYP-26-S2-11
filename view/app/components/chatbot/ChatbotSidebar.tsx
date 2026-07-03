@@ -616,8 +616,9 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
           <input
             ref={photoInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,image/bmp,image/tiff"
-            aria-label="Upload photo"
+            accept="image/*"
+            capture="environment"
+            aria-label="Take photo for image recognition"
             className={styles.hiddenFileInput}
             onChange={e => {
               const file = e.target.files?.[0];
@@ -629,7 +630,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 e.target.value = '';
                 return;
               }
-              handlePickedImage(file, 'screenshot');
+              handlePickedImage(file, 'camera');
               e.target.value = '';
             }}
           />
@@ -640,8 +641,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               className={styles.photoInputBtn}
               onClick={() => photoInputRef.current?.click()}
               disabled={isLoading || pendingImages.length >= 5}
-              aria-label="Attach photo"
-              title="Attach photo"
+              aria-label="Take photo for image recognition"
+              title="Take photo for image recognition"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
