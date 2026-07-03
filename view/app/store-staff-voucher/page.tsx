@@ -1,12 +1,12 @@
 // User Story Architecture Trace — store-staff-voucher/page.tsx
 //
-// View Vouchers (Store Staff)
+// #315 View Vouchers (Store Staff)
 //      View: store-staff-voucher/page.tsx (this file) → Route: voucher.routes.js → Ctrl: voucher.controller.js → Model: voucher.model.js
 //
-// Delete Vouchers (Store Staff)
+// #316 Delete Vouchers (Store Staff)
 //      View: store-staff-voucher/page.tsx (this file) → Route: voucher.routes.js → Ctrl: voucher.controller.js → Model: voucher.model.js
 //
-// Search Vouchers (Store Staff)
+// #317 Search Vouchers (Store Staff)
 //      View: store-staff-voucher/page.tsx (this file) → Route: voucher.routes.js → Ctrl: voucher.controller.js → Model: voucher.model.js
 
 'use client';
