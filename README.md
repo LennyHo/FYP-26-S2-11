@@ -18,8 +18,7 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 10. [Default Seed Accounts](#default-seed-accounts)
 11. [Essential API Endpoints](#essential-api-endpoints)
 12. [Frontend Pages & Features](#frontend-pages--features)
-13. [Recent Changes](#recent-changes)
-14. [Chatbot Test Prompts](#chatbot-test-prompts)
+13. [Chatbot Test Prompts](#chatbot-test-prompts)
 
 ---
 
@@ -193,7 +192,7 @@ Expected response:
 
 ### 3. Initialise collections & seed data
 
-The backend auto-creates collections and seeds default users + the full menu the **first time** a database route is called. You can also trigger it manually:
+The backend auto-creates collections and seeds default users, the full menu, and default vouchers the **first time** a database route is called. You can also trigger it manually:
 
 ```
 POST http://localhost:5000/api/mongo/setup
@@ -379,6 +378,16 @@ All backend routes are prefixed with `/api` except the chatbot.
 
 > `/api/transcribe` is handled by the Express backend (port 5000). The TTS endpoint (`/api/tts`) is a Next.js API route (port 3000) and does not appear here.
 
+### Vouchers
+
+| Method | Endpoint                    | Description                                  |
+|--------|-----------------------------|----------------------------------------------|
+| GET    | `/api/vouchers`             | Get all active vouchers (customer)           |
+| GET    | `/api/vouchers/used`        | Get used vouchers for a customer             |
+| POST   | `/api/cart/apply-voucher`   | Apply a voucher code to cart                 |
+| GET    | `/api/staff/vouchers`       | Get all vouchers (store staff)               |
+| DELETE | `/api/staff/vouchers/:id`   | Delete a voucher (store staff)               |
+
 ---
 
 ## Frontend Pages & Features
@@ -404,136 +413,5 @@ All backend routes are prefixed with `/api` except the chatbot.
 | `/store-staff-dashboard`       | Order queue management (staff)                        |
 | `/user-admin`                  | Admin login                                           |
 | `/user-admin-dashboard`        | User & menu management (admin)                        |
+| `/store-staff-voucher`         | Voucher management — view, search, delete (staff)     |
 
----
-
-## Recent Changes
-
-### Multilingual Voice Input & Bot Voice (ElevenLabs)
-
-**Speech-to-Text (STT) — Mic & Speak buttons**
-- Replaced the Web Speech API with **ElevenLabs Scribe v1** for true audio-based language auto-detection
-- Supports English, Malay, Chinese, and Tamil without requiring the user to manually select a language
-- `MediaRecorder` captures raw audio; speak mode uses `AudioContext` volume polling (VAD) to detect 600ms of silence and auto-send
-- Audio is sent to `POST /api/transcribe` (Express backend) → forwarded to ElevenLabs → returns `{ text, language }`
-- Parenthetical sound descriptions (e.g. `(background noise)`, `(laughter)`) are automatically stripped from transcripts before they reach the chatbot
-- TTS pause/resume hooks prevent the bot's own voice from being recorded and re-sent as user input
-
-**Text-to-Speech (TTS) — Bot voice narration (Speak mode only)**
-- Bot replies are now spoken using ElevenLabs `eleven_multilingual_v2` model via a Next.js API route (`/api/tts`)
-- The same voice handles all four languages automatically; no language parameter needed
-- Falls back to the browser's built-in Web Speech Synthesis if ElevenLabs is unavailable
-- Voice is configurable via `ELEVENLABS_VOICE_ID` in `view/.env.local`
-
-**Tamil language support**
-- Added Tamil script (`[஀-௿]`) detection on both frontend and backend
-- Backend AI prompt now instructs Gemini to reply entirely in Tamil when Tamil script is detected
-- Added Tamil translations for all ordering UI labels (size, ice level, sugar %, toppings)
-
-**Language detection fixes**
-- Mic language no longer gets stuck after detecting Chinese or Tamil — resets correctly when input is cleared
-- Previous session language no longer persists after page refresh (`sessionStartedRef` skips history on mount)
-- Default language changed from `en-US` to `en-GB` (British English, appropriate for Singapore)
-- Browser language (`navigator.language`) used as the starting default for mic/speak mode
-
-### Cart Badge Fix
-- Fixed a race condition in `Header.tsx` where the navbar cart badge count was reverting to the old count after adding a drink
-- Root cause: `syncStoredCartFromBackend` (a backend GET) was racing with `addCartItem` (backend POST) — the GET completed first, returned stale data, and overwrote localStorage before the new item was saved
-- Fix: `cartUpdated` event handler now only reads from localStorage (which is already updated before the event fires); backend sync is reserved for initial page load and `authUpdated` (login/logout) where no concurrent POST exists
-
-### Cart Page — UI & Routing Fix
-- Moved `cart/edit/[cartItemId]/page.tsx` from `view/app/components/cart/edit/...` to the correct Next.js App Router path `view/app/cart/edit/[cartItemId]/page.tsx` — it was previously unreachable as a route
-- Improved cart page layout: added `.cart-content` wrapper (`max-width: 1000px; margin: 0 auto`) so only content below the header is constrained, keeping the navbar full-width and consistent with other pages
-- Back to Menu button: `align-self: flex-start` and proper spacing so it no longer appears cramped or centered
-- Checkout button: `justify-content: flex-end` on `.checkout-row` with no extra padding — right-aligned cleanly with the cart panel
-
-### Drink Info & Ratings — Moved from Hardcoded to MongoDB
-- Added `drinkInfo` (`ingredients`, `diabeticAdvice`, `insulinImpact`) and `rating` fields to the `menuItem` Mongoose schema (`src/models/menuItem.model.js`)
-- Both fields are included in the public menu API response (`src/controllers/menu.controller.js`)
-- Removed hardcoded `DRINK_INFO` and `DRINK_RATINGS` constants from `DrinkCard.tsx` and `DrinkRecCards.tsx`; components now receive values as props or read from the API response
-- `ChatbotSidebar.tsx` builds a `menuById` lookup (keyed by item ID) so it can pass `rating` and `drinkInfo` as props to `DrinkCard` when rendering chatbot drink recommendations
-
-### API Documentation — `dripteaApi.ts`
-- Added a single-line comment above every exported function in `view/app/utils/dripteaApi.ts` describing its purpose and the full backend file chain (route → controller → service)
-- Removed all `// done by "HDC"` / `// end done by "HDC"` markers from the file
-
-### Code Cleanup — `view/app/components/`
-- Deleted `KeywordInfo.tsx` and `KeywordInfo.module.css` — component had no callers
-- Deleted `ORGANIZATION.md` — documentation file mixed in with source components
-- Deleted all barrel `index.ts` re-export files (`components/index.ts`, `drink/index.ts`, `layout/index.ts`, `chatbot/index.ts`, `pages/index.ts`, `ui/index.ts`, `cart/index.ts`) — none were imported by real code
-- Removed the now-empty subdirectories: `chatbot/`, `drink/`, `layout/`, `pages/`, `ui/`
-
-### Login Page — Migrated to TypeScript
-- `view/app/login/page.js` converted to `page.tsx`
-- Added TypeScript types: `LoginCredentials`, `LoginPayload` interfaces; typed `useRef<HTMLInputElement>`, form event handler, and helper function parameters
-- Removed unused `storeUser` import
-
-### Footer Social Links Fix
-- Replaced placeholder external URLs with `#` and removed `target="_blank"` / `rel="noreferrer"` from social links to eliminate browser security warnings
-
-### Add Manual Feedback Function
-- Purchase History -> Feedback button -> Feedback Page -> Select 1-5 stars -> Write comment -> Submit -> POST /api/feedback -> MongoDB feedbacks collection -> Average rating updated in menu_items.rating
-- For example, A gives 5 stars for Classic Milk Tea, B gives 3 stars for Classic Milk Tea, the avarage rating shown in menu.items will be 4 stars.
-- Sequence Diagram flow: Customer -> FeedbackGUI -> Feedback.Controller -> Feedback.Model, MenuItem.Model
-
-### Multiple Languages Function
-- All languages works well in the whole ordering flow.
-
-### UI & Frontend Improvements
-
-**Landing Page (`/`)**
-- Replaced the old "Meet the Crew" section with a full-width video banner (`buy_driptea_3.mp4`) with a CTA overlay
-- Added conditional marketing section below the video: perk cards + registration CTA for guests; member benefits grid for logged-in users
-- Added new **Avy Section** between About Us and Meet the Crew — highlights chatbot features with a "CHAT WITH AVY" button that opens the sidebar directly via a custom browser event (no URL param side effects)
-- "Join the Crew" eyebrow uses Dancing Script font
-
-**Buy DripTea Page (`/buy-driptea`)**
-- Updated category card images: Milk Tea → b004, Matcha Teas → b007, Ice Blended → b012, Local Favourites → b011
-- Redesigned category cards: full-bleed image, frosted-glass price badge overlay, consistent brown Browse button (hover → secondary blue `#0257AD`)
-- Search now loads all menu items once on page mount and filters client-side — instant results with no API delay per keystroke
-
-**Drink Listing Page (`/menu/[category]`)**
-- Redesigned drink cards to match category card style: full-bleed image, price badge overlay, full-width "Customize & Add" button
-- "Back to Categories" button styled as white pill to match "VIEW ALL DRIPS" button
-
-**Drink Detail Page (`/menu/[category]/[drinkId]`)**
-- Replaced coloured letter nutri-grade badge with official `grade_nutri_X_full.png` image (A/B/C/D), displayed below the Sugar and kcal pills, left-aligned
-- "Back to Category" now calls `router.back()` instead of always going to `/buy-driptea`
-- Removed hover zoom on drink image
-
-**Chatbot Sidebar**
-- Improved message entrance animations: spring easing (`cubic-bezier(0.16, 1, 0.3, 1)`), 380ms duration, slide + subtle scale for a natural pop-in feel
-- Improved typing indicator: dots now scale up at bounce peak for a livelier pulse
-- Fixed `AvyQueryListener` bug where `?avy=open` in the URL prevented the chatbot from being closed — URL param is now cleared immediately after opening
-
-**Store Staff Dashboard**
-- Removed "Live orders refreshed HH:MM:SS" timer banner; errors still display when they occur
-
-### Data & Code Cleanup
-- Removed `data/menu.json` and `data/nutriCalculator.js` — all menu data is served from MongoDB
-- Removed unused imports and dead code from `ChatbotSidebar.tsx`: `menuData`, `applyGlossaryTooltips`, `MessageSource`, `TRUSTED_SOURCE_HOSTS`, `narrationVoiceRef`, `inputRef`, `pickNarrationVoice`, `resumeSpeakModeListening`
-- Removed pill/rounded-rectangle backgrounds from chip labels site-wide for a cleaner look
-
----
-
-## Chatbot Test Prompts
-
-Use these to verify the full ordering flow inside the chat widget:
-
-1. **Greeting** — `Hi`
-2. **Basic recommendation** — `What drinks do you have?`
-3. **Filter by price** — `I want chocolate drinks under $5`
-4. **Multi-flavour** — `I want chocolate or milo drink`
-5. **Health query** — `What is the healthiest option?`
-6. **Topping query** — `What is pearl? Explain any toppings`
-7. **Full order flow** — choose a drink, then follow Avy's prompts for size, ice, sugar, and toppings
-8. **Image input** — send a photo of a drink and ask Avy to describe it
-
-### Voice & Multilingual Tests
-
-9. **English mic** — click the mic button, say "What drinks do you have?" in English
-10. **Malay mic** — click mic, say "Saya nak satu teh matcha strawberi."
-11. **Chinese mic** — click mic, say "我想要一杯奶茶"
-12. **Tamil mic** — click mic, say "எனக்கு ஒரு தேநீர் வேண்டும்"
-13. **Speak mode (TTS)** — click the Speak button, ask for a recommendation; Avy should reply both in text and with ElevenLabs voice audio
-14. **Language auto-switch** — type in Chinese first, then use mic in English; mic should reset to English correctly
