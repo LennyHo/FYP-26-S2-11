@@ -12,9 +12,9 @@
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 
 import { requestJson } from './api.base';
-import type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem, DripTeaFeedback } from './api.base';
+import type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem, DripTeaFeedback, DripTeaVoucher } from './api.base';
 
-export type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem, DripTeaFeedback };
+export type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem, DripTeaFeedback, DripTeaVoucher };
 
 // Fetches all orders filtered by status. GET /api/orders
 export function getOrders(status: string = 'all') {
@@ -61,6 +61,21 @@ export function getOrderFeedbacks(orderIds: string[]) {
   }
   return requestJson<{ ok: boolean; data: Record<string, DripTeaFeedback[]> }>(
     `/api/feedback/orders?ids=${orderIds.map(encodeURIComponent).join(',')}`
+  );
+}
+
+// ── Voucher management ───────────────────────────────────────────────────────
+
+// Fetches every voucher, including inactive/expired ones. GET /api/staff/vouchers
+export function getStaffVouchers() {
+  return requestJson<{ ok: boolean; data: DripTeaVoucher[] }>('/api/staff/vouchers');
+}
+
+// Deletes a voucher. DELETE /api/staff/vouchers/:id
+export function deleteVoucher(id: string) {
+  return requestJson<{ ok: boolean; data: { id: string } }>(
+    `/api/staff/vouchers/${encodeURIComponent(id)}`,
+    { method: 'DELETE' }
   );
 }
 

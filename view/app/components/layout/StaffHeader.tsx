@@ -31,6 +31,9 @@ export default function StaffHeader() {
           <Link href="/store-staff-dashboard" className={styles.navLink}>
             Dashboard
           </Link>
+          <Link href="/store-staff-voucher" className={styles.navLink}>
+            Vouchers
+          </Link>
         </nav>
 
         <div className={styles.actions}>

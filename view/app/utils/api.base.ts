@@ -123,6 +123,13 @@ export type DripTeaVoucher = {
   discountValue: number;
   maxDiscount?: number | null;
   minSpend?: number;
+  // Present on the staff-facing voucher list (GET /api/staff/vouchers) — omitted
+  // from the customer-facing active-vouchers list (GET /api/vouchers).
+  _id?: string;
+  isActive?: boolean;
+  expiresAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type DripTeaFeedback = {

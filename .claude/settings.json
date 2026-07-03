@@ -108,7 +108,13 @@
       "Bash(curl -s -o /tmp/reward_check.html -w \"checkout HTTP %{http_code}\\\\n\" http://localhost:3000/checkout)",
       "Bash(curl -s -o /tmp/reward_page.html -w \"reward HTTP %{http_code}\\\\n\" http://localhost:3000/reward)",
       "Bash(curl -s -o /tmp/reward_page.html -w \"rewards HTTP %{http_code}\\\\n\" http://localhost:3000/rewards)",
-      "Bash(rm -f /tmp/backend.log /tmp/backend_test.log /tmp/backend_main.log /tmp/backend_main2.log /tmp/checkout_page.html /tmp/reward_check.html /tmp/reward_page.html *)"
+      "Bash(rm -f /tmp/backend.log /tmp/backend_test.log /tmp/backend_main.log /tmp/backend_main2.log /tmp/checkout_page.html /tmp/reward_check.html /tmp/reward_page.html *)",
+      "Bash(node -e \"require\\('./src/controllers/voucher.controller.js'\\); require\\('./src/routes/voucher.routes.js'\\); console.log\\('OK'\\)\")",
+      "Bash(curl -s http://localhost:5000/api/staff/vouchers -o /tmp/staff_vouchers.json -w \"HTTP %{http_code}\\\\n\")",
+      "Bash(curl -s http://localhost:5000/api/staff/vouchers)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\('still there:', j.data.some\\(v=>v.code==='TESTDEL'\\)\\);}\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\('customer voucher count:', j.data.length\\);}\\)\")",
+      "Bash(curl -s -o /tmp/voucher_page.html -w \"store-staff-voucher HTTP %{http_code}\\\\n\" http://localhost:3000/store-staff-voucher)"
     ],
     "additionalDirectories": [
       "\\tmp"

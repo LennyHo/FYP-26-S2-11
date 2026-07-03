@@ -55,6 +55,11 @@ const feedbackRoutes = require("./src/routes/feedback.routes");
 app.use("/api", feedbackRoutes);
 console.log("[ROUTES] Feedback routes mounted");
 
+// Voucher management (Store Staff)
+const voucherRoutes = require("./src/routes/voucher.routes");
+app.use("/api", voucherRoutes);
+console.log("[ROUTES] Voucher routes mounted");
+
 // DripTea routes (authentication, users, etc.)
 const authRoutes = require("./src/routes/auth.routes");
 app.use("/api", authRoutes);
