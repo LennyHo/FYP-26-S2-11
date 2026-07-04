@@ -40,7 +40,7 @@
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: cartItem.model.js
 //
 // #202 Check Vouchers via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: Voucher.Model
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: voucher.Model
 //
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: order.model.js
@@ -733,6 +733,7 @@ async function getRecentOrders(userId) {
 }
 // End of User Story #203
 
+// #202 Customers check available vouchers
 // Detects "what vouchers do I have" intent.
 function isVoucherRequest(message) {
     const msg = String(message || "").toLowerCase();
@@ -749,9 +750,7 @@ function isVoucherRequest(message) {
     );
 }
 
-// #202 - Queries Voucher collection for vouchers the customer can still redeem: active,
-// unexpired, and not already used by this customer (checked via their past orders'
-// voucherCode field), so the chatbot never recommends a voucher already spent.
+// Queries Voucher collection for vouchers the customer can still redeem
 async function getAvailableVouchers(userId) {
     const now = new Date();
 
@@ -2021,6 +2020,24 @@ const REPLY_STRINGS = {
         ms: "Maaf, saya tidak dapat menemui halaman itu. Anda boleh minta saya bawa anda ke halaman Menu, Troli, Daftar Keluar, Sejarah Pembelian, Status Pesanan, Profil, atau Hubungi Kami.",
         ta: "மன்னிக்கவும், அந்தப் பக்கத்தை என்னால் கண்டுபிடிக்க முடியவில்லை. மெனு, கார்ட், செக்அவுட், கொள்முதல் வரலாறு, ஆர்டர் நிலை, சுயவிவரம் அல்லது எங்களை தொடர்பு கொள்ளுங்கள் பக்கத்திற்கு அழைத்துச் செல்லும்படி என்னிடம் கேட்கலாம்.",
     },
+    loginForVouchers: {
+        en: "Please log in to check your available vouchers.",
+        zh: "请先登录以查看您可用的优惠券。",
+        ms: "Sila log masuk untuk menyemak baucar yang tersedia untuk anda.",
+        ta: "உங்களிடம் உள்ள வவுச்சர்களைப் பார்க்க முதலில் உள்நுழையுங்கள்.",
+    },
+    exploreRewardsCta: {
+        en: "You can find more reward details by exploring our Rewards page!",
+        zh: "欢迎前往我们的奖励页面，了解更多奖励详情！",
+        ms: "Anda boleh mendapatkan lebih banyak butiran ganjaran dengan meneroka halaman Rewards kami!",
+        ta: "மேலும் வெகுமதி விவரங்களை எங்கள் Rewards பக்கத்தில் காணலாம்!",
+    },
+    exploreRewardsBtn: {
+        en: "Explore Rewards",
+        zh: "探索奖励",
+        ms: "Terokai Ganjaran",
+        ta: "வெகுமதிகளை ஆராயுங்கள்",
+    },
 };
 
 // Main chatbot message handler
@@ -2434,29 +2451,49 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     if (isVoucherRequest(intentMessage)) {
         if (!userId) {
             return {
-                reply: "Please log in to check your available vouchers.",
+                reply: t('loginForVouchers'),
                 system_action: { ui_navigation: "none" },
             };
         }
 
         const vouchers = await getAvailableVouchers(userId);
 
-        const voucherContext = vouchers.length === 0
+        const voucherContext = (vouchers.length === 0
             ? "The customer has no available vouchers right now."
             : `[LIVE VOUCHER DATA — use this as the authoritative list of currently available vouchers.]\n\nAvailable vouchers:\n` +
-              vouchers.map((v) => {
-                  const discount = v.discountType === "percentage"
-                      ? `${v.discountValue}% off${v.maxDiscount != null ? ` (up to S$${Number(v.maxDiscount).toFixed(2)})` : ""}`
-                      : `S$${Number(v.discountValue).toFixed(2)} off`;
-                  const minSpend = Number(v.minSpend || 0) > 0 ? ` — min. spend S$${Number(v.minSpend).toFixed(2)}` : "";
-                  return `- ${v.code}: ${v.title} (${discount}${minSpend})`;
-              }).join("\n");
+            vouchers.map((v) => {
+                const discount = v.discountType === "percentage"
+                    ? `${v.discountValue}% off${v.maxDiscount != null ? ` (up to S$${Number(v.maxDiscount).toFixed(2)})` : ""}`
+                    : `S$${Number(v.discountValue).toFixed(2)} off`;
+                const minSpend = Number(v.minSpend || 0) > 0 ? ` — min. spend S$${Number(v.minSpend).toFixed(2)}` : "";
+                return `- ${v.code}: ${v.title} (${discount}${minSpend})`;
+            }).join("\n")) +
+            `\n\nDo NOT mention, suggest, or reference the Rewards page, or say anything like "explore/check/visit our rewards page for more details" — the app already appends that message and a button separately. End your reply after the voucher info itself.`;
 
         const systemPrompt = await buildSystemPrompt(safeMessage, voucherContext);
-        const reply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt);
+        const rawGeminiReply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt);
 
+        // Defensively strip any button/CTA markup Gemini may have echoed back from older
+        // conversation turns (saved before history was cleaned of this markup — see below) so
+        // exactly one button is ever shown, regardless of what's already stored for this chat.
+        let geminiReply = rawGeminiReply.replace(/<button[^>]*>[\s\S]*?<\/button>/gi, "");
+        for (const cta of Object.values(REPLY_STRINGS.exploreRewardsCta)) {
+            geminiReply = geminiReply.split(cta).join("");
+        }
+        geminiReply = geminiReply.replace(/(<br\s*\/?>\s*){2,}/gi, "<br><br>").trim();
+
+        // The CTA message + button are appended deterministically (not left to Gemini) so the
+        // Rewards page link always appears, and always in the correct language via REPLY_STRINGS —
+        // the same pattern buildCartSummaryReply uses for its "View Cart"/"Checkout" buttons.
+        const reply =
+            `${geminiReply}<br><br>${t('exploreRewardsCta')}<br><br>` +
+            `<button class="chat-nav-btn-compact" onclick="handleRewards()">${t('exploreRewardsBtn')}</button>`;
+
+        // Store only the plain (cleaned) Gemini reply in history, not the appended button HTML —
+        // otherwise Gemini sees its own button markup on the next turn and starts imitating it,
+        // producing a second (malformed, non-functional) button of its own in later replies.
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
-        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: geminiReply });
 
         return {
             reply,

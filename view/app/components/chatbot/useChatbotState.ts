@@ -230,6 +230,7 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     (window as any).goToCheckoutPage = (window as any).handleCheckout;
     (window as any).handleMenu = () => { router.push('/menu'); };
     (window as any).handlePurchaseHistory = () => { router.push('/purchase-history'); };
+    (window as any).handleRewards = () => { router.push('/rewards'); };
   }, [router]);
 
   // Close sidebar on Escape key

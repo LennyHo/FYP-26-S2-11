@@ -123,7 +123,14 @@
       "Bash(node -e \"require\\('./src/services/chatbot.service.js'\\); console.log\\('OK'\\)\")",
       "Bash(curl -s -X POST http://localhost:5000/api/chat -H 'Content-Type: application/json' -d '{\"message\":\"do I have any vouchers?\",\"conversationId\":\"test-voucher-convo-2\"}')",
       "Bash(curl -s -X POST http://localhost:5000/api/chat -H 'Content-Type: application/json' -d '{\"message\":\"go to the vouchers page\",\"conversationId\":\"test-voucher-convo-3\"}')",
-      "Bash(rm -f /tmp/backend_voucher_chat.log *)"
+      "Bash(rm -f /tmp/backend_voucher_chat.log *)",
+      "Bash(awk '/^const REPLY_STRINGS = \\\\{/{start=NR} start && /^\\\\};/{print NR; exit}' src/services/chatbot.service.js)",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H 'Content-Type: application/json' -d '{\"message\":\"我有优惠券吗？\",\"conversationId\":\"cta-test-zh\",\"userId\":\"6a2002079fad5a24637dfb83\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H 'Content-Type: application/json' -d '{\"message\":\"Do I have any coupons?\",\"conversationId\":\"cta-test-en2\",\"userId\":\"6a2002079fad5a24637dfb83\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H 'Content-Type: application/json' -d '{\"message\":\"我有优惠券吗？\",\"conversationId\":\"cta-test-zh-2\",\"userId\":\"6a2002079fad5a24637dfb83\"}')",
+      "Bash(python3 -c ' *)",
+      "Bash(xxd /tmp/zh_payload.json)",
+      "Bash(grep -n \"buildSystemPrompt\\\\|handleCart\\(\\)\\\\|onclick=\\\\\\\\\\\\\\\\\\\\\"handle\\\\|chat-nav-btn\" src/services/prompt.service.js)"
     ],
     "additionalDirectories": [
       "\\tmp"
