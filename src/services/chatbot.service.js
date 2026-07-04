@@ -63,6 +63,7 @@ const Payment = require("../models/payment.model");
 const Order = require("../models/order.model");
 const OrderItem = require("../models/orderItem.model");
 const Feedback = require("../models/feedback.model");
+const Voucher = require("../models/voucher.model");
 
 // Common functions for most features
 async function findDrinkByName(message) {
@@ -731,6 +732,42 @@ async function getRecentOrders(userId) {
     }));
 }
 // End of User Story #203
+
+// Detects "what vouchers do I have" intent.
+function isVoucherRequest(message) {
+    const msg = String(message || "").toLowerCase();
+    return (
+        msg.includes("voucher") ||
+        msg.includes("vouchers") ||
+        msg.includes("promo code") ||
+        msg.includes("promo codes") ||
+        msg.includes("discount code") ||
+        msg.includes("coupon") ||
+        msg.includes("any discount") ||
+        msg.includes("any deals") ||
+        msg.includes("any promotion")
+    );
+}
+
+// #202 - Queries Voucher collection for vouchers the customer can still redeem: active,
+// unexpired, and not already used by this customer (checked via their past orders'
+// voucherCode field), so the chatbot never recommends a voucher already spent.
+async function getAvailableVouchers(userId) {
+    const now = new Date();
+
+    const activeVouchers = await Voucher.find({
+        isActive: true,
+        $or: [{ expiresAt: null }, { expiresAt: { $gte: now } }],
+    }).sort({ createdAt: 1 }).lean();
+
+    const usedOrders = await Order.find({ userId, voucherCode: { $ne: null } })
+        .select("voucherCode")
+        .lean();
+    const usedCodes = new Set(usedOrders.map((order) => order.voucherCode));
+
+    return activeVouchers.filter((voucher) => !usedCodes.has(voucher.code));
+}
+// End of User Story #202
 
 
 // #199 - As a customer, I want to add beverages into my cart through the chatbot so that I can prepare my order conveniently.
@@ -2392,6 +2429,41 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         };
     }
     // End of User Story #203
+
+    // User Story #202: Check available vouchers via chatbot
+    if (isVoucherRequest(intentMessage)) {
+        if (!userId) {
+            return {
+                reply: "Please log in to check your available vouchers.",
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const vouchers = await getAvailableVouchers(userId);
+
+        const voucherContext = vouchers.length === 0
+            ? "The customer has no available vouchers right now."
+            : `[LIVE VOUCHER DATA — use this as the authoritative list of currently available vouchers.]\n\nAvailable vouchers:\n` +
+              vouchers.map((v) => {
+                  const discount = v.discountType === "percentage"
+                      ? `${v.discountValue}% off${v.maxDiscount != null ? ` (up to S$${Number(v.maxDiscount).toFixed(2)})` : ""}`
+                      : `S$${Number(v.discountValue).toFixed(2)} off`;
+                  const minSpend = Number(v.minSpend || 0) > 0 ? ` — min. spend S$${Number(v.minSpend).toFixed(2)}` : "";
+                  return `- ${v.code}: ${v.title} (${discount}${minSpend})`;
+              }).join("\n");
+
+        const systemPrompt = await buildSystemPrompt(safeMessage, voucherContext);
+        const reply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt);
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        return {
+            reply,
+            system_action: { ui_navigation: "none" },
+        };
+    }
+    // End of User Story #202
 
     // User Story #198: View Purchase History
     if (isReorderPurchaseHistoryRequest(intentMessage)) {

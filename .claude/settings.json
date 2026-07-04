@@ -119,7 +119,11 @@
       "Bash(curl -s -o /tmp/checkout_recheck.html -w \"checkout HTTP %{http_code}\\\\n\" http://localhost:3000/checkout)",
       "Bash(rm -f /tmp/checkout_recheck.html)",
       "Bash(curl -s -o /tmp/checkout_recheck2.html -w \"checkout HTTP %{http_code}\\\\n\" http://localhost:3000/checkout)",
-      "Bash(rm -f /tmp/checkout_recheck2.html)"
+      "Bash(rm -f /tmp/checkout_recheck2.html)",
+      "Bash(node -e \"require\\('./src/services/chatbot.service.js'\\); console.log\\('OK'\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H 'Content-Type: application/json' -d '{\"message\":\"do I have any vouchers?\",\"conversationId\":\"test-voucher-convo-2\"}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/chat -H 'Content-Type: application/json' -d '{\"message\":\"go to the vouchers page\",\"conversationId\":\"test-voucher-convo-3\"}')",
+      "Bash(rm -f /tmp/backend_voucher_chat.log *)"
     ],
     "additionalDirectories": [
       "\\tmp"
