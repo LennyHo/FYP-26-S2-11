@@ -538,11 +538,34 @@ export default function Checkout() {
                                         type="button"
                                         className="collect-btn"
                                         onClick={async () => {
-                                            if (!confirmation.orderId.startsWith("GUEST-")) {
-                                                await updateOrderStatus(confirmation.orderId, "completed").catch(console.error);
-                                            }
-
                                             setCollected(true);
+
+                                            if (confirmation.orderId.startsWith("GUEST-")) return;
+
+                                            try {
+                                                await updateOrderStatus(confirmation.orderId, "completed");
+                                                const orderRes = await getOrder(confirmation.orderId);
+
+                                                window.dispatchEvent(
+                                                    new CustomEvent("chatbotSystemMessage", {
+                                                        detail: {
+                                                            text:
+                                                                "We hope you enjoyed your order. We'd love to hear your thoughts — your feedback helps us deliver a better experience every time.",
+                                                            feedbackOrderId: confirmation.orderId,
+                                                            feedbackItems: (orderRes.data.items || []).map((item) => ({
+                                                                name: item.name,
+                                                                image: item.image,
+                                                                quantity: item.quantity,
+                                                                customization: item.customization,
+                                                                menuItemId: item.menuItemId,
+                                                                menuItemCode: item.menuItemCode,
+                                                            })),
+                                                        },
+                                                    })
+                                                );
+                                            } catch (error) {
+                                                console.error("[DripTea collect]", error);
+                                            }
                                         }}
                                     >
                                         {isDeliveryOrder ? "Mark as Received" : "Click to Collect"}

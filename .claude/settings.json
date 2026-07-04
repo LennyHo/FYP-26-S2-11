@@ -114,7 +114,10 @@
       "Bash(curl -s http://localhost:5000/api/staff/vouchers)",
       "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\('still there:', j.data.some\\(v=>v.code==='TESTDEL'\\)\\);}\\)\")",
       "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const j=JSON.parse\\(d\\);console.log\\('customer voucher count:', j.data.length\\);}\\)\")",
-      "Bash(curl -s -o /tmp/voucher_page.html -w \"store-staff-voucher HTTP %{http_code}\\\\n\" http://localhost:3000/store-staff-voucher)"
+      "Bash(curl -s -o /tmp/voucher_page.html -w \"store-staff-voucher HTTP %{http_code}\\\\n\" http://localhost:3000/store-staff-voucher)",
+      "Bash(curl -s http://localhost:5000/api/health -o /dev/null -w \"backend HTTP %{http_code}\\\\n\")",
+      "Bash(curl -s -o /tmp/checkout_recheck.html -w \"checkout HTTP %{http_code}\\\\n\" http://localhost:3000/checkout)",
+      "Bash(rm -f /tmp/checkout_recheck.html)"
     ],
     "additionalDirectories": [
       "\\tmp"
