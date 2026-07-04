@@ -117,7 +117,9 @@
       "Bash(curl -s -o /tmp/voucher_page.html -w \"store-staff-voucher HTTP %{http_code}\\\\n\" http://localhost:3000/store-staff-voucher)",
       "Bash(curl -s http://localhost:5000/api/health -o /dev/null -w \"backend HTTP %{http_code}\\\\n\")",
       "Bash(curl -s -o /tmp/checkout_recheck.html -w \"checkout HTTP %{http_code}\\\\n\" http://localhost:3000/checkout)",
-      "Bash(rm -f /tmp/checkout_recheck.html)"
+      "Bash(rm -f /tmp/checkout_recheck.html)",
+      "Bash(curl -s -o /tmp/checkout_recheck2.html -w \"checkout HTTP %{http_code}\\\\n\" http://localhost:3000/checkout)",
+      "Bash(rm -f /tmp/checkout_recheck2.html)"
     ],
     "additionalDirectories": [
       "\\tmp"
