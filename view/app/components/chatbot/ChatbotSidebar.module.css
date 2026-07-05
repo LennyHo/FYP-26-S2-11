@@ -72,6 +72,29 @@
   overflow-x: visible;
 }
 
+.chatbotSidebar.chatBg {
+  background: linear-gradient(120deg, #ffffff 0%, #fdf0f6 20%, #ffffff 45%, #eee7f9 70%, #ffffff 100%);
+  background-size: 300% 300%;
+  animation: avyBgMotion 14s ease infinite;
+  animation-play-state: paused;
+}
+
+.chatbotSidebar.chatBg.chatBgMotionActive {
+  animation-play-state: running;
+}
+
+@keyframes avyBgMotion {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chatbotSidebar.chatBg {
+    animation: none;
+  }
+}
+
 .chatbotWrapper {
   display: flex;
   flex-direction: column;
@@ -182,7 +205,6 @@
   transition: transform 0.18s ease, opacity 0.18s ease;
   transform: translate(var(--avy-eye-x, 0px), var(--avy-eye-y, 0px));
 }
-
 
 .backBtn,
 .restartBtn {

@@ -155,7 +155,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
   }, [overlayMessages]);
 
   return (
-    <aside className={styles.chatbotSidebar}>
+    <aside className={`${styles.chatbotSidebar} ${styles.chatBg}${!hasUserMessage && !input ? ` ${styles.chatBgMotionActive}` : ''}`}>
       {/* Header with logo and controls */}
       <div className={styles.chatHeader}>
         <div className={styles.headerTop}>
