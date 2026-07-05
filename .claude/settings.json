@@ -130,7 +130,10 @@
       "Bash(curl -s -X POST http://localhost:5000/api/chat -H 'Content-Type: application/json' -d '{\"message\":\"我有优惠券吗？\",\"conversationId\":\"cta-test-zh-2\",\"userId\":\"6a2002079fad5a24637dfb83\"}')",
       "Bash(python3 -c ' *)",
       "Bash(xxd /tmp/zh_payload.json)",
-      "Bash(grep -n \"buildSystemPrompt\\\\|handleCart\\(\\)\\\\|onclick=\\\\\\\\\\\\\\\\\\\\\"handle\\\\|chat-nav-btn\" src/services/prompt.service.js)"
+      "Bash(grep -n \"buildSystemPrompt\\\\|handleCart\\(\\)\\\\|onclick=\\\\\\\\\\\\\\\\\\\\\"handle\\\\|chat-nav-btn\" src/services/prompt.service.js)",
+      "Bash(rm -f /tmp/backend_order_status.log)",
+      "Bash(rm -f /tmp/backend_no_order.log)",
+      "Bash(rm -f /tmp/backend_no_current.log)"
     ],
     "additionalDirectories": [
       "\\tmp"

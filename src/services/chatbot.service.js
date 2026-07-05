@@ -721,11 +721,17 @@ function isTrackOrderRequest(message) {
     );
 }
 
-// #203 - Queries Order collection for recent orders. Active orders (pending/preparing/ready)
-// are surfaced first; falls back to the 3 most recent orders of any status so the customer
-// can always clarify "do I have any other orders?".
-async function getRecentOrders(userId) {
-    const orders = await Order.find({ userId }, null, { sort: { createdAt: -1 }, limit: 3 }).lean();
+// #203 - Track Order Status via Chatbot
+function extractOrderNoFromMessage(message) {
+    const match = String(message || "").match(/(?:order\s*#?|#)\s*(\d{3,6})\b/i);
+    return match ? match[1].padStart(4, "0") : null;
+}
+
+async function getOrderStatus(userId, orderId) {
+    const orders = orderId
+        ? await Order.find({ userId, orderNo: orderId }).lean()
+        : await Order.find({ userId }, null, { sort: { createdAt: -1 }, limit: 3 }).lean();
+
     return Promise.all(orders.map(async (order) => {
         const items = await OrderItem.find({ orderId: order._id }).lean();
         return { ...order, items };
@@ -734,7 +740,6 @@ async function getRecentOrders(userId) {
 // End of User Story #203
 
 // #202 Customers check available vouchers
-// Detects "what vouchers do I have" intent.
 function isVoucherRequest(message) {
     const msg = String(message || "").toLowerCase();
     return (
@@ -2415,7 +2420,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             };
         }
 
-        const orders = await getRecentOrders(userId);
+        const requestedOrderNo = extractOrderNoFromMessage(intentMessage);
+        const orders = await getOrderStatus(userId, requestedOrderNo);
 
         const STATUS_LABELS = {
             pending:    "Pending — your order has been placed and is waiting to be confirmed.",
@@ -2426,13 +2432,23 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             cancelled:  "Cancelled.",
         };
 
+        // "Current" means still in progress — not yet collected or cancelled.
+        const ACTIVE_STATUSES = new Set(["pending", "paid", "preparing", "ready"]);
+        const hasActiveOrder = orders.some((o) => ACTIVE_STATUSES.has(o.status));
+
+        const noCurrentOrderNote = (!requestedOrderNo && orders.length > 0 && !hasActiveOrder)
+            ? "\n\nNote: The customer has NO current order in progress right now (nothing pending, paid, preparing, or ready) — every order below has already been completed or cancelled. Explicitly tell the customer they have no current order before showing this past order history."
+            : "";
+
         const orderContext = orders.length === 0
-            ? "The customer has no orders on record."
-            : `[LIVE ORDER DATA — use this as the authoritative current status. Ignore any order status mentioned earlier in the conversation.]\n\nCustomer's recent orders (most recent first):\n` +
+            ? (requestedOrderNo
+                ? `The customer asked about order #${requestedOrderNo}, but no such order exists for this account.`
+                : "No order is found. The customer has no current or past orders on record.")
+            : `[LIVE ORDER DATA — use this as the authoritative current status. Ignore any order status mentioned earlier in the conversation.]\n\nCustomer's ${requestedOrderNo ? "requested order" : "recent orders (most recent first)"}:\n` +
               orders.map((o, i) => {
                   const itemList = (o.items || []).map(it => `  • ${it.name} x${it.quantity}`).join("\n") || "  (no item details)";
                   return `Order ${i + 1}: #${o.orderNo} — ${STATUS_LABELS[o.status] || o.status} — Total: S$${Number(o.totalAmount || 0).toFixed(2)}\nItems:\n${itemList}`;
-              }).join("\n\n");
+              }).join("\n\n") + noCurrentOrderNote;
 
         const systemPrompt = await buildSystemPrompt(safeMessage, orderContext);
         const reply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt)
