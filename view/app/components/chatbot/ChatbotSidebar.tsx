@@ -558,7 +558,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               <Image src={avyLogo} alt="Avy" width={18} height={18} className={styles.messageAvatar} />
               <span className={styles.assistantLabel}>Avy</span>
               <span className={styles.metaDivider}>•</span>
-              <span className={`${styles.messageTime} ${styles.messageTimePulsing}`}>typing...</span>
+              <span className={styles.messageTime}>typing...</span>
             </div>
             <div className={`${styles.botBubble} ${styles.typingBubble}`}>
               <span className={styles.typingIndicator}>
