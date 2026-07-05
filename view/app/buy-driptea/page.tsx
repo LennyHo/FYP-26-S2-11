@@ -8,8 +8,13 @@
 //
 // #21  Search Beverages
 //      View: buy-driptea/page.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
+import { Suspense } from 'react';
 import BuyDripTea from '../components/menu/BuyDriptea';
 
 export default function BuyDripTeaPage() {
-  return <BuyDripTea />;
+  return (
+    <Suspense fallback={null}>
+      <BuyDripTea />
+    </Suspense>
+  );
 }
