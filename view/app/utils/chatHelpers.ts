@@ -166,6 +166,11 @@ export function getBrowserSpeechLang(): string {
 let _activeAudio: HTMLAudioElement | null = null;
 export function registerAudio(audio: HTMLAudioElement | null) { _activeAudio = audio; }
 
+// Bumped on every cancelSpeech()/speakText() call so async TTS responses that resolve
+// after a newer narration has started can detect they're stale and drop themselves,
+// instead of playing on top of the latest message's audio.
+let _speakSeq = 0;
+
 // Hooks called by useSpeech so it can pause/resume MediaRecorder around TTS playback
 let _onTTSStart: (() => void) | null = null;
 let _onTTSEnd: (() => void) | null = null;
@@ -175,6 +180,7 @@ export function setTTSHooks(onStart?: () => void, onEnd?: () => void): void {
 }
 
 export function cancelSpeech(): void {
+  _speakSeq++;
   if (_activeAudio) { _activeAudio.pause(); _activeAudio.src = ''; _activeAudio = null; }
   if ('speechSynthesis' in window) {
     const s = window.speechSynthesis;
@@ -184,8 +190,9 @@ export function cancelSpeech(): void {
   _onTTSEnd?.();
 }
 
-function _browserSpeak(text: string, onEndCallback?: () => void): void {
+function _browserSpeak(text: string, onEndCallback?: () => void, mySeq?: number): void {
   if (!('speechSynthesis' in window)) { _onTTSEnd?.(); onEndCallback?.(); return; }
+  if (mySeq !== undefined && mySeq !== _speakSeq) return; // a newer narration has since started
   window.speechSynthesis.cancel();
   const lang = detectSpeechLang(text);
   const utterance = new SpeechSynthesisUtterance(text);
@@ -208,6 +215,11 @@ export function speakText(text: string, onEndCallback?: () => void): void {
   const clean = text.replace(/[*#]/g, '').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
   if (!clean) { onEndCallback?.(); return; }
 
+  // Stop whatever is currently playing/pending and claim the new sequence number so
+  // a slower, older request can't play its audio after this (newer) one starts.
+  cancelSpeech();
+  const mySeq = _speakSeq;
+
   _onTTSStart?.();
 
   fetch('/api/tts', {
@@ -220,6 +232,7 @@ export function speakText(text: string, onEndCallback?: () => void): void {
       return res.blob();
     })
     .then(blob => {
+      if (mySeq !== _speakSeq) return; // superseded by a newer speakText() call
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       registerAudio(audio);
@@ -233,16 +246,16 @@ export function speakText(text: string, onEndCallback?: () => void): void {
         URL.revokeObjectURL(url);
         registerAudio(null);
         // Only fall back if not cancelled (cancelSpeech sets _activeAudio=null first)
-        if (_activeAudio !== null) _browserSpeak(clean, onEndCallback);
+        if (mySeq === _speakSeq) _browserSpeak(clean, onEndCallback, mySeq);
       };
       audio.play().catch(() => {
         registerAudio(null);
-        _browserSpeak(clean, onEndCallback);
+        if (mySeq === _speakSeq) _browserSpeak(clean, onEndCallback, mySeq);
       });
     })
     .catch(() => {
       // ElevenLabs unreachable — fall back to browser TTS silently
-      _browserSpeak(clean, onEndCallback);
+      if (mySeq === _speakSeq) _browserSpeak(clean, onEndCallback, mySeq);
     });
 }
 

@@ -371,9 +371,10 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
         } else {
           if (isSpeakDetectedRef.current) { isSpeakDetectedRef.current = false; setIsSpeakDetected(false); }
           // Silence — start countdown after 300 ms grace period.
-          // 500 ms if user actually spoke (fast response), 800 ms if no voice yet (conservative).
+          // 650 ms if user actually spoke (enough for natural pauses without feeling laggy),
+          // 950 ms if no voice yet (conservative).
           if (!vadTimerRef.current && elapsed > 300 && mediaRecorderRef.current?.state === 'recording' && !isProcessingRef.current) {
-            const silenceMs = hadVoiceInChunkRef.current ? 500 : 800;
+            const silenceMs = hadVoiceInChunkRef.current ? 650 : 950;
             vadTimerRef.current = setTimeout(() => {
               vadTimerRef.current = null;
               if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
