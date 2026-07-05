@@ -62,6 +62,7 @@ import { QUICK_PROMPTS, convertDrinkNamesToLinks, extractOrderingOptions, getOrd
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from '../menu/DrinkRecCards';
 import OrderReceiptCard from '../ui/OrderReceiptCard';
+import OrderStatusCard from '../ui/OrderStatusCard';
 import FeedbackPromptCard from "./FeedbackPromptCard";
 import CartSummaryCard from '../ui/CartSummaryCard';
 import PurchaseHistoryCard from '../ui/PurchaseHistoryCard';
@@ -337,7 +338,9 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 onClick={handleChatClick}
               >
                 <div className={styles.bubbleText}>
-                  {!msg.isUser && msg.orderReceipt ? (
+                  {!msg.isUser && msg.orderStatusCard ? (
+                    <OrderStatusCard orderStatus={msg.orderStatusCard} />
+                  ) : !msg.isUser && msg.orderReceipt ? (
                     <OrderReceiptCard orderReceipt={msg.orderReceipt} />
                   ) : !msg.isUser && msg.cartUpdate ? (
                     <CartSummaryCard cartUpdate={msg.cartUpdate} />
@@ -804,7 +807,9 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 )}
                 <div className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}>
                   <div className={styles.bubbleText}>
-                    {!msg.isUser && msg.orderReceipt ? (
+                    {!msg.isUser && msg.orderStatusCard ? (
+                      <OrderStatusCard orderStatus={msg.orderStatusCard} />
+                    ) : !msg.isUser && msg.orderReceipt ? (
                       <OrderReceiptCard orderReceipt={msg.orderReceipt} />
                     ) : !msg.isUser && msg.cartUpdate ? (
                       <CartSummaryCard cartUpdate={msg.cartUpdate} />

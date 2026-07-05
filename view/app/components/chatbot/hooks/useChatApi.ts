@@ -84,11 +84,13 @@ export function useChatApi({
       ? (payload.cartUpdate as Message['cartUpdate']) : null;
     const purchaseHistory = payload.purchaseHistory && typeof payload.purchaseHistory === 'object'
       ? (payload.purchaseHistory as Message['purchaseHistory']) : null;
+    const orderStatusCard = payload.orderStatusCard && typeof payload.orderStatusCard === 'object'
+      ? (payload.orderStatusCard as Message['orderStatusCard']) : null;
     const systemAction = payload.system_action && typeof payload.system_action === 'object'
       ? (payload.system_action as { ui_navigation?: string }) : null;
     const strippedReply = rawReply.replace(/<div[^>]*class="[^"]*hidden-cart-data[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
     const sanitizedReply = strippedReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
-    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, showViewCart: payload.showViewCart, systemAction };
+    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, showViewCart: payload.showViewCart, systemAction };
   }
 
   async function sendMessage(messageText: string, shouldSpeak: boolean = false, isQuickPrompt: boolean = false) {
@@ -156,8 +158,8 @@ export function useChatApi({
 
     try {
       const response = await sendChatMessage({ message: messageText, conversationId: convId, userId: getCurrentUserId(), isQuickPrompt });
-      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, showViewCart, systemAction } = parsePayload(await response.json());
-      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory };
+      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, showViewCart, systemAction } = parsePayload(await response.json());
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard };
       setMessages(prev => [...prev, botMsg]);
 
       // #26 - Navigate Website via Chatbot: backend resolved a destination page, jump there now.
@@ -206,6 +208,7 @@ export function useChatApi({
         orderReceipt: payload.orderReceipt && typeof payload.orderReceipt === 'object' ? (payload.orderReceipt as Message['orderReceipt']) : null,
         cartUpdate: payload.cartUpdate && typeof payload.cartUpdate === 'object' ? (payload.cartUpdate as Message['cartUpdate']) : null,
         purchaseHistory: payload.purchaseHistory && typeof payload.purchaseHistory === 'object' ? (payload.purchaseHistory as Message['purchaseHistory']) : null,
+        orderStatusCard: payload.orderStatusCard && typeof payload.orderStatusCard === 'object' ? (payload.orderStatusCard as Message['orderStatusCard']) : null,
       };
       setOverlayMessages(prev => [...prev, botMsg]);
 

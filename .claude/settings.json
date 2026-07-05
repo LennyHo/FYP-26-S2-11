@@ -133,7 +133,10 @@
       "Bash(grep -n \"buildSystemPrompt\\\\|handleCart\\(\\)\\\\|onclick=\\\\\\\\\\\\\\\\\\\\\"handle\\\\|chat-nav-btn\" src/services/prompt.service.js)",
       "Bash(rm -f /tmp/backend_order_status.log)",
       "Bash(rm -f /tmp/backend_no_order.log)",
-      "Bash(rm -f /tmp/backend_no_current.log)"
+      "Bash(rm -f /tmp/backend_no_current.log)",
+      "Bash(rm -f /tmp/backend_status_card.log)",
+      "Bash(powershell -Command \"Get-Process -Id \\(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue\\).OwningProcess -ErrorAction SilentlyContinue | Select-Object Id,StartTime,Path\")",
+      "Bash(powershell -Command \"Stop-Process -Id 26932 -Force -ErrorAction SilentlyContinue\")"
     ],
     "additionalDirectories": [
       "\\tmp"

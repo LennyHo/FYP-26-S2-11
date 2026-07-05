@@ -2043,6 +2043,42 @@ const REPLY_STRINGS = {
         ms: "Terokai Ganjaran",
         ta: "வெகுமதிகளை ஆராயுங்கள்",
     },
+    orderStatusStep1: {
+        en: "Order sent",
+        zh: "订单已发送",
+        ms: "Pesanan dihantar",
+        ta: "ஆர்டர் அனுப்பப்பட்டது",
+    },
+    orderStatusStep2: {
+        en: "Drinks in Progress",
+        zh: "饮品制作中",
+        ms: "Minuman Sedang Disediakan",
+        ta: "பானம் தயாராகிறது",
+    },
+    orderStatusStep3: {
+        en: "Collection!",
+        zh: "待取餐！",
+        ms: "Pengambilan!",
+        ta: "சேகரிப்பு!",
+    },
+    orderStatusPhase1Msg: {
+        en: "Please wait for your drink to be prepared and collected at the pickup counter.",
+        zh: "请耐心等待，您的饮品制作完成后可在取餐柜台领取。",
+        ms: "Sila tunggu minuman anda disediakan dan diambil di kaunter pengambilan.",
+        ta: "உங்கள் பானம் தயாராகி, பிக்கப் கவுன்டரில் பெறப்படும் வரை காத்திருக்கவும்.",
+    },
+    orderStatusPhase2Msg: {
+        en: "Your drink is in progress! Please keep a lookout.",
+        zh: "您的饮品正在制作中！请留意通知。",
+        ms: "Minuman anda sedang disediakan! Sila perhatikan.",
+        ta: "உங்கள் பானம் தயாராகி வருகிறது! கவனமாக இருங்கள்.",
+    },
+    orderStatusPhase3Msg: {
+        en: "Your drink is ready for collection! Please head to the pickup counter.",
+        zh: "您的饮品已准备好，请前往取餐柜台领取！",
+        ms: "Minuman anda sudah sedia untuk diambil! Sila ke kaunter pengambilan.",
+        ta: "உங்கள் பானம் தயார்! பிக்கப் கவுன்டருக்குச் செல்லவும்.",
+    },
 };
 
 // Main chatbot message handler
@@ -2435,6 +2471,34 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         // "Current" means still in progress — not yet collected or cancelled.
         const ACTIVE_STATUSES = new Set(["pending", "paid", "preparing", "ready"]);
         const hasActiveOrder = orders.some((o) => ACTIVE_STATUSES.has(o.status));
+
+        // If there's a current (active) order, show ONLY that order as a structured status
+        // card (matching the 3-step "Order sent / Drinks in Progress / Collection!" widget) —
+        // no need to also list other past orders alongside it.
+        const PHASE_BY_STATUS = { pending: 1, paid: 1, preparing: 2, ready: 3 };
+        const activeOrder = orders.find((o) => ACTIVE_STATUSES.has(o.status));
+
+        if (activeOrder) {
+            const phase = PHASE_BY_STATUS[activeOrder.status];
+            const phaseMessageKey =
+                phase === 1 ? 'orderStatusPhase1Msg' : phase === 2 ? 'orderStatusPhase2Msg' : 'orderStatusPhase3Msg';
+
+            const orderStatusCard = {
+                orderNo: activeOrder.orderNo,
+                phase,
+                message: t(phaseMessageKey),
+                stepLabels: [t('orderStatusStep1'), t('orderStatusStep2'), t('orderStatusStep3')],
+            };
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: orderStatusCard.message });
+
+            return {
+                reply: orderStatusCard.message,
+                orderStatusCard,
+                system_action: { ui_navigation: "none" },
+            };
+        }
 
         const noCurrentOrderNote = (!requestedOrderNo && orders.length > 0 && !hasActiveOrder)
             ? "\n\nNote: The customer has NO current order in progress right now (nothing pending, paid, preparing, or ready) — every order below has already been completed or cancelled. Explicitly tell the customer they have no current order before showing this past order history."

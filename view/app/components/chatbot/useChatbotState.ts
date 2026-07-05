@@ -111,6 +111,12 @@ export interface Message {
       totalAmount: number;
     }[];
   } | null;
+  orderStatusCard?: {
+    orderNo: string;
+    phase: 1 | 2 | 3;
+    message: string;
+    stepLabels: [string, string, string];
+  } | null;
 }
 
 export interface ChatbotSidebarProps {
