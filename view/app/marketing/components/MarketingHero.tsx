@@ -22,7 +22,7 @@ export default function MarketingHero() {
           <div className={styles.actions}>
             <a
               className={`${buttons.btn} ${buttons.large} ${buttons.blue}`}
-              href="https://driptea-ruby.vercel.app/"
+              href="https://driptea-ruby.vercel.app/buy-driptea"
               target="_blank"
               rel="noopener noreferrer"
             >
