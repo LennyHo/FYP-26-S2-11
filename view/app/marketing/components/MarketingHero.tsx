@@ -11,13 +11,12 @@ export default function MarketingHero() {
         <div>
           <p className={`${layout.eyebrow} ${styles.eyebrowEnter}`}>FYP-26-S2-11</p>
           <h1 className={styles.title}>
-            Say what you&apos;re
+            Find your flavor. Skip the line.
             <br />
-            craving.<span className={styles.titleAccent}> Avy pours it.</span>
+            craving.<span className={styles.titleAccent}> Talk to Avy.</span>
           </h1>
           <p className={styles.sub}>
-            DripTea is a neighbourhood bubble tea shop. Talk to Avy, the AI concierge who recommends your
-            drink, remembers your order, and gets you straight to the front of the line.
+            Meet Avy, the digital face of DripTea. As your personal AI concierge, Avy learns your taste, remembers your go-to orders, and fast-tracks you straight to the counter.
           </p>
           <div className={styles.actions}>
             <a

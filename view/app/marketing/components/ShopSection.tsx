@@ -31,7 +31,7 @@ export default function ShopSection() {
               to a cup you crave.
             </h2>
             <p className={styles.heroSub}>
-              A decade of passion, craft, and community, brewed into every drop.
+              Driptea. A decade of passion, craft, and community, brewed into every drop. Freshly Brwed, Brightly Layered.
             </p>
             <div className={styles.heroRule} />
           </div>
