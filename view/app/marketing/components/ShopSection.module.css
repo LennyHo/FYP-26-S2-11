@@ -1,0 +1,391 @@
+.section {
+  padding: 48px 0;
+  background: var(--paper);
+}
+
+/* ─── Hero (replicated from view/app/components/pages/OurStory.module.css) ─── */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #010919 0%, #011840 45%, #040d1f 100%);
+  box-shadow: 0 8px 48px rgba(0, 0, 0, 0.22);
+  padding: 80px 24px 72px;
+  text-align: center;
+}
+
+.heroStarfield {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.heroStarfield::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px; height: 2px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    18px  42px 0 0 rgba(255,255,255,0.55),
+    74px  18px 0 0 rgba(255,255,255,0.35),
+    112px 68px 0 0 rgba(200,220,255,0.45),
+    160px 28px 0 0 rgba(255,255,255,0.28),
+    195px 88px 0 0 rgba(255,255,255,0.4),
+    248px 12px 0 0 rgba(200,220,255,0.38),
+    292px 55px 0 0 rgba(255,255,255,0.5),
+    338px 32px 0 0 rgba(255,240,200,0.42),
+    382px 78px 0 0 rgba(255,255,255,0.32),
+    428px 22px 0 0 rgba(200,220,255,0.48),
+    475px 60px 0 0 rgba(255,255,255,0.38),
+    518px 18px 0 0 rgba(255,255,255,0.25),
+    565px 74px 0 0 rgba(200,220,255,0.4),
+    612px 38px 0 0 rgba(255,255,255,0.45),
+    658px 82px 0 0 rgba(255,240,200,0.35),
+    705px 14px 0 0 rgba(255,255,255,0.5),
+    748px 58px 0 0 rgba(200,220,255,0.3),
+    792px 28px 0 0 rgba(255,255,255,0.42),
+    835px 72px 0 0 rgba(255,255,255,0.28),
+    878px 16px 0 0 rgba(200,220,255,0.48),
+    922px 62px 0 0 rgba(255,255,255,0.38),
+    965px 34px 0 0 rgba(255,240,200,0.4),
+    1008px 78px 0 0 rgba(255,255,255,0.32),
+    1055px 22px 0 0 rgba(200,220,255,0.45),
+    1098px 64px 0 0 rgba(255,255,255,0.5),
+    1142px 18px 0 0 rgba(255,255,255,0.3),
+    1185px 58px 0 0 rgba(200,220,255,0.4),
+    1228px 34px 0 0 rgba(255,255,255,0.45),
+    1272px 72px 0 0 rgba(255,240,200,0.32),
+    1315px 24px 0 0 rgba(255,255,255,0.38),
+    1358px 66px 0 0 rgba(200,220,255,0.5),
+    40px  148px 0 0 rgba(255,255,255,0.42),
+    88px  168px 0 0 rgba(200,220,255,0.35),
+    138px 128px 0 0 rgba(255,255,255,0.48),
+    182px 178px 0 0 rgba(255,240,200,0.38),
+    228px 138px 0 0 rgba(255,255,255,0.3),
+    275px 188px 0 0 rgba(200,220,255,0.45),
+    318px 145px 0 0 rgba(255,255,255,0.4),
+    362px 172px 0 0 rgba(255,255,255,0.28),
+    405px 132px 0 0 rgba(200,220,255,0.5),
+    448px 185px 0 0 rgba(255,240,200,0.35),
+    492px 148px 0 0 rgba(255,255,255,0.42),
+    538px 168px 0 0 rgba(200,220,255,0.38),
+    582px 125px 0 0 rgba(255,255,255,0.32),
+    628px 178px 0 0 rgba(255,255,255,0.48),
+    672px 138px 0 0 rgba(200,220,255,0.4),
+    718px 182px 0 0 rgba(255,240,200,0.3),
+    762px 142px 0 0 rgba(255,255,255,0.45),
+    808px 162px 0 0 rgba(200,220,255,0.35),
+    852px 128px 0 0 rgba(255,255,255,0.38),
+    895px 175px 0 0 rgba(255,255,255,0.28),
+    938px 148px 0 0 rgba(200,220,255,0.48),
+    982px 168px 0 0 rgba(255,240,200,0.4),
+    1025px 132px 0 0 rgba(255,255,255,0.42),
+    1068px 178px 0 0 rgba(200,220,255,0.32),
+    1112px 145px 0 0 rgba(255,255,255,0.5),
+    1155px 165px 0 0 rgba(255,255,255,0.35),
+    1198px 138px 0 0 rgba(200,220,255,0.45),
+    1242px 175px 0 0 rgba(255,240,200,0.38),
+    1285px 148px 0 0 rgba(255,255,255,0.3),
+    1328px 168px 0 0 rgba(200,220,255,0.48);
+}
+
+.heroStarfield::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 1px; height: 1px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    35px  95px 0 0 rgba(255,255,255,0.18),
+    82px  35px 0 0 rgba(255,255,255,0.14),
+    128px 112px 0 0 rgba(200,220,255,0.2),
+    175px 58px 0 0 rgba(255,255,255,0.15),
+    222px 108px 0 0 rgba(255,255,255,0.12),
+    268px 42px 0 0 rgba(200,220,255,0.18),
+    315px 98px 0 0 rgba(255,255,255,0.16),
+    362px 52px 0 0 rgba(255,240,200,0.14),
+    408px 108px 0 0 rgba(255,255,255,0.2),
+    455px 48px 0 0 rgba(200,220,255,0.16),
+    502px 98px 0 0 rgba(255,255,255,0.12),
+    548px 36px 0 0 rgba(255,255,255,0.18),
+    595px 88px 0 0 rgba(200,220,255,0.15),
+    642px 52px 0 0 rgba(255,255,255,0.2),
+    688px 108px 0 0 rgba(255,240,200,0.14),
+    735px 42px 0 0 rgba(255,255,255,0.16),
+    782px 92px 0 0 rgba(200,220,255,0.18),
+    828px 48px 0 0 rgba(255,255,255,0.12),
+    875px 98px 0 0 rgba(255,255,255,0.2),
+    922px 38px 0 0 rgba(200,220,255,0.15);
+}
+
+.heroStarsBright {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  animation: twinkleBright 4s ease-in-out infinite;
+}
+
+.heroStarsBright::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow:
+    145px  35px 0 0 rgba(255,255,255,0.92),
+    385px  58px 0 0 rgba(255,245,210,0.88),
+    625px  28px 0 0 rgba(200,225,255,0.95),
+    865px  52px 0 0 rgba(255,255,255,0.85),
+    1105px 38px 0 0 rgba(255,245,210,0.9),
+    1328px 55px 0 0 rgba(200,225,255,0.88),
+    65px  185px 0 0 rgba(255,255,255,0.9),
+    305px 205px 0 0 rgba(255,245,210,0.85),
+    545px 172px 0 0 rgba(200,225,255,0.92),
+    785px 195px 0 0 rgba(255,255,255,0.88),
+    1025px 178px 0 0 rgba(255,245,210,0.95),
+    1265px 198px 0 0 rgba(200,225,255,0.85);
+}
+
+.heroStarsBright::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px; height: 2px;
+  border-radius: 50%;
+  background: transparent;
+  animation: twinkleSlow 6.5s ease-in-out infinite 2s;
+  box-shadow:
+    258px  18px 0 0 rgba(255,255,255,0.88),
+    498px  42px 0 0 rgba(255,245,210,0.92),
+    738px  22px 0 0 rgba(200,225,255,0.85),
+    978px  48px 0 0 rgba(255,255,255,0.9),
+    1218px 28px 0 0 rgba(255,245,210,0.88),
+    168px 268px 0 0 rgba(200,225,255,0.92),
+    408px 282px 0 0 rgba(255,255,255,0.85),
+    648px 258px 0 0 rgba(255,245,210,0.9);
+}
+
+.heroNebula {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 38% at 18% 68%, rgba(2, 87, 173, 0.09) 0%, transparent 100%),
+    radial-gradient(ellipse 42% 30% at 82% 22%, rgba(244, 59, 3, 0.05) 0%, transparent 100%),
+    radial-gradient(ellipse 60% 42% at 52% 88%, rgba(2, 50, 130, 0.07) 0%, transparent 100%),
+    radial-gradient(ellipse 38% 28% at 72% 60%, rgba(2, 87, 173, 0.06) 0%, transparent 100%),
+    radial-gradient(ellipse 48% 35% at 28% 30%, rgba(244, 59, 3, 0.04) 0%, transparent 100%),
+    linear-gradient(135deg, transparent 25%, rgba(2, 60, 140, 0.05) 50%, transparent 75%);
+}
+
+@keyframes twinkleBright {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+@keyframes twinkleSlow {
+  0%, 100% { opacity: 0.8; }
+  50%       { opacity: 0.18; }
+}
+
+.heroBlob {
+  position: absolute;
+  top: -80px;
+  right: -60px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(2, 87, 173, 0.18) 0%, transparent 68%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.heroBlobRed {
+  position: absolute;
+  bottom: -60px;
+  left: -40px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(244, 59, 3, 0.12) 0%, transparent 68%);
+  filter: blur(48px);
+  pointer-events: none;
+}
+
+.heroSpotlight {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 360px;
+  background: radial-gradient(ellipse at top, rgba(2, 87, 173, 0.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.heroRingOuter {
+  position: absolute;
+  width: 680px;
+  height: 680px;
+  border-radius: 50%;
+  border: 1px solid rgba(2, 87, 173, 0.08);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.heroRingInner {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  border: 1px solid rgba(2, 87, 173, 0.13);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.heroRingMid {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 59, 3, 0.07);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.heroBurst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1000px;
+  height: 1000px;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(2, 87, 173, 0.018) 0deg,
+    transparent 6deg,
+    transparent 18deg
+  );
+  -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,0.6) 20%, transparent 68%);
+  mask-image: radial-gradient(circle, rgba(0,0,0,0.6) 20%, transparent 68%);
+  pointer-events: none;
+}
+
+.heroCornerTL,
+.heroCornerTR,
+.heroCornerBL,
+.heroCornerBR {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.heroCornerTL {
+  top: 24px;
+  left: 24px;
+  border-top: 1.5px solid rgba(2, 87, 173, 0.5);
+  border-left: 1.5px solid rgba(2, 87, 173, 0.5);
+}
+
+.heroCornerTR {
+  top: 24px;
+  right: 24px;
+  border-top: 1.5px solid rgba(244, 59, 3, 0.45);
+  border-right: 1.5px solid rgba(244, 59, 3, 0.45);
+}
+
+.heroCornerBL {
+  bottom: 24px;
+  left: 24px;
+  border-bottom: 1.5px solid rgba(244, 59, 3, 0.45);
+  border-left: 1.5px solid rgba(244, 59, 3, 0.45);
+}
+
+.heroCornerBR {
+  bottom: 24px;
+  right: 24px;
+  border-bottom: 1.5px solid rgba(2, 87, 173, 0.5);
+  border-right: 1.5px solid rgba(2, 87, 173, 0.5);
+}
+
+.heroBottomFade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, rgba(1, 9, 25, 0.4));
+  pointer-events: none;
+}
+
+.heroInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.heroLogo {
+  width: clamp(140px, 30vw, 220px);
+  height: auto;
+  opacity: 0.92;
+}
+
+.heroEyebrow {
+  color: #F43B03;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.heroHeadline {
+  color: #fff;
+  font-size: clamp(1.9rem, 4.5vw, 3rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.heroSub {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 440px;
+  margin: 0;
+}
+
+.heroRule {
+  width: 48px;
+  height: 2px;
+  background: rgba(2, 87, 173, 0.5);
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroStarsBright,
+  .heroStarsBright::before,
+  .heroStarsBright::after {
+    animation: none;
+  }
+}

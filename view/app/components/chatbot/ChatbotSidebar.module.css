@@ -129,18 +129,21 @@
   margin: 0 10px 10px;
   padding: 10px 14px;
   padding-bottom: max(14px, env(safe-area-inset-bottom));
+  /* Near-opaque (not translucent) so message content scrolled behind the
+     sticky composer can't bleed through as a faint edge/line. */
   background: linear-gradient(
     160deg,
-    rgba(255, 255, 255, 0.7) 0%,
-    rgba(250, 240, 255, 0.92) 100%
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(250, 240, 255, 0.99) 100%
   );
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.6);
+  /* Neutral, tightly-clipped shadow - a saturated/large-blur shadow here
+     reads as message content glowing through from behind. */
   box-shadow:
-    0 14px 34px rgba(171, 28, 110, 0.18),
-    0 2px 10px rgba(0, 0, 0, 0.06),
+    0 6px 16px rgba(0, 0, 0, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.75);
   z-index: 10;
 }

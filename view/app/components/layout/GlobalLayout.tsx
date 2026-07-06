@@ -57,7 +57,8 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/register') ||
     pathname.startsWith('/profile') ||
     pathname.startsWith('/forgot-password') ||
-    pathname.startsWith('/change-password');
+    pathname.startsWith('/change-password') ||
+    pathname.startsWith('/marketing');
 
   const hideFooter =
     pathname.startsWith('/user-admin') ||
@@ -65,7 +66,8 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/user-admin-dashboard') ||
     pathname.startsWith('/store-staff-dashboard') ||
     pathname.startsWith('/login') ||
-    pathname.startsWith('/register');
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/marketing');
 
   const rootClass = `${styles.globalShell} ${(pathname === '/login' || hideChatbot) ? 'loginPage' : ''}`;
   

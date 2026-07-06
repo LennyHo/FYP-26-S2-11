@@ -5,15 +5,15 @@ import styles from './AvySection.module.css';
 
 const FEATURES = [
   {
-    label: 'Just say it',
+    label: 'Just say it.',
     desc: "Tell Avy what you're craving and she'll find your perfect match instantly. No browsing, no scrolling required.",
   },
   {
-    label: 'Save your taste once',
+    label: 'Save your taste once.',
     desc: "Set your sugar level, go-to toppings, and usual order once. Avy remembers everything for next time.",
   },
   {
-    label: 'Skip the queue',
+    label: 'Skip the queue.',
     desc: "Order in seconds, any time. Avy's always ready to take your order, even when the line isn't.",
   },
 ];

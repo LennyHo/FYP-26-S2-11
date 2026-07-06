@@ -1,0 +1,46 @@
+.root {
+  --cream: #FAF5CA;
+  --paper: #FFFBF2;
+  --ink: #2A1B10;
+  --clay: #7A5C3E;
+  --tea-blue: #0257AD;
+  --spark: #F43B03;
+  --spark-strong: #C22C02; /* AA-contrast variant of --spark for text/button labels */
+
+  --ink-rgb: 42, 27, 16;
+  --paper-rgb: 255, 251, 242;
+
+  /* Matches the live product's single Geist Sans family (view/app/globals.css) */
+  --font-display: var(--font-geist-sans), 'Segoe UI', Arial, Helvetica, sans-serif;
+  --font-body: var(--font-geist-sans), 'Segoe UI', Arial, Helvetica, sans-serif;
+
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.6;
+}
+
+.wrap {
+  width: min(1160px, calc(100% - 96px));
+  margin-inline: auto;
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    width: min(1160px, calc(100% - 48px));
+  }
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--spark-strong);
+  margin-bottom: 14px;
+}
+
+.eyebrowLight {
+  color: var(--cream);
+}
