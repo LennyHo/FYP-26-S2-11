@@ -102,7 +102,8 @@
 }
 
 .refreshBtn:hover {
-  background: rgba(234, 88, 12, 0.12);
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.5);
   transform: translateY(-1px);
 }
 
@@ -110,6 +111,7 @@
   opacity: 0.55;
   cursor: not-allowed;
   transform: none;
+  background: rgba(248, 250, 252, 0.95);
 }
 
 /* Search */
