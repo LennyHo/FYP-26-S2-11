@@ -189,6 +189,18 @@ function isHealthRankingQuery(message) {
     );
 }
 
+// Detects rating-ranking queries: "which beverage has the highest rating?", "best rated drink",
+// "top rated drink", "most stars", etc. — requires both a rating word and a ranking word so it
+// doesn't collide with general recommendation phrases like "what's good" or "any good drinks".
+function isHighestRatedRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    const hasRatingWord = msg.includes("rating") || msg.includes("rated") || msg.includes("star");
+    const hasRankWord = msg.includes("highest") || msg.includes("best") || msg.includes("top") || msg.includes("most");
+
+    return hasRatingWord && hasRankWord;
+}
+
 // #32 (extension) - As a customer, I want the chatbot to suggest drinks based on how I'm feeling
 // (flu, sore throat, indigestion, fatigue, stress) so that I can pick something comforting.
 // Keyword-detects a symptom category → maps to a curated set of itemIds (see getDrinksByItemIds)
@@ -2253,6 +2265,36 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         return {
             reply,
             recommendedDrinks: formatDrinkCards(drinks),
+            system_action: { ui_navigation: "none" },
+        };
+    }
+
+    // Rating ranking query: "which beverage has the highest rating?", "best rated drink", etc.
+    // Deterministic DB lookup (not Gemini-generated) so the answer is always accurate.
+    if (isHighestRatedRequest(intentMessage)) {
+        const allDrinks = await MenuItem.find({ status: "active" }).lean();
+        const ratedDrinks = allDrinks.filter((d) => Number(d.rating || 0) > 0);
+
+        if (ratedDrinks.length === 0) {
+            const reply = "None of our drinks have been rated by customers yet — check back soon!";
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+            return { reply, system_action: { ui_navigation: "none" } };
+        }
+
+        const maxRating = Math.max(...ratedDrinks.map((d) => Number(d.rating || 0)));
+        const topDrinks = ratedDrinks.filter((d) => Number(d.rating || 0) === maxRating).slice(0, 5);
+
+        const reply = topDrinks.length === 1
+            ? `Our highest-rated drink right now is ${topDrinks[0].name}, with a rating of ${maxRating.toFixed(1)} ★!`
+            : `Our highest-rated drinks right now are tied at ${maxRating.toFixed(1)} ★: ${topDrinks.map((d) => d.name).join(", ")}.`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        return {
+            reply,
+            recommendedDrinks: formatDrinkCards(topDrinks),
             system_action: { ui_navigation: "none" },
         };
     }
