@@ -66,6 +66,7 @@ Make sure all of the following are installed and working on your machine **befor
 - A **Gemini API key** — [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 - An **ElevenLabs API key** — [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) (used for both STT transcription and TTS bot voice)
 - An **ElevenLabs Voice ID** — [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library) → pick a voice → copy its ID
+- A **OneMap Accouunt** - https://www.onemap.gov.sg/apidocs/register
 
 ---
 
