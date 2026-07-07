@@ -668,6 +668,18 @@
   border-color: #ea580c;
 }
 
+.addressList {
+  display: grid;
+  gap: 10px;
+  /* Shows the 2 permanent rows plus a peek of row 3, hinting there's more to
+     scroll to; rows beyond that (up to the hard cap) scroll within this
+     fixed area instead of growing the modal. */
+  max-height: 114px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 .addressRow {
   display: grid;
   grid-template-columns: 1fr 2fr auto auto;
@@ -735,6 +747,12 @@
 .removeAddressButton:hover {
   background: rgba(239, 68, 68, 0.08);
   border-color: #ef4444;
+}
+
+.removeAddressSpacer {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 620px) {
