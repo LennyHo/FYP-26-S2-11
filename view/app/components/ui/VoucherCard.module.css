@@ -1,0 +1,78 @@
+.root {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 14px;
+    color: #fff;
+}
+
+.header {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.voucherBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.topRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.voucherName {
+    font-size: 14px;
+    font-weight: 700;
+    flex: 1;
+}
+
+.discountBadge {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 800;
+    color: #8f2d83;
+    background: #fff;
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.description {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.metaRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.codePill {
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px dashed rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    padding: 3px 9px;
+}
+
+.minSpend {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.75);
+    text-align: right;
+}

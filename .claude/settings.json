@@ -136,7 +136,13 @@
       "Bash(rm -f /tmp/backend_no_current.log)",
       "Bash(rm -f /tmp/backend_status_card.log)",
       "Bash(powershell -Command \"Get-Process -Id \\(Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue\\).OwningProcess -ErrorAction SilentlyContinue | Select-Object Id,StartTime,Path\")",
-      "Bash(powershell -Command \"Stop-Process -Id 26932 -Force -ErrorAction SilentlyContinue\")"
+      "Bash(powershell -Command \"Stop-Process -Id 26932 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(PORT=5052 node server.js)",
+      "Bash(curl -s http://localhost:5052/api/health)",
+      "Bash(powershell -Command 'Get-NetTCPConnection -LocalPort 5052 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }')",
+      "Bash(rm -f /tmp/backend_voucher_card_test.log)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue\")",
+      "Bash(echo \"exit code: $?\")"
     ],
     "additionalDirectories": [
       "\\tmp"

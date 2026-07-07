@@ -63,6 +63,7 @@ import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from '../menu/DrinkRecCards';
 import OrderReceiptCard from '../ui/OrderReceiptCard';
 import OrderStatusCard from '../ui/OrderStatusCard';
+import VoucherCard from '../ui/VoucherCard';
 import FeedbackPromptCard from "./FeedbackPromptCard";
 import CartSummaryCard from '../ui/CartSummaryCard';
 import PurchaseHistoryCard from '../ui/PurchaseHistoryCard';
@@ -340,6 +341,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 <div className={styles.bubbleText}>
                   {!msg.isUser && msg.orderStatusCard ? (
                     <OrderStatusCard orderStatus={msg.orderStatusCard} />
+                  ) : !msg.isUser && msg.voucherCard ? (
+                    <VoucherCard voucherCard={msg.voucherCard} />
                   ) : !msg.isUser && msg.orderReceipt ? (
                     <OrderReceiptCard orderReceipt={msg.orderReceipt} />
                   ) : !msg.isUser && msg.cartUpdate ? (
@@ -803,6 +806,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   <div className={styles.bubbleText}>
                     {!msg.isUser && msg.orderStatusCard ? (
                       <OrderStatusCard orderStatus={msg.orderStatusCard} />
+                    ) : !msg.isUser && msg.voucherCard ? (
+                      <VoucherCard voucherCard={msg.voucherCard} />
                     ) : !msg.isUser && msg.orderReceipt ? (
                       <OrderReceiptCard orderReceipt={msg.orderReceipt} />
                     ) : !msg.isUser && msg.cartUpdate ? (
