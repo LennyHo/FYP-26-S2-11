@@ -27,6 +27,10 @@ const orderSchema = new mongoose.Schema(
     currency: { type: String, default: "SGD" },
     voucherCode: { type: String, default: null },
     discountAmount: { type: Number, default: 0 },
+    deliveryDetails: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
   },
   { timestamps: true, collection: "orders" }
 );

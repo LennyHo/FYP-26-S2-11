@@ -164,6 +164,18 @@
 .purchase-status-cancelled { background: #fee2e2; color: #991b1b; }
 .purchase-status-cancelled::before { background: #ef4444; }
 
+.purchase-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #f6eee7;
+  color: #7c5133;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 /* ── Divider ─────────────────────────────────── */
 .purchase-divider {
   height: 1px;
@@ -396,12 +408,15 @@
 
 .purchase-feedback-btn {
   padding: 5px 15px;
+  border: 0;
   border-radius: 99px;
   background: #6b3f24;
   color: white;
+  font-family: inherit;
   text-decoration: none;
   font-size: 0.78rem;
   font-weight: 700;
+  cursor: pointer;
   transition: 0.2s ease;
 }
 

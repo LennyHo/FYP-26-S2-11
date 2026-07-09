@@ -25,6 +25,7 @@ import type {
   DripTeaMenuItem,
   DripTeaPurchaseHistoryItem,
   DripTeaVoucher,
+  DripTeaDeliveryDetails,
 } from './api.base';
 
 
@@ -230,13 +231,21 @@ export function getUsedVouchers(userId: string) {
 // ── Checkout ──────────────────────────────────────────────────────────────────
 
 // Submits the cart as an order and records a payment. POST /api/checkout
-export function checkoutCart(userId: string, paymentMethod: string, voucherCode?: string) {
+export function checkoutCart(
+  userId: string,
+  paymentMethod: string,
+  voucherCode?: string,
+  orderType?: string,
+  deliveryDetails?: DripTeaDeliveryDetails | null
+) {
   const payload: Record<string, unknown> = { userId, paymentMethod };
   if (voucherCode) payload.voucherCode = voucherCode;
+  if (orderType) payload.orderType = orderType;
+  if (deliveryDetails) payload.deliveryDetails = deliveryDetails;
 
   return requestJson<{
     ok: boolean;
-    order: { id: string; orderNo: string; displayOrderNo?: string; status: string; totalAmount: number; orderType: string };
+    order: { id: string; orderNo: string; displayOrderNo?: string; status: string; totalAmount: number; orderType: string; deliveryDetails?: DripTeaDeliveryDetails | null };
     payment: { id: string; status: string; method: string };
   }>('/api/checkout', { method: 'POST', body: JSON.stringify(payload) });
 }
@@ -251,7 +260,12 @@ export function getPurchaseHistory(userId: string) {
 }
 
 // Updates a user's profile. PATCH /api/users/:id
-export function updateUser(userId: string, payload: { profilePic?: string; fullName?: string; email?: string }) {
+export function updateUser(userId: string, payload: {
+  profilePic?: string;
+  fullName?: string;
+  email?: string;
+  addresses?: DripTeaUser['addresses'];
+}) {
   return requestJson<{ ok: boolean; data: DripTeaUser }>(
     `/api/users/${encodeURIComponent(userId)}`,
     { method: 'PATCH', body: JSON.stringify(payload) }

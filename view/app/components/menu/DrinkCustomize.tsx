@@ -60,12 +60,20 @@ type DrinkCustomizeProps = {
   mode?: "add" | "edit";
 };
 
+function getRouteParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function isValidRouteId(value?: string): value is string {
+  return Boolean(value && value !== "undefined" && value !== "null");
+}
+
 export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
   const params = useParams();
   const router = useRouter();
 
-  const drinkId = params.drinkId as string;
-  const cartItemId = params.cartItemId as string;
+  const drinkId = getRouteParam(params.drinkId);
+  const cartItemId = getRouteParam(params.cartItemId);
   const isEditMode = mode === "edit";
   const [drink, setDrink] = useState<DrinkData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,7 +90,13 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
 
     async function loadDrinkAndCartItem() {
       try {
-        let targetDrinkId = drinkId;
+        let targetDrinkId = drinkId || "";
+
+        if (isEditMode && !isValidRouteId(cartItemId)) {
+          console.warn("[DrinkCustomize] Missing cart item id for edit route.");
+          router.replace("/cart");
+          return;
+        }
 
         if (isEditMode && cartItemId) {
           const cartResponse = await getCartItem(cartItemId);
@@ -155,7 +169,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
     }
 
     loadDrinkAndCartItem();
-  }, [drinkId, cartItemId, isEditMode]);
+  }, [drinkId, cartItemId, isEditMode, router]);
 
   // Pre-fill form from chat customization
   useEffect(() => {
@@ -385,12 +399,15 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
   // User Story #17: Edit cart items
   async function handleUpdateCartItem() {
     try {
-      if (!cartItemId) {
+      if (!isValidRouteId(cartItemId)) {
         alert("Cart item ID is missing.");
+        router.push("/cart");
         return;
       }
 
-      await updateCartItem(cartItemId, {
+      const validCartItemId = cartItemId;
+
+      await updateCartItem(validCartItemId, {
         quantity,
         unitPrice: selectedDrink.price + size.surcharge + topping.price,
         lineTotal: totalPrice,

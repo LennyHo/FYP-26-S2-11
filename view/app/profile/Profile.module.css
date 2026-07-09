@@ -192,6 +192,118 @@
   opacity: 0.65;
 }
 
+.addressSection {
+  border: 1.5px solid #e0dbd0;
+  border-radius: 14px;
+  background: #fbf8f2;
+  padding: 1rem;
+}
+
+.addressHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.addressTitle {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #1a1a1a;
+}
+
+.addressHint {
+  margin: 0.25rem 0 0;
+  color: #777;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.addAddressBtn {
+  flex: 0 0 auto;
+  border: 1.5px solid #c8c2b6;
+  border-radius: 999px;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.addAddressBtn:hover {
+  background: #f5f0e8;
+}
+
+.emptyAddresses {
+  margin: 0;
+  color: #888;
+  font-size: 0.84rem;
+}
+
+.addressList {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.addressCard {
+  display: grid;
+  gap: 0.7rem;
+  border: 1px solid #e7dfd4;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.85rem;
+}
+
+.addressInputs {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.addressTextarea {
+  min-height: 78px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.addressActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.defaultAddressToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #333;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.defaultAddressToggle input {
+  accent-color: #1a1a1a;
+}
+
+.removeAddressBtn {
+  border: none;
+  background: transparent;
+  color: #9b3b2f;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0.2rem 0;
+}
+
+.removeAddressBtn:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .saveBtn {
   margin-top: 0.6rem;
   padding: 0.85rem;
@@ -226,4 +338,24 @@
   background: rgba(45, 106, 45, 0.08);
   border-radius: 8px;
   padding: 0.55rem 1rem;
+}
+
+@media (max-width: 560px) {
+  .card {
+    padding: 1.5rem 1.1rem 2rem;
+  }
+
+  .addressHeader {
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .addAddressBtn {
+    width: 100%;
+  }
+
+  .addressActions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

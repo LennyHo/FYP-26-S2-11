@@ -105,6 +105,7 @@ function toPublicOrder(order, user, items, payment) {
         status: order.status,
         orderType: order.orderType,
         totalAmount: Number(order.totalAmount || 0),
+        deliveryDetails: order.deliveryDetails || null,
         paymentStatus: payment?.status || order.paymentStatus || "unpaid",
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
@@ -117,7 +118,9 @@ function toPublicOrder(order, user, items, payment) {
 // Reads cart_items → creates order in orders → inserts order_items → creates payment → clears cart_items.
 async function processPayment(req, res) {
     try {
-    const { userId, paymentMethod, voucherCode } = req.body;
+    const { userId, paymentMethod, voucherCode, deliveryDetails } = req.body;
+    const requestedOrderType = String(req.body.orderType || "").trim().toLowerCase();
+    const orderType = requestedOrderType === "delivery" ? "delivery" : "pickup";
 
     if (!userId) {
         return res.status(400).json({
@@ -154,7 +157,8 @@ async function processPayment(req, res) {
         }
     }
 
-    const totalAmount = Math.round((subtotal - discountAmount) * 100) / 100;
+    const deliveryFee = orderType === "delivery" ? Number(deliveryDetails?.deliveryFee || 0) : 0;
+    const totalAmount = Math.round((subtotal - discountAmount + deliveryFee) * 100) / 100;
 
     const order = await createOrderWithUniqueNumber({
         userId,
@@ -168,10 +172,11 @@ async function processPayment(req, res) {
             customization: item.customization,
         })),
         totalAmount,
-        orderType: "online",
+        orderType,
         status: "pending",
         voucherCode: appliedVoucherCode,
         discountAmount,
+        deliveryDetails: orderType === "delivery" && deliveryDetails ? deliveryDetails : null,
     });
 
     const orderItems = cartItems.map((item) => ({
@@ -213,6 +218,7 @@ async function processPayment(req, res) {
         status: order.status,
         totalAmount: order.totalAmount,
         orderType: order.orderType,
+        deliveryDetails: order.deliveryDetails || null,
         },
         payment: {
         id: payment._id.toString(),

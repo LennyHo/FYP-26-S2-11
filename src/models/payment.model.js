@@ -59,7 +59,9 @@ paymentSchema.statics.getPurchaseHistory = async function getPurchaseHistory(use
         displayOrderNo: order.displayOrderNo || order.orderNo,
         createdAt: order.createdAt,
         status: order.status,
+        orderType: order.orderType || "pickup",
         totalAmount: order.totalAmount,
+        deliveryDetails: order.deliveryDetails || null,
         paymentStatus: payment?.status || "unpaid",
 
         hasFeedback: feedbackCount > 0,

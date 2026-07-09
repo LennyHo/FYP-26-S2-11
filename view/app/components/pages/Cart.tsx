@@ -10,7 +10,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCartItems, getMenuItems, deleteCartItem, updateCartItemQuantity } from "../../utils/customerApi";
-import { getStoredUser, parseLocalCartLine } from "../../utils/api.base";
+import { formatLocalCartLine, getStoredUser, parseLocalCartLine } from "../../utils/api.base";
 import Header from "../layout/Header";
 import "./Cart.css";
 
@@ -108,6 +108,7 @@ const SUGAR_NUDGE: Record<"a" | "b" | "c" | "d", string> = {
 
 interface CartItem {
   backendId?: string;
+  localIndex?: number;
   drinkId?: string;
   name: string;
   details: string;
@@ -122,6 +123,38 @@ function getCartItemImage(item: CartItem) {
   if (item.drinkId) return `/img/bubble_teas/${item.drinkId}.jpg`;
   if (item.imageSrc) return item.imageSrc;
   return "/img/bubble_teas/b001.jpg";
+}
+
+function getCartItemKey(item: CartItem, index: number) {
+  if (item.backendId) return item.backendId;
+  if (item.localIndex !== undefined) return `local-${item.localIndex}`;
+  return `${item.name}-${index}`;
+}
+
+function setQuantityInDetails(details: string, quantity: number) {
+  const current = details.trim();
+
+  if (/^(Qty|Bilangan|数量)\s+\d+/i.test(current)) {
+    return current.replace(/^(Qty|Bilangan|数量)\s+\d+/i, `$1 ${quantity}`);
+  }
+
+  return current ? `Qty ${quantity} | ${current}` : `Qty ${quantity}`;
+}
+
+function getLocalCartLines() {
+  return (window.localStorage.getItem("dripTeaCartData") || "")
+    .split("\n")
+    .filter((line) => line.trim());
+}
+
+function saveLocalCartLines(lines: string[]) {
+  if (lines.length) {
+    window.localStorage.setItem("dripTeaCartData", lines.join("\n"));
+  } else {
+    window.localStorage.removeItem("dripTeaCartData");
+  }
+
+  window.dispatchEvent(new Event("cartUpdated"));
 }
 
 function getCategorySlugByDrinkId(drinkId?: string) {
@@ -168,7 +201,7 @@ export default function Cart() {
         localData
           .split("\n")
           .filter((line) => line.trim())
-          .forEach((line) => {
+          .forEach((line, localIndex) => {
             const parsed = parseLocalCartLine(line);
             if (!parsed) return;
 
@@ -177,6 +210,7 @@ export default function Cart() {
             const unitPrice = quantity > 0 ? parsed.price / quantity : parsed.price;
 
             guestItems.push({
+              localIndex,
               name: parsed.name,
               details: parsed.details,
               price: parsed.price,
@@ -271,17 +305,20 @@ export default function Cart() {
   }
 
   function handleEditItem(item: CartItem) {
+    if (!item.backendId) {
+      console.warn("[Cart] Cannot edit cart item without a backend id.");
+      return;
+    }
+
     router.push(`/cart/edit/${item.backendId}`);
   }
 
   async function handleIncrease(item: CartItem) {
-    if (!item.backendId) return;
-
     const nextQuantity = item.quantity + 1;
 
     setCartItems((prev) =>
       prev.map((i) => {
-        if (i.backendId !== item.backendId) return i;
+        if (i !== item) return i;
 
         return {
           ...i,
@@ -293,6 +330,21 @@ export default function Cart() {
     );
 
     setTotal((prev) => prev + item.unitPrice);
+
+    if (!item.backendId) {
+      if (item.localIndex === undefined) return;
+
+      const lines = getLocalCartLines();
+      lines[item.localIndex] = formatLocalCartLine({
+        name: item.name,
+        details: setQuantityInDetails(item.details, nextQuantity),
+        price: item.unitPrice * nextQuantity,
+        imageSrc: item.imageSrc,
+      });
+      saveLocalCartLines(lines);
+      return;
+    }
+
     await updateCartItemQuantity(item.backendId, nextQuantity);
 
     skipNextCartUpdated.current = true;
@@ -300,8 +352,6 @@ export default function Cart() {
   }
 
   async function handleDecrease(item: CartItem) {
-    if (!item.backendId) return;
-
     if (item.quantity <= 1) {
       await handleRemove(item);
       return;
@@ -311,7 +361,7 @@ export default function Cart() {
 
     setCartItems((prev) =>
       prev.map((i) => {
-        if (i.backendId !== item.backendId) return i;
+        if (i !== item) return i;
 
         return {
           ...i,
@@ -323,6 +373,21 @@ export default function Cart() {
     );
 
     setTotal((prev) => prev - item.unitPrice);
+
+    if (!item.backendId) {
+      if (item.localIndex === undefined) return;
+
+      const lines = getLocalCartLines();
+      lines[item.localIndex] = formatLocalCartLine({
+        name: item.name,
+        details: setQuantityInDetails(item.details, nextQuantity),
+        price: item.unitPrice * nextQuantity,
+        imageSrc: item.imageSrc,
+      });
+      saveLocalCartLines(lines);
+      return;
+    }
+
     await updateCartItemQuantity(item.backendId, nextQuantity);
 
     skipNextCartUpdated.current = true;
@@ -330,11 +395,22 @@ export default function Cart() {
   }
 
   async function handleRemove(item: CartItem) {
-    if (!item.backendId) return;
+    const removeKey = item.backendId || (item.localIndex !== undefined ? `local-${item.localIndex}` : null);
+    if (!removeKey) return;
 
-    setRemovingId(item.backendId);
+    setRemovingId(removeKey);
     await new Promise((resolve) => setTimeout(resolve, 280));
     setRemovingId(null);
+
+    if (!item.backendId) {
+      if (item.localIndex === undefined) return;
+
+      const lines = getLocalCartLines();
+      lines.splice(item.localIndex, 1);
+      saveLocalCartLines(lines);
+      await fetchCartData();
+      return;
+    }
 
     await deleteCartItem(item.backendId);
     await fetchCartData();
@@ -351,7 +427,7 @@ export default function Cart() {
     }
 
     if (orderType === "delivery") {
-      router.push("/delivery");
+      router.push("/checkout");
       return;
     }
 
@@ -484,8 +560,8 @@ export default function Cart() {
               <div className="cart-list">
                 {cartItems.map((item, index) => (
                   <div
-                    key={item.backendId || `${item.name}-${index}`}
-                    className={`cart-item-row${removingId === item.backendId ? " removing" : ""}`}
+                    key={getCartItemKey(item, index)}
+                    className={`cart-item-row${removingId === getCartItemKey(item, index) ? " removing" : ""}`}
                   >
                     <div className="cart-item-main">
                       <img
@@ -501,13 +577,15 @@ export default function Cart() {
 
                         <p className="cart-item-details">{item.details}</p>
 
-                        <button
-                          type="button"
-                          className="edit-beverage-btn"
-                          onClick={() => handleEditItem(item)}
-                        >
-                          Edit Beverage
-                        </button>
+                        {item.backendId && (
+                          <button
+                            type="button"
+                            className="edit-beverage-btn"
+                            onClick={() => handleEditItem(item)}
+                          >
+                            Edit Beverage
+                          </button>
+                        )}
                       </div>
                     </div>
 

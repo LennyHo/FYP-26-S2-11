@@ -44,6 +44,20 @@ export type DripTeaCartItem = {
   customization: Record<string, unknown>;
 };
 
+export type DripTeaDeliveryDetails = {
+  type?: string;
+  outletName: string;
+  outletAddress: string;
+  outletLat: number;
+  outletLng: number;
+  customerLat: number;
+  customerLng: number;
+  customerAddress?: string;
+  distanceKm: number;
+  deliveryFee: number;
+  deliveryStatus?: string;
+};
+
 export type DripTeaStorageTarget = {
   type: string;
   database?: string;
@@ -100,6 +114,7 @@ export type DripTeaOrder = {
   status: string;
   orderType: string;
   totalAmount: number;
+  deliveryDetails?: DripTeaDeliveryDetails | null;
   paymentStatus: string;
   createdAt?: string;
   updatedAt?: string;
@@ -156,8 +171,10 @@ export type DripTeaPurchaseHistoryItem = {
   orderNo: string;
   displayOrderNo?: string;
   status: string;
+  orderType?: string;
   paymentStatus: string;
   totalAmount: number;
+  deliveryDetails?: DripTeaDeliveryDetails | null;
   createdAt?: string;
   hasFeedback?: boolean;
   items: Array<{

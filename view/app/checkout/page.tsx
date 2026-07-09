@@ -26,12 +26,6 @@ export default function Page() {
       return;
     }
 
-    // If customer selected delivery but has not chosen delivery address
-    if (orderType === "delivery" && !deliveryData) {
-      router.replace("/delivery");
-      return;
-    }
-
     // If customer selected pickup, remove any old delivery address
     if (orderType === "pickup") {
       window.localStorage.removeItem("driptea_delivery");

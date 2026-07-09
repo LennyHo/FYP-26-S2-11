@@ -7,5 +7,5 @@ const DeliveryMap = dynamic(() => import("../components/DeliveryMap"), {
 })
 
 export default function DeliveryPage() {
-  return <DeliveryMap cartTotal={9.7} />
+  return <DeliveryMap />
 }

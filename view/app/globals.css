@@ -208,6 +208,56 @@ button { touch-action: manipulation; }
   color: var(--muted);
 }
 
+.delivery-outlet-selector {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--surface-strong);
+  border: 1px solid rgba(155, 109, 74, 0.2);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.delivery-outlet-selector h2 {
+  margin-bottom: 12px;
+}
+
+.delivery-outlet-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.delivery-outlet-options button {
+  border: 1px solid rgba(141, 99, 63, 0.24);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--accent-ink);
+  text-align: left;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.delivery-outlet-options button.active {
+  border-color: var(--accent);
+  background: #f5ece4;
+}
+
+.delivery-outlet-options strong,
+.delivery-outlet-options span {
+  display: block;
+}
+
+.delivery-outlet-options strong {
+  font-size: 15px;
+}
+
+.delivery-outlet-options span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 .delivery-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;

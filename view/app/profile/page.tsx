@@ -7,13 +7,14 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './Profile.module.css';
 import { updateUser } from '../utils/customerApi';
-import { getStoredUser, storeUser } from '../utils/api.base';
+import { getStoredUser, storeUser, type DripTeaAddress } from '../utils/api.base';
 
 export default function ProfilePage() {
   const router = useRouter();
   const [profilePic, setProfilePic] = useState<string>("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [addresses, setAddresses] = useState<DripTeaAddress[]>([]);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -21,7 +22,64 @@ export default function ProfilePage() {
     setProfilePic(user?.profilePic || "/profile_empty.png");
     setName(user?.fullName || "");
     setEmail(user?.email || "");
+    setAddresses(user?.addresses ? user.addresses.map((address: DripTeaAddress) => ({ ...address })) : []);
   }, []);
+
+  function addAddress() {
+    setAddresses(current => [
+      ...current,
+      {
+        label: "",
+        address: "",
+        isDefault: current.length === 0,
+      },
+    ]);
+  }
+
+  function removeAddress(index: number) {
+    setAddresses(current => {
+      const next = current.filter((_, itemIndex) => itemIndex !== index);
+
+      if (current[index]?.isDefault && next.length > 0 && !next.some(address => address.isDefault)) {
+        next[0] = { ...next[0], isDefault: true };
+      }
+
+      return next;
+    });
+  }
+
+  function updateAddressField(index: number, field: "label" | "address", value: string) {
+    setAddresses(current =>
+      current.map((entry, itemIndex) =>
+        itemIndex === index ? { ...entry, [field]: value } : entry
+      )
+    );
+  }
+
+  function setDefaultAddress(index: number) {
+    setAddresses(current =>
+      current.map((entry, itemIndex) => ({
+        ...entry,
+        isDefault: itemIndex === index,
+      }))
+    );
+  }
+
+  function cleanAddresses() {
+    const cleaned = addresses
+      .map(entry => ({
+        label: String(entry.label || "").trim(),
+        address: String(entry.address || "").trim(),
+        isDefault: Boolean(entry.isDefault),
+      }))
+      .filter(entry => entry.address.length > 0);
+
+    if (cleaned.length > 0 && !cleaned.some(entry => entry.isDefault)) {
+      cleaned[0].isDefault = true;
+    }
+
+    return cleaned;
+  }
 
   function handlePicChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -49,7 +107,12 @@ export default function ProfilePage() {
     const user = getStoredUser();
     if (user) {
       try {
-        const response = await updateUser(user.id, { profilePic, fullName: name, email });
+        const response = await updateUser(user.id, {
+          profilePic,
+          fullName: name,
+          email,
+          addresses: cleanAddresses(),
+        });
         storeUser(response.data);
         window.dispatchEvent(new Event('profileUpdated'));
         setStatus("Profile updated!");
@@ -136,6 +199,65 @@ export default function ProfilePage() {
               </button>
             </div>
           </div>
+
+          <section className={styles.addressSection}>
+            <div className={styles.addressHeader}>
+              <div>
+                <h2 className={styles.addressTitle}>Saved Delivery Addresses</h2>
+                <p className={styles.addressHint}>The default address is used first during delivery checkout.</p>
+              </div>
+
+              <button type="button" className={styles.addAddressBtn} onClick={addAddress}>
+                Add Address
+              </button>
+            </div>
+
+            {addresses.length === 0 ? (
+              <p className={styles.emptyAddresses}>No saved addresses yet.</p>
+            ) : (
+              <div className={styles.addressList}>
+                {addresses.map((entry, index) => (
+                  <div key={index} className={styles.addressCard}>
+                    <div className={styles.addressInputs}>
+                      <input
+                        className={styles.input}
+                        value={entry.label || ""}
+                        onChange={event => updateAddressField(index, "label", event.target.value)}
+                        placeholder="Label, e.g. Home"
+                      />
+                      <textarea
+                        className={`${styles.input} ${styles.addressTextarea}`}
+                        value={entry.address || ""}
+                        onChange={event => updateAddressField(index, "address", event.target.value)}
+                        placeholder="Full delivery address"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className={styles.addressActions}>
+                      <label className={styles.defaultAddressToggle}>
+                        <input
+                          type="radio"
+                          name="defaultAddress"
+                          checked={Boolean(entry.isDefault)}
+                          onChange={() => setDefaultAddress(index)}
+                        />
+                        Default
+                      </label>
+
+                      <button
+                        type="button"
+                        className={styles.removeAddressBtn}
+                        onClick={() => removeAddress(index)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
           <button className={styles.saveBtn} type="submit">Save Changes</button>
 

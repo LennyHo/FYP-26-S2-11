@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Header from "../layout/Header";
 import { checkoutCart, getCartItems, getVouchers, applyVoucher } from "../../utils/customerApi";
@@ -8,6 +9,10 @@ import type { DripTeaVoucher } from "../../utils/api.base";
 import { getOrder, updateOrderStatus } from "../../utils/staffApi";
 import { getStoredUser, parseLocalCartLine, PENDING_VOUCHER_KEY, type DripTeaCartItem } from "../../utils/api.base";
 import "./Checkout.css";
+
+const CheckoutDeliveryAddress = dynamic(() => import("./CheckoutDeliveryAddress"), {
+    ssr: false,
+});
 
 type CheckoutItem = {
     name: string;
@@ -39,6 +44,8 @@ type DeliveryData = {
     deliveryFee: number;
     deliveryStatus: string;
 };
+
+const ORDER_TRACKING_KEY = "driptea_order_tracking";
 
 function parseLocalCart(): CheckoutItem[] {
     if (typeof window === "undefined") return [];
@@ -122,6 +129,36 @@ function makeGuestOrderNo() {
     return String(Math.floor(Math.random() * 9000) + 1000).padStart(4, "0");
 }
 
+function saveOrderTrackingSnapshot(
+    orderId: string,
+    orderNo: string,
+    items: CheckoutItem[],
+    delivery: DeliveryData | null,
+    subtotal: number,
+    deliveryFee: number,
+    discountAmount: number,
+    total: number
+) {
+    if (typeof window === "undefined") return;
+
+    try {
+        const current = JSON.parse(window.localStorage.getItem(ORDER_TRACKING_KEY) || "{}");
+        current[orderId] = {
+            orderNo,
+            items,
+            delivery,
+            subtotal,
+            deliveryFee,
+            discountAmount,
+            total,
+            savedAt: new Date().toISOString(),
+        };
+        window.localStorage.setItem(ORDER_TRACKING_KEY, JSON.stringify(current));
+    } catch (error) {
+        console.error("[DripTea order tracking snapshot]", error);
+    }
+}
+
 function getProgressStep(status: string) {
     const normalized = status.toLowerCase();
     if (normalized === "completed" || normalized === "ready") return 3;
@@ -166,6 +203,8 @@ export default function Checkout() {
     const [phase, setPhase] = useState<1 | 2 | 3>(1);
     const [countdown, setCountdown] = useState(8);
     const [collected, setCollected] = useState(false);
+    const [orderType, setOrderType] = useState("");
+    const [deliveryPreview, setDeliveryPreview] = useState<DeliveryData | null>(null);
 
     function fillFakeDetails() {
         setCardNumber("4532 1234 5678 9012");
@@ -175,9 +214,11 @@ export default function Checkout() {
     }
 
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-    const deliveryFee = delivery?.deliveryFee ?? 0;
+    const displayedDelivery = deliveryPreview || delivery;
+    const deliveryFee = displayedDelivery?.deliveryFee ?? 0;
     const total = Math.max(subtotal - discountAmount, 0) + deliveryFee;
-    const isDeliveryOrder = Boolean(delivery);
+    const isDeliveryOrder = Boolean(displayedDelivery);
+    const needsDeliveryAddress = orderType === "delivery" && !delivery;
 
     useEffect(() => {
         async function loadVouchers() {
@@ -190,6 +231,10 @@ export default function Checkout() {
         }
 
         void loadVouchers();
+    }, []);
+
+    useEffect(() => {
+        setOrderType(window.localStorage.getItem("driptea_order_type") || "");
     }, []);
 
     // Pre-select the voucher the customer chose via "USE NOW" on the Reward page.
@@ -271,6 +316,39 @@ export default function Checkout() {
             }
         }
     }, []);
+
+    function handleDeliveryConfirm(deliveryData: DeliveryData) {
+        setDelivery(deliveryData);
+        setDeliveryPreview(deliveryData);
+        setStatusMessage("");
+    }
+
+    function handleDeliveryPreviewChange(previewData: DeliveryData | null) {
+        setDeliveryPreview(previewData);
+
+        setDelivery((currentDelivery) => {
+            if (!currentDelivery) return currentDelivery;
+            if (!previewData) {
+                window.localStorage.removeItem("driptea_delivery");
+                return null;
+            }
+
+            const isSameDelivery =
+                currentDelivery.outletName === previewData.outletName &&
+                currentDelivery.outletAddress === previewData.outletAddress &&
+                Math.abs(currentDelivery.outletLat - previewData.outletLat) < 0.000001 &&
+                Math.abs(currentDelivery.outletLng - previewData.outletLng) < 0.000001 &&
+                Math.abs(currentDelivery.customerLat - previewData.customerLat) < 0.000001 &&
+                Math.abs(currentDelivery.customerLng - previewData.customerLng) < 0.000001 &&
+                Math.abs(currentDelivery.deliveryFee - previewData.deliveryFee) < 0.001 &&
+                currentDelivery.customerAddress === previewData.customerAddress;
+
+            if (isSameDelivery) return currentDelivery;
+
+            window.localStorage.removeItem("driptea_delivery");
+            return null;
+        });
+    }
 
     useEffect(() => {
         if (!confirmation || confirmation.orderId.startsWith("GUEST-")) return;
@@ -368,22 +446,29 @@ export default function Checkout() {
                 const result = await checkoutCart(
                     currentUser.id,
                     paymentMethod,
-                    voucherCode ? voucherCode.trim() : undefined
+                    voucherCode ? voucherCode.trim() : undefined,
+                    orderType === "delivery" ? "delivery" : "pickup",
+                    delivery
+                );
+                const orderNo = result.order.orderNo || result.order.displayOrderNo || result.order.id;
+                const finalTotal = Number(result.order.totalAmount || total);
+
+                saveOrderTrackingSnapshot(
+                    result.order.id,
+                    orderNo,
+                    items,
+                    delivery,
+                    subtotal,
+                    deliveryFee,
+                    discountAmount,
+                    finalTotal
                 );
 
                 window.localStorage.removeItem("dripTeaCartData");
                 window.localStorage.removeItem("driptea_delivery");
                 window.dispatchEvent(new Event("cartUpdated"));
                 setItems([]);
-
-                setConfirmation({
-                    orderId: result.order.id,
-                    orderNo: result.order.orderNo || result.order.displayOrderNo || result.order.id,
-                    paymentStatus: result.payment.status,
-                    status: result.order.status,
-                    total: Number(result.order.totalAmount || subtotal) + deliveryFee,
-                    details: orderDetails,
-                });
+                router.push(`/order-status/${result.order.id}`);
 
                 return;
             }
@@ -628,6 +713,11 @@ export default function Checkout() {
                     <section className="checkout-card">
                         <div className="checkout-two-col">
                             <div className="checkout-form-col">
+                                <div className="checkout-mobile-step-title">
+                                    <span>3</span>
+                                    <strong>Payment details</strong>
+                                </div>
+
                                 <div className="checkout-form-header">
                                     <p className="checkout-label">Credit Card</p>
 
@@ -711,113 +801,109 @@ export default function Checkout() {
                                     {voucherMessage && <p className="checkout-voucher-message">{voucherMessage}</p>}
                                 </label>
 
-                                {statusMessage && (
-                                    <p role="alert" className="checkout-error checkout-confirm-mobile">{statusMessage}</p>
-                                )}
-
-                                <div className="checkout-confirm-row checkout-confirm-mobile">
-                                    <button
-                                        type="button"
-                                        className="checkout-confirm-btn"
-                                        onClick={handleFakePayment}
-                                        disabled={items.length === 0 || isProcessing}
-                                    >
-                                        {isProcessing ? "Processing..." : "Confirm Payment"}
-                                    </button>
-                                </div>
                             </div>
 
                             <div className="checkout-cart-col">
-                                <h2>Your Shopping Cart</h2>
+                                <div className="checkout-summary-section">
+                                    <div className="checkout-mobile-step-title">
+                                        <span>1</span>
+                                        <strong>Beverage summary</strong>
+                                    </div>
 
-                                <div className="checkout-items">
-                                    {items.length === 0 ? (
-                                        <p>Your cart is empty.</p>
-                                    ) : (
-                                        items.map((item, index) => (
-                                            <div key={`${item.name}-${index}`} className="checkout-item">
-                                                <div className="checkout-item-index">{index + 1}.</div>
+                                    <h2>Your Shopping Cart</h2>
 
-                                                <img
-                                                    src={item.image || "/img/no-image.png"}
-                                                    alt={item.name}
-                                                    className="checkout-item-img"
-                                                />
+                                    <div className="checkout-items">
+                                        {items.length === 0 ? (
+                                            <p>Your cart is empty.</p>
+                                        ) : (
+                                            items.map((item, index) => (
+                                                <div key={`${item.name}-${index}`} className="checkout-item">
+                                                    <div className="checkout-item-index">{index + 1}.</div>
 
-                                                <div className="checkout-item-info">
-                                                    <strong>{item.name}</strong>
+                                                    <img
+                                                        src={item.image || "/img/no-image.png"}
+                                                        alt={item.name}
+                                                        className="checkout-item-img"
+                                                    />
 
-                                                    {item.fields && item.fields.length > 0 ? (
-                                                        <div className="checkout-item-fields">
-                                                            {item.fields.map(f => (
-                                                                <p key={f.label}>
-                                                                    <span className="checkout-item-field-label">{f.label}:</span> {f.value}
-                                                                </p>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <p>{item.details}</p>
-                                                    )}
+                                                    <div className="checkout-item-info">
+                                                        <strong>{item.name}</strong>
+
+                                                        {item.fields && item.fields.length > 0 ? (
+                                                            <div className="checkout-item-fields">
+                                                                {item.fields.map(f => (
+                                                                    <p key={f.label}>
+                                                                        <span className="checkout-item-field-label">{f.label}:</span> {f.value}
+                                                                    </p>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p>{item.details}</p>
+                                                        )}
+                                                    </div>
+
+                                                    <strong className="checkout-item-price">S$ {item.price.toFixed(2)}</strong>
                                                 </div>
-
-                                                <strong className="checkout-item-price">S$ {item.price.toFixed(2)}</strong>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-
-                                {delivery && (
-                                    <div className="checkout-delivery-box">
-                                        <h3>Delivery Details</h3>
-                                        <p><strong>Outlet:</strong> {delivery.outletName}</p>
-                                        <p><strong>Address:</strong> {delivery.outletAddress}</p>
-                                        <p>
-                                            <strong>Deliver to:</strong> {delivery.customerLat.toFixed(5)}, {delivery.customerLng.toFixed(5)}
-                                        </p>
-                                        <p><strong>Distance:</strong> {delivery.distanceKm.toFixed(2)} km</p>
-                                    </div>
-                                )}
-
-                                <div className="checkout-price-breakdown">
-                                    <div className="checkout-price-row">
-                                        <span>Subtotal:</span>
-                                        <strong>S$ {subtotal.toFixed(2)}</strong>
+                                            ))
+                                        )}
                                     </div>
 
-                                    {discountAmount > 0 && (
-                                        <div className="checkout-price-row checkout-price-row-discount">
-                                            <span>Voucher ({voucherCode}):</span>
-                                            <strong>- S$ {discountAmount.toFixed(2)}</strong>
-                                        </div>
-                                    )}
-
-                                    {delivery && (
+                                    <div className="checkout-price-breakdown">
                                         <div className="checkout-price-row">
-                                            <span>Delivery Fee:</span>
-                                            <strong>S$ {deliveryFee.toFixed(2)}</strong>
+                                            <span>Subtotal:</span>
+                                            <strong>S$ {subtotal.toFixed(2)}</strong>
                                         </div>
+
+                                        {discountAmount > 0 && (
+                                            <div className="checkout-price-row checkout-price-row-discount">
+                                                <span>Voucher ({voucherCode}):</span>
+                                                <strong>- S$ {discountAmount.toFixed(2)}</strong>
+                                            </div>
+                                        )}
+
+                                        {displayedDelivery && (
+                                            <div className="checkout-price-row">
+                                                <span>Delivery Fee:</span>
+                                                <strong>S$ {deliveryFee.toFixed(2)}</strong>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="checkout-total">
+                                        <span>Total Price:</span>
+                                        <strong>S$ {total.toFixed(2)}</strong>
+                                    </div>
+
+                                    {statusMessage && (
+                                        <p role="alert" className="checkout-error">{statusMessage}</p>
                                     )}
+
+                                    <div className="checkout-confirm-row">
+                                        <button
+                                            type="button"
+                                            className="checkout-confirm-btn"
+                                            onClick={handleFakePayment}
+                                            disabled={items.length === 0 || isProcessing || needsDeliveryAddress}
+                                        >
+                                            {isProcessing ? "Processing..." : "Confirm Payment"}
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="checkout-total">
-                                    <span>Total Price:</span>
-                                    <strong>S$ {total.toFixed(2)}</strong>
-                                </div>
+                                {orderType === "delivery" && (
+                                    <div className="checkout-delivery-section">
+                                        <div className="checkout-mobile-step-title">
+                                            <span>2</span>
+                                            <strong>Delivery address</strong>
+                                        </div>
 
-                                {statusMessage && (
-                                    <p role="alert" className="checkout-error checkout-confirm-desktop">{statusMessage}</p>
+                                        <CheckoutDeliveryAddress
+                                            delivery={delivery}
+                                            onConfirm={handleDeliveryConfirm}
+                                            onPreviewChange={handleDeliveryPreviewChange}
+                                        />
+                                    </div>
                                 )}
-
-                                <div className="checkout-confirm-row checkout-confirm-desktop">
-                                    <button
-                                        type="button"
-                                        className="checkout-confirm-btn"
-                                        onClick={handleFakePayment}
-                                        disabled={items.length === 0 || isProcessing}
-                                    >
-                                        {isProcessing ? "Processing..." : "Confirm Payment"}
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </section>

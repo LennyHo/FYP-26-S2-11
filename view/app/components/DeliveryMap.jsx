@@ -5,20 +5,28 @@ import {
   MapContainer,
   TileLayer,
   Marker,
-  Circle,
   Popup,
   useMap,
   useMapEvents
 } from "react-leaflet"
 import L from "leaflet"
 
-const DRIPTEA_OUTLET = {
-  name: "DripTea Bugis Junction Outlet",
-  address: "Bugis Junction, 200 Victoria Street, Singapore 188021",
-  lat: 1.2991129,
-  lng: 103.8554112,
-  deliveryRadiusKm: 5
-}
+const DRIPTEA_OUTLETS = [
+  {
+    storeCode: "DT-001",
+    name: "DripTea Orchard",
+    address: "313 Orchard Road, #B2-01, Singapore 238895",
+    lat: 1.3006,
+    lng: 103.8389
+  },
+  {
+    storeCode: "DT-002",
+    name: "DripTea Jurong East",
+    address: "50 Jurong Gateway Road, #03-12 JEM, Singapore 608549",
+    lat: 1.3336,
+    lng: 103.7436
+  }
+]
 
 const outletIcon = new L.Icon({
   iconUrl: "/img/icons/driptea-marker.svg",
@@ -130,14 +138,16 @@ async function getAddressFromCoords(lat, lng) {
   }
 }
 
-function MapMover({ customerLocation }) {
+function MapMover({ customerLocation, outlet }) {
   const map = useMap()
 
   useEffect(() => {
     if (customerLocation) {
       map.flyTo([customerLocation.lat, customerLocation.lng], 17)
+    } else {
+      map.flyTo([outlet.lat, outlet.lng], 14)
     }
-  }, [customerLocation, map])
+  }, [customerLocation, map, outlet])
 
   return null
 }
@@ -168,27 +178,29 @@ function LocationPicker({ onPick }) {
 }
 
 export default function DeliveryMap({ cartTotal = 0 }) {
+  const [selectedOutletCode, setSelectedOutletCode] = useState(
+    DRIPTEA_OUTLETS[0].storeCode
+  )
   const [customerLocation, setCustomerLocation] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [searchMessage, setSearchMessage] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const selectedOutlet =
+    DRIPTEA_OUTLETS.find((outlet) => outlet.storeCode === selectedOutletCode) ||
+    DRIPTEA_OUTLETS[0]
 
   const distanceKm = customerLocation
     ? calculateDistanceKm(
-        DRIPTEA_OUTLET.lat,
-        DRIPTEA_OUTLET.lng,
+        selectedOutlet.lat,
+        selectedOutlet.lng,
         customerLocation.lat,
         customerLocation.lng
       )
     : 0
 
-  const isDeliverable =
-    customerLocation && distanceKm <= DRIPTEA_OUTLET.deliveryRadiusKm
-
-  const deliveryFee =
-    customerLocation && isDeliverable ? 3 + Math.ceil(distanceKm) * 0.5 : 0
+  const deliveryFee = customerLocation ? 3 + Math.ceil(distanceKm) * 0.5 : 0
 
   const totalWithDelivery = cartTotal + deliveryFee
 
@@ -299,14 +311,14 @@ function searchLocation() {
   }
 
   function saveDeliveryLocation() {
-    if (!customerLocation || !isDeliverable) return
+    if (!customerLocation) return
 
     const deliveryData = {
       type: "delivery",
-      outletName: DRIPTEA_OUTLET.name,
-      outletAddress: DRIPTEA_OUTLET.address,
-      outletLat: DRIPTEA_OUTLET.lat,
-      outletLng: DRIPTEA_OUTLET.lng,
+      outletName: selectedOutlet.name,
+      outletAddress: selectedOutlet.address,
+      outletLat: selectedOutlet.lat,
+      outletLng: selectedOutlet.lng,
       customerLat: customerLocation.lat,
       customerLng: customerLocation.lng,
       customerAddress: customerLocation.address,
@@ -323,6 +335,23 @@ function searchLocation() {
     <div className="delivery-page">
       <h1>Delivery Location</h1>
       <p>Search for your building, landmark, road name, or postal code.</p>
+
+      <div className="delivery-outlet-selector">
+        <h2>Choose Store Location</h2>
+        <div className="delivery-outlet-options">
+          {DRIPTEA_OUTLETS.map((outlet) => (
+            <button
+              type="button"
+              key={outlet.storeCode}
+              className={selectedOutletCode === outlet.storeCode ? "active" : ""}
+              onClick={() => setSelectedOutletCode(outlet.storeCode)}
+            >
+              <strong>{outlet.name}</strong>
+              <span>{outlet.address}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="delivery-search-box">
         <label className="delivery-search-label">Delivery address</label>
@@ -374,7 +403,7 @@ function searchLocation() {
       <div className="delivery-layout">
         <div className="delivery-map-card">
           <MapContainer
-            center={[DRIPTEA_OUTLET.lat, DRIPTEA_OUTLET.lng]}
+            center={[selectedOutlet.lat, selectedOutlet.lng]}
             zoom={15}
             scrollWheelZoom={true}
             className="delivery-map"
@@ -384,23 +413,18 @@ function searchLocation() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            <MapMover customerLocation={customerLocation} />
+            <MapMover customerLocation={customerLocation} outlet={selectedOutlet} />
 
             <Marker
-              position={[DRIPTEA_OUTLET.lat, DRIPTEA_OUTLET.lng]}
+              position={[selectedOutlet.lat, selectedOutlet.lng]}
               icon={outletIcon}
             >
               <Popup>
-                <strong>{DRIPTEA_OUTLET.name}</strong>
+                <strong>{selectedOutlet.name}</strong>
                 <br />
-                {DRIPTEA_OUTLET.address}
+                {selectedOutlet.address}
               </Popup>
             </Marker>
-
-            <Circle
-              center={[DRIPTEA_OUTLET.lat, DRIPTEA_OUTLET.lng]}
-              radius={DRIPTEA_OUTLET.deliveryRadiusKm * 1000}
-            />
 
             {customerLocation && (
               <Marker
@@ -419,11 +443,11 @@ function searchLocation() {
           <h2>Delivery Summary</h2>
 
           <p>
-            <strong>Outlet:</strong> {DRIPTEA_OUTLET.name}
+            <strong>Outlet:</strong> {selectedOutlet.name}
           </p>
 
           <p>
-            <strong>Outlet Address:</strong> {DRIPTEA_OUTLET.address}
+            <strong>Outlet Address:</strong> {selectedOutlet.address}
           </p>
 
           <p>
@@ -441,25 +465,20 @@ function searchLocation() {
 
               <p>
                 <strong>Delivery Fee:</strong>{" "}
-                {isDeliverable ? `S$ ${deliveryFee.toFixed(2)}` : "Not available"}
+                S$ {deliveryFee.toFixed(2)}
               </p>
 
               <p>
                 <strong>Total:</strong> S$ {totalWithDelivery.toFixed(2)}
               </p>
 
-              {!isDeliverable && (
-                <p className="delivery-error">
-                  Sorry, this address is outside our 5 km delivery radius.
-                </p>
-              )}
             </>
           )}
 
           <button
             type="button"
             className="primary-btn"
-            disabled={!customerLocation || !isDeliverable}
+            disabled={!customerLocation}
             onClick={saveDeliveryLocation}
           >
             Save Location & Continue

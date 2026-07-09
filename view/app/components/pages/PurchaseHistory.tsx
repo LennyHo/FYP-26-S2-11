@@ -8,15 +8,36 @@ import { updateOrderStatus } from "../../utils/staffApi";
 import { getStoredUser, type DripTeaPurchaseHistoryItem } from "../../utils/api.base";
 import "./PurchaseHistory.css";
 
-const TRACK_STATUSES = new Set(["pending", "preparing"]);
+const TRACK_STATUSES = new Set(["pending", "preparing", "ready"]);
 const COLLECT_STATUSES = new Set(["ready"]);
 const LS_COLLECTED_KEY = "driptea_collected_orders";
+const ORDER_TRACKING_KEY = "driptea_order_tracking";
+const READY_AFTER_MS = 10_000;
+const COMPLETED_AFTER_MS = 20_000;
 
 function getLocalCollectedIds(): Set<string> {
   if (typeof window === "undefined") return new Set();
   try {
     const raw = localStorage.getItem(LS_COLLECTED_KEY);
     return new Set<string>(raw ? (JSON.parse(raw) as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function getDeliverySnapshotIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const snapshots = JSON.parse(localStorage.getItem(ORDER_TRACKING_KEY) || "{}") as Record<
+      string,
+      { delivery?: unknown }
+    >;
+
+    return new Set(
+      Object.entries(snapshots)
+        .filter(([, snapshot]) => Boolean(snapshot?.delivery))
+        .map(([orderId]) => orderId)
+    );
   } catch {
     return new Set();
   }
@@ -38,10 +59,10 @@ function formatCustomization(customization?: Record<string, unknown>) {
   return text || "No customization";
 }
 
-function formatStatus(status?: string) {
+function formatStatus(status?: string, isDeliveryOrder = false) {
   if (!status) return "Pending";
-  if (status.toLowerCase() === "completed") return "Collected";
-  if (status.toLowerCase() === "ready") return "Ready for collection";
+  if (status.toLowerCase() === "completed") return isDeliveryOrder ? "Delivered" : "Collected";
+  if (status.toLowerCase() === "ready") return isDeliveryOrder ? "Out for delivery" : "Ready for collection";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
@@ -54,17 +75,39 @@ function totalSpent(orders: DripTeaPurchaseHistoryItem[]) {
   return orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
 }
 
+function openAvyFeedbackPrompt(order: DripTeaPurchaseHistoryItem) {
+  window.dispatchEvent(
+    new CustomEvent("chatbotSystemMessage", {
+      detail: {
+        text:
+          "We hope you enjoyed your order. We'd love to hear your thoughts - your feedback helps us deliver a better experience every time.",
+        feedbackOrderId: order.id,
+        feedbackItems: (order.items || []).map((item) => ({
+          name: item.name,
+          image: item.image,
+          quantity: item.quantity,
+          customization: item.customization,
+          menuItemId: item.menuItemId,
+          menuItemCode: item.menuItemCode,
+        })),
+      },
+    })
+  );
+}
+
 export default function PurchaseHistory() {
   const [orders, setOrders] = useState<DripTeaPurchaseHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [localCollectedIds, setLocalCollectedIds] = useState<Set<string>>(getLocalCollectedIds);
+  const [deliverySnapshotIds, setDeliverySnapshotIds] = useState<Set<string>>(getDeliverySnapshotIds);
 
   // Re-sync localStorage when the customer navigates back from the order-status page
   useEffect(() => {
     function syncFromStorage() {
       setLocalCollectedIds(getLocalCollectedIds());
+      setDeliverySnapshotIds(getDeliverySnapshotIds());
     }
     window.addEventListener("focus", syncFromStorage);
     document.addEventListener("visibilitychange", syncFromStorage);
@@ -101,16 +144,23 @@ export default function PurchaseHistory() {
   }, []);
 
   useEffect(() => {
-    const READY_AFTER_MS = 28_000;
     const now = Date.now();
     orders.forEach((order) => {
-      if ((order.status || "").toLowerCase() !== "pending") return;
+      const status = (order.status || "").toLowerCase();
       if (!order.createdAt) return;
-      if (now - new Date(order.createdAt).getTime() >= READY_AFTER_MS) {
+      const age = now - new Date(order.createdAt).getTime();
+      const isDeliveryOrder = order.orderType === "delivery" || Boolean(order.deliveryDetails) || deliverySnapshotIds.has(order.id);
+
+      if (isDeliveryOrder && status !== "completed" && age >= COMPLETED_AFTER_MS) {
+        void updateOrderStatus(order.id, "completed").catch(console.error);
+        return;
+      }
+
+      if ((status === "pending" || status === "preparing") && age >= READY_AFTER_MS) {
         void updateOrderStatus(order.id, "ready").catch(console.error);
       }
     });
-  }, [orders]);
+  }, [orders, deliverySnapshotIds]);
 
   const activeOrders = orders.filter(o =>
     ["pending", "preparing", "ready"].includes((o.status || "").toLowerCase())
@@ -175,11 +225,13 @@ export default function PurchaseHistory() {
           <div className="purchase-list">
             {orders.filter((order) => order.items && order.items.length > 0).map((order) => {
               const status = (order.status || "pending").toLowerCase();
+              const isDeliveryOrder = order.orderType === "delivery" || Boolean(order.deliveryDetails) || deliverySnapshotIds.has(order.id);
               const isCompleted = status === "completed";
               const customerCollected = localCollectedIds.has(order.id);
               // Show Collect until the customer explicitly clicks it (tracked in localStorage)
-              const showCollect = COLLECT_STATUSES.has(status) || (isCompleted && !customerCollected && !order.hasFeedback);
-              const showFeedback = isCompleted && (customerCollected || !!order.hasFeedback);
+              const showCollect = !isDeliveryOrder && (COLLECT_STATUSES.has(status) || (isCompleted && !customerCollected && !order.hasFeedback));
+              const showFeedback = isCompleted && (isDeliveryOrder || customerCollected || !!order.hasFeedback);
+              const showTrack = TRACK_STATUSES.has(status);
               return (
                 <article key={order.id} className="purchase-order" data-status={status}>
 
@@ -191,7 +243,10 @@ export default function PurchaseHistory() {
                     </div>
                     <div className="purchase-order-meta">
                       <span className={`purchase-status-badge purchase-status-${status}`}>
-                        {formatStatus(order.status)}
+                        {formatStatus(order.status, isDeliveryOrder)}
+                      </span>
+                      <span className="purchase-type-badge">
+                        {isDeliveryOrder ? "Delivery" : "Pickup"}
                       </span>
                       <span className="purchase-order-amount">
                         S$ {Number(order.totalAmount || 0).toFixed(2)}
@@ -238,9 +293,9 @@ export default function PurchaseHistory() {
                       </span>
                     </div>
                     <div className="purchase-order-actions">
-                      {TRACK_STATUSES.has(status) && (
+                      {showTrack && (
                         <Link href={`/order-status/${order.id}`} className="purchase-track-btn">
-                          Track Order
+                          {isDeliveryOrder ? "Track Delivery" : "Track Order"}
                         </Link>
                       )}
                       {showCollect && (
@@ -258,9 +313,13 @@ export default function PurchaseHistory() {
                             Feedback Submitted
                           </button>
                         ) : (
-                          <Link href={`/feedback/${order.id}`} className="purchase-feedback-btn">
+                          <button
+                            type="button"
+                            className="purchase-feedback-btn"
+                            onClick={() => openAvyFeedbackPrompt(order)}
+                          >
                             Feedback
-                          </Link>
+                          </button>
                         )
                       )}
                     </div>
