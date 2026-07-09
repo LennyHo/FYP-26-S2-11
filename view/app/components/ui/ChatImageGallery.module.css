@@ -1,0 +1,120 @@
+.thumbRow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.thumbButton {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border: 1.5px solid rgba(171, 28, 110, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #f7eaf5;
+  flex-shrink: 0;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 5, 20, 0.6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+/* ── Lightbox ──────────────────────────────────────────────── */
+.lightboxOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 5, 20, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.lightboxContent {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 90vw;
+  max-height: 90vh;
+  padding: 16px;
+}
+
+.lightboxImg {
+  max-width: min(480px, 86vw);
+  max-height: 80vh;
+  border-radius: 10px;
+  object-fit: contain;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+.lightboxClose {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.lightboxClose:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.lightboxNavButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  z-index: 1;
+}
+.lightboxNavButton:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.lightboxPrev { left: -52px; }
+.lightboxNext { right: -52px; }
+
+@media (max-width: 480px) {
+  .lightboxPrev { left: 4px; }
+  .lightboxNext { right: 4px; }
+}

@@ -67,11 +67,9 @@ import VoucherCard from '../ui/VoucherCard';
 import FeedbackPromptCard from "./FeedbackPromptCard";
 import CartSummaryCard from '../ui/CartSummaryCard';
 import PurchaseHistoryCard from '../ui/PurchaseHistoryCard';
+import ChatImageGallery from '../ui/ChatImageGallery';
 import DrinkCard from '../menu/DrinkCard';
 import { useChatbotState, type ChatbotSidebarProps } from './useChatbotState';
-import GlossaryCard from './GlossaryCard';
-import { injectGlossaryLinks } from '../../utils/chatHelpers';
-import { GLOSSARY_TERMS } from '../../data/glossaryData';
 
 const avyLogo = '/img/Group 2.svg';
 
@@ -118,8 +116,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     handleInputPaste,
     removePendingImage,
     restartConversation,
-    activeGlossaryTerm,
-    setActiveGlossaryTerm,
     handleChatClick,
     formatMessageTime,
     sanitizeExcessiveBreaks,
@@ -339,6 +335,9 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 onClick={handleChatClick}
               >
                 <div className={styles.bubbleText}>
+                  {msg.isUser && msg.images && msg.images.length > 0 && (
+                    <ChatImageGallery images={msg.images} />
+                  )}
                   {!msg.isUser && msg.orderStatusCard ? (
                     <OrderStatusCard orderStatus={msg.orderStatusCard} />
                   ) : !msg.isUser && msg.voucherCard ? (
@@ -991,14 +990,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
           </div>
         </div>
       )}
-      {/* GLOSSARY POPUP — commented out, re-enable when ready
-      {activeGlossaryTerm && (
-        <GlossaryCard
-          termKey={activeGlossaryTerm}
-          onClose={() => setActiveGlossaryTerm(null)}
-        />
-      )}
-      */}
     </aside>
   );
 }

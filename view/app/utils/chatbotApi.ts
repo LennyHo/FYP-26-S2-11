@@ -38,11 +38,10 @@ export function sendChatMessage(payload: {
   });
 }
 
-// Sends an image (base64) to the chatbot. Returns the raw Response.
+// Sends one or more images (base64) to the chatbot. Returns the raw Response.
 export function sendChatImage(payload: {
   message: string;
-  image: string;
-  mimeType: string;
+  images: { data: string; mimeType: string }[];
   conversationId: string;
 }): Promise<Response> {
   return fetch(`${getImageApiBase()}/api/chat`, {

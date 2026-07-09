@@ -126,9 +126,13 @@ async function translateToEnglish(text) {
   }
 }
 
-async function generateImageAnalysis(base64, mimeType, textPrompt, systemPrompt = "") {
+async function generateImageAnalysis(images, textPrompt, systemPrompt = "") {
   const geminiKeys = getGeminiKeys();
   if (geminiKeys.length === 0) throw new Error("No Gemini keys available.");
+
+  const imageParts = images.map((img) => ({
+    inlineData: { mimeType: img.mimeType || "image/jpeg", data: img.data },
+  }));
 
   let lastError;
   for (let i = 0; i < geminiKeys.length; i++) {
@@ -141,7 +145,7 @@ async function generateImageAnalysis(base64, mimeType, textPrompt, systemPrompt 
       });
 
       const result = await model.generateContent([
-        { inlineData: { mimeType: mimeType || "image/jpeg", data: base64 } },
+        ...imageParts,
         textPrompt || "What drink is this?",
       ]);
 

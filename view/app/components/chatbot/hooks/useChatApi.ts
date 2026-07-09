@@ -98,38 +98,39 @@ export function useChatApi({
   async function sendMessage(messageText: string, shouldSpeak: boolean = false, isQuickPrompt: boolean = false) {
     // ── Image path ──────────────────────────────────────────────────────────
     if (pendingImages.length > 0) {
-      const img = pendingImages[0];
       try {
         setIsLoading(true);
-        const blob = await (await fetch(img.previewUrl)).blob();
-        const mimeType = blob.type || 'image/jpeg';
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const result = reader.result;
-            if (typeof result === 'string') resolve(result.split(',')[1]);
-            else reject(new Error('Failed to read image'));
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-        // Create a tiny thumbnail data URL so the chip survives page reloads
-        // (blob: URLs are session-only and break on refresh)
-        const thumbDataUrl = await createThumbnail(blob);
-        const thumbSrc = thumbDataUrl || `data:${mimeType};base64,${base64}`;
-        const photoChip = `<span style="display:inline-flex;align-items:center;gap:8px;background:#f7eaf5;border:1.5px solid rgba(171,28,110,0.28);border-radius:10px;padding:5px 12px 5px 5px;"><span style="position:relative;display:inline-block;width:38px;height:38px;flex-shrink:0;"><img src="${thumbSrc}" alt="" style="width:38px;height:38px;border-radius:7px;object-fit:cover;display:block;border:1.5px solid rgba(171,28,110,0.30);" /><span style="position:absolute;bottom:2px;right:2px;background:rgba(171,28,110,0.80);border-radius:4px;padding:2px 3px;font-size:9px;line-height:1;color:#fff;">&#128247;</span></span><span style="font-size:0.73rem;color:#7b1254;font-weight:600;white-space:nowrap;">Photo attached</span></span>`;
-        const userBubbleText = messageText.trim()
-          ? `${photoChip}<div style="margin-top:6px;">${messageText.trim()}</div>`
-          : photoChip;
+        // Every attached image is analysed and shown in the message gallery.
+        const thumbnails: string[] = [];
+        const analysisImages: { data: string; mimeType: string }[] = [];
+        for (const img of pendingImages) {
+          const blob = await (await fetch(img.previewUrl)).blob();
+          const mimeType = blob.type || 'image/jpeg';
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result;
+              if (typeof result === 'string') resolve(result.split(',')[1]);
+              else reject(new Error('Failed to read image'));
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          analysisImages.push({ data: base64, mimeType });
+          // Build a thumbnail data URL too so the gallery survives page reloads
+          // (blob: URLs are session-only and break on refresh)
+          thumbnails.push(await createThumbnail(blob, 480));
+        }
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
-          text: userBubbleText,
+          text: messageText.trim(),
           isUser: true,
+          images: thumbnails,
         }]);
         setPendingImages([]);
         setInput('');
         const convId = ensureConversationId();
-        const res = await sendChatImage({ message: messageText || 'What drink is this?', image: base64, mimeType, conversationId: convId });
+        const res = await sendChatImage({ message: messageText || 'What drink is this?', images: analysisImages, conversationId: convId });
         const data = await res.json();
         const replyText = typeof data?.reply === 'string' ? data.reply : 'Error connecting to backend';
         setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: replyText, isUser: false }]);

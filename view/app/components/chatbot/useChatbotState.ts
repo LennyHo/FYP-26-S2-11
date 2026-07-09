@@ -64,6 +64,7 @@ export interface Message {
   id: string;
   text: string;
   isUser: boolean;
+  images?: string[];
   feedbackOrderId?: string;
   feedbackItems?: any[];
   feedbackSubmitted?: boolean;
@@ -153,7 +154,6 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
 
   // input lives here so both useSpeech (setInputRef) and useChatApi (setInput) share the same state
   const [input, setInput] = useState('');
-  const [activeGlossaryTerm, setActiveGlossaryTerm] = useState<string | null>(null);
 
   // ── Sub-hooks ──────────────────────────────────────────────────────────────
   const menu = useMenuData();
@@ -297,12 +297,6 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
 
   const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    // GLOSSARY click handler — commented out, re-enable with GlossaryCard in ChatbotSidebar
-    // const glossaryEl = target.closest('[data-glossary]') as HTMLElement | null;
-    // if (glossaryEl) {
-    //   const key = glossaryEl.getAttribute('data-glossary');
-    //   if (key) { setActiveGlossaryTerm(key); return; }
-    // }
     if (target.classList.contains('chat-drink-link') && target instanceof HTMLAnchorElement) {
       e.preventDefault(); e.stopPropagation();
       const href = target.getAttribute('href');
@@ -424,8 +418,6 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     handleInputPaste: ui.handleInputPaste,
     removePendingImage: ui.removePendingImage,
     restartConversation: conversation.restartConversation,
-    activeGlossaryTerm,
-    setActiveGlossaryTerm,
     handleChatClick,
     formatMessageTime,
     sanitizeExcessiveBreaks,

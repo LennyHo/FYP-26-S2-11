@@ -1,33 +1,3 @@
-export function injectGlossaryLinks(html: string, terms: string[]): string {
-  if (!html || terms.length === 0) return html;
-  const used = new Set<string>();
-  // Split on HTML tags so we only process text nodes, never tag attributes
-  const parts = html.split(/(<[^>]*>)/g);
-  let insideAnchor = false;
-  return parts.map(part => {
-    if (part.startsWith('<')) {
-      if (/^<a[\s>]/i.test(part)) insideAnchor = true;
-      if (/^<\/a>/i.test(part)) insideAnchor = false;
-      return part;
-    }
-    if (insideAnchor || !part) return part;
-    let result = part;
-    for (const term of terms) {
-      if (used.has(term)) continue;
-      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const re = new RegExp(`(?<![\\w-])(${escaped})(?![\\w-])`, 'i');
-      if (re.test(result)) {
-        used.add(term);
-        result = result.replace(
-          re,
-          `<span class="chat-glossary-link" data-glossary="${term}" style="color:#2b7da3;text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer;font-weight:600;">$1</span>`,
-        );
-      }
-    }
-    return result;
-  }).join('');
-}
-
 export const QUICK_PROMPTS = [
   'What should I try today?',
   'Show me low sugar options',

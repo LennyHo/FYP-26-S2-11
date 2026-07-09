@@ -3752,7 +3752,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
 
 
-async function handleImageMessage({ image, mimeType, message, conversationId }) {
+async function handleImageMessage({ images, message, conversationId }) {
     try {
         const MenuItem = require("../models/menuItem.model");
         const allDrinks = await MenuItem.find({ status: "active" }).lean();
@@ -3762,21 +3762,25 @@ async function handleImageMessage({ image, mimeType, message, conversationId }) 
             return `- ${d.name} (${d.category}) S$${Number(d.price).toFixed(2)}, Nutri-Grade ${nutrition.nutriGrade || "B"}`;
         }).join("\n");
 
+        const multiple = images.length > 1;
         const systemPrompt = `You are Avy, the friendly AI assistant for DripTea, a bubble tea café in Singapore.
-A customer has sent you a photo of a drink. Your job is to:
-1. Identify what the drink looks like (colour, appearance, visible ingredients).
-2. Match it to the closest item(s) on our menu listed below, or let them know if it looks like something we don't serve.
-3. Suggest the matched drink warmly and offer to help them order it.
-4. Keep your tone friendly, concise, and helpful.
+A customer has sent you ${multiple ? `${images.length} photos` : "a photo"}. Your job is to:
+1. Identify what is in ${multiple ? "each photo" : "the photo"}.
+2. If a photo clearly shows a drink, match it to the closest item(s) on our menu listed below, or let them know if it looks like something we don't serve.
+3. If a photo does NOT show a drink or isn't relevant to DripTea (e.g. random objects, people, scenery, unrelated screenshots), do not try to force-match it to a menu item - clearly tell the customer that photo is outside Avy's scope, since Avy can only help with drinks, orders, and the DripTea menu.
+4. ${multiple ? "Go through every photo one by one and address each one individually - don't skip any of them." : "Suggest the matched drink warmly and offer to help them order it."}
+5. Keep your tone friendly, concise, and helpful.
 
 Our current menu:
 ${menuSummary}`;
 
         const userPrompt = message && message.trim()
             ? message
-            : "What drink is this? Can you identify it and match it to your menu?";
+            : (multiple
+                ? "What drinks are these? Can you identify each one and match them to your menu?"
+                : "What drink is this? Can you identify it and match it to your menu?");
 
-        const reply = await aiClient.generateImageAnalysis(image, mimeType || "image/jpeg", userPrompt, systemPrompt);
+        const reply = await aiClient.generateImageAnalysis(images, userPrompt, systemPrompt);
 
         return {
             reply,

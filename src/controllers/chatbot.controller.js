@@ -52,10 +52,15 @@ const chatbotService = require("../services/chatbot.service");
 
 async function handleChat(req, res) {
   try {
-    const { message, conversationId, userId, isQuickPrompt, image, mimeType } = req.body || {};
+    const { message, conversationId, userId, isQuickPrompt, image, mimeType, images } = req.body || {};
+
+    if (Array.isArray(images) && images.length > 0) {
+      const result = await chatbotService.handleImageMessage({ images, message, conversationId });
+      return res.json(result);
+    }
 
     if (image) {
-      const result = await chatbotService.handleImageMessage({ image, mimeType, message, conversationId });
+      const result = await chatbotService.handleImageMessage({ images: [{ data: image, mimeType }], message, conversationId });
       return res.json(result);
     }
 
