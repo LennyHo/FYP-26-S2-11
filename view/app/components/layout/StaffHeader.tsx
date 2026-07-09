@@ -4,10 +4,16 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { clearStoredUser } from '../../utils/api.base';
 import styles from './StaffHeader.module.css';
 
 export default function StaffHeader() {
   const router = useRouter();
+
+  const handleLogout = () => {
+    clearStoredUser();
+    router.push('/login');
+  };
 
   return (
     <header className={styles.header}>
@@ -39,7 +45,7 @@ export default function StaffHeader() {
         <div className={styles.actions}>
           <button
             className={styles.logoutBtn}
-            onClick={() => router.push('/login')}
+            onClick={handleLogout}
           >
             Log Out
           </button>

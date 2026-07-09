@@ -295,14 +295,11 @@ userSchema.statics.suspendUser = async function suspendUser(userId) {
 
 userSchema.statics.createUserAccount = async function createUserAccount(userData) {
   const email = normalizeEmail(userData.email);
+  const role = userData.role || "customer";
 
-  let role = userData.role || "customer";
-
-  if (email.includes("admin")) {
-    role = "user_admin";
-  } else if (email.includes("staff")) {
-    role = "store_staff";
-  }
+  const passwordRecord = userData.passwordHash && userData.passwordSalt
+    ? { passwordHash: userData.passwordHash, passwordSalt: userData.passwordSalt }
+    : createPasswordRecord(userData.password || "Password@123");
 
   return this.create({
     fullName: userData.fullName,
@@ -311,7 +308,7 @@ userSchema.statics.createUserAccount = async function createUserAccount(userData
     status: userData.status || "active",
     profilePic: userData.profilePic || "",
     addresses: userData.addresses || [],
-    ...createPasswordRecord(userData.password || "Password@123"),
+    ...passwordRecord,
   });
 };
 

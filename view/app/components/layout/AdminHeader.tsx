@@ -3,10 +3,16 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { clearStoredUser } from '../../utils/api.base';
 import styles from './AdminHeader.module.css';
 
 export default function AdminHeader() {
   const router = useRouter();
+
+  const handleLogout = () => {
+    clearStoredUser();
+    router.push('/login');
+  };
 
   return (
     <header className={styles.header}>
@@ -27,7 +33,7 @@ export default function AdminHeader() {
         <div className={styles.actions}>
           <button
             className={styles.logoutBtn}
-            onClick={() => router.push('/login')}
+            onClick={handleLogout}
           >
             Log Out
           </button>
