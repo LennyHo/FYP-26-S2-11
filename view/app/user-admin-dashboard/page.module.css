@@ -126,36 +126,52 @@
 .searchWrapper {
   position: relative;
   flex: 1;
-  max-width: 320px;
+  max-width: 340px;
+  transition: max-width 0.2s ease;
+}
+
+.searchWrapper:focus-within {
+  max-width: 380px;
 }
 
 .searchIcon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #64748b;
+  color: #94a3b8;
+  font-size: 0.85rem;
   pointer-events: none;
+  transition: color 0.18s;
+}
+
+.searchWrapper:focus-within .searchIcon {
+  color: #ea580c;
 }
 
 .searchInput {
   width: 100%;
-  padding: 10px 34px 10px 36px;
-  border: 1px solid rgba(147, 197, 253, 0.8);
-  border-radius: 11px;
+  padding: 11px 36px 11px 40px;
+  border: 1.5px solid rgba(147, 197, 253, 0.7);
+  border-radius: 12px;
   font-size: 0.9rem;
-  background: rgba(248, 250, 252, 0.95);
+  background: #ffffff;
   color: #1e293b;
   outline: none;
-  transition: border 0.18s, box-shadow 0.18s;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.18s, box-shadow 0.18s;
   box-sizing: border-box;
 }
 
-.searchInput::placeholder { color: #64748b; }
+.searchInput:hover {
+  border-color: rgba(147, 197, 253, 1);
+}
+
+.searchInput::placeholder { color: #94a3b8; }
 
 .searchInput:focus {
   border-color: #ea580c;
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1);
 }
 
 .searchClear {
@@ -163,23 +179,24 @@
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.12);
   border-radius: 50%;
   color: #64748b;
   font-size: 0.6rem;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
 }
 
 .searchClear:hover {
   background: rgba(234, 88, 12, 0.15);
   color: #c2410c;
+  transform: translateY(-50%) scale(1.08);
 }
 
 /* Tab Content */
@@ -275,13 +292,18 @@
 
 /* Badges */
 .badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 98px;
   background: rgba(59, 130, 246, 0.12);
   color: #3b82f6;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 100px;
   font-size: 0.8rem;
   font-weight: 600;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .storiesCoverage .badge {
@@ -295,7 +317,7 @@
 .status {
   display: inline-block;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 100px;
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -668,6 +690,18 @@
   border-color: #ea580c;
 }
 
+.addressList {
+  display: grid;
+  gap: 10px;
+  /* Shows the 2 permanent rows plus a peek of row 3, hinting there's more to
+     scroll to; rows beyond that (up to the hard cap) scroll within this
+     fixed area instead of growing the modal. */
+  max-height: 114px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 .addressRow {
   display: grid;
   grid-template-columns: 1fr 2fr auto auto;
@@ -735,6 +769,12 @@
 .removeAddressButton:hover {
   background: rgba(239, 68, 68, 0.08);
   border-color: #ef4444;
+}
+
+.removeAddressSpacer {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 620px) {

@@ -91,6 +91,21 @@ function formatDate(value?: string) {
   });
 }
 
+const MIN_ADDRESS_ROWS = 2;
+const MAX_ADDRESS_ROWS = 4;
+
+function blankAddressRow(isDefault: boolean): DripTeaAddress {
+  return { label: '', address: '', isDefault };
+}
+
+function withMinimumRows(addresses: DripTeaAddress[]): DripTeaAddress[] {
+  const rows = addresses.map(a => ({ ...a }));
+  while (rows.length < MIN_ADDRESS_ROWS) {
+    rows.push(blankAddressRow(rows.length === 0));
+  }
+  return rows;
+}
+
 function emptyForm(): UserFormState {
   return {
     fullName: '',
@@ -98,7 +113,7 @@ function emptyForm(): UserFormState {
     password: '',
     role: 'customer',
     status: 'active',
-    addresses: [],
+    addresses: withMinimumRows([]),
   };
 }
 
@@ -109,8 +124,17 @@ function formFromUser(user: DripTeaUser): UserFormState {
     password: '',
     role: user.role,
     status: user.status,
-    addresses: user.addresses ? user.addresses.map(a => ({ ...a })) : [],
+    addresses: withMinimumRows(user.addresses ?? []),
   };
+}
+
+// Optional blank rows shouldn't be sent to the backend as real addresses.
+function filledAddresses(addresses: DripTeaAddress[]): DripTeaAddress[] {
+  const filled = addresses.filter(a => a.address.trim().length > 0);
+  if (filled.length > 0 && !filled.some(a => a.isDefault)) {
+    filled[0] = { ...filled[0], isDefault: true };
+  }
+  return filled;
 }
 
 export default function UserAdminDashboardPage() {
@@ -196,13 +220,17 @@ export default function UserAdminDashboardPage() {
   }
 
   function addAddress() {
-    setFormData(current => ({
-      ...current,
-      addresses: [...current.addresses, { label: '', address: '', isDefault: current.addresses.length === 0 }],
-    }));
+    setFormData(current => {
+      if (current.addresses.length >= MAX_ADDRESS_ROWS) return current;
+      return {
+        ...current,
+        addresses: [...current.addresses, blankAddressRow(current.addresses.length === 0)],
+      };
+    });
   }
 
   function removeAddress(index: number) {
+    if (index < MIN_ADDRESS_ROWS) return;
     setFormData(current => {
       const addresses = current.addresses.filter((_, i) => i !== index);
       // If the removed entry was the default, promote the first remaining one.
@@ -234,7 +262,7 @@ export default function UserAdminDashboardPage() {
 
     try {
       if (formMode === 'create') {
-        const response = await createUserAccount(formData);
+        const response = await createUserAccount({ ...formData, addresses: filledAddresses(formData.addresses) });
         setUsers(current => [...current, response.data].sort((a, b) => a.fullName.localeCompare(b.fullName)));
         setMessage('User created.');
       } else if (formMode === 'edit' && editingUser) {
@@ -243,7 +271,7 @@ export default function UserAdminDashboardPage() {
           email: formData.email,
           role: formData.role,
           status: formData.status,
-          addresses: formData.addresses,
+          addresses: filledAddresses(formData.addresses),
         });
         setUsers(current => current.map(user => (user.id === response.data.id ? response.data : user)));
         setMessage('User updated.');
@@ -688,49 +716,58 @@ export default function UserAdminDashboardPage() {
               <div className={styles.addressEditor}>
                 <div className={styles.addressEditorHeader}>
                   <span>Saved Addresses</span>
-                  <button type="button" className={styles.addAddressButton} onClick={addAddress}>
-                    <FaPlus /> Add Address
+                  <button
+                    type="button"
+                    className={styles.addAddressButton}
+                    onClick={addAddress}
+                    disabled={formData.addresses.length >= MAX_ADDRESS_ROWS}
+                  >
+                    <FaPlus /> {formData.addresses.length >= MAX_ADDRESS_ROWS ? 'Limit reached (4)' : 'Add Address'}
                   </button>
                 </div>
 
-                {formData.addresses.length === 0 && (
-                  <p className={styles.addressEditorEmpty}>No saved addresses yet.</p>
-                )}
-
-                {formData.addresses.map((entry, index) => (
-                  <div key={index} className={styles.addressRow}>
-                    <input
-                      value={entry.label ?? ''}
-                      onChange={(event) => updateAddressField(index, 'label', event.target.value)}
-                      placeholder="Label (e.g. Home, Work)"
-                      className={styles.addressLabelInput}
-                    />
-                    <input
-                      value={entry.address}
-                      onChange={(event) => updateAddressField(index, 'address', event.target.value)}
-                      placeholder="Full address"
-                      className={styles.addressLineInput}
-                      required
-                    />
-                    <label className={styles.addressDefaultToggle}>
-                      <input
-                        type="radio"
-                        name="defaultAddress"
-                        checked={Boolean(entry.isDefault)}
-                        onChange={() => setDefaultAddress(index)}
-                      />
-                      Default
-                    </label>
-                    <button
-                      type="button"
-                      className={styles.removeAddressButton}
-                      onClick={() => removeAddress(index)}
-                      aria-label="Remove address"
-                    >
-                      <FaTimes />
-                    </button>
-                  </div>
-                ))}
+                <div className={styles.addressList}>
+                  {formData.addresses.map((entry, index) => {
+                    const isPermanent = index < MIN_ADDRESS_ROWS;
+                    return (
+                      <div key={index} className={styles.addressRow}>
+                        <input
+                          value={entry.label ?? ''}
+                          onChange={(event) => updateAddressField(index, 'label', event.target.value)}
+                          placeholder="Label (e.g. Home, Work)"
+                          className={styles.addressLabelInput}
+                        />
+                        <input
+                          value={entry.address}
+                          onChange={(event) => updateAddressField(index, 'address', event.target.value)}
+                          placeholder="Full address (optional)"
+                          className={styles.addressLineInput}
+                        />
+                        <label className={styles.addressDefaultToggle}>
+                          <input
+                            type="radio"
+                            name="defaultAddress"
+                            checked={Boolean(entry.isDefault)}
+                            onChange={() => setDefaultAddress(index)}
+                          />
+                          Default
+                        </label>
+                        {isPermanent ? (
+                          <span className={styles.removeAddressSpacer} aria-hidden="true" />
+                        ) : (
+                          <button
+                            type="button"
+                            className={styles.removeAddressButton}
+                            onClick={() => removeAddress(index)}
+                            aria-label="Remove address"
+                          >
+                            <FaTimes />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className={styles.modalActions}>

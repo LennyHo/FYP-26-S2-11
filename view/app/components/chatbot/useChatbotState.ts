@@ -117,6 +117,18 @@ export interface Message {
     message: string;
     stepLabels: [string, string, string];
   } | null;
+  voucherCard?: {
+    title: string;
+    vouchers: {
+      code: string;
+      title: string;
+      description?: string;
+      discountType: 'percentage' | 'fixed';
+      discountValue: number;
+      maxDiscount?: number | null;
+      minSpend?: number;
+    }[];
+  } | null;
 }
 
 export interface ChatbotSidebarProps {

@@ -189,6 +189,18 @@ function isHealthRankingQuery(message) {
     );
 }
 
+// Detects rating-ranking queries: "which beverage has the highest rating?", "best rated drink",
+// "top rated drink", "most stars", etc. — requires both a rating word and a ranking word so it
+// doesn't collide with general recommendation phrases like "what's good" or "any good drinks".
+function isHighestRatedRequest(message) {
+    const msg = String(message || "").toLowerCase();
+
+    const hasRatingWord = msg.includes("rating") || msg.includes("rated") || msg.includes("star");
+    const hasRankWord = msg.includes("highest") || msg.includes("best") || msg.includes("top") || msg.includes("most");
+
+    return hasRatingWord && hasRankWord;
+}
+
 // #32 (extension) - As a customer, I want the chatbot to suggest drinks based on how I'm feeling
 // (flu, sore throat, indigestion, fatigue, stress) so that I can pick something comforting.
 // Keyword-detects a symptom category → maps to a curated set of itemIds (see getDrinksByItemIds)
@@ -2079,6 +2091,18 @@ const REPLY_STRINGS = {
         ms: "Minuman anda sudah sedia untuk diambil! Sila ke kaunter pengambilan.",
         ta: "உங்கள் பானம் தயார்! பிக்கப் கவுன்டருக்குச் செல்லவும்.",
     },
+    voucherCardTitle: {
+        en: "Here are the vouchers you can use right now:",
+        zh: "以下是您目前可以使用的优惠券：",
+        ms: "Berikut adalah baucar yang boleh anda gunakan sekarang:",
+        ta: "இப்போது நீங்கள் பயன்படுத்தக்கூடிய வவுச்சர்கள் இதோ:",
+    },
+    noVouchersAvailable: {
+        en: "You don't have any vouchers available right now. Check back soon for new offers!",
+        zh: "您目前没有可用的优惠券，敬请留意新优惠！",
+        ms: "Anda tiada baucar yang tersedia sekarang. Semak semula untuk tawaran baharu!",
+        ta: "தற்போது உங்களிடம் வவுச்சர்கள் இல்லை. புதிய சலுகைகளுக்காக மீண்டும் பாருங்கள்!",
+    },
 };
 
 // Main chatbot message handler
@@ -2241,6 +2265,36 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         return {
             reply,
             recommendedDrinks: formatDrinkCards(drinks),
+            system_action: { ui_navigation: "none" },
+        };
+    }
+
+    // Rating ranking query: "which beverage has the highest rating?", "best rated drink", etc.
+    // Deterministic DB lookup (not Gemini-generated) so the answer is always accurate.
+    if (isHighestRatedRequest(intentMessage)) {
+        const allDrinks = await MenuItem.find({ status: "active" }).lean();
+        const ratedDrinks = allDrinks.filter((d) => Number(d.rating || 0) > 0);
+
+        if (ratedDrinks.length === 0) {
+            const reply = "None of our drinks have been rated by customers yet — check back soon!";
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+            return { reply, system_action: { ui_navigation: "none" } };
+        }
+
+        const maxRating = Math.max(...ratedDrinks.map((d) => Number(d.rating || 0)));
+        const topDrinks = ratedDrinks.filter((d) => Number(d.rating || 0) === maxRating).slice(0, 5);
+
+        const reply = topDrinks.length === 1
+            ? `Our highest-rated drink right now is ${topDrinks[0].name}, with a rating of ${maxRating.toFixed(1)} ★!`
+            : `Our highest-rated drinks right now are tied at ${maxRating.toFixed(1)} ★: ${topDrinks.map((d) => d.name).join(", ")}.`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        return {
+            reply,
+            recommendedDrinks: formatDrinkCards(topDrinks),
             system_action: { ui_navigation: "none" },
         };
     }
@@ -2538,45 +2592,45 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         const vouchers = await getAvailableVouchers(userId);
 
-        const voucherContext = (vouchers.length === 0
-            ? "The customer has no available vouchers right now."
-            : `[LIVE VOUCHER DATA — use this as the authoritative list of currently available vouchers.]\n\nAvailable vouchers:\n` +
-            vouchers.map((v) => {
-                const discount = v.discountType === "percentage"
-                    ? `${v.discountValue}% off${v.maxDiscount != null ? ` (up to S$${Number(v.maxDiscount).toFixed(2)})` : ""}`
-                    : `S$${Number(v.discountValue).toFixed(2)} off`;
-                const minSpend = Number(v.minSpend || 0) > 0 ? ` — min. spend S$${Number(v.minSpend).toFixed(2)}` : "";
-                return `- ${v.code}: ${v.title} (${discount}${minSpend})`;
-            }).join("\n")) +
-            `\n\nDo NOT mention, suggest, or reference the Rewards page, or say anything like "explore/check/visit our rewards page for more details" — the app already appends that message and a button separately. End your reply after the voucher info itself.`;
+        // Deterministic, not Gemini-generated — same reasoning as the #203 order status card:
+        // guarantees the voucher list (code, description, minimum spend) is always accurate and
+        // always shown, and sidesteps the duplicate/paraphrased-CTA issue Gemini free-text had.
+        if (vouchers.length === 0) {
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: t('noVouchersAvailable') });
 
-        const systemPrompt = await buildSystemPrompt(safeMessage, voucherContext);
-        const rawGeminiReply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt);
-
-        // Defensively strip any button/CTA markup Gemini may have echoed back from older
-        // conversation turns (saved before history was cleaned of this markup — see below) so
-        // exactly one button is ever shown, regardless of what's already stored for this chat.
-        let geminiReply = rawGeminiReply.replace(/<button[^>]*>[\s\S]*?<\/button>/gi, "");
-        for (const cta of Object.values(REPLY_STRINGS.exploreRewardsCta)) {
-            geminiReply = geminiReply.split(cta).join("");
+            return {
+                reply: t('noVouchersAvailable'),
+                system_action: { ui_navigation: "none" },
+            };
         }
-        geminiReply = geminiReply.replace(/(<br\s*\/?>\s*){2,}/gi, "<br><br>").trim();
 
-        // The CTA message + button are appended deterministically (not left to Gemini) so the
+        const voucherCard = {
+            title: t('voucherCardTitle'),
+            vouchers: vouchers.map((v) => ({
+                code: v.code,
+                title: v.title,
+                description: v.description,
+                discountType: v.discountType,
+                discountValue: v.discountValue,
+                maxDiscount: v.maxDiscount,
+                minSpend: v.minSpend,
+            })),
+        };
+
+        // The CTA message + button remain deterministic too (not left to Gemini) so the
         // Rewards page link always appears, and always in the correct language via REPLY_STRINGS —
         // the same pattern buildCartSummaryReply uses for its "View Cart"/"Checkout" buttons.
         const reply =
-            `${geminiReply}<br><br>${t('exploreRewardsCta')}<br><br>` +
+            `${t('voucherCardTitle')}<br><br>${t('exploreRewardsCta')}<br><br>` +
             `<button class="chat-nav-btn-compact" onclick="handleRewards()">${t('exploreRewardsBtn')}</button>`;
 
-        // Store only the plain (cleaned) Gemini reply in history, not the appended button HTML —
-        // otherwise Gemini sees its own button markup on the next turn and starts imitating it,
-        // producing a second (malformed, non-functional) button of its own in later replies.
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
-        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: geminiReply });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: t('voucherCardTitle') });
 
         return {
             reply,
+            voucherCard,
             system_action: { ui_navigation: "none" },
         };
     }
