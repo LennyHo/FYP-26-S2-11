@@ -37,7 +37,22 @@ export default function StoreStaffPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
   const [addError, setAddError] = useState('');
+  const [nameError, setNameError] = useState('');
   const [adding, setAdding] = useState(false);
+
+  function handleNameChange(value: string) {
+    setAddForm(f => ({ ...f, name: value }));
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) { setNameError(''); return; }
+    const duplicate = items.some(i => i.name.trim().toLowerCase() === normalized);
+    setNameError(duplicate ? `A drink named "${value.trim()}" already exists.` : '');
+  }
+
+  function closeAddModal() {
+    setShowAddModal(false);
+    setAddError('');
+    setNameError('');
+  }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -89,6 +104,7 @@ export default function StoreStaffPage() {
   async function handleAddDrink(e: React.SyntheticEvent) {
     e.preventDefault();
     setAddError('');
+    if (nameError) return;
     const price = parseFloat(addForm.price);
     if (!addForm.name.trim() || !addForm.category.trim() || isNaN(price) || price < 0) {
       setAddError('Name, category, and a valid price are required.');
@@ -111,6 +127,7 @@ export default function StoreStaffPage() {
       });
       setItems(prev => [...prev, res.data]);
       setShowAddModal(false);
+      setNameError('');
       setAddForm({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
     } catch (err) {
       setAddError(err instanceof Error ? err.message : 'Failed to add drink.');
@@ -166,7 +183,7 @@ export default function StoreStaffPage() {
 
         {/* Toolbar */}
         <div className={styles.toolbar}>
-          <button type="button" className={styles.addBtn} onClick={() => setShowAddModal(true)}>
+          <button type="button" className={styles.addBtn} onClick={() => { setAddError(''); setNameError(''); setShowAddModal(true); }}>
             + Add Drink
           </button>
           <div className={styles.catTabs}>
@@ -287,13 +304,13 @@ export default function StoreStaffPage() {
       </main>
 
       {showAddModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
+        <div className={styles.modalOverlay} onClick={closeAddModal}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
 
             {/* Header */}
             <div className={styles.modalHeader}>
               <h2 className={styles.modalTitle}>Add New Drink</h2>
-              <button type="button" className={styles.modalClose} onClick={() => setShowAddModal(false)} aria-label="Close">
+              <button type="button" className={styles.modalClose} onClick={closeAddModal} aria-label="Close">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
@@ -333,7 +350,13 @@ export default function StoreStaffPage() {
                 {/* Name + Category + Price */}
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>Name <span className={styles.required}>*</span></label>
-                  <input className={styles.formInput} value={addForm.name} onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Taro Milk Tea" />
+                  <input
+                    className={`${styles.formInput} ${nameError ? styles.formInputError : ''}`}
+                    value={addForm.name}
+                    onChange={e => handleNameChange(e.target.value)}
+                    placeholder="e.g. Taro Milk Tea"
+                  />
+                  {nameError && <p className={styles.fieldError}>{nameError}</p>}
                 </div>
                 <div className={styles.formRow}>
                   <div className={styles.formField}>
@@ -402,8 +425,8 @@ export default function StoreStaffPage() {
               </div>
 
               <div className={styles.modalFooter}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setShowAddModal(false)}>Cancel</button>
-                <button type="submit" className={styles.saveBtn} disabled={adding}>{adding ? 'Adding…' : 'Add Drink'}</button>
+                <button type="button" className={styles.cancelBtn} onClick={closeAddModal}>Cancel</button>
+                <button type="submit" className={styles.saveBtn} disabled={adding || Boolean(nameError)}>{adding ? 'Adding…' : 'Add Drink'}</button>
               </div>
             </form>
 

@@ -145,6 +145,8 @@ export default function UserAdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [formError, setFormError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [viewingUser, setViewingUser] = useState<DripTeaUser | null>(null);
   const [formMode, setFormMode] = useState<FormMode | null>(null);
   const [editingUser, setEditingUser] = useState<DripTeaUser | null>(null);
@@ -197,6 +199,8 @@ export default function UserAdminDashboardPage() {
 
   function openCreateModal() {
     setMessage('');
+    setFormError('');
+    setEmailError('');
     setEditingUser(null);
     setFormData(emptyForm());
     setFormMode('create');
@@ -204,15 +208,27 @@ export default function UserAdminDashboardPage() {
 
   function openEditModal(user: DripTeaUser) {
     setMessage('');
+    setFormError('');
+    setEmailError('');
     setEditingUser(user);
     setFormData(formFromUser(user));
     setFormMode('edit');
   }
 
   function closeFormModal() {
+    setFormError('');
+    setEmailError('');
     setFormMode(null);
     setEditingUser(null);
     setFormData(emptyForm());
+  }
+
+  function handleEmailChange(value: string) {
+    updateFormField('email', value);
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) { setEmailError(''); return; }
+    const duplicate = users.some(u => u.email.toLowerCase() === normalized && u.id !== editingUser?.id);
+    setEmailError(duplicate ? 'An account with this email already exists.' : '');
   }
 
   function updateFormField(field: Exclude<keyof UserFormState, 'addresses'>, value: string) {
@@ -257,7 +273,8 @@ export default function UserAdminDashboardPage() {
 
   async function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage('');
+    setFormError('');
+    if (emailError) return;
     setIsSaving(true);
 
     try {
@@ -280,7 +297,7 @@ export default function UserAdminDashboardPage() {
       closeFormModal();
     } catch (error) {
       console.error('[DripTea save user]', error);
-      setMessage(error instanceof Error ? error.message : 'Unable to save user.');
+      setFormError(error instanceof Error ? error.message : 'Unable to save user.');
     } finally {
       setIsSaving(false);
     }
@@ -662,6 +679,8 @@ export default function UserAdminDashboardPage() {
                 </button>
               </div>
 
+              {formError && <p className={styles.formErrorMessage}>{formError}</p>}
+
               <div className={styles.formGrid}>
                 <label>
                   Name
@@ -677,10 +696,12 @@ export default function UserAdminDashboardPage() {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(event) => updateFormField('email', event.target.value)}
+                    onChange={(event) => handleEmailChange(event.target.value)}
                     placeholder="email@example.com"
+                    className={emailError ? styles.inputError : undefined}
                     required
                   />
+                  {emailError && <span className={styles.fieldError}>{emailError}</span>}
                 </label>
                 {formMode === 'create' && (
                   <label className={styles.formGridFull}>
@@ -774,7 +795,7 @@ export default function UserAdminDashboardPage() {
                 <button type="button" className={styles.secondaryButton} onClick={closeFormModal}>
                   Cancel
                 </button>
-                <button type="submit" className={styles.primaryButton} disabled={isSaving}>
+                <button type="submit" className={styles.primaryButton} disabled={isSaving || Boolean(emailError)}>
                   {isSaving ? 'Saving...' : 'Save User'}
                 </button>
               </div>

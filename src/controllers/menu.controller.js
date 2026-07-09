@@ -130,6 +130,16 @@ async function createMenuItem(req, res) {
       });
     }
 
+    const existingItem = await MenuItem.findOne({
+      name: { $regex: `^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+    }).lean();
+    if (existingItem) {
+      return res.status(409).json({
+        ok: false,
+        message: `A drink named "${name}" already exists.`,
+      });
+    }
+
     // Student note: custom menu item IDs keep new drinks separate from seeded b001 drinks.
     const image = typeof req.body.image === "string" ? req.body.image : "";
 

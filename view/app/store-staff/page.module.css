@@ -604,6 +604,21 @@
   border: 1px solid rgba(180, 35, 24, 0.14);
 }
 
+.fieldError {
+  color: #b42318;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin: -2px 0 0;
+}
+
+.formInputError {
+  border-color: #b42318 !important;
+}
+
+.formInputError:focus {
+  box-shadow: 0 0 0 2px rgba(180, 35, 24, 0.14) !important;
+}
+
 .cancelBtn {
   padding: 7px 16px;
   border: 1px solid rgba(147, 197, 253, 0.9);
