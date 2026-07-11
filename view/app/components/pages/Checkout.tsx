@@ -8,7 +8,12 @@ import { checkoutCart, getCartItems, getVouchers, applyVoucher } from "../../uti
 import type { DripTeaVoucher } from "../../utils/api.base";
 import { getOrder, updateOrderStatus } from "../../utils/staffApi";
 import { getStoredUser, parseLocalCartLine, PENDING_VOUCHER_KEY, type DripTeaCartItem } from "../../utils/api.base";
+import { DRIPTEA_OUTLETS, type DripTeaOutlet } from "../../utils/outlets";
+import OrderTypeSelect from "./OrderTypeSelect";
+import VoucherSelect from "./VoucherSelect";
 import "./Checkout.css";
+
+const PICKUP_OUTLET_KEY = "driptea_pickup_outlet";
 
 const CheckoutDeliveryAddress = dynamic(() => import("./CheckoutDeliveryAddress"), {
     ssr: false,
@@ -197,6 +202,12 @@ export default function Checkout() {
     const [cardName, setCardName] = useState("");
     const [expiryDate, setExpiryDate] = useState("");
     const [cvv, setCvv] = useState("");
+    const [cardFieldErrors, setCardFieldErrors] = useState<{
+        cardNumber?: boolean;
+        cardName?: boolean;
+        expiryDate?: boolean;
+        cvv?: boolean;
+    }>({});
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
     const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
@@ -205,12 +216,15 @@ export default function Checkout() {
     const [collected, setCollected] = useState(false);
     const [orderType, setOrderType] = useState("");
     const [deliveryPreview, setDeliveryPreview] = useState<DeliveryData | null>(null);
+    const [rightStep, setRightStep] = useState<1 | 2>(1);
+    const [pickupOutlet, setPickupOutlet] = useState<DripTeaOutlet | null>(null);
 
     function fillFakeDetails() {
         setCardNumber("4532 1234 5678 9012");
         setCardName("John Doe");
         setExpiryDate("12/2026");
         setCvv("123");
+        setCardFieldErrors({});
     }
 
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
@@ -219,6 +233,7 @@ export default function Checkout() {
     const total = Math.max(subtotal - discountAmount, 0) + deliveryFee;
     const isDeliveryOrder = Boolean(displayedDelivery);
     const needsDeliveryAddress = orderType === "delivery" && !delivery;
+    const isDelivery = orderType === "delivery";
 
     useEffect(() => {
         async function loadVouchers() {
@@ -305,14 +320,54 @@ export default function Checkout() {
     }, []);
 
     useEffect(() => {
+        const currentOrderType = window.localStorage.getItem("driptea_order_type");
+        if (currentOrderType !== "delivery") return;
+
         const savedDelivery = window.localStorage.getItem("driptea_delivery");
 
         if (savedDelivery) {
             try {
-                setDelivery(JSON.parse(savedDelivery));
+                const parsed = JSON.parse(savedDelivery);
+                const isValid =
+                    parsed &&
+                    typeof parsed.customerAddress === "string" &&
+                    parsed.customerAddress.trim().length > 0 &&
+                    Number.isFinite(parsed.customerLat) &&
+                    Number.isFinite(parsed.customerLng);
+
+                if (isValid) {
+                    setDelivery(parsed);
+                    setRightStep(2);
+                } else {
+                    window.localStorage.removeItem("driptea_delivery");
+                }
             } catch (error) {
                 console.error("[DripTea delivery data]", error);
                 window.localStorage.removeItem("driptea_delivery");
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        const currentOrderType = window.localStorage.getItem("driptea_order_type");
+        if (currentOrderType === "delivery") return;
+
+        const savedOutlet = window.localStorage.getItem(PICKUP_OUTLET_KEY);
+
+        if (savedOutlet) {
+            try {
+                const parsed = JSON.parse(savedOutlet);
+                const isValid = parsed && typeof parsed.storeCode === "string" && parsed.storeCode.trim().length > 0;
+
+                if (isValid) {
+                    setPickupOutlet(parsed);
+                    setRightStep(2);
+                } else {
+                    window.localStorage.removeItem(PICKUP_OUTLET_KEY);
+                }
+            } catch (error) {
+                console.error("[DripTea pickup outlet]", error);
+                window.localStorage.removeItem(PICKUP_OUTLET_KEY);
             }
         }
     }, []);
@@ -321,6 +376,19 @@ export default function Checkout() {
         setDelivery(deliveryData);
         setDeliveryPreview(deliveryData);
         setStatusMessage("");
+    }
+
+    function confirmPickupOutlet() {
+        if (!pickupOutlet) return;
+        window.localStorage.setItem(PICKUP_OUTLET_KEY, JSON.stringify(pickupOutlet));
+        setRightStep(2);
+    }
+
+    function handleOrderTypeChange(nextOrderType: string) {
+        if (nextOrderType === orderType) return;
+        setOrderType(nextOrderType);
+        window.localStorage.setItem("driptea_order_type", nextOrderType);
+        setRightStep(1);
     }
 
     function handleDeliveryPreviewChange(previewData: DeliveryData | null) {
@@ -434,7 +502,23 @@ export default function Checkout() {
         };
     }, [confirmation?.orderId]);
 
+    function validateCardDetails() {
+        const errors: typeof cardFieldErrors = {};
+        if (!cardNumber.trim()) errors.cardNumber = true;
+        if (!cardName.trim()) errors.cardName = true;
+        if (!expiryDate.trim()) errors.expiryDate = true;
+        if (!cvv.trim()) errors.cvv = true;
+
+        setCardFieldErrors(errors);
+        return Object.keys(errors).length === 0;
+    }
+
     async function handleFakePayment() {
+        if (!validateCardDetails()) {
+            setStatusMessage("Please fill in your credit card details before confirming payment.");
+            return;
+        }
+
         setStatusMessage("");
         setIsProcessing(true);
 
@@ -713,9 +797,26 @@ export default function Checkout() {
                     <section className="checkout-card">
                         <div className="checkout-two-col">
                             <div className="checkout-form-col">
-                                <div className="checkout-mobile-step-title">
-                                    <span>3</span>
-                                    <strong>Payment details</strong>
+                                <div className="checkout-card-visual">
+                                    <div className="checkout-card-visual-top">
+                                        <div className="checkout-card-chip" />
+                                        <span className="checkout-card-visual-brand">Mastercard</span>
+                                    </div>
+
+                                    <div className="checkout-card-number">
+                                        {cardNumber ? `•••• •••• •••• ${cardNumber.replace(/\s/g, "").slice(-4).padStart(4, "•")}` : "•••• •••• •••• ••••"}
+                                    </div>
+
+                                    <div className="checkout-card-visual-bottom">
+                                        <div>
+                                            Card Holder
+                                            <strong>{cardName || "Your Name"}</strong>
+                                        </div>
+                                        <div>
+                                            Valid Thru
+                                            <strong>{expiryDate || "MM/YYYY"}</strong>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="checkout-form-header">
@@ -739,79 +840,156 @@ export default function Checkout() {
                                     Fill Demo Details
                                 </button>
 
-                                <label className="checkout-field">
+                                <label className={`checkout-field ${cardFieldErrors.cardNumber ? "checkout-field-invalid" : ""}`}>
                                     Credit Card Number
                                     <input
                                         value={cardNumber}
-                                        onChange={(e) => setCardNumber(e.target.value)}
+                                        onChange={(e) => {
+                                            setCardNumber(e.target.value);
+                                            if (cardFieldErrors.cardNumber) setCardFieldErrors((prev) => ({ ...prev, cardNumber: false }));
+                                        }}
                                         placeholder="Key in the full credit card number"
                                         maxLength={19}
                                     />
+                                    {cardFieldErrors.cardNumber && <p className="checkout-field-invalid-message">Required</p>}
                                 </label>
 
-                                <label className="checkout-field">
+                                <label className={`checkout-field ${cardFieldErrors.cardName ? "checkout-field-invalid" : ""}`}>
                                     Name
                                     <input
                                         value={cardName}
-                                        onChange={(e) => setCardName(e.target.value)}
+                                        onChange={(e) => {
+                                            setCardName(e.target.value);
+                                            if (cardFieldErrors.cardName) setCardFieldErrors((prev) => ({ ...prev, cardName: false }));
+                                        }}
                                         placeholder="Key in your full name on the credit card"
                                     />
+                                    {cardFieldErrors.cardName && <p className="checkout-field-invalid-message">Required</p>}
                                 </label>
 
-                                <div className="checkout-row">
-                                    <label className="checkout-field">
+                                <div className="checkout-field-row">
+                                    <label className={`checkout-field ${cardFieldErrors.expiryDate ? "checkout-field-invalid" : ""}`}>
                                         Expiry Date
                                         <input
                                             value={expiryDate}
-                                            onChange={(e) => setExpiryDate(e.target.value)}
+                                            onChange={(e) => {
+                                                setExpiryDate(e.target.value);
+                                                if (cardFieldErrors.expiryDate) setCardFieldErrors((prev) => ({ ...prev, expiryDate: false }));
+                                            }}
                                             placeholder="MM/YYYY"
                                             maxLength={7}
                                             autoComplete="off"
                                         />
+                                        {cardFieldErrors.expiryDate && <p className="checkout-field-invalid-message">Required</p>}
                                     </label>
 
-                                    <label className="checkout-field">
+                                    <label className={`checkout-field ${cardFieldErrors.cvv ? "checkout-field-invalid" : ""}`}>
                                         CVV
                                         <input
                                             value={cvv}
-                                            onChange={(e) => setCvv(e.target.value)}
+                                            onChange={(e) => {
+                                                setCvv(e.target.value);
+                                                if (cardFieldErrors.cvv) setCardFieldErrors((prev) => ({ ...prev, cvv: false }));
+                                            }}
                                             placeholder="CVV"
                                             maxLength={4}
                                             type="password"
                                             autoComplete="off"
                                         />
+                                        {cardFieldErrors.cvv && <p className="checkout-field-invalid-message">Required</p>}
                                     </label>
                                 </div>
 
                                 <label className="checkout-field">
                                     Voucher
-                                    <select
-                                        className="checkout-voucher-select"
+                                    <VoucherSelect
                                         value={voucherCode}
                                         disabled={isApplyingVoucher}
-                                        onChange={(e) => void handleVoucherChange(e.target.value)}
-                                    >
-                                        <option value="">No voucher</option>
-                                        {vouchers.map((voucher) => (
-                                            <option key={voucher.code} value={voucher.code}>
-                                                {voucher.title} ({voucher.code})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(code: string) => void handleVoucherChange(code)}
+                                        options={vouchers.map((voucher) => ({
+                                            value: voucher.code,
+                                            label: `${voucher.title} (${voucher.code})`,
+                                            title: voucher.title,
+                                            code: voucher.code,
+                                        }))}
+                                    />
                                     {voucherMessage && <p className="checkout-voucher-message">{voucherMessage}</p>}
                                 </label>
 
                             </div>
 
                             <div className="checkout-cart-col">
-                                <div className="checkout-summary-section">
-                                    <div className="checkout-mobile-step-title">
-                                        <span>1</span>
-                                        <strong>Beverage summary</strong>
+                                <div className="checkout-stepper">
+                                    <div className={`checkout-step ${rightStep === 1 ? "active" : "done"}`}>
+                                        <span>{rightStep > 1 ? "✓" : "1"}</span>
+                                        <em>{isDelivery ? "Address" : "Outlet"}</em>
                                     </div>
+                                    <div className={`checkout-step-line ${rightStep === 2 ? "active" : ""}`} />
+                                    <div className={`checkout-step ${rightStep === 2 ? "active" : ""}`}>
+                                        <span>2</span>
+                                        <em>Summary</em>
+                                    </div>
+                                </div>
 
-                                    <h2>Your Shopping Cart</h2>
+                                {rightStep === 1 && (
+                                    isDelivery ? (
+                                        <CheckoutDeliveryAddress
+                                            delivery={delivery}
+                                            onConfirm={handleDeliveryConfirm}
+                                            onPreviewChange={handleDeliveryPreviewChange}
+                                            onConfirmed={() => setRightStep(2)}
+                                            orderType={orderType}
+                                            onOrderTypeChange={handleOrderTypeChange}
+                                        />
+                                    ) : (
+                                        <section className="checkout-address-card">
+                                            <div className="checkout-outlet-selector">
+                                                <div className="checkout-outlet-selector-header">
+                                                    <p>Pickup from</p>
+                                                    <OrderTypeSelect value={orderType || "pickup"} onChange={handleOrderTypeChange} />
+                                                </div>
+                                                <div className="checkout-outlet-options">
+                                                    {DRIPTEA_OUTLETS.map((outlet) => (
+                                                        <button
+                                                            type="button"
+                                                            key={outlet.storeCode}
+                                                            className={pickupOutlet?.storeCode === outlet.storeCode ? "active" : ""}
+                                                            onClick={() => setPickupOutlet(outlet)}
+                                                        >
+                                                            <strong>{outlet.name}</strong>
+                                                            <span>{outlet.address}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
 
+                                            <button
+                                                type="button"
+                                                className="checkout-address-confirm"
+                                                disabled={!pickupOutlet}
+                                                onClick={confirmPickupOutlet}
+                                            >
+                                                Confirm Outlet
+                                            </button>
+                                        </section>
+                                    )
+                                )}
+
+                                {rightStep === 2 && (
+                                    <div className="checkout-selection-summary">
+                                        <div>
+                                            <strong>{isDelivery ? "Delivering to" : "Pickup from"}</strong>
+                                            <p>{isDelivery ? (delivery?.customerAddress || "-") : (pickupOutlet?.name || "-")}</p>
+                                            {isDelivery && delivery && <span>{delivery.outletName}</span>}
+                                        </div>
+                                        <button type="button" className="checkout-selection-change" onClick={() => setRightStep(1)}>
+                                            Change
+                                        </button>
+                                    </div>
+                                )}
+
+                                {rightStep === 2 && (
+                                <div className="checkout-summary-section">
                                     <div className="checkout-items">
                                         {items.length === 0 ? (
                                             <p>Your cart is empty.</p>
@@ -889,20 +1067,6 @@ export default function Checkout() {
                                         </button>
                                     </div>
                                 </div>
-
-                                {orderType === "delivery" && (
-                                    <div className="checkout-delivery-section">
-                                        <div className="checkout-mobile-step-title">
-                                            <span>2</span>
-                                            <strong>Delivery address</strong>
-                                        </div>
-
-                                        <CheckoutDeliveryAddress
-                                            delivery={delivery}
-                                            onConfirm={handleDeliveryConfirm}
-                                            onPreviewChange={handleDeliveryPreviewChange}
-                                        />
-                                    </div>
                                 )}
                             </div>
                         </div>

@@ -1,25 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
 import { updateUser } from "../../utils/customerApi"
 import { getStoredUser, storeUser } from "../../utils/api.base"
+import { DRIPTEA_OUTLETS } from "../../utils/outlets"
+import OrderTypeSelect from "./OrderTypeSelect"
 
-const DRIPTEA_OUTLETS = [
-  {
-    storeCode: "DT-001",
-    name: "DripTea Orchard",
-    address: "313 Orchard Road, #B2-01, Singapore 238895",
-    lat: 1.3006,
-    lng: 103.8389,
-  },
-  {
-    storeCode: "DT-002",
-    name: "DripTea Jurong East",
-    address: "50 Jurong Gateway Road, #03-12 JEM, Singapore 608549",
-    lat: 1.3336,
-    lng: 103.7436,
-  },
-]
+const CheckoutAddressMap = dynamic(() => import("./CheckoutAddressMap"), {
+  ssr: false,
+})
 
 function getOutletFromDelivery(delivery) {
   if (!delivery) return DRIPTEA_OUTLETS[0]
@@ -144,6 +134,9 @@ export default function CheckoutDeliveryAddress({
   delivery,
   onConfirm,
   onPreviewChange,
+  onConfirmed,
+  orderType,
+  onOrderTypeChange,
 }) {
   const [currentUser, setCurrentUser] = useState(() => getStoredUser())
   const [savedAddresses, setSavedAddresses] = useState(() => getSavedAddresses())
@@ -155,6 +148,9 @@ export default function CheckoutDeliveryAddress({
   )
   const [mode, setMode] = useState("saved")
   const [addressInput, setAddressInput] = useState(
+    delivery?.customerAddress || savedAddress
+  )
+  const [selectedSavedAddress, setSelectedSavedAddress] = useState(
     delivery?.customerAddress || savedAddress
   )
   const [selectedLocation, setSelectedLocation] = useState(
@@ -261,7 +257,7 @@ export default function CheckoutDeliveryAddress({
     } catch (error) {
       console.error("[Checkout delivery search]", error)
       setSelectedLocation(null)
-      setMessage("Address search failed. Please try again.")
+      setMessage(error instanceof Error ? error.message : "Address search failed. Please try again.")
     } finally {
       setIsSearching(false)
     }
@@ -286,6 +282,7 @@ export default function CheckoutDeliveryAddress({
   function chooseSavedAddress() {
     setMode("saved")
     setAddressInput(savedAddress)
+    setSelectedSavedAddress(savedAddress)
     setSelectedLocation(null)
     setSearchResults([])
     setShowSuggestions(false)
@@ -304,6 +301,7 @@ export default function CheckoutDeliveryAddress({
     setMode("saved")
     setSavedAddress(nextAddress)
     setAddressInput(nextAddress)
+    setSelectedSavedAddress(nextAddress)
     setSelectedLocation(null)
     setSearchResults([])
     setShowSuggestions(false)
@@ -313,6 +311,7 @@ export default function CheckoutDeliveryAddress({
   function chooseNewAddress() {
     setMode("new")
     setAddressInput("")
+    setSelectedSavedAddress("")
     setSelectedLocation(null)
     setMessage("")
     setSearchResults([])
@@ -375,6 +374,7 @@ export default function CheckoutDeliveryAddress({
 
     window.localStorage.setItem("driptea_delivery", JSON.stringify(deliveryData))
     onConfirm(deliveryData)
+    onConfirmed?.()
 
     try {
       const saveResult = await saveSelectedAddress(deliveryData)
@@ -417,6 +417,7 @@ export default function CheckoutDeliveryAddress({
 
       if (mode === "saved" && !delivery) {
         setAddressInput(defaultSavedAddress)
+        setSelectedSavedAddress(defaultSavedAddress)
       }
     }
 
@@ -457,7 +458,10 @@ export default function CheckoutDeliveryAddress({
   return (
     <section className="checkout-address-card">
       <div className="checkout-outlet-selector">
-        <p>Deliver from</p>
+        <div className="checkout-outlet-selector-header">
+          <p>Deliver from</p>
+          <OrderTypeSelect value={orderType} onChange={onOrderTypeChange} />
+        </div>
         <div className="checkout-outlet-options">
           {DRIPTEA_OUTLETS.map((outlet) => (
             <button
@@ -498,7 +502,7 @@ export default function CheckoutDeliveryAddress({
                 type="button"
                 key={`${entry.address}-${index}`}
                 className={
-                  normalizeAddress(addressInput) === normalizeAddress(entry.address)
+                  normalizeAddress(selectedSavedAddress) === normalizeAddress(entry.address)
                     ? "active"
                     : ""
                 }
@@ -514,70 +518,75 @@ export default function CheckoutDeliveryAddress({
         </div>
       )}
 
-      <div className="checkout-address-search">
-        <input
-          value={addressInput}
-          readOnly={mode === "saved"}
-          onChange={(event) => {
-            setAddressInput(event.target.value)
-            setSelectedLocation(null)
-            setShowSuggestions(true)
-          }}
-          onFocus={() => {
-            if (searchResults.length > 0) setShowSuggestions(true)
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault()
-              void fetchSearchResults(addressInput, mode, true)
-            }
-            if (event.key === "Escape") setShowSuggestions(false)
-          }}
-          placeholder="Enter building, road name, or postal code"
-        />
-
-        {showSuggestions && searchResults.length > 0 && (
-          <div className="checkout-address-results">
-            {searchResults.map((result, index) => (
-              <button
-                type="button"
-                key={`${result.SEARCHVAL}-${result.POSTAL}-${index}`}
-                onClick={() => selectSearchResult(result)}
-              >
-                <strong>{result.SEARCHVAL}</strong>
-                <span>{formatOneMapAddress(result)}</span>
-              </button>
-            ))}
+      {mode === "new" && (
+        <>
+          <div className="checkout-address-map-wrap">
+            <CheckoutAddressMap outlet={selectedOutlet} location={selectedLocation} />
           </div>
+
+          <div className="checkout-address-search">
+            <input
+              value={addressInput}
+              onChange={(event) => {
+                setAddressInput(event.target.value)
+                setSelectedLocation(null)
+                setShowSuggestions(true)
+              }}
+              onFocus={() => {
+                if (searchResults.length > 0) setShowSuggestions(true)
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                  void fetchSearchResults(addressInput, mode, true)
+                }
+                if (event.key === "Escape") setShowSuggestions(false)
+              }}
+              placeholder="Enter building, road name, or postal code"
+            />
+
+            {showSuggestions && searchResults.length > 0 && (
+              <div className="checkout-address-results">
+                {searchResults.map((result, index) => (
+                  <button
+                    type="button"
+                    key={`${result.SEARCHVAL}-${result.POSTAL}-${index}`}
+                    onClick={() => selectSearchResult(result)}
+                  >
+                    <strong>{result.SEARCHVAL}</strong>
+                    <span>{formatOneMapAddress(result)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      <div className="checkout-save-address">
+        <label className="checkout-save-address-check">
+          <input
+            type="checkbox"
+            checked={saveAddress}
+            disabled={!currentUser || !selectedLocation}
+            onChange={(event) => setSaveAddress(event.target.checked)}
+          />
+          <span>Save this address for next time</span>
+        </label>
+
+        {!currentUser && (
+          <p>Log in to save delivery addresses.</p>
+        )}
+
+        {currentUser && saveAddress && (
+          <input
+            value={saveAddressLabel}
+            onChange={(event) => setSaveAddressLabel(event.target.value)}
+            placeholder="Address label, e.g. Home"
+            maxLength={32}
+          />
         )}
       </div>
-
-      {selectedLocation && (
-        <div className="checkout-save-address">
-          <label className="checkout-save-address-check">
-            <input
-              type="checkbox"
-              checked={saveAddress}
-              disabled={!currentUser}
-              onChange={(event) => setSaveAddress(event.target.checked)}
-            />
-            <span>Save this address for next time</span>
-          </label>
-
-          {!currentUser && (
-            <p>Log in to save delivery addresses.</p>
-          )}
-
-          {currentUser && saveAddress && (
-            <input
-              value={saveAddressLabel}
-              onChange={(event) => setSaveAddressLabel(event.target.value)}
-              placeholder="Address label, e.g. Home"
-              maxLength={32}
-            />
-          )}
-        </div>
-      )}
 
       {message && (
         <p
@@ -589,12 +598,16 @@ export default function CheckoutDeliveryAddress({
         </p>
       )}
 
-      {selectedLocation && (
-        <div className="checkout-address-meta">
-          <span>{distanceKm.toFixed(2)} km from {selectedOutlet.name}</span>
-          <span>Delivery fee: S$ {deliveryFee.toFixed(2)}</span>
-        </div>
-      )}
+      <div className={`checkout-address-meta ${isSearching ? "is-updating" : ""}`}>
+        <span>
+          {selectedLocation
+            ? `${distanceKm.toFixed(2)} km from ${selectedOutlet.name}`
+            : "Select an address to see distance"}
+        </span>
+        <span>
+          {selectedLocation ? `Delivery fee: S$ ${deliveryFee.toFixed(2)}` : "Delivery fee: —"}
+        </span>
+      </div>
 
       <button
         type="button"

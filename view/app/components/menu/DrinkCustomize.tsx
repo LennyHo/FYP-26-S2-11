@@ -371,14 +371,13 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
     }
   }
 
-  // CHANGED: Now handles navigation to home page immediately, no waiting for backend
+  // CHANGED: Now handles navigation immediately, no waiting for backend
   async function handleAddToCartAndReturnToMenu() {
     try {
       // CHANGED: Use async version that doesn't wait for backend
       saveCartItemForSelectedDrinkAsync();
       setAddedToCart(true);
-      // CHANGED: Navigate to home page instead of menu category
-      router.push('/');
+      router.push('/buy-driptea');
     } catch (error) {
       console.error('[DripTea cart add]', error);
       alert('Unable to add this drink to cart. Please try again.');
