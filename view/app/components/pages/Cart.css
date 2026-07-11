@@ -26,10 +26,9 @@
 }
 
 .cart-content {
-  max-width: 1000px;
-  width: 100%;
+  width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 0 64px 48px;
+  padding: 0 0 48px;
   display: flex;
   flex-direction: column;
   flex: 1;

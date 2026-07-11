@@ -644,10 +644,10 @@
         gap: 14px;
     }
 
-    /* Mobile stacks as: summary, delivery, payment. */
-    .checkout-form-col { order: 2; }
+    /* Mobile stacks as: payment, then delivery/pickup + summary. */
+    .checkout-form-col { order: 1; }
     .checkout-cart-col {
-        order: 1;
+        order: 2;
         gap: 14px;
         border-bottom: 0;
         padding-bottom: 0;
