@@ -1,24 +1,34 @@
-export type DripTeaOutlet = {
-  storeCode: string;
-  name: string;
-  address: string;
-  lat: number;
-  lng: number;
-};
+// outlets.ts — Store locations, fetched from the backend (GET /api/stores).
+// Use the useOutlets() hook in client components instead of a hardcoded list.
 
-export const DRIPTEA_OUTLETS: DripTeaOutlet[] = [
-  {
-    storeCode: "DT-001",
-    name: "DripTea Orchard",
-    address: "313 Orchard Road, #B2-01, Singapore 238895",
-    lat: 1.3006,
-    lng: 103.8389,
-  },
-  {
-    storeCode: "DT-002",
-    name: "DripTea Jurong East",
-    address: "50 Jurong Gateway Road, #03-12 JEM, Singapore 608549",
-    lat: 1.3336,
-    lng: 103.7436,
-  },
-];
+import { useEffect, useState } from "react";
+import { getStores } from "./customerApi";
+import type { DripTeaStore } from "./api.base";
+
+export type DripTeaOutlet = DripTeaStore;
+
+export function useOutlets() {
+  const [outlets, setOutlets] = useState<DripTeaOutlet[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getStores()
+      .then((response) => {
+        if (!cancelled && response.ok) setOutlets(response.data);
+      })
+      .catch((error) => {
+        console.error("[useOutlets] Failed to load stores:", error);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { outlets, loading };
+}

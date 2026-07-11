@@ -155,6 +155,17 @@ export type DripTeaFeedback = {
   createdAt?: string;
 };
 
+export type DripTeaStore = {
+  storeCode: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  phone?: string;
+  openingHours?: { weekday: string; weekend: string };
+  status?: string;
+};
+
 export type DripTeaInventoryItem = {
   _id: string;
   name: string;

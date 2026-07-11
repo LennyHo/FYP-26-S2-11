@@ -5,18 +5,24 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Dancing_Script } from 'next/font/google';
 import { getStoredUser } from '../../utils/api.base';
+import { useOutlets } from '../../utils/outlets';
 import styles from './MeetTheCrew.module.css';
 
 const dancingScript = Dancing_Script({ subsets: ['latin'], weight: '700' });
 
-const STORE_LOCATIONS = [
-  { name: 'DripTea Orchard', address: '1 Orchard Road, #B1-01, Singapore 238801', hours: 'Mon – Sun: 10am – 10pm', mapsUrl: 'https://maps.google.com/?q=1+Orchard+Road+Singapore' },
-  { name: 'DripTea Jurong East', address: '2 Jurong East Central, #02-15, Singapore 609731', hours: 'Mon – Sun: 10am – 9:30pm', mapsUrl: 'https://maps.google.com/?q=2+Jurong+East+Central+Singapore' },
-];
+function storeHours(store: { openingHours?: { weekday: string; weekend: string } }) {
+  if (!store.openingHours) return '';
+  return `Mon – Fri: ${store.openingHours.weekday}  •  Sat – Sun: ${store.openingHours.weekend}`;
+}
+
+function storeMapsUrl(store: { address: string }) {
+  return `https://maps.google.com/?q=${encodeURIComponent(store.address)}`;
+}
 
 export default function MeetTheCrew() {
   const [user, setUser] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
+  const { outlets: storeLocations } = useOutlets();
 
   useEffect(() => {
     setUser(getStoredUser());
@@ -95,8 +101,8 @@ export default function MeetTheCrew() {
             <p className={styles.memberSub}>Walk in or order ahead. We're brewing fresh at every location.</p>
           </div>
           <div className={styles.memberBenefitsGrid}>
-            {STORE_LOCATIONS.map((store) => (
-              <div key={store.name} className={styles.storeCard}>
+            {storeLocations.map((store) => (
+              <div key={store.storeCode} className={styles.storeCard}>
                 <div className={styles.storeCardName}>
                   <svg className={styles.storeCardIcon} viewBox="0 0 24 24" fill="none" stroke="rgba(255,185,100,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
@@ -117,10 +123,10 @@ export default function MeetTheCrew() {
                       <circle cx="12" cy="12" r="10"/>
                       <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    {store.hours}
+                    {storeHours(store)}
                   </div>
                 </div>
-                <a href={store.mapsUrl} target="_blank" rel="noopener noreferrer" className={styles.storeCardLink}>
+                <a href={storeMapsUrl(store)} target="_blank" rel="noopener noreferrer" className={styles.storeCardLink}>
                   Get Directions
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>

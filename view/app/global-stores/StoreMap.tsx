@@ -4,27 +4,7 @@ import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
-const STORES = [
-  {
-    storeCode: 'DT-001',
-    name: 'DripTea Orchard',
-    address: '313 Orchard Road, #B2-01, Singapore 238895',
-    phone: '+65 6123 4567',
-    openingHours: { weekday: '10:00 – 22:00', weekend: '09:00 – 23:00' },
-    lat: 1.3006,
-    lng: 103.8389,
-  },
-  {
-    storeCode: 'DT-002',
-    name: 'DripTea Jurong East',
-    address: '50 Jurong Gateway Road, #03-12 JEM, Singapore 608549',
-    phone: '+65 6234 5678',
-    openingHours: { weekday: '10:00 – 22:00', weekend: '09:00 – 23:00' },
-    lat: 1.3336,
-    lng: 103.7436,
-  },
-];
+import { useOutlets } from '../utils/outlets';
 
 const CENTER: [number, number] = [1.3171, 103.7913];
 
@@ -47,6 +27,8 @@ const redIcon   = makeIcon('#F43B03');
 const icons     = [blueIcon, redIcon];
 
 export default function StoreMap() {
+  const { outlets: stores } = useOutlets();
+
   useEffect(() => {
     /* Fix for missing default marker images when using react-leaflet */
     // @ts-ignore
@@ -69,8 +51,8 @@ export default function StoreMap() {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {STORES.map((store, i) => (
-        <Marker key={store.storeCode} position={[store.lat, store.lng]} icon={icons[i]}>
+      {stores.map((store, i) => (
+        <Marker key={store.storeCode} position={[store.lat, store.lng]} icon={icons[i % icons.length]}>
           <Popup>
             <strong style={{ color: '#0257AD' }}>{store.name}</strong><br />
             {store.address}<br />

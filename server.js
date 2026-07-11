@@ -6,6 +6,7 @@ const { connectMongo } = require("./src/config/mongo");
 const User = require("./src/models/user.model");
 const Inventory = require("./src/models/inventory.model");
 const Voucher = require("./src/models/voucher.model");
+const Store = require("./src/models/store.model");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -20,6 +21,10 @@ app.use("/api", menuRoutes);
 // Inventory management
 const inventoryRoutes = require("./src/routes/inventory.routes");
 app.use("/api", inventoryRoutes);
+
+// Store Locator
+const storeRoutes = require("./src/routes/store.routes");
+app.use("/api", storeRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({
@@ -80,6 +85,7 @@ async function startServer() {
     await User.initializeSeedUsers();
     await Inventory.initializeSeedInventory();
     await Voucher.initializeSeedVouchers();
+    await Store.initializeSeedStores();
 
     app.get("/", (req, res) => {
       res.send("DripTea backend is running");

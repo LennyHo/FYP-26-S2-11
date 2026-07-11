@@ -3,30 +3,16 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import Header from '../components/layout/Header';
+import { useOutlets } from '../utils/outlets';
 import styles from './GlobalStores.module.css';
 
 const StoreMap = dynamic(() => import('./StoreMap'), { ssr: false });
 
-const STORES = [
-  {
-    storeCode: 'DT-001',
-    name: 'DripTea Orchard',
-    address: '313 Orchard Road, #B2-01, Singapore 238895',
-    phone: '+65 6123 4567',
-    openingHours: { weekday: 'Mon – Fri  10:00 – 22:00', weekend: 'Sat – Sun  09:00 – 23:00' },
-    variant: 'blue' as const,
-  },
-  {
-    storeCode: 'DT-002',
-    name: 'DripTea Jurong East',
-    address: '50 Jurong Gateway Road, #03-12 JEM, Singapore 608549',
-    phone: '+65 6234 5678',
-    openingHours: { weekday: 'Mon – Fri  10:00 – 22:00', weekend: 'Sat – Sun  09:00 – 23:00' },
-    variant: 'red' as const,
-  },
-];
+const VARIANTS = ['blue', 'red'] as const;
 
 export default function GlobalStoresPage() {
+  const { outlets: stores } = useOutlets();
+
   return (
     <>
       <Header />
@@ -51,8 +37,8 @@ export default function GlobalStoresPage() {
 
           {/* Store cards */}
           <div className={styles.cardsRow}>
-            {STORES.map((store) => (
-              <div key={store.storeCode} className={`${styles.card} ${styles[`card_${store.variant}`]}`}>
+            {stores.map((store, index) => (
+              <div key={store.storeCode} className={`${styles.card} ${styles[`card_${VARIANTS[index % VARIANTS.length]}`]}`}>
                 <div className={styles.cardAccent} />
                 <div className={styles.cardBody}>
                   <div className={styles.cardHead}>
@@ -87,10 +73,10 @@ export default function GlobalStoresPage() {
                           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                         </svg>
                       </span>
-                      <span>{store.openingHours.weekday}</span>
+                      <span>Mon – Fri  {store.openingHours?.weekday}</span>
                     </div>
                     <div className={styles.infoRowIndented}>
-                      <span>{store.openingHours.weekend}</span>
+                      <span>Sat – Sun  {store.openingHours?.weekend}</span>
                     </div>
                   </div>
                 </div>

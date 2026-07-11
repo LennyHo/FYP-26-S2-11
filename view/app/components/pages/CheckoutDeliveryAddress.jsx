@@ -4,24 +4,24 @@ import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { updateUser } from "../../utils/customerApi"
 import { getStoredUser, storeUser } from "../../utils/api.base"
-import { DRIPTEA_OUTLETS } from "../../utils/outlets"
+import { useOutlets } from "../../utils/outlets"
 import OrderTypeSelect from "./OrderTypeSelect"
 
 const CheckoutAddressMap = dynamic(() => import("./CheckoutAddressMap"), {
   ssr: false,
 })
 
-function getOutletFromDelivery(delivery) {
-  if (!delivery) return DRIPTEA_OUTLETS[0]
+function getOutletFromDelivery(delivery, outlets) {
+  if (!delivery) return outlets[0]
 
   return (
-    DRIPTEA_OUTLETS.find(
+    outlets.find(
       (outlet) =>
         outlet.name === delivery.outletName ||
         outlet.address === delivery.outletAddress ||
         (Math.abs(outlet.lat - Number(delivery.outletLat)) < 0.000001 &&
           Math.abs(outlet.lng - Number(delivery.outletLng)) < 0.000001)
-    ) || DRIPTEA_OUTLETS[0]
+    ) || outlets[0]
   )
 }
 
@@ -138,14 +138,13 @@ export default function CheckoutDeliveryAddress({
   orderType,
   onOrderTypeChange,
 }) {
+  const { outlets } = useOutlets()
   const [currentUser, setCurrentUser] = useState(() => getStoredUser())
   const [savedAddresses, setSavedAddresses] = useState(() => getSavedAddresses())
   const [savedAddress, setSavedAddress] = useState(() =>
     getDefaultSavedAddress(getSavedAddresses())
   )
-  const [selectedOutletCode, setSelectedOutletCode] = useState(
-    () => getOutletFromDelivery(delivery).storeCode
-  )
+  const [selectedOutletCode, setSelectedOutletCode] = useState("")
   const [mode, setMode] = useState("saved")
   const [addressInput, setAddressInput] = useState(
     delivery?.customerAddress || savedAddress
@@ -170,10 +169,11 @@ export default function CheckoutDeliveryAddress({
   const [saveAddressLabel, setSaveAddressLabel] = useState("")
   const [isSavingAddress, setIsSavingAddress] = useState(false)
   const selectedOutlet =
-    DRIPTEA_OUTLETS.find((outlet) => outlet.storeCode === selectedOutletCode) ||
-    DRIPTEA_OUTLETS[0]
+    outlets.find((outlet) => outlet.storeCode === selectedOutletCode) ||
+    outlets[0] ||
+    null
 
-  const distanceKm = selectedLocation
+  const distanceKm = selectedLocation && selectedOutlet
     ? calculateDistanceKm(
         selectedOutlet.lat,
         selectedOutlet.lng,
@@ -185,7 +185,7 @@ export default function CheckoutDeliveryAddress({
   const deliveryFee = selectedLocation ? 3 + Math.ceil(distanceKm) * 0.5 : 0
 
   function buildDeliveryData() {
-    if (!selectedLocation) return null
+    if (!selectedLocation || !selectedOutlet) return null
 
     return {
       type: "delivery",
@@ -395,6 +395,12 @@ export default function CheckoutDeliveryAddress({
   }
 
   useEffect(() => {
+    if (!outlets.length || selectedOutletCode) return
+    setSelectedOutletCode(getOutletFromDelivery(delivery, outlets).storeCode)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outlets])
+
+  useEffect(() => {
     if (delivery) return
     if (!savedAddress) {
       setMessage("No saved address found. Enter a new address instead.")
@@ -463,7 +469,7 @@ export default function CheckoutDeliveryAddress({
           <OrderTypeSelect value={orderType} onChange={onOrderTypeChange} />
         </div>
         <div className="checkout-outlet-options">
-          {DRIPTEA_OUTLETS.map((outlet) => (
+          {outlets.map((outlet) => (
             <button
               type="button"
               key={outlet.storeCode}
@@ -521,7 +527,9 @@ export default function CheckoutDeliveryAddress({
       {mode === "new" && (
         <>
           <div className="checkout-address-map-wrap">
-            <CheckoutAddressMap outlet={selectedOutlet} location={selectedLocation} />
+            {selectedOutlet && (
+              <CheckoutAddressMap outlet={selectedOutlet} location={selectedLocation} />
+            )}
           </div>
 
           <div className="checkout-address-search">
@@ -600,7 +608,7 @@ export default function CheckoutDeliveryAddress({
 
       <div className={`checkout-address-meta ${isSearching ? "is-updating" : ""}`}>
         <span>
-          {selectedLocation
+          {selectedLocation && selectedOutlet
             ? `${distanceKm.toFixed(2)} km from ${selectedOutlet.name}`
             : "Select an address to see distance"}
         </span>

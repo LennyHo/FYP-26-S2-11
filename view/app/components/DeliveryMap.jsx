@@ -10,23 +10,7 @@ import {
   useMapEvents
 } from "react-leaflet"
 import L from "leaflet"
-
-const DRIPTEA_OUTLETS = [
-  {
-    storeCode: "DT-001",
-    name: "DripTea Orchard",
-    address: "313 Orchard Road, #B2-01, Singapore 238895",
-    lat: 1.3006,
-    lng: 103.8389
-  },
-  {
-    storeCode: "DT-002",
-    name: "DripTea Jurong East",
-    address: "50 Jurong Gateway Road, #03-12 JEM, Singapore 608549",
-    lat: 1.3336,
-    lng: 103.7436
-  }
-]
+import { useOutlets } from "../utils/outlets"
 
 const outletIcon = new L.Icon({
   iconUrl: "/img/icons/driptea-marker.svg",
@@ -178,9 +162,8 @@ function LocationPicker({ onPick }) {
 }
 
 export default function DeliveryMap({ cartTotal = 0 }) {
-  const [selectedOutletCode, setSelectedOutletCode] = useState(
-    DRIPTEA_OUTLETS[0].storeCode
-  )
+  const { outlets } = useOutlets()
+  const [selectedOutletCode, setSelectedOutletCode] = useState("")
   const [customerLocation, setCustomerLocation] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState([])
@@ -188,10 +171,17 @@ export default function DeliveryMap({ cartTotal = 0 }) {
   const [searchMessage, setSearchMessage] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
   const selectedOutlet =
-    DRIPTEA_OUTLETS.find((outlet) => outlet.storeCode === selectedOutletCode) ||
-    DRIPTEA_OUTLETS[0]
+    outlets.find((outlet) => outlet.storeCode === selectedOutletCode) ||
+    outlets[0] ||
+    null
 
-  const distanceKm = customerLocation
+  useEffect(() => {
+    if (!selectedOutletCode && outlets.length > 0) {
+      setSelectedOutletCode(outlets[0].storeCode)
+    }
+  }, [outlets, selectedOutletCode])
+
+  const distanceKm = customerLocation && selectedOutlet
     ? calculateDistanceKm(
         selectedOutlet.lat,
         selectedOutlet.lng,
@@ -311,7 +301,7 @@ function searchLocation() {
   }
 
   function saveDeliveryLocation() {
-    if (!customerLocation) return
+    if (!customerLocation || !selectedOutlet) return
 
     const deliveryData = {
       type: "delivery",
@@ -339,7 +329,7 @@ function searchLocation() {
       <div className="delivery-outlet-selector">
         <h2>Choose Store Location</h2>
         <div className="delivery-outlet-options">
-          {DRIPTEA_OUTLETS.map((outlet) => (
+          {outlets.map((outlet) => (
             <button
               type="button"
               key={outlet.storeCode}
@@ -400,6 +390,9 @@ function searchLocation() {
         )}
       </div>
 
+      {!selectedOutlet ? (
+        <p>Loading store locations...</p>
+      ) : (
       <div className="delivery-layout">
         <div className="delivery-map-card">
           <MapContainer
@@ -485,6 +478,7 @@ function searchLocation() {
           </button>
         </div>
       </div>
+      )}
     </div>
   )
 }

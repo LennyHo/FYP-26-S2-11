@@ -26,6 +26,7 @@ import type {
   DripTeaPurchaseHistoryItem,
   DripTeaVoucher,
   DripTeaDeliveryDetails,
+  DripTeaStore,
 } from './api.base';
 
 
@@ -95,6 +96,13 @@ export function getMenuItems(status: string = 'all') {
 // Searches menu items by keyword. GET /api/menu/search
 export function searchBeverage(keyword: string) {
   return requestJson<{ ok: boolean; data: DripTeaMenuItem[] }>(`/api/menu/search?q=${encodeURIComponent(keyword)}`);
+}
+
+// ── Stores ────────────────────────────────────────────────────────────────────
+
+// Fetches all active store locations. GET /api/stores
+export function getStores() {
+  return requestJson<{ ok: boolean; data: DripTeaStore[] }>('/api/stores');
 }
 
 // ── Cart ──────────────────────────────────────────────────────────────────────

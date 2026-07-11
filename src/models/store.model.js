@@ -11,6 +11,29 @@
 
 const mongoose = require("mongoose");
 
+const SEED_STORES = [
+  {
+    storeCode: "DT-001",
+    name: "DripTea Orchard",
+    address: "313 Orchard Road, #B2-01, Singapore 238895",
+    lat: 1.3006,
+    lng: 103.8389,
+    phone: "+65 6123 4567",
+    openingHours: { weekday: "10:00 – 22:00", weekend: "09:00 – 23:00" },
+    status: "active",
+  },
+  {
+    storeCode: "DT-002",
+    name: "DripTea Jurong East",
+    address: "50 Jurong Gateway Road, #03-12 JEM, Singapore 608549",
+    lat: 1.3336,
+    lng: 103.7436,
+    phone: "+65 6234 5678",
+    openingHours: { weekday: "10:00 – 22:00", weekend: "09:00 – 23:00" },
+    status: "active",
+  },
+];
+
 const storeSchema = new mongoose.Schema(
   {
     storeCode: { type: String, required: true, unique: true, trim: true },
@@ -43,6 +66,20 @@ storeSchema.statics.findNearest = async function findNearest(lat, lng) {
     const nearestDist = Math.hypot(nearest.lat - lat, nearest.lng - lng);
     return dist < nearestDist ? store : nearest;
   });
+};
+
+// Seeds the stores collection from SEED_STORES on server startup (skips stores that already exist).
+storeSchema.statics.initializeSeedStores = async function initializeSeedStores() {
+  try {
+    for (const seed of SEED_STORES) {
+      const existing = await this.findOne({ storeCode: seed.storeCode }).lean();
+      if (!existing) {
+        await this.create(seed);
+      }
+    }
+  } catch (error) {
+    console.error("[Store] Seed error:", error.message);
+  }
 };
 
 module.exports = mongoose.model("Store", storeSchema);

@@ -8,7 +8,7 @@ import { checkoutCart, getCartItems, getVouchers, applyVoucher } from "../../uti
 import type { DripTeaVoucher } from "../../utils/api.base";
 import { getOrder, updateOrderStatus } from "../../utils/staffApi";
 import { getStoredUser, parseLocalCartLine, PENDING_VOUCHER_KEY, type DripTeaCartItem } from "../../utils/api.base";
-import { DRIPTEA_OUTLETS, type DripTeaOutlet } from "../../utils/outlets";
+import { useOutlets, type DripTeaOutlet } from "../../utils/outlets";
 import OrderTypeSelect from "./OrderTypeSelect";
 import VoucherSelect from "./VoucherSelect";
 import "./Checkout.css";
@@ -218,6 +218,7 @@ export default function Checkout() {
     const [deliveryPreview, setDeliveryPreview] = useState<DeliveryData | null>(null);
     const [rightStep, setRightStep] = useState<1 | 2>(1);
     const [pickupOutlet, setPickupOutlet] = useState<DripTeaOutlet | null>(null);
+    const { outlets: pickupOutlets } = useOutlets();
 
     function fillFakeDetails() {
         setCardNumber("4532 1234 5678 9012");
@@ -949,7 +950,7 @@ export default function Checkout() {
                                                     <OrderTypeSelect value={orderType || "pickup"} onChange={handleOrderTypeChange} />
                                                 </div>
                                                 <div className="checkout-outlet-options">
-                                                    {DRIPTEA_OUTLETS.map((outlet) => (
+                                                    {pickupOutlets.map((outlet) => (
                                                         <button
                                                             type="button"
                                                             key={outlet.storeCode}
