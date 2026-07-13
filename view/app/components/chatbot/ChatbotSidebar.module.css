@@ -1842,7 +1842,7 @@
   background: linear-gradient(135deg, #fdf5ff 0%, #ffffff 60%);
   border: 1.2px solid rgba(171, 28, 110, 0.12);
   border-radius: 32px;
-  box-shadow: 0 4px 18px rgba(171, 28, 110, 0.13), 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: none;
   padding: 0 6px 0 0;
   margin: 0;
   min-height: 50px;
@@ -1936,7 +1936,7 @@
   .welcomeIntroCard {
     width: 100%;
     max-width: 92%;
-    margin: 0 auto;
+    margin: auto;
   }
 
   .welcomeGreeting {
