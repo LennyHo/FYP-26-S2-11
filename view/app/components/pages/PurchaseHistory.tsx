@@ -242,12 +242,14 @@ export default function PurchaseHistory() {
                       <p className="purchase-order-date">{formatDate(order.createdAt)}</p>
                     </div>
                     <div className="purchase-order-meta">
-                      <span className={`purchase-status-badge purchase-status-${status}`}>
-                        {formatStatus(order.status, isDeliveryOrder)}
-                      </span>
-                      <span className="purchase-type-badge">
-                        {isDeliveryOrder ? "Delivery" : "Pickup"}
-                      </span>
+                      <div className="purchase-order-badges">
+                        <span className="purchase-type-badge">
+                          {isDeliveryOrder ? "Delivery" : "Pickup"}
+                        </span>
+                        <span className={`purchase-status-badge purchase-status-${status}`}>
+                          {formatStatus(order.status, isDeliveryOrder)}
+                        </span>
+                      </div>
                       <span className="purchase-order-amount">
                         S$ {Number(order.totalAmount || 0).toFixed(2)}
                       </span>

@@ -126,6 +126,14 @@
   flex-shrink: 0;
 }
 
+.purchase-order-badges {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .purchase-order-amount {
   font-size: 18px;
   font-weight: 800;
@@ -143,6 +151,8 @@
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  height: 24px;
+  box-sizing: border-box;
 }
 
 .purchase-status-badge::before {
@@ -168,12 +178,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 11px;
+  height: 24px;
+  padding: 3px 11px;
   border-radius: 999px;
   background: #f6eee7;
   color: #7c5133;
-  font-size: 0.78rem;
+  font-size: 12px;
   font-weight: 800;
+  box-sizing: border-box;
 }
 
 /* ── Divider ─────────────────────────────────── */

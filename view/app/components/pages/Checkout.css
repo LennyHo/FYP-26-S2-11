@@ -933,7 +933,7 @@
 
 /* Delivery tracking page */
 .tracking-main {
-    width: min(1240px, calc(100% - 56px));
+    width: min(1120px, calc(100% - 32px));
     margin: 0 auto;
     padding: 22px 0 32px;
 }
@@ -1005,8 +1005,17 @@
 .tracking-progress-card {
     display: grid;
     grid-template-columns: 1fr 56px 1fr 56px 1fr 56px 1fr;
-    align-items: center;
-    padding: 16px 18px;
+    align-items: start;
+    padding: 18px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffffff 0%, #fffaf5 100%);
+    box-shadow: 0 10px 26px rgba(66, 42, 25, 0.07);
+    border-radius: 14px;
+    animation: tracking-card-enter 0.45s ease-out both;
+}
+
+.tracking-mobile-current-step {
+    display: none;
 }
 
 .tracking-step {
@@ -1015,7 +1024,14 @@
     text-align: center;
     gap: 5px;
     color: #a49890;
+    transition: color 0.3s ease, transform 0.3s ease;
+    animation: tracking-step-enter 0.38s ease-out both;
 }
+
+.tracking-step:nth-child(1) { animation-delay: 0.08s; }
+.tracking-step:nth-child(3) { animation-delay: 0.14s; }
+.tracking-step:nth-child(5) { animation-delay: 0.2s; }
+.tracking-step:nth-child(7) { animation-delay: 0.26s; }
 
 .tracking-step span {
     width: 40px;
@@ -1027,6 +1043,18 @@
     background: #fff;
     color: #a49890;
     font-weight: 900;
+    box-shadow: 0 2px 8px rgba(66, 42, 25, 0.06);
+    transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
+}
+
+.tracking-step span svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .tracking-step strong {
@@ -1035,9 +1063,19 @@
 }
 
 .tracking-step em {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 68px;
+    min-height: 24px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #f4eee8;
     color: #8d7e74;
     font-size: 12px;
+    font-weight: 800;
     font-style: normal;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
 }
 
 .tracking-step.active span,
@@ -1052,9 +1090,52 @@
     color: #2c1810;
 }
 
+.tracking-step.done span {
+    background: #a5653b;
+    border-color: #a5653b;
+}
+
+.tracking-step.done em {
+    background: #e9f5ed;
+    color: #2f6f45;
+}
+
+.tracking-step.active span {
+    background: #78401f;
+    border-color: #78401f;
+    box-shadow: 0 0 0 6px rgba(138, 78, 40, 0.12), 0 7px 16px rgba(89, 48, 25, 0.2);
+    transform: scale(1.06);
+    animation: tracking-active-pulse 2.2s ease-in-out infinite;
+}
+
+.tracking-step.active em {
+    background: #f3e5da;
+    color: #78401f;
+}
+
 .tracking-rail {
-    height: 2px;
-    border-top: 2px dashed #ddd1c8;
+    position: relative;
+    align-self: start;
+    height: 3px;
+    margin-top: 19px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: repeating-linear-gradient(90deg, #ddd1c8 0 7px, transparent 7px 11px);
+}
+
+.tracking-rail::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #b27445, #78401f);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tracking-rail.done::after {
+    transform: scaleX(1);
 }
 
 .tracking-eta-card {
@@ -1063,7 +1144,43 @@
     align-items: center;
     gap: 18px;
     padding: 13px 16px;
-    background: #fffaf1;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(110deg, #fff9ef 0%, #fffdf9 60%, #ffffff 100%);
+    box-shadow: 0 8px 22px rgba(66, 42, 25, 0.06);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    animation: tracking-card-enter 0.45s 0.08s ease-out both;
+    border-radius: 14px;
+}
+
+.tracking-eta-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: #9b5b32;
+    transition: background-color 0.3s ease;
+}
+
+.tracking-eta-card.is-complete::before {
+    background: #2f7d4a;
+}
+
+.tracking-eta-card.is-complete {
+    background: linear-gradient(110deg, #f4fbf6 0%, #fffdf9 58%, #ffffff 100%);
+    border-color: rgba(47, 125, 74, 0.24);
+}
+
+.tracking-eta-card.is-complete .tracking-eta-icon {
+    border-color: #2f7d4a;
+    color: #2f7d4a;
+    box-shadow: 0 0 0 4px rgba(47, 125, 74, 0.08);
+}
+
+.tracking-eta-card:hover {
+    border-color: rgba(141, 99, 63, 0.42);
+    box-shadow: 0 12px 28px rgba(66, 42, 25, 0.1);
+    transform: translateY(-1px);
 }
 
 .tracking-eta-card > div {
@@ -1098,6 +1215,84 @@
     color: #8a4e28;
     display: grid;
     place-items: center;
+    box-shadow: 0 0 0 4px rgba(138, 78, 40, 0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tracking-eta-card:hover .tracking-eta-icon {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 6px rgba(138, 78, 40, 0.1);
+}
+
+.tracking-eta-card button {
+    transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.tracking-eta-card button:hover {
+    border-color: #8a4e28;
+    background: #8a4e28;
+    color: #fff;
+    box-shadow: 0 7px 16px rgba(91, 53, 31, 0.18);
+    transform: translateY(-1px);
+}
+
+.tracking-eta-card button:focus-visible {
+    outline: 3px solid rgba(138, 78, 40, 0.22);
+    outline-offset: 3px;
+}
+
+.tracking-eta-card button:active {
+    transform: translateY(0);
+}
+
+@keyframes tracking-card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes tracking-step-enter {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes tracking-active-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 5px rgba(138, 78, 40, 0.1), 0 7px 16px rgba(89, 48, 25, 0.18);
+    }
+    50% {
+        box-shadow: 0 0 0 9px rgba(138, 78, 40, 0.04), 0 9px 20px rgba(89, 48, 25, 0.22);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tracking-progress-card,
+    .tracking-eta-card,
+    .tracking-step,
+    .tracking-mobile-current-step,
+    .tracking-step.active span {
+        animation: none;
+    }
+
+    .tracking-step,
+    .tracking-step span,
+    .tracking-rail::after,
+    .tracking-eta-card,
+    .tracking-eta-icon,
+    .tracking-eta-card button {
+        transition: none;
+    }
 }
 
 .tracking-map-card {
@@ -1260,6 +1455,72 @@
     gap: 16px;
 }
 
+.tracking-info-grid > div {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(145deg, #ffffff 0%, #fffcf8 100%);
+}
+
+.tracking-info-grid > div::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, #9b6a3e, #c58a59);
+}
+
+.tracking-address-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    width: min(100%, 430px);
+    margin: 0 auto;
+}
+
+.tracking-info-grid .tracking-address-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    border-radius: 16px;
+    background: #f3e5da;
+    color: #8a4e28;
+}
+
+.tracking-info-grid .tracking-address-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.tracking-info-grid .tracking-address-content p {
+    margin: 0 0 12px;
+    color: #4f433d;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.tracking-info-grid .tracking-distance-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin: 0;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #f6f0e9;
+    color: #76553e;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
 .tracking-info-grid > div,
 .tracking-pickup-card,
 .tracking-card {
@@ -1292,16 +1553,19 @@
 
 .tracking-rider-content {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-columns: 60px minmax(0, 1fr);
     gap: 12px;
     align-items: center;
+    align-content: center;
+    width: min(100%, 380px);
+    margin: 0 auto;
 }
 
 .tracking-rider-avatar {
     display: grid;
     place-items: center;
-    width: 52px;
-    height: 52px;
+    width: 60px;
+    height: 60px;
     border-radius: 999px;
     background: #9b6a3e;
     color: #ffffff;
@@ -1326,8 +1590,10 @@
 }
 
 .tracking-rider-actions {
-    display: grid;
+    grid-column: 1 / -1;
+    display: flex;
     gap: 8px;
+    margin-top: 4px;
 }
 
 .tracking-rider-actions button {
@@ -1340,6 +1606,16 @@
     font-size: 12px;
     font-weight: 900;
     cursor: pointer;
+    flex: 1;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tracking-rider-actions button:hover {
+    border-color: #8a4e28;
+    background: #8a4e28;
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(91, 53, 31, 0.16);
+    transform: translateY(-1px);
 }
 
 .tracking-order-items {
@@ -1427,6 +1703,38 @@
 .tracking-card > p strong {
     color: #2c1810;
     text-align: right;
+}
+
+@media (min-width: 901px) {
+    .tracking-layout {
+        align-items: stretch;
+    }
+
+    .tracking-primary {
+        grid-template-rows: auto auto auto 1fr;
+    }
+
+    .tracking-info-grid,
+    .tracking-info-grid > div {
+        height: 100%;
+        box-sizing: border-box;
+    }
+
+    .tracking-info-grid > div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tracking-info-grid > div:not(.tracking-rider-card) > p {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        margin-bottom: 12px;
+    }
+
+    .tracking-rider-content {
+        flex: 1;
+    }
 }
 
 .tracking-card button {
@@ -2008,7 +2316,7 @@
 
 @media (max-width: 900px) {
     .tracking-main {
-        width: min(100% - 24px, 1240px);
+        width: min(1120px, calc(100% - 32px));
         padding-top: 18px;
     }
 
@@ -2025,12 +2333,25 @@
     }
 
     .tracking-progress-card {
-        grid-template-columns: 1fr;
-        gap: 12px;
+        grid-template-columns: minmax(96px, 1fr) 28px minmax(96px, 1fr) 28px minmax(96px, 1fr) 28px minmax(96px, 1fr);
+        gap: 0;
+        padding: 16px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x proximity;
+        overscroll-behavior-inline: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(141, 99, 63, 0.4) transparent;
     }
 
     .tracking-rail {
-        display: none;
+        display: block;
+    }
+
+    .tracking-step {
+        min-width: 96px;
+        scroll-snap-align: center;
     }
 
     .tracking-eta-card {
@@ -2043,6 +2364,90 @@
 }
 
 @media (max-width: 560px) {
+    .tracking-progress-card {
+        display: block;
+        padding: 18px;
+        overflow: hidden;
+        scroll-snap-type: none;
+    }
+
+    .tracking-progress-card > .tracking-step,
+    .tracking-progress-card > .tracking-rail {
+        display: none;
+    }
+
+    .tracking-mobile-current-step {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        min-height: 92px;
+        text-align: left;
+        animation: tracking-step-enter 0.38s ease-out both;
+    }
+
+    .tracking-mobile-step-icon {
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        flex: 0 0 56px;
+        border-radius: 50%;
+        background: #78401f;
+        color: #fff;
+        box-shadow: 0 0 0 7px rgba(138, 78, 40, 0.1), 0 8px 18px rgba(89, 48, 25, 0.18);
+    }
+
+    .tracking-mobile-current-step.done .tracking-mobile-step-icon {
+        background: #2f7d4a;
+        box-shadow: 0 0 0 7px rgba(47, 125, 74, 0.09), 0 8px 18px rgba(47, 125, 74, 0.16);
+    }
+
+    .tracking-mobile-step-icon svg {
+        width: 25px;
+        height: 25px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .tracking-mobile-current-step > div {
+        display: grid;
+        gap: 4px;
+    }
+
+    .tracking-mobile-current-step small {
+        color: #8d7e74;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .tracking-mobile-current-step strong {
+        color: #2c1810;
+        font-size: 17px;
+        line-height: 1.2;
+    }
+
+    .tracking-mobile-current-step em {
+        width: fit-content;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: #f3e5da;
+        color: #78401f;
+        font-size: 12px;
+        font-weight: 800;
+        font-style: normal;
+    }
+
+    .tracking-mobile-current-step.done em {
+        background: #e9f5ed;
+        color: #2f6f45;
+    }
+
     .tracking-order-item {
         grid-template-columns: 56px minmax(0, 1fr);
     }

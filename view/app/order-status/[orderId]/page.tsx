@@ -169,6 +169,39 @@ function getStepState(step: number, currentStep: number) {
   return "";
 }
 
+function getStepLabel(step: number, currentStep: number) {
+  if (step < currentStep) return "Done";
+  if (step === currentStep) return "Now";
+  return "Upcoming";
+}
+
+function TrackingStepIcon({ step }: { step: 1 | 2 | 3 | 4 }) {
+  if (step === 2) {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 8h11v4.5a5.5 5.5 0 0 1-11 0V8Z" />
+        <path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 5c0-1 1-1 1-2M12 5c0-1 1-1 1-2" />
+      </svg>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 7h11v9H3V7Zm11 3h3l3 3v3h-6v-6Z" />
+        <circle cx="7" cy="18" r="2" />
+        <circle cx="17" cy="18" r="2" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m5 12 4 4L19 6" />
+    </svg>
+  );
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
@@ -328,6 +361,15 @@ export default function OrderStatusPage() {
   const orderNo = snapshot?.orderNo || order?.orderNo || orderId;
   const etaEnd = addSeconds(createdAt, isDeliveryOrder ? 20 : 20);
   const progressStep = collected ? 4 : phase;
+  const visualProgressStep = collected ? 5 : progressStep;
+  const mobileStep: 1 | 2 | 3 | 4 = collected ? 4 : phase;
+  const mobileStepTitle = mobileStep === 1
+    ? "Order Confirmed"
+    : mobileStep === 2
+      ? "Preparing"
+      : mobileStep === 3
+        ? (isDeliveryOrder ? "Out for Delivery" : "Ready")
+        : (isDeliveryOrder ? "Delivered" : "Collected");
 
   return (
     <div className="checkout-page">
@@ -353,32 +395,40 @@ export default function OrderStatusPage() {
             <div className="tracking-layout">
               <section className="tracking-primary">
                 <div className="tracking-progress-card">
-                  <div className={`tracking-step ${getStepState(1, progressStep)}`}>
-                    <span>{progressStep > 1 ? "OK" : "1"}</span>
+                  <div className={`tracking-mobile-current-step ${collected ? "done" : "active"}`}>
+                    <span className="tracking-mobile-step-icon"><TrackingStepIcon step={mobileStep} /></span>
+                    <div>
+                      <small>Current status</small>
+                      <strong>{mobileStepTitle}</strong>
+                      <em>{collected ? "Done" : "Now"}</em>
+                    </div>
+                  </div>
+                  <div className={`tracking-step ${getStepState(1, visualProgressStep)}`}>
+                    <span aria-label="Order confirmed"><TrackingStepIcon step={1} /></span>
                     <strong>Order Confirmed</strong>
-                    <em>{formatTime(createdAt)}</em>
+                    <em>{getStepLabel(1, visualProgressStep)}</em>
                   </div>
-                  <div className="tracking-rail" />
-                  <div className={`tracking-step ${getStepState(2, progressStep)}`}>
-                    <span>2</span>
+                  <div className={`tracking-rail ${visualProgressStep > 1 ? "done" : ""}`} />
+                  <div className={`tracking-step ${getStepState(2, visualProgressStep)}`}>
+                    <span aria-label="Preparing"><TrackingStepIcon step={2} /></span>
                     <strong>Preparing</strong>
-                    <em>{phase === 1 ? `in ${countdown}s` : formatTime(addSeconds(createdAt, 5))}</em>
+                    <em>{getStepLabel(2, visualProgressStep)}</em>
                   </div>
-                  <div className="tracking-rail" />
-                  <div className={`tracking-step ${getStepState(3, progressStep)}`}>
-                    <span>3</span>
+                  <div className={`tracking-rail ${visualProgressStep > 2 ? "done" : ""}`} />
+                  <div className={`tracking-step ${getStepState(3, visualProgressStep)}`}>
+                    <span aria-label="Out for delivery"><TrackingStepIcon step={3} /></span>
                     <strong>{isDeliveryOrder ? "Out for Delivery" : "Ready"}</strong>
-                    <em>{phase >= 3 ? "Now" : formatTime(addSeconds(createdAt, 10))}</em>
+                    <em>{getStepLabel(3, visualProgressStep)}</em>
                   </div>
-                  <div className="tracking-rail" />
-                  <div className={`tracking-step ${getStepState(4, progressStep)}`}>
-                    <span>4</span>
+                  <div className={`tracking-rail ${visualProgressStep > 3 ? "done" : ""}`} />
+                  <div className={`tracking-step ${getStepState(4, visualProgressStep)}`}>
+                    <span aria-label={isDeliveryOrder ? "Delivered" : "Collected"}><TrackingStepIcon step={4} /></span>
                     <strong>{isDeliveryOrder ? "Delivered" : "Collected"}</strong>
-                    <em>{collected ? "Done" : `Est. ${formatTime(etaEnd)}`}</em>
+                    <em>{getStepLabel(4, visualProgressStep)}</em>
                   </div>
                 </div>
 
-                <div className="tracking-eta-card">
+                <div className={`tracking-eta-card ${collected ? "is-complete" : ""}`}>
                   <div>
                     <span className="tracking-eta-icon">i</span>
                     <strong>{isDeliveryOrder ? "Estimated Delivery" : "Estimated Ready Time"}</strong>
@@ -442,8 +492,22 @@ export default function OrderStatusPage() {
                 <div className="tracking-info-grid">
                   <div>
                     <h2>{isDeliveryOrder ? "Delivery Address" : "Pickup Details"}</h2>
-                    <p>{delivery?.customerAddress || "Collect at selected outlet."}</p>
-                    {delivery && <span>{delivery.distanceKm.toFixed(2)} km from {delivery.outletName}</span>}
+                    <div className="tracking-address-content">
+                      <span className="tracking-address-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                          <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+                          <circle cx="12" cy="10" r="2.5" />
+                        </svg>
+                      </span>
+                      <div>
+                        <p>{delivery?.customerAddress || "Collect at selected outlet."}</p>
+                        {delivery && (
+                          <span className="tracking-distance-badge">
+                            {delivery.distanceKm.toFixed(2)} km from {delivery.outletName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   {isDeliveryOrder ? (
                     <div className="tracking-rider-card">
@@ -512,7 +576,6 @@ export default function OrderStatusPage() {
                   <p>Our support team is here to help you.</p>
                   <div className="tracking-help-actions">
                     <button type="button" onClick={() => router.push("/contact")}>Chat with Us</button>
-                    <span>WhatsApp: +65 9123 4567</span>
                   </div>
                 </section>
               </aside>
