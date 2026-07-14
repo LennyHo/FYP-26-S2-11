@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from 'react';
-import { speakText, cancelSpeech, getBrowserSpeechLang, setTTSHooks } from '../../../utils/chatHelpers';
+import { speakText, cancelSpeech, getBrowserSpeechLang, setTTSHooks, detectChatLang } from '../../../utils/chatHelpers';
 import type { Message } from '../useChatbotState';
 
 interface UseSpeechProps {
@@ -92,6 +92,14 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   const voiceConversationRef = useRef(false);
   const isListeningRef = useRef(false);
   const isRecognitionStartingRef = useRef(false);
+  // Speak mode's own capture path — native browser recognition when available, so
+  // continuous voice conversation keeps working even if ElevenLabs transcription is
+  // unavailable (quota, key issues, network). Decided once per Speak-mode session.
+  const speechRecognitionRef = useRef<any>(null);
+  const useNativeSpeakRef = useRef(false);
+  const abortedForPauseRef = useRef(false); // true while we're deliberately aborting for TTS pause
+  const isSpeakRecognitionStartingRef = useRef(false); // guards against overlapping start() calls
+  const speakRecognitionFailStreakRef = useRef(0); // consecutive empty/error rounds — drives backoff
   const chunkStartTimeRef = useRef(0);
   const isSpeakDetectedRef = useRef(false);
   const hadVoiceInChunkRef = useRef(false); // did real voice occur in the current recording chunk
@@ -103,6 +111,18 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
   useEffect(() => { speakModeRef.current = isSpeakMode; }, [isSpeakMode]);
   useEffect(() => { recognitionLangRef.current = selectedSpeechLang; }, [selectedSpeechLang]);
+
+  // Native SpeechRecognition (unlike ElevenLabs) can't detect the spoken language
+  // from the audio — it has to be told what to expect *before* it starts listening.
+  // Infer it from Avy's last reply so a conversation that's turned to Chinese/Malay/
+  // Tamil doesn't stay stuck listening in the browser's default (English) locale.
+  useEffect(() => {
+    if (!useNativeSpeakRef.current) return;
+    const lastBotMsg = [...overlayMessages].reverse().find(m => !m.isUser);
+    if (!lastBotMsg?.text) return;
+    const detected = detectChatLang(lastBotMsg.text.replace(/<[^>]+>/g, ''));
+    if (detected && detected !== selectedSpeechLang) setSelectedSpeechLang(detected);
+  }, [overlayMessages]);
 
   // Keep compat shim pointing at the latest stopCapture
   useEffect(() => {
@@ -120,16 +140,27 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
           try { mediaRecorderRef.current.stop(); } catch {}
           audioChunksRef.current = []; // discard captured TTS audio
         }
+        if (speechRecognitionRef.current) {
+          abortedForPauseRef.current = true;
+          try { speechRecognitionRef.current.abort(); } catch {}
+        }
       },
       () => {
         ttsPausedRef.current = false;
         setIsTTSSpeaking(false);
-        // Resume recording after TTS finishes (speak mode only)
+        // Resume listening after TTS finishes (speak mode only). Wait long enough
+        // for the speaker's echo/reverb tail to die down first — starting the mic
+        // (and its noise-floor calibration, for the MediaRecorder/VAD path) too soon
+        // after Avy stops talking lets that tail skew the voice threshold, or get
+        // misheard as the start of a new utterance, for the whole next turn.
         setTimeout(() => {
-          if (speakModeRef.current && streamRef.current && !isProcessingRef.current) {
+          if (!speakModeRef.current || isProcessingRef.current) return;
+          if (useNativeSpeakRef.current) {
+            startSpeakRecognition();
+          } else if (streamRef.current) {
             startSpeakChunk(streamRef.current);
           }
-        }, 150);
+        }, 450);
       }
     );
     return () => setTTSHooks();
@@ -152,13 +183,22 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     }
+    if (speechRecognitionRef.current) {
+      abortedForPauseRef.current = true;
+      try { speechRecognitionRef.current.abort(); } catch {}
+      speechRecognitionRef.current = null;
+    }
     setIsListening(false);
     isListeningRef.current = false;
     isRecognitionStartingRef.current = false;
   }
 
   async function getStream(): Promise<MediaStream> {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // Explicit (not just relying on browser defaults) since speak mode plays Avy's
+    // TTS reply back through the same device the mic is listening on.
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
     streamRef.current = stream;
     return stream;
   }
@@ -336,6 +376,104 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
     isListeningRef.current = true;
   }
 
+  // Native-recognition path for Speak mode — no server round trip, so it keeps
+  // working regardless of ElevenLabs quota/availability. The browser handles
+  // end-of-utterance detection itself, so no VAD/AudioContext needed here.
+  function startSpeakRecognition() {
+    if (ttsPausedRef.current || !speakModeRef.current || isSpeakRecognitionStartingRef.current) return;
+
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) return;
+
+    isSpeakRecognitionStartingRef.current = true;
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = recognitionLangRef.current;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    let finalText = '';
+    let gotError = false;
+
+    recognition.onresult = (event: any) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) finalText += event.results[i][0].transcript;
+      }
+    };
+
+    recognition.onend = () => {
+      speechRecognitionRef.current = null;
+      isSpeakRecognitionStartingRef.current = false;
+      setIsListening(false);
+      isListeningRef.current = false;
+
+      // Ended because TTS start deliberately aborted us — the TTS onEnd hook owns
+      // restarting capture once Avy is done, so don't also restart here.
+      if (abortedForPauseRef.current) { abortedForPauseRef.current = false; return; }
+
+      const text = finalText.trim();
+      if (text) {
+        speakRecognitionFailStreakRef.current = 0;
+        void handleSpeakRecognitionResult(text);
+        return;
+      }
+
+      if (!speakModeRef.current || ttsPausedRef.current || isProcessingRef.current) return;
+
+      // Nothing captured this round (silence timeout, or a real error like
+      // "network"/"audio-capture"). Restarting instantly can make the browser's
+      // recognition service fail immediately every time — a tight loop that looks
+      // like the mic flickering and never actually listens. Back off instead, and
+      // give up after repeated failures rather than spinning forever.
+      if (gotError) {
+        speakRecognitionFailStreakRef.current += 1;
+        if (speakRecognitionFailStreakRef.current > 5) {
+          console.error('[Speech] Speak-mode recognition failing repeatedly — stopping auto-restart.');
+          return;
+        }
+      } else {
+        speakRecognitionFailStreakRef.current = 0;
+      }
+
+      const delay = gotError ? Math.min(600 * speakRecognitionFailStreakRef.current, 4000) : 300;
+      setTimeout(() => {
+        if (speakModeRef.current && !ttsPausedRef.current && !isProcessingRef.current) startSpeakRecognition();
+      }, delay);
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        gotError = true;
+        console.error('[Speech] Speak-mode recognition error:', event.error);
+      }
+      // onend always fires after onerror — it owns cleanup/restart
+    };
+
+    try {
+      recognition.start();
+      speechRecognitionRef.current = recognition;
+      setIsListening(true);
+      isListeningRef.current = true;
+    } catch {
+      // e.g. "already started" — safe to drop, the next resume will retry
+      isSpeakRecognitionStartingRef.current = false;
+    }
+  }
+
+  async function handleSpeakRecognitionResult(text: string) {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    setOverlayLoading(true);
+    setOverlayTranscript('');
+    setOverlayMessages(prev => [...prev, { id: Date.now().toString(), text, isUser: true }]);
+    try {
+      await sendOverlayMessageRef.current?.(text, true);
+    } finally {
+      isProcessingRef.current = false;
+      setOverlayLoading(false);
+    }
+  }
+
   function startVAD(stream: MediaStream) {
     try {
       const audioCtx = new AudioContext();
@@ -391,6 +529,17 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   }
 
   async function startSpeakMode() {
+    speakRecognitionFailStreakRef.current = 0;
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognitionAPI) {
+      // Primary path: native browser recognition — keeps working regardless of
+      // ElevenLabs transcription quota/availability.
+      useNativeSpeakRef.current = true;
+      startSpeakRecognition();
+      return;
+    }
+
+    useNativeSpeakRef.current = false;
     try {
       const stream = await getStream();
       startVAD(stream);
@@ -464,21 +613,29 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   const handleOverlayMicClick = () => {
     clearSendTimer();
     if (isListeningRef.current) {
-      // Pause: stop recording without auto-restart
-      // speakModeRef = false FIRST so _onTTSEnd hook and onstop don't restart the recorder
+      // Pause: stop capture without auto-restart
+      // speakModeRef = false FIRST so _onTTSEnd hook and onstop/onend don't restart capture
       speakModeRef.current = false;
       cancelSpeech();
       if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+      if (speechRecognitionRef.current) {
+        abortedForPauseRef.current = true;
+        try { speechRecognitionRef.current.abort(); } catch {}
+      }
       setIsListening(false);
       isListeningRef.current = false;
     } else if (ttsPausedRef.current) {
-      // Interrupt Avy mid-speech — cancelSpeech fires _onTTSEnd which restarts recording after 150ms
+      // Interrupt Avy mid-speech — cancelSpeech fires _onTTSEnd which restarts capture after 450ms
       speakModeRef.current = true;
       cancelSpeech();
     } else {
       // Paused or idle — resume listening
       speakModeRef.current = true;
-      if (streamRef.current) startSpeakChunk(streamRef.current);
+      if (useNativeSpeakRef.current) {
+        startSpeakRecognition();
+      } else if (streamRef.current) {
+        startSpeakChunk(streamRef.current);
+      }
     }
   };
 

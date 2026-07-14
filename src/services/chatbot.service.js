@@ -506,13 +506,13 @@ function isPurchaseHistory(message) {
         /did.*i.*order/i.test(msg) ||
         /what.*i.*buy/i.test(msg) ||
         /what.*i.*bought/i.test(msg) ||
-        /order.*on.*\d/i.test(msg) ||
-        /order.*on\s+[a-z]+/i.test(msg) ||
-        /order.*in\s+[a-z]+/i.test(msg) ||
-        /order.*from\s+[a-z0-9]/i.test(msg) ||
-        /bought.*on/i.test(msg) ||
-        /bought.*in/i.test(msg) ||
-        /purchased.*on/i.test(msg) ||
+        /order.*\bon\b.*\d/i.test(msg) ||
+        /order.*\bon\s+[a-z]+/i.test(msg) ||
+        /order.*\bin\s+[a-z]+/i.test(msg) ||
+        /order.*\bfrom\s+[a-z0-9]/i.test(msg) ||
+        /bought.*\bon\b/i.test(msg) ||
+        /bought.*\bin\b/i.test(msg) ||
+        /purchased.*\bon\b/i.test(msg) ||
         /show.*order/i.test(msg) ||
         /yesterday|last week|last month|this month/i.test(msg) && /order|buy|bought|purchase/i.test(msg)
     );

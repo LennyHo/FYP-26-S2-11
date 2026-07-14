@@ -149,13 +149,21 @@ export function setTTSHooks(onStart?: () => void, onEnd?: () => void): void {
   _onTTSEnd = onEnd ?? null;
 }
 
-export function cancelSpeech(): void {
-  _speakSeq++;
+// Stops whatever audio/utterance is currently active without touching the TTS
+// hooks — used internally by speakText() so clearing the previous narration
+// right before starting a new one doesn't fire a spurious "resume the mic"
+// signal that a new _onTTSStart() is about to contradict a moment later.
+function _stopActivePlayback(): void {
   if (_activeAudio) { _activeAudio.pause(); _activeAudio.src = ''; _activeAudio = null; }
   if ('speechSynthesis' in window) {
     const s = window.speechSynthesis;
     if (s.speaking || s.pending) { s.pause(); s.cancel(); }
   }
+}
+
+export function cancelSpeech(): void {
+  _speakSeq++;
+  _stopActivePlayback();
   // Always fire the end hook so MediaRecorder resumes correctly after cancellation
   _onTTSEnd?.();
 }
@@ -202,7 +210,11 @@ export function speakText(
 
   // Stop whatever is currently playing/pending and claim the new sequence number so
   // a slower, older request can't play its audio after this (newer) one starts.
-  cancelSpeech();
+  // Deliberately not cancelSpeech() here: that fires _onTTSEnd (mic-resume signal),
+  // which would race the _onTTSStart() below and could schedule a stray resume
+  // that fires mid-narration once this new response starts playing.
+  _speakSeq++;
+  _stopActivePlayback();
   const mySeq = _speakSeq;
 
   _onTTSStart?.();
