@@ -100,7 +100,7 @@ export default function Reward() {
             </svg>
           </div>
           <div className="reward-highlight-body">
-            <strong>{vouchers.length} rewards waiting for you</strong>
+            <strong>{vouchers.length} vouchers waiting for you</strong>
             <span>Redeem them on your next order before they expire</span>
           </div>
           <div className="reward-highlight-decor" aria-hidden="true">
