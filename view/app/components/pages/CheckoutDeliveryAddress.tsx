@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import { updateUser } from "../../utils/customerApi"
 import { getStoredUser, storeUser } from "../../utils/api.base"
@@ -139,6 +139,7 @@ export default function CheckoutDeliveryAddress({
   onOrderTypeChange,
 }) {
   const { outlets } = useOutlets()
+  const searchWrapperRef = useRef<HTMLDivElement>(null)
   const [currentUser, setCurrentUser] = useState(() => getStoredUser())
   const [savedAddresses, setSavedAddresses] = useState(() => getSavedAddresses())
   const [savedAddress, setSavedAddress] = useState(() =>
@@ -375,7 +376,6 @@ export default function CheckoutDeliveryAddress({
 
     window.localStorage.setItem("driptea_delivery", JSON.stringify(deliveryData))
     onConfirm(deliveryData)
-    onConfirmed?.()
 
     try {
       const saveResult = await saveSelectedAddress(deliveryData)
@@ -392,6 +392,8 @@ export default function CheckoutDeliveryAddress({
     } catch (error) {
       console.error("[Checkout save address]", error)
       setMessage("Delivery address confirmed, but the address could not be saved.")
+    } finally {
+      onConfirmed?.()
     }
   }
 
@@ -425,6 +427,13 @@ export default function CheckoutDeliveryAddress({
       if (mode === "saved" && !delivery) {
         setAddressInput(defaultSavedAddress)
         setSelectedSavedAddress(defaultSavedAddress)
+
+        if (defaultSavedAddress) {
+          void fetchSearchResults(defaultSavedAddress, "saved")
+        } else {
+          setSelectedLocation(null)
+          setMessage("No saved address found. Enter a new address instead.")
+        }
       }
     }
 
@@ -456,6 +465,19 @@ export default function CheckoutDeliveryAddress({
     return () => window.clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addressInput, mode])
+
+  useEffect(() => {
+    if (!showSuggestions) return
+
+    function handleClickOutside(event: MouseEvent) {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [showSuggestions])
 
   useEffect(() => {
     onPreviewChange?.(buildDeliveryData())
@@ -533,7 +555,7 @@ export default function CheckoutDeliveryAddress({
             )}
           </div>
 
-          <div className="checkout-address-search">
+          <div className="checkout-address-search" ref={searchWrapperRef}>
             <input
               value={addressInput}
               onChange={(event) => {
