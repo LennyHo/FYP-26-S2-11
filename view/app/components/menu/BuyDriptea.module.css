@@ -255,23 +255,6 @@
 }
 
 
-.menuHeaderArt {
-  position: absolute;
-  right: 48px;
-  top: 8px;
-  width: 130px;
-  height: auto;
-  opacity: 0.55;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@media (max-width: 960px) {
-  .menuHeaderArt {
-    display: none;
-  }
-}
-
 .menuHeaderBadge {
   display: inline-flex;
   align-items: center;
@@ -602,7 +585,8 @@
   .hero,
   .productCard,
   .bundlePanel,
-  .offerPanel {
+  .offerPanel,
+  .menuHeaderCard {
     padding: 18px;
   }
 
@@ -952,6 +936,15 @@
     min-height: 180px;
     padding: 18px 16px;
     border-radius: 18px;
+  }
+
+  .menuHeaderCard {
+    padding: 20px 16px;
+  }
+
+  .sectionHeading::before,
+  .sectionHeading::after {
+    display: none;
   }
 
   .searchCardGrid {

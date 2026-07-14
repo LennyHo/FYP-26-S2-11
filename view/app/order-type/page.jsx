@@ -28,7 +28,7 @@ export default function OrderTypePage() {
 
           <div className="order-type-options">
             <button type="button" className="order-type-option" onClick={choosePickup}>
-              <div className="order-type-icon">🧋</div>
+              <div className="order-type-icon">🏪</div>
               <h2>Pickup</h2>
               <p>Skip the line. Grab your order at your nearest outlet.</p>
               <strong>No delivery fee</strong>

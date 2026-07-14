@@ -88,25 +88,24 @@ export default function Voucher() {
       <Header />
 
       <main className="voucher-main">
-        {/* Highlight banner — pillar-style callout showing how many vouchers are ready */}
+        {/* Highlight banner, styled as a ticket stub — the vouchers themselves are the subject */}
         <div className="voucher-highlight">
-          <div className="voucher-highlight-pillar">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="voucher-highlight-main">
+            <svg className="voucher-highlight-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 12v9H4v-9" />
               <path d="M2 7h20v5H2z" />
               <path d="M12 22V7" />
               <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
               <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
             </svg>
+            <div className="voucher-highlight-body">
+              <strong>Vouchers waiting for you</strong>
+              <span>Redeem them on your next order before they expire</span>
+            </div>
           </div>
-          <div className="voucher-highlight-body">
-            <strong>{vouchers.length} vouchers waiting for you</strong>
-            <span>Redeem them on your next order before they expire</span>
-          </div>
-          <div className="voucher-highlight-decor" aria-hidden="true">
-            <span />
-            <span />
-            <span />
+          <div className="voucher-highlight-stub" aria-hidden="true">
+            <span className="voucher-highlight-count">{vouchers.length}</span>
+            <span className="voucher-highlight-label">Ready</span>
           </div>
         </div>
 

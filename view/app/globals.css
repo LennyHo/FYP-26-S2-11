@@ -720,7 +720,7 @@ button { touch-action: manipulation; }
   background: white;
   border-radius: 24px;
   padding: 44px 40px;
-  box-shadow: 0 16px 40px rgba(1, 9, 25, 0.35);
+  box-shadow: 0 16px 40px rgba(59, 39, 26, 0.14);
 }
 
 .order-type-card h1 {
@@ -771,21 +771,14 @@ button { touch-action: manipulation; }
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 76px;
-  height: 76px;
-  margin-bottom: 16px;
-  border-radius: 50%;
-  font-size: 36px;
-  background: rgba(155, 109, 74, 0.12);
+  margin-bottom: 12px;
+  font-size: 40px;
+  line-height: 1;
   transition: transform 0.2s ease;
 }
 
 .order-type-option:hover .order-type-icon {
   transform: scale(1.06);
-}
-
-.order-type-option:nth-child(2) .order-type-icon {
-  background: rgba(2, 87, 173, 0.1);
 }
 
 .order-type-option h2 {
@@ -802,19 +795,22 @@ button { touch-action: manipulation; }
 }
 
 .order-type-option strong {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   margin-top: 16px;
-  padding: 6px 16px;
+  padding: 6px 14px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  background: rgba(123, 168, 106, 0.16);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: rgba(123, 168, 106, 0.14);
   color: #3f6b32;
 }
 
 .order-type-option:nth-child(2) strong {
-  background: rgba(2, 87, 173, 0.1);
-  color: #0257ad;
+  background: rgba(155, 109, 74, 0.12);
+  color: var(--accent-brown);
 }
 
 @media (max-width: 700px) {

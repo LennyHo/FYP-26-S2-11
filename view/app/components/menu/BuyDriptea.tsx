@@ -157,23 +157,6 @@ export default function BuyDripTeaPage() {
         {/* OUR MENU CATEGORIES SECTION */}
         <section className={styles.section} id="menu-section" ref={menuSectionRef}>
           <div className={styles.menuHeaderCard}>
-            <svg className={styles.menuHeaderArt} viewBox="0 0 200 240" fill="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="menuHeaderArtGradient" x1="0" y1="0" x2="200" y2="240" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#9b6d4a" />
-                  <stop offset="55%" stopColor="#c89a5a" />
-                  <stop offset="100%" stopColor="#7fae3f" />
-                </linearGradient>
-              </defs>
-              <path d="M50 70h100l-14 140a12 12 0 0 1-12 10H76a12 12 0 0 1-12-10L50 70Z" stroke="url(#menuHeaderArtGradient)" strokeWidth="4" strokeLinejoin="round" />
-              <path d="M50 70h100" stroke="url(#menuHeaderArtGradient)" strokeWidth="4" strokeLinecap="round" />
-              <path d="M108 70 128 20" stroke="url(#menuHeaderArtGradient)" strokeWidth="4" strokeLinecap="round" />
-              <circle cx="86" cy="148" r="6" fill="url(#menuHeaderArtGradient)" />
-              <circle cx="112" cy="150" r="6" fill="url(#menuHeaderArtGradient)" />
-              <circle cx="98" cy="168" r="6" fill="url(#menuHeaderArtGradient)" />
-              <circle cx="90" cy="188" r="6" fill="url(#menuHeaderArtGradient)" />
-            </svg>
-
             <div className={styles.sectionHeading}>
               <span className={styles.menuHeaderBadge}>✦ Now Brewing</span>
               <h2 className={styles.menuTitle}>Our <span className={styles.menuTitleAccent}>Menu</span></h2>

@@ -8,8 +8,6 @@ import styles from './GlobalStores.module.css';
 
 const StoreMap = dynamic(() => import('./StoreMap'), { ssr: false });
 
-const VARIANTS = ['blue', 'red'] as const;
-
 export default function GlobalStoresPage() {
   const { outlets: stores } = useOutlets();
 
@@ -23,7 +21,7 @@ export default function GlobalStoresPage() {
           <p className={styles.heroEyebrow}>Find Us</p>
           <h1 className={styles.heroHeadline}>Our Stores</h1>
           <p className={styles.heroSub}>
-            Two locations across Singapore — pick up your order or let us deliver to your door.
+            Pick up your order or let us deliver to your door with our two outlets.
           </p>
         </section>
 
@@ -37,9 +35,8 @@ export default function GlobalStoresPage() {
 
           {/* Store cards */}
           <div className={styles.cardsRow}>
-            {stores.map((store, index) => (
-              <div key={store.storeCode} className={`${styles.card} ${styles[`card_${VARIANTS[index % VARIANTS.length]}`]}`}>
-                <div className={styles.cardAccent} />
+            {stores.map((store) => (
+              <div key={store.storeCode} className={styles.card}>
                 <div className={styles.cardBody}>
                   <div className={styles.cardHead}>
                     <h2 className={styles.cardName}>{store.name}</h2>

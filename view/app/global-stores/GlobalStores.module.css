@@ -72,25 +72,13 @@
 }
 
 .card {
-  border-radius: 24px;
-  border: 1px solid rgba(200, 175, 148, 0.22);
-  background: #fff;
-  box-shadow: 0 10px 32px rgba(10, 24, 50, 0.08);
+  border-radius: 20px;
+  border: 1px solid rgba(155, 109, 74, 0.22);
+  background: #fffaf5;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
-
-.cardAccent {
-  height: 6px;
-  width: 100%;
-}
-
-.card_blue .cardAccent { background: linear-gradient(90deg, #0257AD, #4a9de0); }
-.card_red  .cardAccent { background: linear-gradient(90deg, #F43B03, #ff8a5c); }
-
-.card_blue .infoIcon { stroke: #0257AD; }
-.card_red  .infoIcon { stroke: #F43B03; }
 
 .cardBody {
   padding: 30px 30px 34px;
@@ -145,19 +133,16 @@
 
 .infoIconChip {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.card_blue .infoIconChip { background: rgba(2, 87, 173, 0.09); }
-.card_red  .infoIconChip { background: rgba(244, 59, 3, 0.09); }
-
 .infoIcon {
   flex-shrink: 0;
+  stroke: var(--accent-brown);
 }
 
 .hoursBlock {
@@ -167,7 +152,7 @@
 }
 
 .infoRowIndented {
-  padding-left: 44px;
+  padding-left: 32px;
   font-size: 0.92rem;
   color: #666;
   line-height: 1.5;

@@ -282,13 +282,10 @@ export default function LoginPage() {
             <div className={styles.visualFrame}>
               <div className={styles.visualGlow} />
               <div className={styles.visualImageWrap}>
-                <video
-                  src="/buy_driptea_1.mp4"
+                <img
+                  src="/buy_dripTea_cover.png"
+                  alt="DripTea drinks"
                   className={styles.visualImage}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
                 />
               </div>
             </div>

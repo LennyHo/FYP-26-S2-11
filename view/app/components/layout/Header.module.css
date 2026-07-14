@@ -151,17 +151,15 @@
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .nav a:hover {
   color: var(--color-secondary);
-  transform: translateY(-1px);
 }
 
 .actions a:hover {
   color: var(--color-accent);
-  transform: translateY(-1px);
 }
 
 /* Nav link visual styles */

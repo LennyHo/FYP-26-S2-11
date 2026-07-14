@@ -275,88 +275,53 @@
 }
 
 .addressTabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
   margin-bottom: 1rem;
+  border-bottom: 1px solid #e7dfd4;
 }
 
 .addressTab {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
+  align-items: baseline;
+  gap: 0.4rem;
   min-width: 0;
-  padding: 0.7rem 0.85rem;
-  border: 1.5px solid #ded8cd;
-  border-radius: 10px;
-  background: #fff;
-  color: #625f59;
+  padding: 0 0 0.65rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: #9a8b78;
   font-family: inherit;
-  font-size: 0.86rem;
+  font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
-}
-
-.addressTab[data-category="home"],
-.addressCard[data-category="home"] {
-  --address-accent: #52745a;
-  --address-accent-soft: #edf4ee;
-}
-
-.addressTab[data-category="work"],
-.addressCard[data-category="work"] {
-  --address-accent: #846744;
-  --address-accent-soft: #f5efe6;
-}
-
-.addressTab[data-category="others"],
-.addressCard[data-category="others"] {
-  --address-accent: #627785;
-  --address-accent-soft: #edf2f5;
+  transition: color 0.18s, border-color 0.18s;
 }
 
 .addressTab:hover {
-  border-color: #aaa397;
   color: #1a1a1a;
 }
 
 .addressTabActive {
-  border-color: var(--address-accent, #1a1a1a);
-  background: var(--address-accent, #1a1a1a);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(35, 30, 24, 0.16);
-}
-
-.addressTabActive:hover {
-  color: #fff;
+  border-bottom-color: var(--accent-brown);
+  color: #1a1a1a;
 }
 
 .addressTabLabel {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
   min-width: 0;
 }
 
 .addressTabCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.5rem;
-  height: 1.5rem;
-  padding: 0 0.35rem;
-  border-radius: 999px;
-  background: #eee9e0;
-  color: #4e4b46;
-  font-size: 0.75rem;
-  box-sizing: border-box;
+  color: #9a8b78;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .addressTabActive .addressTabCount {
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  color: var(--accent-brown);
 }
 
 .emptyAddresses {
@@ -412,21 +377,11 @@
   min-height: 300px;
   min-width: 0;
   scroll-snap-align: start;
-  box-shadow: 0 2px 8px rgba(35, 30, 24, 0.04);
-  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
-}
-
-.addressCard::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 4px;
-  background: var(--address-accent, #777);
+  transition: border-color 0.18s, transform 0.18s;
 }
 
 .addressCard:hover {
-  border-color: var(--address-accent, #cec5b8);
-  box-shadow: 0 6px 16px rgba(35, 30, 24, 0.08);
+  border-color: #cec5b8;
   transform: translateY(-1px);
 }
 
@@ -434,9 +389,9 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  color: var(--address-accent, #555);
+  color: #9a8b78;
   font-size: 0.76rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }

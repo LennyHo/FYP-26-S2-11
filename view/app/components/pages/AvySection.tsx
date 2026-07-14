@@ -24,7 +24,6 @@ export default function AvySection() {
       {/* Background decorative elements */}
       <div className={styles.blobTopRight} />
       <div className={styles.blobBottomLeft} />
-      <div className={styles.gridOverlay} />
 
       <div className={styles.inner}>
         <div className={styles.copy}>
