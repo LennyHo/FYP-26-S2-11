@@ -175,7 +175,7 @@ function getStepLabel(step: number, currentStep: number) {
   return "Upcoming";
 }
 
-function TrackingStepIcon({ step }: { step: 1 | 2 | 3 | 4 }) {
+function TrackingStepIcon({ step, isDeliveryOrder }: { step: 1 | 2 | 3 | 4; isDeliveryOrder: boolean }) {
   if (step === 2) {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -185,7 +185,8 @@ function TrackingStepIcon({ step }: { step: 1 | 2 | 3 | 4 }) {
     );
   }
 
-  if (step === 3) {
+  // The lorry icon only applies to delivery orders — pickup orders reuse the checkmark instead.
+  if (step === 3 && isDeliveryOrder) {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M3 7h11v9H3V7Zm11 3h3l3 3v3h-6v-6Z" />
@@ -394,9 +395,9 @@ export default function OrderStatusPage() {
 
             <div className="tracking-layout">
               <section className="tracking-primary">
-                <div className="tracking-progress-card">
+                <div className={`tracking-progress-card${isDeliveryOrder ? "" : " tracking-progress-card-3step"}`}>
                   <div className={`tracking-mobile-current-step ${collected ? "done" : "active"}`}>
-                    <span className="tracking-mobile-step-icon"><TrackingStepIcon step={mobileStep} /></span>
+                    <span className="tracking-mobile-step-icon"><TrackingStepIcon step={mobileStep} isDeliveryOrder={isDeliveryOrder} /></span>
                     <div>
                       <small>Current status</small>
                       <strong>{mobileStepTitle}</strong>
@@ -404,28 +405,38 @@ export default function OrderStatusPage() {
                     </div>
                   </div>
                   <div className={`tracking-step ${getStepState(1, visualProgressStep)}`}>
-                    <span aria-label="Order confirmed"><TrackingStepIcon step={1} /></span>
+                    <span aria-label="Order confirmed"><TrackingStepIcon step={1} isDeliveryOrder={isDeliveryOrder} /></span>
                     <strong>Order Confirmed</strong>
                     <em>{getStepLabel(1, visualProgressStep)}</em>
                   </div>
                   <div className={`tracking-rail ${visualProgressStep > 1 ? "done" : ""}`} />
                   <div className={`tracking-step ${getStepState(2, visualProgressStep)}`}>
-                    <span aria-label="Preparing"><TrackingStepIcon step={2} /></span>
+                    <span aria-label="Preparing"><TrackingStepIcon step={2} isDeliveryOrder={isDeliveryOrder} /></span>
                     <strong>Preparing</strong>
                     <em>{getStepLabel(2, visualProgressStep)}</em>
                   </div>
                   <div className={`tracking-rail ${visualProgressStep > 2 ? "done" : ""}`} />
-                  <div className={`tracking-step ${getStepState(3, visualProgressStep)}`}>
-                    <span aria-label="Out for delivery"><TrackingStepIcon step={3} /></span>
-                    <strong>{isDeliveryOrder ? "Out for Delivery" : "Ready"}</strong>
-                    <em>{getStepLabel(3, visualProgressStep)}</em>
-                  </div>
-                  <div className={`tracking-rail ${visualProgressStep > 3 ? "done" : ""}`} />
-                  <div className={`tracking-step ${getStepState(4, visualProgressStep)}`}>
-                    <span aria-label={isDeliveryOrder ? "Delivered" : "Collected"}><TrackingStepIcon step={4} /></span>
-                    <strong>{isDeliveryOrder ? "Delivered" : "Collected"}</strong>
-                    <em>{getStepLabel(4, visualProgressStep)}</em>
-                  </div>
+                  {isDeliveryOrder ? (
+                    <>
+                      <div className={`tracking-step ${getStepState(3, visualProgressStep)}`}>
+                        <span aria-label="Out for delivery"><TrackingStepIcon step={3} isDeliveryOrder={isDeliveryOrder} /></span>
+                        <strong>Out for Delivery</strong>
+                        <em>{getStepLabel(3, visualProgressStep)}</em>
+                      </div>
+                      <div className={`tracking-rail ${visualProgressStep > 3 ? "done" : ""}`} />
+                      <div className={`tracking-step ${getStepState(4, visualProgressStep)}`}>
+                        <span aria-label="Delivered"><TrackingStepIcon step={4} isDeliveryOrder={isDeliveryOrder} /></span>
+                        <strong>Delivered</strong>
+                        <em>{getStepLabel(4, visualProgressStep)}</em>
+                      </div>
+                    </>
+                  ) : (
+                    <div className={`tracking-step ${getStepState(3, visualProgressStep)}`}>
+                      <span aria-label={collected ? "Collected" : "Ready"}><TrackingStepIcon step={3} isDeliveryOrder={isDeliveryOrder} /></span>
+                      <strong>{collected ? "Collected" : "Ready"}</strong>
+                      <em>{getStepLabel(3, visualProgressStep)}</em>
+                    </div>
+                  )}
                 </div>
 
                 <div className={`tracking-eta-card ${collected ? "is-complete" : ""}`}>
@@ -489,27 +500,34 @@ export default function OrderStatusPage() {
                   </div>
                 )}
 
-                <div className="tracking-info-grid">
+                <div className={`tracking-info-grid${isDeliveryOrder ? "" : " tracking-info-grid-single"}`}>
                   <div>
-                    <h2>{isDeliveryOrder ? "Delivery Address" : "Pickup Details"}</h2>
-                    <div className="tracking-address-content">
-                      <span className="tracking-address-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                          <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-                          <circle cx="12" cy="10" r="2.5" />
-                        </svg>
-                      </span>
-                      <div>
-                        <p>{delivery?.customerAddress || "Collect at selected outlet."}</p>
-                        {delivery && (
-                          <span className="tracking-distance-badge">
-                            {delivery.distanceKm.toFixed(2)} km from {delivery.outletName}
-                          </span>
-                        )}
+                    <h2>{isDeliveryOrder ? "Delivery Address" : "How to Get There"}</h2>
+                    {isDeliveryOrder ? (
+                      <div className="tracking-address-content">
+                        <span className="tracking-address-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24">
+                            <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+                            <circle cx="12" cy="10" r="2.5" />
+                          </svg>
+                        </span>
+                        <div>
+                          <p>{delivery?.customerAddress || "Collect at selected outlet."}</p>
+                          {delivery && (
+                            <span className="tracking-distance-badge">
+                              {delivery.distanceKm.toFixed(2)} km from {delivery.outletName}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <ol className="tracking-pickup-steps">
+                        <li><span>1</span>Head to your selected outlet.</li>
+                        <li><span>2</span>Show <strong>Order #{orderNo}</strong> at the counter to collect.</li>
+                      </ol>
+                    )}
                   </div>
-                  {isDeliveryOrder ? (
+                  {isDeliveryOrder && (
                     <div className="tracking-rider-card">
                       <h2>Rider Information</h2>
                       <div className="tracking-rider-content">
@@ -523,12 +541,6 @@ export default function OrderStatusPage() {
                           <button type="button">Message</button>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <h2>Collection Information</h2>
-                      <p>Show your order number at the counter.</p>
-                      <span>Order #{orderNo}</span>
                     </div>
                   )}
                 </div>

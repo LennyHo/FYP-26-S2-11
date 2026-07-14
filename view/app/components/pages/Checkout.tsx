@@ -15,6 +15,13 @@ import "./Checkout.css";
 
 const PICKUP_OUTLET_KEY = "driptea_pickup_outlet";
 
+// Client-only outlet photos — the stores collection has no image field, so
+// this maps each outlet by name to the building it's located in.
+const OUTLET_IMAGES: Record<string, string> = {
+    "DripTea Jurong East": "/img/Jem_Mall.jpg",
+    "DripTea Orchard": "/img/313somerset.webp",
+};
+
 const CheckoutDeliveryAddress = dynamic(() => import("./CheckoutDeliveryAddress"), {
     ssr: false,
 });
@@ -361,8 +368,9 @@ export default function Checkout() {
                 const isValid = parsed && typeof parsed.storeCode === "string" && parsed.storeCode.trim().length > 0;
 
                 if (isValid) {
+                    // Pre-select the last-used outlet but still require the customer to
+                    // confirm it on the Outlet step, rather than skipping straight to Summary.
                     setPickupOutlet(parsed);
-                    setRightStep(2);
                 } else {
                     window.localStorage.removeItem(PICKUP_OUTLET_KEY);
                 }
@@ -944,7 +952,7 @@ export default function Checkout() {
                                             onOrderTypeChange={handleOrderTypeChange}
                                         />
                                     ) : (
-                                        <section className="checkout-address-card">
+                                        <section className="checkout-address-card checkout-pickup-outlet-card">
                                             <div className="checkout-outlet-selector">
                                                 <div className="checkout-outlet-selector-header">
                                                     <p>Pickup from</p>
@@ -958,8 +966,17 @@ export default function Checkout() {
                                                             className={pickupOutlet?.storeCode === outlet.storeCode ? "active" : ""}
                                                             onClick={() => setPickupOutlet(outlet)}
                                                         >
-                                                            <strong>{outlet.name}</strong>
-                                                            <span>{outlet.address}</span>
+                                                            {OUTLET_IMAGES[outlet.name] && (
+                                                                <img
+                                                                    src={OUTLET_IMAGES[outlet.name]}
+                                                                    alt={outlet.name}
+                                                                    className="checkout-outlet-image"
+                                                                />
+                                                            )}
+                                                            <div className="checkout-outlet-info">
+                                                                <strong>{outlet.name}</strong>
+                                                                <span>{outlet.address}</span>
+                                                            </div>
                                                         </button>
                                                     ))}
                                                 </div>
