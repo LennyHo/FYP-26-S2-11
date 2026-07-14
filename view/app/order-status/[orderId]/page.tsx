@@ -20,6 +20,29 @@ const DELIVERED_MS = 20_000;
 const LS_COLLECTED_KEY = "driptea_collected_orders";
 const ORDER_TRACKING_KEY = "driptea_order_tracking";
 
+// Client-only walking directions per outlet — the stores collection has no
+// wayfinding field, so this fills in what the database doesn't cover.
+const PICKUP_DIRECTIONS: Record<string, { image: string; steps: string[] }> = {
+  "DT-001": {
+    image: "/img/313somerset.webp",
+    steps: [
+      "Go to Somerset MRT Station.",
+      "Take the escalator on the right when you exit the station.",
+      "Head to Basement 2 — the store is at the end of the level.",
+      "Show your order number at the counter.",
+    ],
+  },
+  "DT-002": {
+    image: "/img/Jem_Mall.jpg",
+    steps: [
+      "Go to Jurong East MRT Station.",
+      "Take the escalator at the back when you exit the station.",
+      "Head up to Level 3 — the store is on the right side.",
+      "Show your order number at the counter.",
+    ],
+  },
+};
+
 const TrackingDeliveryMap = dynamic(() => import("./TrackingDeliveryMap"), {
   ssr: false,
 });
@@ -281,6 +304,10 @@ export default function OrderStatusPage() {
 
   const delivery = normalizeDelivery(snapshot?.delivery || order?.deliveryDetails || null);
   const isDeliveryOrder = Boolean(delivery) || order?.orderType === "delivery";
+  const pickupOutletName = order?.deliveryDetails?.outletName || "";
+  const pickupDirections = order?.deliveryDetails?.storeCode
+    ? PICKUP_DIRECTIONS[order.deliveryDetails.storeCode]
+    : undefined;
   const createdAt = order?.createdAt ? new Date(order.createdAt) : new Date(nowMs);
   const elapsedMs = order?.createdAt ? Math.max(0, nowMs - createdAt.getTime()) : 0;
   const nextPhase = getPhaseFromElapsed(elapsedMs, isDeliveryOrder);
@@ -519,6 +546,23 @@ export default function OrderStatusPage() {
                             </span>
                           )}
                         </div>
+                      </div>
+                    ) : pickupDirections ? (
+                      <div className="tracking-pickup-directions">
+                        <div className="tracking-pickup-outlet-photo">
+                          <img src={pickupDirections.image} alt={pickupOutletName || "Pickup outlet"} />
+                          {pickupOutletName && <span>{pickupOutletName}</span>}
+                        </div>
+                        <ol className="tracking-pickup-steps">
+                          {pickupDirections.steps.map((step, index) => (
+                            <li key={step}>
+                              <span>{index + 1}</span>
+                              {index === pickupDirections.steps.length - 1
+                                ? <>Show <strong>Order #{orderNo}</strong> at the counter.</>
+                                : step}
+                            </li>
+                          ))}
+                        </ol>
                       </div>
                     ) : (
                       <ol className="tracking-pickup-steps">

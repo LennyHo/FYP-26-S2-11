@@ -27,13 +27,25 @@
   margin-bottom: 1.6rem;
 }
 
+.headingGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 0 1 auto;
+}
+
 .heading {
   font-size: 1.2rem;
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
   text-align: left;
-  flex: 0 1 auto;
+}
+
+.headingHint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #918471;
 }
 
 .headerSpacer {
@@ -78,7 +90,7 @@
   height: 110px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2.5px solid #1a1a1a;
+  border: 3px solid var(--accent-brown);
   display: block;
   background: #f0ece4;
 }
@@ -89,19 +101,19 @@
   right: 4px;
   width: 26px;
   height: 26px;
-  background: #fff;
+  background: var(--accent-brown);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  color: #1a1a1a;
-  transition: transform 0.18s;
+  border: 2px solid #fff;
+  color: #fff;
+  transition: background 0.18s;
 }
 
 .avatarEditBtn:hover {
-  transform: scale(1.1);
+  background: #7c5334;
 }
 
 .fileInput {
@@ -238,9 +250,21 @@
 }
 
 .addressTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0;
   font-size: 0.98rem;
   color: #1a1a1a;
+}
+
+.addressTitle::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-brown);
+  flex: 0 0 auto;
 }
 
 .addressHint {
@@ -252,19 +276,21 @@
 
 .addAddressBtn {
   flex: 0 0 auto;
-  border: 1.5px solid #c8c2b6;
+  border: 1.5px solid rgba(155, 109, 74, 0.35);
   border-radius: 999px;
-  background: #fff;
-  color: #1a1a1a;
+  background: rgba(155, 109, 74, 0.08);
+  color: var(--accent-brown);
   font-size: 0.78rem;
   font-weight: 700;
   padding: 0.45rem 0.8rem;
   cursor: pointer;
   font-family: inherit;
+  transition: background 0.18s, border-color 0.18s;
 }
 
 .addAddressBtn:hover {
-  background: #f5f0e8;
+  background: rgba(155, 109, 74, 0.16);
+  border-color: rgba(155, 109, 74, 0.55);
 }
 
 .addAddressBtn:disabled {
@@ -274,65 +300,119 @@
   cursor: not-allowed;
 }
 
-.addressTabs {
+.addressBody {
   display: flex;
-  align-items: center;
-  gap: 1.4rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #e7dfd4;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-height: 0;
 }
 
-.addressTab {
+.addressPillars {
   display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  min-width: 0;
-  padding: 0 0 0.65rem;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: none;
+  flex-direction: column;
+  gap: 0.55rem;
+  flex: 0 0 118px;
+  width: 118px;
+}
+
+.addressPillar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 0.7rem 0.8rem 0.65rem 0.95rem;
+  border: 1.5px solid #e7dfd4;
+  border-radius: 12px;
+  background: #fff;
   color: #9a8b78;
   font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 700;
   cursor: pointer;
-  transition: color 0.18s, border-color 0.18s;
+  text-align: left;
+  overflow: hidden;
+  transition: border-color 0.18s, background 0.18s, color 0.18s;
 }
 
-.addressTab:hover {
+.addressPillar:hover {
+  border-color: #cec5b8;
+  color: #6b5f4f;
+}
+
+.addressPillarDot {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--pillar-color, var(--accent-brown));
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+
+.addressPillar[data-category="home"] { --pillar-color: var(--accent-brown); }
+.addressPillar[data-category="work"] { --pillar-color: var(--accent-blue); }
+.addressPillar[data-category="others"] { --pillar-color: #c9932e; }
+
+.addressPillarActive {
+  border-color: var(--pillar-color, var(--accent-brown));
+  background: color-mix(in srgb, var(--pillar-color, var(--accent-brown)) 8%, #fff);
   color: #1a1a1a;
 }
 
-.addressTabActive {
-  border-bottom-color: var(--accent-brown);
-  color: #1a1a1a;
+.addressPillarActive .addressPillarDot {
+  opacity: 1;
 }
 
-.addressTabLabel {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
+.addressPillarActive svg {
+  color: var(--pillar-color, var(--accent-brown));
 }
 
-.addressTabCount {
-  color: #9a8b78;
-  font-size: 0.82rem;
+.addressPillar svg {
+  color: #b3a894;
+  transition: color 0.18s;
+}
+
+.addressPillarLabel {
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.addressPillarCount {
+  color: #b3a894;
+  font-size: 0.74rem;
   font-weight: 600;
 }
 
-.addressTabActive .addressTabCount {
-  color: var(--accent-brown);
+.addressPillarActive .addressPillarCount {
+  color: var(--pillar-color, var(--accent-brown));
+}
+
+.addressPanel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .emptyAddresses {
+  flex: 1;
   margin: 0;
   padding: 1.35rem;
-  border: 1px dashed #d8d1c5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 220px;
+  border: 1.5px dashed #d8d1c5;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.6);
-  color: #888;
+  color: #a89a86;
+}
+
+.emptyAddresses p {
+  margin: 0;
+  color: #918471;
   font-size: 0.84rem;
-  text-align: center;
 }
 
 .addressList {
@@ -371,18 +451,23 @@
   grid-template-rows: auto 1fr auto;
   gap: 0.7rem;
   border: 1px solid #e7dfd4;
+  border-top: 3px solid var(--pillar-color, var(--accent-brown));
   border-radius: 12px;
   background: #fff;
   padding: 1rem;
   min-height: 300px;
   min-width: 0;
   scroll-snap-align: start;
-  transition: border-color 0.18s, transform 0.18s;
+  transition: border-color 0.18s;
 }
+
+.addressCard[data-category="home"] { --pillar-color: var(--accent-brown); }
+.addressCard[data-category="work"] { --pillar-color: var(--accent-blue); }
+.addressCard[data-category="others"] { --pillar-color: #c9932e; }
 
 .addressCard:hover {
   border-color: #cec5b8;
-  transform: translateY(-1px);
+  border-top-color: var(--pillar-color, var(--accent-brown));
 }
 
 .addressCardHeader {
@@ -394,6 +479,14 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.addressCardHeader::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pillar-color, var(--accent-brown));
 }
 
 .addressInputs {
@@ -472,26 +565,26 @@
 .saveBtn {
   margin-top: auto;
   padding: 0.85rem;
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--accent-brown);
+  color: #fff8f1;
   font-size: 0.97rem;
-  font-weight: 600;
-  border: 1.5px solid #c8c2b6;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.18s, border-color 0.18s;
+  transition: background 0.18s;
   font-family: inherit;
   width: 100%;
   box-sizing: border-box;
 }
 
 .saveBtn:hover {
-  background: #f5f0e8;
-  border-color: #aaa;
+  background: #7c5334;
 }
 
 .saveBtn:active {
-  background: #ede8de;
+  background: #6b472c;
 }
 
 .successMsg {
@@ -608,6 +701,23 @@
     box-sizing: border-box;
   }
 
+  .addressBody {
+    flex-direction: column;
+  }
+
+  .addressPillars {
+    flex-direction: row;
+    width: 100%;
+    flex: 0 0 auto;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
+
+  .addressPillar {
+    flex: 1 1 0;
+    min-width: 96px;
+  }
+
 }
 
 @media (max-width: 560px) {
@@ -620,12 +730,12 @@
     gap: 0.7rem;
   }
 
-  .addressTabs {
+  .addressPillars {
     gap: 0.4rem;
   }
 
-  .addressTab {
-    padding: 0.6rem;
+  .addressPillar {
+    padding: 0.6rem 0.7rem 0.6rem 0.85rem;
   }
 
   .addAddressBtn {

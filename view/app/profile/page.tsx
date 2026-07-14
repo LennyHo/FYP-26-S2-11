@@ -20,6 +20,34 @@ function getAddressCategory(label: string): AddressCategory {
   return "Others";
 }
 
+function CategoryIcon({ category }: { category: AddressCategory }) {
+  if (category === "Home") {
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3.5 11.5 12 4l8.5 7.5" />
+        <path d="M5.5 10v9a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1v-9" />
+      </svg>
+    );
+  }
+
+  if (category === "Work") {
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3.5" y="7.5" width="17" height="12" rx="2" />
+        <path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5" />
+        <path d="M3.5 13h17" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 21s-6.5-5.4-6.5-10.4A6.5 6.5 0 0 1 18.5 10.6C18.5 15.6 12 21 12 21z" />
+      <circle cx="12" cy="10.4" r="2.1" />
+    </svg>
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [profilePic, setProfilePic] = useState<string>("");
@@ -156,7 +184,10 @@ export default function ProfilePage() {
             </svg>
             Back
           </button>
-          <h1 className={styles.heading}>Profile Settings</h1>
+          <div className={styles.headingGroup}>
+            <h1 className={styles.heading}>Profile Settings</h1>
+            <p className={styles.headingHint}>Manage your details and delivery addresses.</p>
+          </div>
           <div className={styles.headerSpacer} />
         </div>
 
@@ -254,90 +285,100 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            <div className={styles.addressTabs} role="tablist" aria-label="Address categories">
-              {ADDRESS_CATEGORIES.map(category => {
-                const categoryCount = addresses.filter(
-                  entry => getAddressCategory(String(entry.label || "")) === category
-                ).length;
+            <div className={styles.addressBody}>
+              <div className={styles.addressPillars} role="tablist" aria-label="Address categories">
+                {ADDRESS_CATEGORIES.map(category => {
+                  const categoryCount = addresses.filter(
+                    entry => getAddressCategory(String(entry.label || "")) === category
+                  ).length;
 
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    role="tab"
-                    data-category={category.toLowerCase()}
-                    aria-selected={activeAddressCategory === category}
-                    className={`${styles.addressTab} ${activeAddressCategory === category ? styles.addressTabActive : ""}`}
-                    onClick={() => {
-                      setActiveAddressCategory(category);
-                    }}
-                  >
-                    <span className={styles.addressTabLabel}>
-                      {category}
-                    </span>
-                    <span className={styles.addressTabCount}>{categoryCount}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {filteredAddresses.length === 0 ? (
-              <p className={styles.emptyAddresses}>No {activeAddressCategory.toLowerCase()} addresses yet.</p>
-            ) : (
-              <div className={styles.addressList}>
-                {filteredAddresses.map(({ entry, index }) => (
-                  <div
-                    key={index}
-                    className={styles.addressCard}
-                    data-category={activeAddressCategory.toLowerCase()}
-                  >
-                    <div className={styles.addressCardHeader}>
-                      <span>{activeAddressCategory} address</span>
-                    </div>
-                    <div className={styles.addressInputs}>
-                      <input
-                        className={styles.input}
-                        value={entry.label || ""}
-                        onChange={event => updateAddressField(index, "label", event.target.value)}
-                        placeholder="Label, e.g. Home"
-                      />
-                      <textarea
-                        className={`${styles.input} ${styles.addressTextarea}`}
-                        value={entry.address || ""}
-                        onChange={event => updateAddressField(index, "address", event.target.value)}
-                        placeholder="Full delivery address"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className={styles.addressActions}>
-                      {entry.isDefault ? (
-                        <span className={styles.defaultAddressBadge}>
-                          <span className={styles.defaultAddressDot} />
-                          Default address
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          className={styles.setDefaultAddressBtn}
-                          onClick={() => setDefaultAddress(index)}
-                        >
-                          Set as default
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        className={styles.removeAddressBtn}
-                        onClick={() => removeAddress(index)}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      role="tab"
+                      data-category={category.toLowerCase()}
+                      aria-selected={activeAddressCategory === category}
+                      className={`${styles.addressPillar} ${activeAddressCategory === category ? styles.addressPillarActive : ""}`}
+                      onClick={() => {
+                        setActiveAddressCategory(category);
+                      }}
+                    >
+                      <span className={styles.addressPillarDot} />
+                      <CategoryIcon category={category} />
+                      <span className={styles.addressPillarLabel}>{category}</span>
+                      <span className={styles.addressPillarCount}>{categoryCount}</span>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+
+              <div className={styles.addressPanel}>
+                {filteredAddresses.length === 0 ? (
+                  <div className={styles.emptyAddresses}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 21s-6.5-5.4-6.5-10.4A6.5 6.5 0 0 1 18.5 10.6C18.5 15.6 12 21 12 21z" />
+                      <circle cx="12" cy="10.4" r="2.1" />
+                    </svg>
+                    <p>No {activeAddressCategory.toLowerCase()} addresses yet.</p>
+                  </div>
+                ) : (
+                  <div className={styles.addressList}>
+                    {filteredAddresses.map(({ entry, index }) => (
+                      <div
+                        key={index}
+                        className={styles.addressCard}
+                        data-category={activeAddressCategory.toLowerCase()}
+                      >
+                        <div className={styles.addressCardHeader}>
+                          <span>{activeAddressCategory} address</span>
+                        </div>
+                        <div className={styles.addressInputs}>
+                          <input
+                            className={styles.input}
+                            value={entry.label || ""}
+                            onChange={event => updateAddressField(index, "label", event.target.value)}
+                            placeholder="Label, e.g. Home"
+                          />
+                          <textarea
+                            className={`${styles.input} ${styles.addressTextarea}`}
+                            value={entry.address || ""}
+                            onChange={event => updateAddressField(index, "address", event.target.value)}
+                            placeholder="Full delivery address"
+                            rows={3}
+                          />
+                        </div>
+
+                        <div className={styles.addressActions}>
+                          {entry.isDefault ? (
+                            <span className={styles.defaultAddressBadge}>
+                              <span className={styles.defaultAddressDot} />
+                              Default address
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className={styles.setDefaultAddressBtn}
+                              onClick={() => setDefaultAddress(index)}
+                            >
+                              Set as default
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            className={styles.removeAddressBtn}
+                            onClick={() => removeAddress(index)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </section>
         </form>
       </div>
