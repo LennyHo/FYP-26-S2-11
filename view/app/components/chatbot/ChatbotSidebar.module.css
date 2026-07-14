@@ -818,10 +818,118 @@
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.22);
   box-shadow:
-    0 18px 38px rgba(171, 28, 110, 0.34),
-    0 4px 10px rgba(0, 0, 0, 0.12),
+    0 8px 18px rgba(171, 28, 110, 0.16),
+    0 2px 6px rgba(0, 0, 0, 0.07),
     inset 0 1px 0 rgba(255, 255, 255, 0.24);
   position: relative;
+}
+
+.botResponseActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  margin: -1px 0 0 6px;
+}
+
+.botResponseAction {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(74, 45, 75, 0.58);
+  cursor: pointer;
+  transition: color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+
+.botResponseAction svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.8;
+}
+
+.botResponseAction:hover {
+  color: #9b2e88;
+  background: rgba(171, 28, 110, 0.08);
+}
+
+.botResponseAction:active {
+  transform: scale(0.92);
+  color: #ab1c6e;
+  background: rgba(171, 28, 110, 0.10);
+  transition-duration: 0.06s;
+}
+
+.botResponseAction:focus-visible {
+  outline: 2px solid rgba(171, 28, 110, 0.42);
+  outline-offset: 1px;
+}
+
+.copyActionGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.narrationBars {
+  width: 18px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.16s ease;
+  pointer-events: none;
+}
+
+.narrationBars span {
+  width: 3px;
+  height: 11px;
+  border-radius: 999px;
+  background: #ab1c6e;
+  opacity: 0.18;
+  transform: scaleY(0.4);
+}
+
+.narrationBarsActive {
+  opacity: 1;
+}
+
+.narrationBarsActive span {
+  animation: narrationBarSequence 0.9s ease-in-out infinite;
+}
+
+.narrationBarsActive span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.narrationBarsActive span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes narrationBarSequence {
+  0%, 28%, 100% {
+    opacity: 0.18;
+    transform: scaleY(0.4);
+  }
+  14% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .narrationBarsActive span {
+    animation: none;
+    opacity: 1;
+    transform: scaleY(0.72);
+  }
 }
 
 /* Frosted-glass highlight strip at the top of every bot bubble */

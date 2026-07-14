@@ -181,9 +181,24 @@ function _browserSpeak(text: string, onEndCallback?: () => void, mySeq?: number)
   window.speechSynthesis.speak(utterance);
 }
 
-export function speakText(text: string, onEndCallback?: () => void): void {
+export function speakText(
+  text: string,
+  onEndCallback?: () => void,
+  options: { allowBrowserFallback?: boolean; onError?: () => void } = {},
+): void {
   const clean = text.replace(/[*#]/g, '').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
   if (!clean) { onEndCallback?.(); return; }
+  const allowBrowserFallback = options.allowBrowserFallback ?? true;
+
+  const handleNarrationFailure = () => {
+    if (allowBrowserFallback) {
+      _browserSpeak(clean, onEndCallback, mySeq);
+      return;
+    }
+    _onTTSEnd?.();
+    options.onError?.();
+    onEndCallback?.();
+  };
 
   // Stop whatever is currently playing/pending and claim the new sequence number so
   // a slower, older request can't play its audio after this (newer) one starts.
@@ -215,17 +230,15 @@ export function speakText(text: string, onEndCallback?: () => void): void {
       audio.onerror = () => {
         URL.revokeObjectURL(url);
         registerAudio(null);
-        // Only fall back if not cancelled (cancelSpeech sets _activeAudio=null first)
-        if (mySeq === _speakSeq) _browserSpeak(clean, onEndCallback, mySeq);
+        if (mySeq === _speakSeq) handleNarrationFailure();
       };
       audio.play().catch(() => {
         registerAudio(null);
-        if (mySeq === _speakSeq) _browserSpeak(clean, onEndCallback, mySeq);
+        if (mySeq === _speakSeq) handleNarrationFailure();
       });
     })
     .catch(() => {
-      // ElevenLabs unreachable — fall back to browser TTS silently
-      if (mySeq === _speakSeq) _browserSpeak(clean, onEndCallback, mySeq);
+      if (mySeq === _speakSeq) handleNarrationFailure();
     });
 }
 

@@ -57,8 +57,9 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { FiCopy, FiVolume2 } from 'react-icons/fi';
 import styles from './ChatbotSidebar.module.css';
-import { QUICK_PROMPTS, convertDrinkNamesToLinks, extractOrderingOptions, getOrderStep, convertMarkdownBold } from '../../utils/chatHelpers';
+import { QUICK_PROMPTS, cancelSpeech, convertDrinkNamesToLinks, extractOrderingOptions, getOrderStep, convertMarkdownBold, speakText } from '../../utils/chatHelpers';
 import QuickPrompts from './QuickPrompts';
 import DrinkRecCards from '../menu/DrinkRecCards';
 import OrderReceiptCard from '../ui/OrderReceiptCard';
@@ -144,8 +145,96 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
   }
 
   const [dismissedMsgId, setDismissedMsgId] = React.useState<string | null>(null);
+  const [speakingMsgId, setSpeakingMsgId] = React.useState<string | null>(null);
+  const [copiedMsgId, setCopiedMsgId] = React.useState<string | null>(null);
   const photoInputRef = React.useRef<HTMLInputElement>(null);
   const speakMsgAreaRef = React.useRef<HTMLDivElement>(null);
+  const copyFeedbackTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const getMessagePlainText = React.useCallback((html: string) => {
+    const withLineBreaks = html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ' ');
+    const decoder = document.createElement('textarea');
+    decoder.innerHTML = withLineBreaks;
+    return decoder.value.replace(/\s*\n\s*/g, '\n').replace(/[ \t]+/g, ' ').trim();
+  }, []);
+
+  const handleReadMessage = React.useCallback((messageId: string, html: string) => {
+    if (speakingMsgId === messageId && isTTSSpeaking) {
+      cancelSpeech();
+      setSpeakingMsgId(null);
+      return;
+    }
+
+    setSpeakingMsgId(messageId);
+    speakText(
+      getMessagePlainText(html),
+      () => setSpeakingMsgId(currentId => currentId === messageId ? null : currentId),
+      { allowBrowserFallback: false },
+    );
+  }, [getMessagePlainText, isTTSSpeaking, speakingMsgId]);
+
+  const handleCopyMessage = React.useCallback(async (messageId: string, html: string) => {
+    const text = getMessagePlainText(html);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+    }
+
+    setCopiedMsgId(messageId);
+    if (copyFeedbackTimerRef.current) clearTimeout(copyFeedbackTimerRef.current);
+    copyFeedbackTimerRef.current = setTimeout(() => setCopiedMsgId(null), 1600);
+  }, [getMessagePlainText]);
+
+  const renderMessageActions = (messageId: string, html: string) => {
+    const isSpeaking = speakingMsgId === messageId && isTTSSpeaking;
+    const isCopied = copiedMsgId === messageId;
+    return (
+      <div className={styles.botResponseActions} aria-label='Avy message actions'>
+        <button
+          type='button'
+          className={styles.botResponseAction}
+          onClick={() => handleReadMessage(messageId, html)}
+          title={isSpeaking ? 'Stop reading' : 'Read aloud'}
+          aria-label={isSpeaking ? 'Stop reading this Avy message' : 'Read this Avy message aloud'}
+          aria-pressed={isSpeaking}
+        >
+          <FiVolume2 aria-hidden='true' />
+        </button>
+        <span className={styles.copyActionGroup}>
+          <button
+            type='button'
+            className={styles.botResponseAction}
+            onClick={() => handleCopyMessage(messageId, html)}
+            title={isCopied ? 'Copied' : 'Copy message'}
+            aria-label={isCopied ? 'Avy message copied' : 'Copy this Avy message'}
+          >
+            <FiCopy aria-hidden='true' />
+          </button>
+          <span
+            className={[styles.narrationBars, isSpeaking ? styles.narrationBarsActive : ''].filter(Boolean).join(' ')}
+            aria-hidden='true'
+          >
+            <span />
+            <span />
+            <span />
+          </span>
+        </span>
+      </div>
+    );
+  };
+
+  React.useEffect(() => () => {
+    if (copyFeedbackTimerRef.current) clearTimeout(copyFeedbackTimerRef.current);
+  }, []);
+
   React.useEffect(() => {
     const el = speakMsgAreaRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -496,6 +585,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   )}
                 </div>
               </div>
+
+              {!msg.isUser && renderMessageActions(msg.id, msg.text)}
               
               {/*{!msg.isUser && msg.feedbackOrderId && msg.feedbackItems && msg.feedbackItems.length > 0 && (
                 <div className={styles.feedbackCard}>
@@ -904,6 +995,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                     )}
                   </div>
                 </div>
+                {!msg.isUser && renderMessageActions(msg.id, msg.text)}
               </div>
             ))}
             {overlayLoading && (
