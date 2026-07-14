@@ -707,20 +707,53 @@ button { touch-action: manipulation; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 40px 0;
   background: var(--background);
 }
 
 .order-type-card {
   position: relative;
   z-index: 1;
-  width: 100%;
-  max-width: 900px;
+  overflow: hidden;
+  width: min(1120px, calc(100% - 32px));
   text-align: center;
-  background: white;
+  background: linear-gradient(165deg, #fffefb 0%, #fff8ef 100%);
   border-radius: 24px;
   padding: 44px 40px;
   box-shadow: 0 16px 40px rgba(59, 39, 26, 0.14);
+}
+
+/* Soft organic accents, echoing a tea leaf and a tapioca pearl —
+   subtle brand touches rather than a flat white panel */
+.order-type-card::before,
+.order-type-card::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.order-type-card::before {
+  top: -70px;
+  right: -60px;
+  width: 240px;
+  height: 240px;
+  border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+  background: radial-gradient(circle, rgba(191, 211, 125, 0.16) 0%, transparent 72%);
+}
+
+.order-type-card::after {
+  bottom: -80px;
+  left: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 58% 42% 37% 63% / 55% 45% 55% 45%;
+  background: radial-gradient(circle, rgba(155, 109, 74, 0.13) 0%, transparent 72%);
+}
+
+.order-type-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .order-type-card h1 {
@@ -751,19 +784,17 @@ button { touch-action: manipulation; }
   padding: 32px 28px;
   cursor: pointer;
   text-align: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.18s ease, background 0.18s ease;
 }
 
 .order-type-option:hover,
 .order-type-option:focus-visible {
-  transform: translateY(-6px);
-  background: #fff5ea;
-  border-color: rgba(155, 109, 74, 0.4);
-  box-shadow: 0 16px 32px rgba(74, 42, 23, 0.14);
+  background: rgba(2, 87, 173, 0.06);
+  border-color: rgba(2, 87, 173, 0.4);
 }
 
 .order-type-option:focus-visible {
-  outline: 2px solid var(--accent-brown);
+  outline: 2px solid var(--color-secondary);
   outline-offset: 3px;
 }
 
@@ -774,11 +805,6 @@ button { touch-action: manipulation; }
   margin-bottom: 12px;
   font-size: 40px;
   line-height: 1;
-  transition: transform 0.2s ease;
-}
-
-.order-type-option:hover .order-type-icon {
-  transform: scale(1.06);
 }
 
 .order-type-option h2 {
