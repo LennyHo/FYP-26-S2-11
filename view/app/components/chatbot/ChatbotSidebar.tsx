@@ -169,7 +169,6 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     speakText(
       getMessagePlainText(html),
       () => setSpeakingMsgId(currentId => currentId === messageId ? null : currentId),
-      { allowBrowserFallback: false },
     );
   }, [getMessagePlainText, isTTSSpeaking, speakingMsgId]);
 
