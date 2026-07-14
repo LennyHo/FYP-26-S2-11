@@ -7,16 +7,22 @@ const OPTIONS = [
   { value: "pickup", label: "Pickup" },
 ]
 
-export default function OrderTypeSelect({ value, onChange }) {
+export default function OrderTypeSelect({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange?: (nextValue: string) => void
+}) {
   const [open, setOpen] = useState(false)
-  const wrapperRef = useRef(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const current = OPTIONS.find((option) => option.value === value) || OPTIONS[0]
 
   useEffect(() => {
     if (!open) return
 
-    function handleClickOutside(event) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setOpen(false)
       }
     }
@@ -25,7 +31,7 @@ export default function OrderTypeSelect({ value, onChange }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [open])
 
-  function choose(option) {
+  function choose(option: { value: string; label: string }) {
     setOpen(false)
     if (option.value !== value) onChange?.(option.value)
   }

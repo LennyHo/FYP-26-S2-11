@@ -2,14 +2,33 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 
-export default function VoucherSelect({ value, options, onChange, disabled, placeholder = "No voucher" }) {
+type VoucherOption = {
+  value: string
+  label: string
+  title?: string
+  code?: string
+}
+
+export default function VoucherSelect({
+  value,
+  options,
+  onChange,
+  disabled,
+  placeholder = "No voucher",
+}: {
+  value: string
+  options: VoucherOption[]
+  onChange?: (nextValue: string) => void
+  disabled?: boolean
+  placeholder?: string
+}) {
   const allOptions = useMemo(() => [{ value: "", label: placeholder }, ...options], [options, placeholder])
   const current = allOptions.find((option) => option.value === value) || allOptions[0]
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState(current.label)
-  const wrapperRef = useRef(null)
-  const inputRef = useRef(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!open) setQuery(current.label)
@@ -19,8 +38,8 @@ export default function VoucherSelect({ value, options, onChange, disabled, plac
   useEffect(() => {
     if (!open) return
 
-    function handleClickOutside(event) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setOpen(false)
         setQuery(current.label)
       }
@@ -37,7 +56,7 @@ export default function VoucherSelect({ value, options, onChange, disabled, plac
     return allOptions.filter((option) => option.label.toLowerCase().includes(cleanQuery))
   }, [query, allOptions])
 
-  function choose(option) {
+  function choose(option: VoucherOption) {
     setOpen(false)
     setQuery(option.label)
     if (option.value !== value) onChange?.(option.value)

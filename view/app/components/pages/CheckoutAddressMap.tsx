@@ -3,8 +3,11 @@
 import { useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import L from "leaflet"
+import type { DripTeaOutlet } from "../../utils/outlets"
 
-function makeIcon(color) {
+type SelectedLocation = { lat: number; lng: number; address: string } | null
+
+function makeIcon(color: string) {
   return L.divIcon({
     className: "",
     html: `
@@ -21,7 +24,7 @@ function makeIcon(color) {
 const outletIcon = makeIcon("#0257AD")
 const locationIcon = makeIcon("#9b6a3e")
 
-function MapMover({ outlet, location }) {
+function MapMover({ outlet, location }: { outlet: DripTeaOutlet; location: SelectedLocation }) {
   const map = useMap()
 
   useEffect(() => {
@@ -35,7 +38,13 @@ function MapMover({ outlet, location }) {
   return null
 }
 
-export default function CheckoutAddressMap({ outlet, location }) {
+export default function CheckoutAddressMap({
+  outlet,
+  location,
+}: {
+  outlet: DripTeaOutlet
+  location: SelectedLocation
+}) {
   useEffect(() => {
     // @ts-ignore
     delete L.Icon.Default.prototype._getIconUrl

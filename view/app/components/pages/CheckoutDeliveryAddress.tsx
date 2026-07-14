@@ -3,15 +3,18 @@
 import { useEffect, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import { updateUser } from "../../utils/customerApi"
-import { getStoredUser, storeUser } from "../../utils/api.base"
-import { useOutlets } from "../../utils/outlets"
+import { getStoredUser, storeUser, type DripTeaAddress, type DripTeaUser } from "../../utils/api.base"
+import { useOutlets, type DripTeaOutlet } from "../../utils/outlets"
 import OrderTypeSelect from "./OrderTypeSelect"
+import type { DeliveryData } from "./Checkout"
 
 const CheckoutAddressMap = dynamic(() => import("./CheckoutAddressMap"), {
   ssr: false,
 })
 
-function getOutletFromDelivery(delivery, outlets) {
+type OneMapResult = Record<string, any>
+
+function getOutletFromDelivery(delivery: DeliveryData | null, outlets: DripTeaOutlet[]) {
   if (!delivery) return outlets[0]
 
   return (
@@ -25,7 +28,7 @@ function getOutletFromDelivery(delivery, outlets) {
   )
 }
 
-function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const earthRadiusKm = 6371
   const dLat = ((lat2 - lat1) * Math.PI) / 180
   const dLon = ((lon2 - lon1) * Math.PI) / 180
@@ -39,11 +42,11 @@ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
   return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))
 }
 
-function isValidValue(value) {
+function isValidValue(value: unknown) {
   return value && value !== "NIL" && value !== "null"
 }
 
-function formatOneMapAddress(result) {
+function formatOneMapAddress(result: OneMapResult) {
   const name = isValidValue(result.SEARCHVAL) ? result.SEARCHVAL : ""
   const block = isValidValue(result.BLK_NO) ? result.BLK_NO : ""
   const road = isValidValue(result.ROAD_NAME) ? result.ROAD_NAME : ""
@@ -69,7 +72,7 @@ function formatOneMapAddress(result) {
   return parts.join(", ") || address || name || "Selected location"
 }
 
-function getOneMapLatLng(result) {
+function getOneMapLatLng(result: OneMapResult) {
   const lat = Number(
     result.LATITUDE ??
       result.latitude ??
@@ -89,7 +92,7 @@ function getOneMapLatLng(result) {
   return { lat, lng }
 }
 
-function getSearchQueries(query) {
+function getSearchQueries(query: string) {
   const cleaned = query
     .trim()
     .replace(/\s+/g, " ")
@@ -107,11 +110,13 @@ function getSearchQueries(query) {
     postalMatch?.[0],
     withoutSingaporePostal,
     firstSegment,
-  ].filter((value, index, values) => value && values.indexOf(value) === index)
+  ].filter(
+    (value, index, values): value is string => Boolean(value) && values.indexOf(value) === index
+  )
 }
 
-function getSavedAddresses(user = getStoredUser()) {
-  const addresses = Array.isArray(user?.addresses) ? user.addresses : []
+function getSavedAddresses(user: DripTeaUser | null = getStoredUser()) {
+  const addresses: DripTeaAddress[] = Array.isArray(user?.addresses) ? user.addresses : []
   return addresses
     .map((entry) => ({
       label: String(entry?.label || "").trim(),
@@ -126,7 +131,7 @@ function getDefaultSavedAddress(addresses = getSavedAddresses()) {
   return defaultAddress?.address || ""
 }
 
-function normalizeAddress(address) {
+function normalizeAddress(address: string) {
   return String(address || "").trim().replace(/\s+/g, " ").toLowerCase()
 }
 
@@ -137,10 +142,17 @@ export default function CheckoutDeliveryAddress({
   onConfirmed,
   orderType,
   onOrderTypeChange,
+}: {
+  delivery: DeliveryData | null
+  onConfirm: (deliveryData: DeliveryData) => void
+  onPreviewChange?: (deliveryData: DeliveryData | null) => void
+  onConfirmed?: () => void
+  orderType: string
+  onOrderTypeChange: (nextOrderType: string) => void
 }) {
   const { outlets } = useOutlets()
   const searchWrapperRef = useRef<HTMLDivElement>(null)
-  const [currentUser, setCurrentUser] = useState(() => getStoredUser())
+  const [currentUser, setCurrentUser] = useState<DripTeaUser | null>(() => getStoredUser())
   const [savedAddresses, setSavedAddresses] = useState(() => getSavedAddresses())
   const [savedAddress, setSavedAddress] = useState(() =>
     getDefaultSavedAddress(getSavedAddresses())
@@ -162,7 +174,7 @@ export default function CheckoutDeliveryAddress({
         }
       : null
   )
-  const [searchResults, setSearchResults] = useState([])
+  const [searchResults, setSearchResults] = useState<OneMapResult[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [message, setMessage] = useState("")
   const [isSearching, setIsSearching] = useState(false)
@@ -185,7 +197,7 @@ export default function CheckoutDeliveryAddress({
 
   const deliveryFee = selectedLocation ? 3 + Math.ceil(distanceKm) * 0.5 : 0
 
-  function buildDeliveryData() {
+  function buildDeliveryData(): DeliveryData | null {
     if (!selectedLocation || !selectedOutlet) return null
 
     return {
@@ -204,7 +216,7 @@ export default function CheckoutDeliveryAddress({
     }
   }
 
-  async function fetchOneMapResults(query) {
+  async function fetchOneMapResults(query: string): Promise<OneMapResult[]> {
     const response = await fetch(
       `/api/onemap/search?q=${encodeURIComponent(query)}`
     )
@@ -217,7 +229,7 @@ export default function CheckoutDeliveryAddress({
     return data.results || []
   }
 
-  async function fetchSearchResults(query, sourceMode = mode, autoSelect = false) {
+  async function fetchSearchResults(query: string, sourceMode = mode, autoSelect = false) {
     const cleanQuery = query.trim()
 
     if (cleanQuery.length < 3) {
@@ -230,7 +242,7 @@ export default function CheckoutDeliveryAddress({
     setMessage("")
 
     try {
-      let results = []
+      let results: OneMapResult[] = []
 
       for (const searchQuery of getSearchQueries(cleanQuery)) {
         results = await fetchOneMapResults(searchQuery)
@@ -265,7 +277,7 @@ export default function CheckoutDeliveryAddress({
     }
   }
 
-  function selectSearchResult(result, keepSuggestionsOpen = false) {
+  function selectSearchResult(result: OneMapResult, keepSuggestionsOpen = false) {
     const coords = getOneMapLatLng(result)
 
     if (!coords) {
@@ -296,7 +308,7 @@ export default function CheckoutDeliveryAddress({
     }
   }
 
-  function chooseSavedAddressEntry(addressEntry) {
+  function chooseSavedAddressEntry(addressEntry: { address?: string }) {
     const nextAddress = String(addressEntry?.address || "").trim()
     if (!nextAddress) return
 
@@ -320,7 +332,7 @@ export default function CheckoutDeliveryAddress({
     setShowSuggestions(false)
   }
 
-  async function saveSelectedAddress(deliveryData) {
+  async function saveSelectedAddress(deliveryData: DeliveryData) {
     if (!saveAddress || !currentUser) return "not-requested"
 
     const cleanAddress = String(deliveryData.customerAddress || "").trim()

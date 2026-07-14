@@ -43,8 +43,9 @@ type Confirmation = {
     details: string;
 };
 
-type DeliveryData = {
+export type DeliveryData = {
     type: string;
+    storeCode: string;
     outletName: string;
     outletAddress: string;
     outletLat: number;
