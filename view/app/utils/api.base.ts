@@ -299,7 +299,7 @@ export async function requestJson<T>(path: string, init: RequestInit = {}, logLa
 const USER_STORAGE_KEY = 'dripTeaCurrentUser';
 const TOKEN_STORAGE_KEY = 'dripTeaAuthToken';
 
-// Set by the Reward page's "USE NOW" button, read once by the checkout page to
+// Set by the Voucher page's "USE NOW" button, read once by the checkout page to
 // pre-select that voucher in the dropdown.
 export const PENDING_VOUCHER_KEY = 'driptea_pending_voucher';
 

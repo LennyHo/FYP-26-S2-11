@@ -1746,8 +1746,8 @@ const PAGE_DIRECTORY = [
         labels: { en: "Order Status", ms: "Status Pesanan", zh: "订单状态", ta: "ஆர்டர் நிலை" } },
     { key: "profile", route: "/profile", aliases: ["profile page", "my profile", "account page", "account settings", "profile"],
         labels: { en: "Profile", ms: "Profil", zh: "个人资料", ta: "சுயவிவரம்" } },
-    { key: "rewards", route: "/rewards", aliases: ["rewards page", "reward page", "vouchers page", "voucher page", "coupons page", "coupon page", "rewards", "reward", "vouchers", "voucher", "coupons", "coupon"],
-        labels: { en: "Rewards", ms: "Ganjaran", zh: "奖励", ta: "வெகுமதிகள்" } },
+    { key: "vouchers", route: "/vouchers", aliases: ["rewards page", "reward page", "vouchers page", "voucher page", "coupons page", "coupon page", "rewards", "reward", "vouchers", "voucher", "coupons", "coupon"],
+        labels: { en: "Vouchers", ms: "Baucar", zh: "优惠券", ta: "வவுச்சர்" } },
     { key: "our-story", route: "/our-story", aliases: ["our story page", "our story", "about us page", "about page", "about us"],
         labels: { en: "Our Story", ms: "Kisah Kami", zh: "我们的故事", ta: "எங்கள் கதை" } },
     { key: "contact", route: "/contact", aliases: ["contact us page", "contact page", "contact us", "contact"],
@@ -1881,11 +1881,11 @@ const PAGE_MANUAL_STEPS = {
         zh: "1. 点击您的个人头像。\n2. 点击 Settings。",
         ta: "1. உங்கள் சுயவிவரப் படத்தைக் கிளிக் செய்யவும்.\n2. Settings ஐக் கிளிக் செய்யவும்.",
     },
-    rewards: {
-        en: "1. Click your profile photo.\n2. Click Rewards.",
-        ms: "1. Klik gambar profil anda.\n2. Klik Rewards.",
-        zh: "1. 点击您的个人头像。\n2. 点击 Rewards。",
-        ta: "1. உங்கள் சுயவிவரப் படத்தைக் கிளிக் செய்யவும்.\n2. Rewards ஐக் கிளிக் செய்யவும்.",
+    vouchers: {
+        en: "1. Click your profile photo.\n2. Click Vouchers.",
+        ms: "1. Klik gambar profil anda.\n2. Klik Vouchers.",
+        zh: "1. 点击您的个人头像。\n2. 点击 Vouchers。",
+        ta: "1. உங்கள் சுயவிவரப் படத்தைக் கிளிக் செய்யவும்.\n2. Vouchers ஐக் கிளிக் செய்யவும்.",
     },
     "our-story": {
         en: "1. Click \"OUR STORY\" in the top menu.",
@@ -2044,16 +2044,16 @@ const REPLY_STRINGS = {
         ta: "உங்களிடம் உள்ள வவுச்சர்களைப் பார்க்க முதலில் உள்நுழையுங்கள்.",
     },
     exploreRewardsCta: {
-        en: "You can find more reward details by exploring our Rewards page!",
-        zh: "欢迎前往我们的奖励页面，了解更多奖励详情！",
-        ms: "Anda boleh mendapatkan lebih banyak butiran ganjaran dengan meneroka halaman Rewards kami!",
-        ta: "மேலும் வெகுமதி விவரங்களை எங்கள் Rewards பக்கத்தில் காணலாம்!",
+        en: "You can find more voucher details by exploring our Vouchers page!",
+        zh: "欢迎前往我们的优惠券页面，了解更多优惠券详情！",
+        ms: "Anda boleh mendapatkan lebih banyak butiran baucar dengan meneroka halaman Vouchers kami!",
+        ta: "மேலும் வவுச்சர் விவரங்களை எங்கள் Vouchers பக்கத்தில் காணலாம்!",
     },
     exploreRewardsBtn: {
-        en: "Explore Rewards",
-        zh: "探索奖励",
-        ms: "Terokai Ganjaran",
-        ta: "வெகுமதிகளை ஆராயுங்கள்",
+        en: "Explore Vouchers",
+        zh: "探索优惠券",
+        ms: "Terokai Baucar",
+        ta: "வவுச்சர்களை ஆராயுங்கள்",
     },
     orderStatusStep1: {
         en: "Order sent",
@@ -2619,11 +2619,11 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         };
 
         // The CTA message + button remain deterministic too (not left to Gemini) so the
-        // Rewards page link always appears, and always in the correct language via REPLY_STRINGS —
+        // Vouchers page link always appears, and always in the correct language via REPLY_STRINGS —
         // the same pattern buildCartSummaryReply uses for its "View Cart"/"Checkout" buttons.
         const reply =
             `${t('voucherCardTitle')}<br><br>${t('exploreRewardsCta')}<br><br>` +
-            `<button class="chat-nav-btn-compact" onclick="handleRewards()">${t('exploreRewardsBtn')}</button>`;
+            `<button class="chat-nav-btn-compact" onclick="handleVouchers()">${t('exploreRewardsBtn')}</button>`;
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: t('voucherCardTitle') });

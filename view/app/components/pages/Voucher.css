@@ -1,17 +1,17 @@
-.reward-page {
+.voucher-page {
   min-height: 100vh;
   background: #f5f0ea;
 }
 
 /* ── Main layout ─────────────────────────────── */
-.reward-main {
+.voucher-main {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
   padding: 40px 0 96px;
 }
 
 /* ── Highlight banner ──────────────────────────── */
-.reward-highlight {
+.voucher-highlight {
   position: relative;
   display: flex;
   align-items: center;
@@ -24,7 +24,7 @@
   overflow: hidden;
 }
 
-.reward-highlight-pillar {
+.voucher-highlight-pillar {
   flex-shrink: 0;
   width: 52px;
   height: 68px;
@@ -39,26 +39,26 @@
   backdrop-filter: blur(2px);
 }
 
-.reward-highlight-body {
+.voucher-highlight-body {
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
 }
 
-.reward-highlight-body strong {
+.voucher-highlight-body strong {
   color: #fff;
   font-size: 17px;
   font-weight: 800;
 }
 
-.reward-highlight-body span {
+.voucher-highlight-body span {
   color: rgba(255, 240, 224, 0.82);
   font-size: 13px;
 }
 
 /* Decorative stacked pillars, echoing the shape of the icon block on the left */
-.reward-highlight-decor {
+.voucher-highlight-decor {
   margin-left: auto;
   display: flex;
   align-items: flex-end;
@@ -66,26 +66,26 @@
   flex-shrink: 0;
 }
 
-.reward-highlight-decor span {
+.voucher-highlight-decor span {
   display: block;
   width: 10px;
   border-radius: 5px;
   background: rgba(255, 255, 255, 0.22);
 }
 
-.reward-highlight-decor span:nth-child(1) { height: 26px; }
-.reward-highlight-decor span:nth-child(2) { height: 42px; background: rgba(255, 255, 255, 0.32); }
-.reward-highlight-decor span:nth-child(3) { height: 58px; background: rgba(255, 233, 199, 0.55); }
+.voucher-highlight-decor span:nth-child(1) { height: 26px; }
+.voucher-highlight-decor span:nth-child(2) { height: 42px; background: rgba(255, 255, 255, 0.32); }
+.voucher-highlight-decor span:nth-child(3) { height: 58px; background: rgba(255, 233, 199, 0.55); }
 
 /* ── Sub tabs (underline) ─────────────────────── */
-.reward-subtabs {
+.voucher-subtabs {
   display: flex;
   gap: 28px;
   border-bottom: 1px solid rgba(220, 199, 180, 0.7);
   margin-bottom: 20px;
 }
 
-.reward-subtab {
+.voucher-subtab {
   border: none;
   background: transparent;
   padding: 0 0 12px;
@@ -98,18 +98,18 @@
   transition: color 0.15s, border-color 0.15s;
 }
 
-.reward-subtab.active {
+.voucher-subtab.active {
   color: #5b351f;
   border-bottom-color: #5b351f;
 }
 
 /* ── Voucher list ──────────────────────────────── */
-.reward-list {
+.voucher-list {
   display: grid;
   gap: 16px;
 }
 
-.reward-card {
+.voucher-card {
   display: grid;
   grid-template-columns: 120px 1fr auto;
   align-items: center;
@@ -121,7 +121,7 @@
   padding: 16px 20px;
 }
 
-.reward-card-image {
+.voucher-card-image {
   width: 120px;
   height: 96px;
   object-fit: cover;
@@ -130,49 +130,49 @@
   background: #f5f0ea;
 }
 
-.reward-card-body {
+.voucher-card-body {
   min-width: 0;
 }
 
-.reward-card-title {
+.voucher-card-title {
   margin: 0 0 6px;
   color: #2c1810;
   font-size: 17px;
   font-weight: 800;
 }
 
-.reward-card-validity {
+.voucher-card-validity {
   margin: 0 0 6px;
   color: #9a7a65;
   font-size: 13px;
 }
 
-.reward-card-code {
+.voucher-card-code {
   margin: 0 0 6px;
   color: #5b351f;
   font-size: 13px;
 }
 
-.reward-card-code strong {
+.voucher-card-code strong {
   letter-spacing: 0.03em;
 }
 
-.reward-card-terms {
+.voucher-card-terms {
   margin: 0;
   color: #9a7a65;
   font-size: 12px;
   line-height: 1.4;
 }
 
-.reward-card-actions {
+.voucher-card-actions {
   flex-shrink: 0;
 }
 
-.reward-card-history {
+.voucher-card-history {
   grid-template-columns: 1fr;
 }
 
-.reward-use-btn {
+.voucher-use-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -187,12 +187,12 @@
   transition: background 0.15s;
 }
 
-.reward-use-btn:hover {
+.voucher-use-btn:hover {
   background: #059669;
 }
 
 /* ── Empty states ──────────────────────────────── */
-.reward-empty {
+.voucher-empty {
   text-align: center;
   padding: 72px 24px;
   background: #fff;
@@ -200,7 +200,7 @@
   border: 1px solid rgba(220, 199, 180, 0.8);
 }
 
-.reward-empty-icon {
+.voucher-empty-icon {
   width: 64px;
   height: 64px;
   background: #f5f0ea;
@@ -212,14 +212,14 @@
   color: #c4a98a;
 }
 
-.reward-empty h2 {
+.voucher-empty h2 {
   margin: 0 0 8px;
   color: #2c1810;
   font-size: 18px;
   font-weight: 700;
 }
 
-.reward-empty p {
+.voucher-empty p {
   margin: 0;
   color: #9a7a65;
   font-size: 14px;
@@ -227,24 +227,24 @@
 
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 640px) {
-  .reward-highlight-decor {
+  .voucher-highlight-decor {
     display: none;
   }
 
-  .reward-card {
+  .voucher-card {
     grid-template-columns: 1fr;
   }
 
-  .reward-card-image {
+  .voucher-card-image {
     width: 100%;
     height: 140px;
   }
 
-  .reward-card-actions {
+  .voucher-card-actions {
     display: flex;
   }
 
-  .reward-use-btn {
+  .voucher-use-btn {
     width: 100%;
     justify-content: center;
   }

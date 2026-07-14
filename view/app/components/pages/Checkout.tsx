@@ -253,7 +253,7 @@ export default function Checkout() {
         setOrderType(window.localStorage.getItem("driptea_order_type") || "");
     }, []);
 
-    // Pre-select the voucher the customer chose via "USE NOW" on the Reward page.
+    // Pre-select the voucher the customer chose via "USE NOW" on the Voucher page.
     // Waits for both the voucher catalogue and the cart (for the subtotal) to load,
     // then applies it once — items.length gates against firing on an empty cart.
     const pendingVoucherAppliedRef = useRef(false);

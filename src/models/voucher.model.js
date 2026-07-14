@@ -50,8 +50,8 @@ voucherSchema.statics.calculateDiscount = function calculateDiscount(voucher, su
 };
 
 // Canonical voucher lineup — single source of truth for the checkout dropdown,
-// the Reward page catalogue, and the database. Keep this list in sync with
-// Reward.tsx's VOUCHER_DISPLAY map (image + validity copy live client-side).
+// the Voucher page catalogue, and the database. Keep this list in sync with
+// Voucher.tsx's VOUCHER_DISPLAY map (image + validity copy live client-side).
 const SEED_VOUCHERS = [
   {
     code: "BOGO2026",
