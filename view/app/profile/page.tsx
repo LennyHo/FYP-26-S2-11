@@ -9,31 +9,53 @@ import styles from './Profile.module.css';
 import { updateUser } from '../utils/customerApi';
 import { getStoredUser, storeUser, type DripTeaAddress } from '../utils/api.base';
 
+const MAX_ADDRESSES = 5;
+const ADDRESS_CATEGORIES = ["Home", "Work", "Others"] as const;
+type AddressCategory = (typeof ADDRESS_CATEGORIES)[number];
+
+function getAddressCategory(label: string): AddressCategory {
+  const normalizedLabel = label.trim().toLowerCase();
+  if (normalizedLabel.includes("home")) return "Home";
+  if (normalizedLabel.includes("work")) return "Work";
+  return "Others";
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [profilePic, setProfilePic] = useState<string>("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [addresses, setAddresses] = useState<DripTeaAddress[]>([]);
+  const [activeAddressCategory, setActiveAddressCategory] = useState<AddressCategory>("Home");
   const [status, setStatus] = useState("");
+
+  const filteredAddresses = addresses
+    .map((entry, index) => ({ entry, index }))
+    .filter(({ entry }) => getAddressCategory(String(entry.label || "")) === activeAddressCategory);
 
   useEffect(() => {
     const user = getStoredUser();
     setProfilePic(user?.profilePic || "/profile_empty.png");
     setName(user?.fullName || "");
     setEmail(user?.email || "");
-    setAddresses(user?.addresses ? user.addresses.map((address: DripTeaAddress) => ({ ...address })) : []);
+    setAddresses(user?.addresses
+      ? user.addresses.slice(0, MAX_ADDRESSES).map((address: DripTeaAddress) => ({ ...address }))
+      : []);
   }, []);
 
   function addAddress() {
-    setAddresses(current => [
-      ...current,
-      {
-        label: "",
-        address: "",
-        isDefault: current.length === 0,
-      },
-    ]);
+    setAddresses(current => {
+      if (current.length >= MAX_ADDRESSES) return current;
+
+      return [
+        ...current,
+        {
+          label: activeAddressCategory === "Others" ? "Other" : activeAddressCategory,
+          address: "",
+          isDefault: current.length === 0,
+        },
+      ];
+    });
   }
 
   function removeAddress(index: number) {
@@ -72,7 +94,8 @@ export default function ProfilePage() {
         address: String(entry.address || "").trim(),
         isDefault: Boolean(entry.isDefault),
       }))
-      .filter(entry => entry.address.length > 0);
+      .filter(entry => entry.address.length > 0)
+      .slice(0, MAX_ADDRESSES);
 
     if (cleaned.length > 0 && !cleaned.some(entry => entry.isDefault)) {
       cleaned[0].isDefault = true;
@@ -137,9 +160,12 @@ export default function ProfilePage() {
           <div className={styles.headerSpacer} />
         </div>
 
-        {/* Avatar */}
-        <div className={styles.avatarSection}>
-          <div className={styles.avatarWrapper}>
+        {/* Form */}
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <div className={styles.profileFields}>
+          {/* Avatar */}
+          <div className={styles.avatarSection}>
+            <div className={styles.avatarWrapper}>
             <img
               src={profilePic || "/profile_empty.png"}
               alt="Profile"
@@ -152,12 +178,10 @@ export default function ProfilePage() {
               </svg>
             </label>
             <input id="profilePic" name="profilePic" type="file" accept="image/*" onChange={handlePicChange} className={styles.fileInput} />
+            </div>
+            <p className={styles.avatarHint}>Tap to change your profile photo</p>
           </div>
-          <p className={styles.avatarHint}>Tap to change your profile photo</p>
-        </div>
 
-        {/* Form */}
-        <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.fieldGroup}>
             <label className={styles.label} htmlFor="name">Full Name</label>
             <input
@@ -200,6 +224,18 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          <button className={styles.saveBtn} type="submit">Save Changes</button>
+
+          {status && (
+            <div className={styles.successMsg}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {status}
+            </div>
+          )}
+          </div>
+
           <section className={styles.addressSection}>
             <div className={styles.addressHeader}>
               <div>
@@ -207,17 +243,57 @@ export default function ProfilePage() {
                 <p className={styles.addressHint}>The default address is used first during delivery checkout.</p>
               </div>
 
-              <button type="button" className={styles.addAddressBtn} onClick={addAddress}>
-                Add Address
+              <button
+                type="button"
+                className={styles.addAddressBtn}
+                onClick={addAddress}
+                disabled={addresses.length >= MAX_ADDRESSES}
+                title={addresses.length >= MAX_ADDRESSES ? "You can save up to 5 addresses." : undefined}
+              >
+                {addresses.length >= MAX_ADDRESSES ? "Address limit reached" : `Add Address (${addresses.length}/${MAX_ADDRESSES})`}
               </button>
             </div>
 
-            {addresses.length === 0 ? (
-              <p className={styles.emptyAddresses}>No saved addresses yet.</p>
+            <div className={styles.addressTabs} role="tablist" aria-label="Address categories">
+              {ADDRESS_CATEGORIES.map(category => {
+                const categoryCount = addresses.filter(
+                  entry => getAddressCategory(String(entry.label || "")) === category
+                ).length;
+
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    role="tab"
+                    data-category={category.toLowerCase()}
+                    aria-selected={activeAddressCategory === category}
+                    className={`${styles.addressTab} ${activeAddressCategory === category ? styles.addressTabActive : ""}`}
+                    onClick={() => {
+                      setActiveAddressCategory(category);
+                    }}
+                  >
+                    <span className={styles.addressTabLabel}>
+                      {category}
+                    </span>
+                    <span className={styles.addressTabCount}>{categoryCount}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {filteredAddresses.length === 0 ? (
+              <p className={styles.emptyAddresses}>No {activeAddressCategory.toLowerCase()} addresses yet.</p>
             ) : (
               <div className={styles.addressList}>
-                {addresses.map((entry, index) => (
-                  <div key={index} className={styles.addressCard}>
+                {filteredAddresses.map(({ entry, index }) => (
+                  <div
+                    key={index}
+                    className={styles.addressCard}
+                    data-category={activeAddressCategory.toLowerCase()}
+                  >
+                    <div className={styles.addressCardHeader}>
+                      <span>{activeAddressCategory} address</span>
+                    </div>
                     <div className={styles.addressInputs}>
                       <input
                         className={styles.input}
@@ -235,15 +311,20 @@ export default function ProfilePage() {
                     </div>
 
                     <div className={styles.addressActions}>
-                      <label className={styles.defaultAddressToggle}>
-                        <input
-                          type="radio"
-                          name="defaultAddress"
-                          checked={Boolean(entry.isDefault)}
-                          onChange={() => setDefaultAddress(index)}
-                        />
-                        Default
-                      </label>
+                      {entry.isDefault ? (
+                        <span className={styles.defaultAddressBadge}>
+                          <span className={styles.defaultAddressDot} />
+                          Default address
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.setDefaultAddressBtn}
+                          onClick={() => setDefaultAddress(index)}
+                        >
+                          Set as default
+                        </button>
+                      )}
 
                       <button
                         type="button"
@@ -258,17 +339,6 @@ export default function ProfilePage() {
               </div>
             )}
           </section>
-
-          <button className={styles.saveBtn} type="submit">Save Changes</button>
-
-          {status && (
-            <div className={styles.successMsg}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              {status}
-            </div>
-          )}
         </form>
       </div>
     </main>

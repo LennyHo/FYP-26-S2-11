@@ -9,7 +9,8 @@
 
 .card {
   width: 100%;
-  max-width: 480px;
+  max-width: 1200px;
+  box-sizing: border-box;
   background: #fff;
   border-radius: 20px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
@@ -21,7 +22,8 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 1.5rem;
   margin-bottom: 1.6rem;
 }
 
@@ -30,12 +32,12 @@
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
-  text-align: center;
-  flex: 1;
+  text-align: left;
+  flex: 0 1 auto;
 }
 
 .headerSpacer {
-  width: 52px;
+  display: none;
 }
 
 .backBtn {
@@ -60,8 +62,9 @@
 .avatarSection {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-bottom: 1.8rem;
+  align-items: flex-start;
+  grid-column: 1;
+  margin-bottom: 0.7rem;
 }
 
 .avatarWrapper {
@@ -113,15 +116,29 @@
 
 /* Form */
 .form {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.35fr);
+  align-items: stretch;
+  gap: 2rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.profileFields {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.8rem;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
 }
 
 .fieldGroup {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .label {
@@ -163,6 +180,9 @@
   border: 1.5px solid #e0dbd0;
   border-radius: 10px;
   background: #f5f0e8;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .passwordDots {
@@ -193,10 +213,20 @@
 }
 
 .addressSection {
+  grid-column: 2;
+  grid-row: 1;
   border: 1.5px solid #e0dbd0;
   border-radius: 14px;
   background: #fbf8f2;
   padding: 1rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 0;
+  height: 100%;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(190, 177, 154, 0.16), transparent 25%),
+    #fbf8f2;
 }
 
 .addressHeader {
@@ -237,34 +267,192 @@
   background: #f5f0e8;
 }
 
+.addAddressBtn:disabled {
+  color: #999;
+  background: #f3f0ea;
+  border-color: #ddd7cc;
+  cursor: not-allowed;
+}
+
+.addressTabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.addressTab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid #ded8cd;
+  border-radius: 10px;
+  background: #fff;
+  color: #625f59;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
+}
+
+.addressTab[data-category="home"],
+.addressCard[data-category="home"] {
+  --address-accent: #52745a;
+  --address-accent-soft: #edf4ee;
+}
+
+.addressTab[data-category="work"],
+.addressCard[data-category="work"] {
+  --address-accent: #846744;
+  --address-accent-soft: #f5efe6;
+}
+
+.addressTab[data-category="others"],
+.addressCard[data-category="others"] {
+  --address-accent: #627785;
+  --address-accent-soft: #edf2f5;
+}
+
+.addressTab:hover {
+  border-color: #aaa397;
+  color: #1a1a1a;
+}
+
+.addressTabActive {
+  border-color: var(--address-accent, #1a1a1a);
+  background: var(--address-accent, #1a1a1a);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(35, 30, 24, 0.16);
+}
+
+.addressTabActive:hover {
+  color: #fff;
+}
+
+.addressTabLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.addressTabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #eee9e0;
+  color: #4e4b46;
+  font-size: 0.75rem;
+  box-sizing: border-box;
+}
+
+.addressTabActive .addressTabCount {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
 .emptyAddresses {
   margin: 0;
+  padding: 1.35rem;
+  border: 1px dashed #d8d1c5;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.6);
   color: #888;
   font-size: 0.84rem;
+  text-align: center;
 }
 
 .addressList {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 0.85rem) / 2);
   gap: 0.85rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.15rem 0 0.65rem;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #c8c0b4 transparent;
+}
+
+.addressList::-webkit-scrollbar {
+  height: 7px;
+}
+
+.addressList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.addressList::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #c8c0b4;
 }
 
 .addressCard {
+  position: relative;
+  overflow: hidden;
   display: grid;
+  grid-template-rows: auto 1fr auto;
   gap: 0.7rem;
   border: 1px solid #e7dfd4;
   border-radius: 12px;
   background: #fff;
-  padding: 0.85rem;
+  padding: 1rem;
+  min-height: 300px;
+  min-width: 0;
+  scroll-snap-align: start;
+  box-shadow: 0 2px 8px rgba(35, 30, 24, 0.04);
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+
+.addressCard::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: var(--address-accent, #777);
+}
+
+.addressCard:hover {
+  border-color: var(--address-accent, #cec5b8);
+  box-shadow: 0 6px 16px rgba(35, 30, 24, 0.08);
+  transform: translateY(-1px);
+}
+
+.addressCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--address-accent, #555);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .addressInputs {
   display: grid;
+  grid-template-rows: auto 1fr;
   gap: 0.6rem;
 }
 
 .addressTextarea {
-  min-height: 78px;
-  resize: vertical;
+  height: 135px;
+  min-height: 135px;
+  max-height: 135px;
+  resize: none;
+  overflow-y: auto;
   line-height: 1.45;
 }
 
@@ -273,19 +461,41 @@
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #eee8df;
 }
 
-.defaultAddressToggle {
+.defaultAddressBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  color: #333;
-  font-size: 0.84rem;
-  font-weight: 600;
+  color: #2d5f38;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-.defaultAddressToggle input {
-  accent-color: #1a1a1a;
+.defaultAddressDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2d6a3f;
+}
+
+.setDefaultAddressBtn {
+  border: none;
+  background: transparent;
+  color: #555;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+
+.setDefaultAddressBtn:hover {
+  color: #1a1a1a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .removeAddressBtn {
@@ -305,7 +515,7 @@
 }
 
 .saveBtn {
-  margin-top: 0.6rem;
+  margin-top: auto;
   padding: 0.85rem;
   background: #fff;
   color: #1a1a1a;
@@ -316,6 +526,8 @@
   cursor: pointer;
   transition: background 0.18s, border-color 0.18s;
   font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .saveBtn:hover {
@@ -340,6 +552,109 @@
   padding: 0.55rem 1rem;
 }
 
+/* Keep the complete profile workspace visible as a stationary panel on
+   desktop and iPad landscape. The address cards remain horizontally scrollable. */
+@media (min-width: 801px) {
+  .page {
+    height: 100dvh;
+    min-height: 0;
+    box-sizing: border-box;
+    align-items: stretch;
+    padding: 12px clamp(12px, 3vw, 56px);
+    overflow: hidden;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    margin-top: 0;
+    padding: clamp(1.25rem, 2.8vh, 2rem) 2rem;
+    overflow: hidden;
+  }
+
+  .header {
+    flex: 0 0 auto;
+    margin-bottom: clamp(0.9rem, 2.2vh, 1.6rem);
+  }
+
+  .form {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .profileFields,
+  .addressSection {
+    min-height: 0;
+  }
+
+  .addressSection {
+    overflow: hidden;
+  }
+
+  .avatarImg {
+    width: clamp(84px, 13vh, 110px);
+    height: clamp(84px, 13vh, 110px);
+  }
+
+  .input,
+  .passwordRow {
+    padding-block: clamp(0.55rem, 1.3vh, 0.75rem);
+  }
+
+  .addressCard {
+    min-height: 300px;
+  }
+
+  .addressTextarea {
+    height: 135px;
+    min-height: 135px;
+    max-height: 135px;
+  }
+}
+
+@media (max-width: 800px) {
+  .card {
+    max-width: 480px;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  .profileFields {
+    gap: 0.75rem;
+    height: auto;
+  }
+
+  .addressSection {
+    min-height: 0;
+    height: auto;
+  }
+
+  .addressCard {
+    min-height: 300px;
+  }
+
+  .form > *,
+  .fieldGroup,
+  .input,
+  .passwordRow,
+  .addressSection,
+  .saveBtn,
+  .successMsg {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+}
+
 @media (max-width: 560px) {
   .card {
     padding: 1.5rem 1.1rem 2rem;
@@ -350,6 +665,14 @@
     gap: 0.7rem;
   }
 
+  .addressTabs {
+    gap: 0.4rem;
+  }
+
+  .addressTab {
+    padding: 0.6rem;
+  }
+
   .addAddressBtn {
     width: 100%;
   }
@@ -357,5 +680,9 @@
   .addressActions {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .addressList {
+    grid-auto-columns: 88%;
   }
 }

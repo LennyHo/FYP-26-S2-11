@@ -592,7 +592,7 @@ export default function Checkout() {
                         className="checkout-back-btn"
                         onClick={() => router.push("/cart")}
                     >
-                        ← Back to cart
+                        Back to Cart
                     </button>
                 )}
 

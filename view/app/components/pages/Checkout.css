@@ -11,23 +11,38 @@
 
 .checkout-back-btn {
     display: inline-flex;
+    box-sizing: border-box;
     align-items: center;
-    gap: 6px;
-    border: 1.5px solid #8d633f;
-    border-radius: 999px;
-    background: transparent;
-    color: #8d633f;
+    justify-content: center;
+    border: 0;
+    min-width: 176px;
+    min-height: 48px;
+    border-radius: 14px;
+    background: #5b351f;
+    color: #fff;
     font-weight: 800;
-    font-size: 14px;
-    padding: 8px 20px;
+    font-size: 15px;
+    line-height: 1;
+    padding: 14px 28px;
     cursor: pointer;
     margin-bottom: 18px;
-    transition: background 0.18s, color 0.18s;
+    box-shadow: 0 7px 14px rgba(60, 35, 20, 0.28);
+    transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .checkout-back-btn:hover {
-    background: #8d633f;
-    color: #fff;
+    background: #462717;
+    box-shadow: 0 9px 18px rgba(60, 35, 20, 0.32);
+    transform: translateY(-2px);
+}
+
+.checkout-back-btn:focus-visible {
+    outline: 3px solid rgba(154, 106, 61, 0.34);
+    outline-offset: 3px;
+}
+
+.checkout-back-btn:active {
+    transform: translateY(0);
 }
 
 .checkout-card {
@@ -627,8 +642,10 @@
     }
 
     .checkout-back-btn {
-        font-size: 13px;
-        padding: 7px 16px;
+        width: 100%;
+        min-height: 46px;
+        font-size: 15px;
+        padding: 13px 22px;
         margin-bottom: 12px;
     }
 
