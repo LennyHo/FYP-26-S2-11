@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation"
 import Header from "../components/layout/Header"
-import heroStyles from "../components/pages/OurStory.module.css"
 
 export default function OrderTypePage() {
   const router = useRouter()
@@ -23,22 +22,6 @@ export default function OrderTypePage() {
     <>
       <Header />
       <div className="order-type-page">
-        <div className={heroStyles.heroStarfield} />
-        <div className={heroStyles.heroStarsBright} />
-        <div className={heroStyles.heroNebula} />
-        <div className={heroStyles.heroBlob} />
-        <div className={heroStyles.heroBlobRed} />
-        <div className={heroStyles.heroSpotlight} />
-        <div className={heroStyles.heroRingOuter} />
-        <div className={heroStyles.heroRingMid} />
-        <div className={heroStyles.heroRingInner} />
-        <div className={heroStyles.heroBurst} />
-        <div className={heroStyles.heroCornerTL} />
-        <div className={heroStyles.heroCornerTR} />
-        <div className={heroStyles.heroCornerBL} />
-        <div className={heroStyles.heroCornerBR} />
-        <div className={heroStyles.heroBottomFade} />
-
         <div className="order-type-card">
           <h1>Choose Your Order Method</h1>
           <p>Select an option to continue to the menu.</p>
