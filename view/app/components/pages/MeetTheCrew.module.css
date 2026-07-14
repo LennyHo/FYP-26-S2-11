@@ -279,16 +279,13 @@
   letter-spacing: 0.06em;
   text-decoration: none;
   margin-top: 6px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.15s ease, color 0.15s ease;
   white-space: nowrap;
 }
 
 .ctaBannerBtn:hover {
   background: var(--color-secondary);
   color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(2, 87, 173, 0.35);
 }
 
 .memberSection {
@@ -298,9 +295,8 @@
   gap: 24px;
   margin-top: 20px;
   padding: 40px 32px;
-  background: linear-gradient(135deg, #1e0a00 0%, #4a1a08 50%, #2a0a3a 100%);
+  background: linear-gradient(160deg, #1e0a00 0%, #3a1408 100%);
   border-radius: 22px;
-  box-shadow: 0 20px 50px rgba(30, 10, 0, 0.22);
   text-align: center;
 }
 
@@ -364,9 +360,8 @@
 
 .storeCard {
   padding: 20px 20px 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 3px solid rgba(255, 185, 100, 0.6);
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 235, 210, 0.14);
   border-radius: 16px;
   text-align: left;
   display: flex;
@@ -427,8 +422,8 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background: rgba(255, 185, 100, 0.08);
-  border: 1px solid rgba(255, 185, 100, 0.25);
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 235, 210, 0.14);
   border-radius: 14px;
   padding: 14px 18px;
   max-width: 640px;

@@ -159,21 +159,8 @@
   text-transform: uppercase;
 }
 
-/* Form container with brown accent bar */
 .container {
-  position: relative;
-  overflow: hidden;
   padding: 22px 24px 22px;
-}
-
-.container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #ea580c 0%, #9b6d4a 50%, #c2410c 100%);
 }
 
 .heading {
@@ -265,20 +252,18 @@
   min-height: 44px;
   border: 0;
   border-radius: 10px;
-  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  background: #ea580c;
   color: #fff;
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.28);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition: background 0.15s ease, opacity 0.15s ease;
   margin-top: 4px;
 }
 
 .button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.38);
+  background: #0257ad;
 }
 
 .button:disabled {

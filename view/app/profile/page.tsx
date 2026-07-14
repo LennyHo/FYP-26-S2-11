@@ -9,7 +9,7 @@ import styles from './Profile.module.css';
 import { updateUser } from '../utils/customerApi';
 import { getStoredUser, storeUser, type DripTeaAddress } from '../utils/api.base';
 
-const MAX_ADDRESSES = 5;
+const MAX_ADDRESSES = 4;
 const ADDRESS_CATEGORIES = ["Home", "Work", "Others"] as const;
 type AddressCategory = (typeof ADDRESS_CATEGORIES)[number];
 
@@ -248,7 +248,7 @@ export default function ProfilePage() {
                 className={styles.addAddressBtn}
                 onClick={addAddress}
                 disabled={addresses.length >= MAX_ADDRESSES}
-                title={addresses.length >= MAX_ADDRESSES ? "You can save up to 5 addresses." : undefined}
+                title={addresses.length >= MAX_ADDRESSES ? `You can save up to ${MAX_ADDRESSES} addresses.` : undefined}
               >
                 {addresses.length >= MAX_ADDRESSES ? "Address limit reached" : `Add Address (${addresses.length}/${MAX_ADDRESSES})`}
               </button>
