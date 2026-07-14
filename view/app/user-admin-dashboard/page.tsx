@@ -39,7 +39,7 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
+import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUsers } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
 import { createUserAccount, getUsers, suspendUser, updateUser } from '../utils/adminApi';
 import { clearStoredUser, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
@@ -589,7 +589,7 @@ export default function UserAdminDashboardPage() {
             <div className={styles.modalAccent} />
             <div className={styles.modalBody}>
               <div className={styles.modalHeader}>
-                <div className={styles.modalAvatar}>👤</div>
+                <div className={styles.modalAvatar}><FaUser /></div>
                 <div className={styles.modalHeaderText}>
                   <h2 id="view-user-title">User Details</h2>
                   <p>{viewingUser.email}</p>
@@ -598,28 +598,30 @@ export default function UserAdminDashboardPage() {
                   <FaTimes />
                 </button>
               </div>
-              <dl className={styles.detailList}>
-                <div><dt>Name</dt><dd>{viewingUser.fullName}</dd></div>
-                <div><dt>Email</dt><dd>{viewingUser.email}</dd></div>
-                <div><dt>User Type</dt><dd>{roleLabel(viewingUser.role)}</dd></div>
-                <div><dt>Status</dt><dd>{statusLabel(viewingUser.status)}</dd></div>
-                <div>
-                  <dt>Addresses</dt>
-                  <dd>
-                    {viewingUser.addresses && viewingUser.addresses.length > 0 ? (
-                      <ul className={styles.addressViewList}>
-                        {viewingUser.addresses.map((entry, index) => (
-                          <li key={entry._id ?? index}>
-                            <strong>{entry.label || 'Address'}{entry.isDefault ? ' (Default)' : ''}:</strong> {entry.address}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : '—'}
-                  </dd>
-                </div>
-                <div><dt>Created</dt><dd>{formatDate(viewingUser.createdAt)}</dd></div>
-                <div><dt>Last Updated</dt><dd>{formatDate(viewingUser.updatedAt)}</dd></div>
-              </dl>
+              <div className={styles.modalScroll}>
+                <dl className={styles.detailList}>
+                  <div><dt>Name</dt><dd>{viewingUser.fullName}</dd></div>
+                  <div><dt>Email</dt><dd>{viewingUser.email}</dd></div>
+                  <div><dt>User Type</dt><dd>{roleLabel(viewingUser.role)}</dd></div>
+                  <div><dt>Status</dt><dd>{statusLabel(viewingUser.status)}</dd></div>
+                  <div>
+                    <dt>Addresses</dt>
+                    <dd>
+                      {viewingUser.addresses && viewingUser.addresses.length > 0 ? (
+                        <ul className={styles.addressViewList}>
+                          {viewingUser.addresses.map((entry, index) => (
+                            <li key={entry._id ?? index}>
+                              <strong>{entry.label || 'Address'}{entry.isDefault ? ' (Default)' : ''}:</strong> {entry.address}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : '—'}
+                    </dd>
+                  </div>
+                  <div><dt>Created</dt><dd>{formatDate(viewingUser.createdAt)}</dd></div>
+                  <div><dt>Last Updated</dt><dd>{formatDate(viewingUser.updatedAt)}</dd></div>
+                </dl>
+              </div>
               <div className={styles.modalActions}>
                 <button type="button" className={styles.secondaryButton} onClick={() => setViewingUser(null)}>
                   Close
@@ -646,7 +648,7 @@ export default function UserAdminDashboardPage() {
             <div className={styles.modalAccent} />
             <div className={styles.modalBody}>
               <div className={styles.modalHeader}>
-                <div className={styles.modalAvatar}>👤</div>
+                <div className={styles.modalAvatar}><FaUsers /></div>
                 <div className={styles.modalHeaderText}>
                   <h2 id="view-role-title">{viewingRole.label} Profile</h2>
                   <p>{users.filter(u => u.role === viewingRole.value).length} user(s)</p>
@@ -655,18 +657,23 @@ export default function UserAdminDashboardPage() {
                   <FaTimes />
                 </button>
               </div>
-              <dl className={styles.detailList}>
-                {users.filter(u => u.role === viewingRole.value).length === 0 ? (
-                  <div><dd>No users with this profile yet.</dd></div>
-                ) : (
-                  users.filter(u => u.role === viewingRole.value).map(u => (
-                    <div key={u.id}>
-                      <dt>{u.fullName}</dt>
-                      <dd>{u.email} — <span className={`${styles.status} ${styles[u.status]}`}>{statusLabel(u.status)}</span></dd>
-                    </div>
-                  ))
-                )}
-              </dl>
+              <div className={styles.modalScroll}>
+                <div className={styles.detailList}>
+                  {users.filter(u => u.role === viewingRole.value).length === 0 ? (
+                    <div className={styles.roleUserRow}>No users with this profile yet.</div>
+                  ) : (
+                    users.filter(u => u.role === viewingRole.value).map(u => (
+                      <div key={u.id} className={styles.roleUserRow}>
+                        <div className={styles.roleUserInfo}>
+                          <span className={styles.roleUserName}>{u.fullName}</span>
+                          <span className={styles.roleUserEmail}>{u.email}</span>
+                        </div>
+                        <span className={`${styles.status} ${styles[u.status]}`}>{statusLabel(u.status)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
               <div className={styles.modalActions}>
                 <button type="button" className={styles.secondaryButton} onClick={() => setViewingRole(null)}>
                   Close
@@ -695,126 +702,128 @@ export default function UserAdminDashboardPage() {
                 </button>
               </div>
 
-              {formError && <p className={styles.formErrorMessage}>{formError}</p>}
+              <div className={styles.modalScroll}>
+                {formError && <p className={styles.formErrorMessage}>{formError}</p>}
 
-              <div className={styles.formGrid}>
-                <label>
-                  Name
-                  <input
-                    value={formData.fullName}
-                    onChange={(event) => updateFormField('fullName', event.target.value)}
-                    placeholder="Full name"
-                    required
-                  />
-                </label>
-                <label>
-                  Email
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(event) => handleEmailChange(event.target.value)}
-                    placeholder="email@example.com"
-                    className={emailError ? styles.inputError : undefined}
-                    required
-                  />
-                  {emailError && <span className={styles.fieldError}>{emailError}</span>}
-                </label>
-                {formMode === 'create' && (
-                  <label className={styles.formGridFull}>
-                    Password
+                <div className={styles.formGrid}>
+                  <label>
+                    Name
                     <input
-                      type="password"
-                      value={formData.password}
-                      onChange={(event) => updateFormField('password', event.target.value)}
-                      placeholder="Minimum 6 characters"
-                      minLength={6}
+                      value={formData.fullName}
+                      onChange={(event) => updateFormField('fullName', event.target.value)}
+                      placeholder="Full name"
                       required
                     />
                   </label>
-                )}
-                <label>
-                  User Type
-                  <select value={formData.role} onChange={(event) => updateFormField('role', event.target.value)}>
-                    {roleOptions.map(option => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
-                {formData.role === 'store_staff' && (
                   <label>
-                    Store
-                    <select value={formData.storeCode} onChange={(event) => updateFormField('storeCode', event.target.value)} required>
-                      <option value="">Select a store</option>
-                      {outlets.map(outlet => (
-                        <option key={outlet.storeCode} value={outlet.storeCode}>{outlet.name}</option>
+                    Email
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(event) => handleEmailChange(event.target.value)}
+                      placeholder="email@example.com"
+                      className={emailError ? styles.inputError : undefined}
+                      required
+                    />
+                    {emailError && <span className={styles.fieldError}>{emailError}</span>}
+                  </label>
+                  {formMode === 'create' && (
+                    <label className={styles.formGridFull}>
+                      Password
+                      <input
+                        type="password"
+                        value={formData.password}
+                        onChange={(event) => updateFormField('password', event.target.value)}
+                        placeholder="Minimum 6 characters"
+                        minLength={6}
+                        required
+                      />
+                    </label>
+                  )}
+                  <label>
+                    User Type
+                    <select value={formData.role} onChange={(event) => updateFormField('role', event.target.value)}>
+                      {roleOptions.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
                   </label>
-                )}
-                <label>
-                  Status
-                  <select value={formData.status} onChange={(event) => updateFormField('status', event.target.value)}>
-                    {statusOptions.map(option => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <div className={styles.addressEditor}>
-                <div className={styles.addressEditorHeader}>
-                  <span>Saved Addresses</span>
-                  <button
-                    type="button"
-                    className={styles.addAddressButton}
-                    onClick={addAddress}
-                    disabled={formData.addresses.length >= MAX_ADDRESS_ROWS}
-                  >
-                    <FaPlus /> {formData.addresses.length >= MAX_ADDRESS_ROWS ? 'Limit reached (4)' : 'Add Address'}
-                  </button>
+                  {formData.role === 'store_staff' && (
+                    <label>
+                      Store
+                      <select value={formData.storeCode} onChange={(event) => updateFormField('storeCode', event.target.value)} required>
+                        <option value="">Select a store</option>
+                        {outlets.map(outlet => (
+                          <option key={outlet.storeCode} value={outlet.storeCode}>{outlet.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <label>
+                    Status
+                    <select value={formData.status} onChange={(event) => updateFormField('status', event.target.value)}>
+                      {statusOptions.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
 
-                <div className={styles.addressList}>
-                  {formData.addresses.map((entry, index) => {
-                    const isPermanent = index < MIN_ADDRESS_ROWS;
-                    return (
-                      <div key={index} className={styles.addressRow}>
-                        <input
-                          value={entry.label ?? ''}
-                          onChange={(event) => updateAddressField(index, 'label', event.target.value)}
-                          placeholder="Label (e.g. Home, Work)"
-                          className={styles.addressLabelInput}
-                        />
-                        <input
-                          value={entry.address}
-                          onChange={(event) => updateAddressField(index, 'address', event.target.value)}
-                          placeholder="Full address (optional)"
-                          className={styles.addressLineInput}
-                        />
-                        <label className={styles.addressDefaultToggle}>
+                <div className={styles.addressEditor}>
+                  <div className={styles.addressEditorHeader}>
+                    <span>Saved Addresses</span>
+                    <button
+                      type="button"
+                      className={styles.addAddressButton}
+                      onClick={addAddress}
+                      disabled={formData.addresses.length >= MAX_ADDRESS_ROWS}
+                    >
+                      <FaPlus /> {formData.addresses.length >= MAX_ADDRESS_ROWS ? 'Limit reached (4)' : 'Add Address'}
+                    </button>
+                  </div>
+
+                  <div className={styles.addressList}>
+                    {formData.addresses.map((entry, index) => {
+                      const isPermanent = index < MIN_ADDRESS_ROWS;
+                      return (
+                        <div key={index} className={styles.addressRow}>
                           <input
-                            type="radio"
-                            name="defaultAddress"
-                            checked={Boolean(entry.isDefault)}
-                            onChange={() => setDefaultAddress(index)}
+                            value={entry.label ?? ''}
+                            onChange={(event) => updateAddressField(index, 'label', event.target.value)}
+                            placeholder="Label (e.g. Home, Work)"
+                            className={styles.addressLabelInput}
                           />
-                          Default
-                        </label>
-                        {isPermanent ? (
-                          <span className={styles.removeAddressSpacer} aria-hidden="true" />
-                        ) : (
-                          <button
-                            type="button"
-                            className={styles.removeAddressButton}
-                            onClick={() => removeAddress(index)}
-                            aria-label="Remove address"
-                          >
-                            <FaTimes />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
+                          <input
+                            value={entry.address}
+                            onChange={(event) => updateAddressField(index, 'address', event.target.value)}
+                            placeholder="Full address (optional)"
+                            className={styles.addressLineInput}
+                          />
+                          <label className={styles.addressDefaultToggle}>
+                            <input
+                              type="radio"
+                              name="defaultAddress"
+                              checked={Boolean(entry.isDefault)}
+                              onChange={() => setDefaultAddress(index)}
+                            />
+                            Default
+                          </label>
+                          {isPermanent ? (
+                            <span className={styles.removeAddressSpacer} aria-hidden="true" />
+                          ) : (
+                            <button
+                              type="button"
+                              className={styles.removeAddressButton}
+                              onClick={() => removeAddress(index)}
+                              aria-label="Remove address"
+                            >
+                              <FaTimes />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
