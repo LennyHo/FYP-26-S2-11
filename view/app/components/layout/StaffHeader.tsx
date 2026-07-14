@@ -1,14 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { clearStoredUser } from '../../utils/api.base';
+import { clearStoredUser, getStoredUser } from '../../utils/api.base';
+import { useOutlets } from '../../utils/outlets';
 import styles from './StaffHeader.module.css';
 
 export default function StaffHeader() {
   const router = useRouter();
+  const { outlets } = useOutlets();
+  const [storeCode, setStoreCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    function syncStore() {
+      setStoreCode(getStoredUser()?.storeCode || null);
+    }
+    syncStore();
+    window.addEventListener('authUpdated', syncStore);
+    return () => window.removeEventListener('authUpdated', syncStore);
+  }, []);
+
+  const storeName = outlets.find((outlet) => outlet.storeCode === storeCode)?.name || storeCode;
 
   const handleLogout = () => {
     clearStoredUser();
@@ -43,6 +57,7 @@ export default function StaffHeader() {
         </nav>
 
         <div className={styles.actions}>
+          {storeName && <span className={styles.storeBadge}>{storeName}</span>}
           <button
             className={styles.logoutBtn}
             onClick={handleLogout}

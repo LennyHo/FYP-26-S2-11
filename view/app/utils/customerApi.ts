@@ -244,12 +244,14 @@ export function checkoutCart(
   paymentMethod: string,
   voucherCode?: string,
   orderType?: string,
-  deliveryDetails?: DripTeaDeliveryDetails | null
+  deliveryDetails?: DripTeaDeliveryDetails | null,
+  pickupOutlet?: { storeCode: string } | null
 ) {
   const payload: Record<string, unknown> = { userId, paymentMethod };
   if (voucherCode) payload.voucherCode = voucherCode;
   if (orderType) payload.orderType = orderType;
   if (deliveryDetails) payload.deliveryDetails = deliveryDetails;
+  if (pickupOutlet?.storeCode) payload.storeCode = pickupOutlet.storeCode;
 
   return requestJson<{
     ok: boolean;

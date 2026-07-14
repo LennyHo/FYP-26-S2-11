@@ -32,6 +32,7 @@ export function createUserAccount(payload: {
   role: string;
   status: string;
   addresses?: DripTeaAddress[];
+  storeCode?: string | null;
 }) {
   return requestJson<{ ok: boolean; data: DripTeaUser }>('/api/users', {
     method: 'POST',
@@ -40,7 +41,7 @@ export function createUserAccount(payload: {
 }
 
 // Updates a user's profile fields. PATCH /api/users/:id
-export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'fullName' | 'email' | 'role' | 'status' | 'profilePic' | 'addresses'>>) {
+export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'fullName' | 'email' | 'role' | 'status' | 'profilePic' | 'addresses'>> & { storeCode?: string | null }) {
   return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),

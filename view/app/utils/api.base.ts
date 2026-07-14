@@ -26,6 +26,8 @@ export type DripTeaUser = {
   status: string;
   profilePic?: string;
   addresses?: DripTeaAddress[];
+  storeId?: string | null;
+  storeCode?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -46,6 +48,7 @@ export type DripTeaCartItem = {
 
 export type DripTeaDeliveryDetails = {
   type?: string;
+  storeCode?: string;
   outletName: string;
   outletAddress: string;
   outletLat: number;
@@ -239,11 +242,13 @@ export async function requestJson<T>(path: string, init: RequestInit = {}, logLa
         console.info(`[${logLabel}] ATTEMPT ${index + 1}/${API_BASES.length} backend=${apiBase}${path}`);
       }
 
+      const token = getStoredToken();
       const response = await fetch(`${apiBase}${path}`, {
         ...init,
         cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
           ...(init.headers || {}),
         },
       });
@@ -314,6 +319,11 @@ export function getStoredUser() {
   } catch {
     return null;
   }
+}
+
+export function getStoredToken() {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
 export function storeUser(user: DripTeaUser, token?: string) {

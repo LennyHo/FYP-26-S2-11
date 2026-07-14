@@ -533,7 +533,8 @@ export default function Checkout() {
                     paymentMethod,
                     voucherCode ? voucherCode.trim() : undefined,
                     orderType === "delivery" ? "delivery" : "pickup",
-                    delivery
+                    delivery,
+                    orderType === "delivery" ? null : pickupOutlet
                 );
                 const orderNo = result.order.orderNo || result.order.displayOrderNo || result.order.id;
                 const finalTotal = Number(result.order.totalAmount || total);

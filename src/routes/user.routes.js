@@ -37,6 +37,8 @@ const express = require("express");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 const User = require("../models/user.model");
+const Store = require("../models/store.model");
+const { requireAuth, requireRole } = require("../middleware/auth.middleware");
 
 const router = express.Router();
 
@@ -58,6 +60,8 @@ function publicUser(user) {
     status: user.status,
     profilePic: user.profilePic || "",
     addresses: user.addresses || [],
+    storeId: user.storeId ? String(user.storeId) : null,
+    storeCode: user.storeCode || null,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -114,7 +118,7 @@ router.get("/users", async (req, res) => {
 
 // #01 - As a user admin, I want to create a user profile so that I can handle different types of users.
 // #06 - As a user admin, I want to create a user account so that a new user can access the platform.
-router.post("/users", async (req, res) => {
+router.post("/users", requireAuth, requireRole("user_admin"), async (req, res) => {
   try {
     const fullName = String(req.body.fullName || "").trim();
     const email = String(req.body.email || "").trim().toLowerCase();
@@ -131,6 +135,18 @@ router.post("/users", async (req, res) => {
       });
     }
 
+    let store = null;
+    if (role === "store_staff") {
+      const storeCode = String(req.body.storeCode || "").trim();
+      if (!storeCode) {
+        return res.status(400).json({ ok: false, message: "A store is required for store staff accounts." });
+      }
+      store = await Store.findOne({ storeCode }).lean();
+      if (!store) {
+        return res.status(400).json({ ok: false, message: "The selected store could not be found." });
+      }
+    }
+
     const existingUser = await User.findOne({ email }).lean();
     if (existingUser) {
       return res.status(409).json({
@@ -145,6 +161,8 @@ router.post("/users", async (req, res) => {
       role,
       status,
       addresses: sanitizeAddresses(req.body.addresses),
+      storeId: store ? store._id : null,
+      storeCode: store ? store.storeCode : null,
       ...makePasswordHash(password),
     });
 
@@ -201,6 +219,18 @@ router.patch("/users/:id", async (req, res) => {
 
     if (req.body.profilePic !== undefined) {
       update.profilePic = String(req.body.profilePic || "");
+    }
+
+    if (req.body.storeCode !== undefined) {
+      if (!req.body.storeCode) {
+        update.storeId = null;
+        update.storeCode = null;
+      } else {
+        const store = await Store.findOne({ storeCode: String(req.body.storeCode).trim() }).lean();
+        if (!store) return res.status(400).json({ ok: false, message: "The selected store could not be found." });
+        update.storeId = store._id;
+        update.storeCode = store.storeCode;
+      }
     }
 
     if (req.body.addresses !== undefined) {

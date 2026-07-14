@@ -15,12 +15,13 @@ const inventorySchema = new mongoose.Schema(
     unit: { type: String, required: true, trim: true },
     lowStockThreshold: { type: Number, default: 5 },
     description: { type: String, default: "" },
+    storeId: { type: mongoose.Schema.Types.ObjectId, ref: "Store", required: true },
   },
   { timestamps: true, collection: "inventory" }
 );
 
-inventorySchema.statics.getAll = async function getAll() {
-  return this.find({}).sort({ name: 1 }).lean();
+inventorySchema.statics.getAll = async function getAll(storeId) {
+  return this.find(storeId ? { storeId } : {}).sort({ name: 1 }).lean();
 };
 
 inventorySchema.statics.getById = async function getById(id) {
@@ -28,11 +29,17 @@ inventorySchema.statics.getById = async function getById(id) {
 };
 
 inventorySchema.statics.initializeSeedInventory = async function initializeSeedInventory() {
+  const Store = require("./store.model");
+
   try {
-    for (const seed of SEED_INVENTORY) {
-      const existing = await this.findOne({ name: seed.name }).lean();
-      if (!existing) {
-        await this.create(seed);
+    const stores = await Store.find({}).lean();
+
+    for (const store of stores) {
+      for (const seed of SEED_INVENTORY) {
+        const existing = await this.findOne({ name: seed.name, storeId: store._id }).lean();
+        if (!existing) {
+          await this.create({ ...seed, storeId: store._id });
+        }
       }
     }
   } catch (error) {

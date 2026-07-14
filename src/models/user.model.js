@@ -21,6 +21,8 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 
+const SESSION_TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
 const SEED_USERS = [
   {
     fullName: "Admin User",
@@ -33,6 +35,14 @@ const SEED_USERS = [
     email: "williamsbilly@driptea.com",
     password: "Staff@123",
     role: "store_staff",
+    storeCode: "DT-001",
+  },
+  {
+    fullName: "Jurong East Staff",
+    email: "staff.jurong@driptea.com",
+    password: "Staff@123",
+    role: "store_staff",
+    storeCode: "DT-002",
   },
   {
     fullName: "Customer User",
@@ -84,6 +94,8 @@ function publicUser(user) {
     status: user.status,
     profilePic: user.profilePic || "",
     addresses: user.addresses || [],
+    storeId: user.storeId ? String(user.storeId) : null,
+    storeCode: user.storeCode || null,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -130,6 +142,10 @@ const userSchema = new mongoose.Schema(
     addresses: { type: [addressSchema], default: [] },
     passwordHash: { type: String, required: true },
     passwordSalt: { type: String },
+    storeId: { type: mongoose.Schema.Types.ObjectId, ref: "Store", default: null },
+    storeCode: { type: String, default: null },
+    sessionToken: { type: String, default: null, select: false },
+    sessionTokenExpiresAt: { type: Date, default: null, select: false },
   },
   { timestamps: true, collection: "users" }
 );
@@ -155,17 +171,22 @@ userSchema.statics.register = async function register({ fullName, email, passwor
     throw error;
   }
 
+  const token = crypto.randomBytes(24).toString("hex");
+  const sessionTokenExpiresAt = new Date(Date.now() + SESSION_TOKEN_TTL_MS);
+
   const user = await this.create({
     fullName,
     email,
     role: "customer",
     status: "active",
+    sessionToken: token,
+    sessionTokenExpiresAt,
     ...createPasswordRecord(password),
   });
 
   return {
     user: publicUser(user),
-    token: crypto.randomBytes(24).toString("hex"),
+    token,
   };
 };
 
@@ -187,9 +208,17 @@ userSchema.statics.login = async function login({ email, password }) {
     throw error;
   }
 
+  const token = crypto.randomBytes(24).toString("hex");
+  const sessionTokenExpiresAt = new Date(Date.now() + SESSION_TOKEN_TTL_MS);
+
+  await this.updateOne(
+    { _id: user._id },
+    { $set: { sessionToken: token, sessionTokenExpiresAt } }
+  );
+
   return {
     user: publicUser(user),
-    token: crypto.randomBytes(24).toString("hex"),
+    token,
   };
 };
 
@@ -262,23 +291,52 @@ userSchema.statics.changePassword = async function changePassword({
 };
 
 userSchema.statics.initializeSeedUsers = async function initializeSeedUsers() {
+  const Store = require("./store.model");
+
   try {
     for (const seedUser of SEED_USERS) {
       const email = normalizeEmail(seedUser.email);
       const existingUser = await this.findOne({ email }).lean();
 
-      if (!existingUser) {
-        await this.create({
-          fullName: seedUser.fullName,
-          email,
-          role: seedUser.role,
-          status: "active",
-          addresses: seedUser.addresses || [],
-          ...createPasswordRecord(seedUser.password),
-        });
-
-        console.log(`[Auth] Seeded user: ${email}`);
+      if (existingUser) {
+        // Backfills storeId/storeCode on a seed account created before store-scoping
+        // existed, so canonical seed staff (e.g. williamsbilly@driptea.com) keep working.
+        if (seedUser.role === "store_staff" && seedUser.storeCode && !existingUser.storeId) {
+          const store = await Store.findOne({ storeCode: seedUser.storeCode }).lean();
+          if (store) {
+            await this.updateOne(
+              { _id: existingUser._id },
+              { $set: { storeId: store._id, storeCode: store.storeCode } }
+            );
+            console.log(`[Auth] Backfilled storeId for seed user: ${email}`);
+          }
+        }
+        continue;
       }
+
+      let storeId = null;
+      let storeCode = null;
+
+      if (seedUser.role === "store_staff" && seedUser.storeCode) {
+        const store = await Store.findOne({ storeCode: seedUser.storeCode }).lean();
+        if (store) {
+          storeId = store._id;
+          storeCode = store.storeCode;
+        }
+      }
+
+      await this.create({
+        fullName: seedUser.fullName,
+        email,
+        role: seedUser.role,
+        status: "active",
+        addresses: seedUser.addresses || [],
+        storeId,
+        storeCode,
+        ...createPasswordRecord(seedUser.password),
+      });
+
+      console.log(`[Auth] Seeded user: ${email}`);
     }
   } catch (error) {
     console.error("[Auth] Failed to initialize seed users:", error.message);
@@ -308,6 +366,8 @@ userSchema.statics.createUserAccount = async function createUserAccount(userData
     status: userData.status || "active",
     profilePic: userData.profilePic || "",
     addresses: userData.addresses || [],
+    storeId: role === "store_staff" ? userData.storeId || null : null,
+    storeCode: role === "store_staff" ? userData.storeCode || null : null,
     ...passwordRecord,
   });
 };

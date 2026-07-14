@@ -14,14 +14,17 @@
 
 const express = require("express");
 const orderController = require("../controllers/order.controller");
+const { requireAuth, requireRole } = require("../middleware/auth.middleware");
 
 const router = express.Router();
 
 // #18 Apply Vouchers | #23 Make Payment
 router.post("/checkout", orderController.processPayment);
 
-// Store staff: view and manage all customer orders from the staff dashboard.
-router.get("/orders", orderController.getOrders);
+// Store staff: view all orders for their own store from the staff dashboard.
+// GET /orders/:id and PATCH .../status stay open — they're also used by the
+// customer-facing order-tracking page and are id-scoped, not list-scoped.
+router.get("/orders", requireAuth, requireRole("store_staff"), orderController.getOrders);
 router.get("/orders/:id", orderController.getOrder);
 
 // #28 Track Order Status | #203 Track Order Status via Chatbot

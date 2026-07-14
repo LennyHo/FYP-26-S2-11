@@ -82,10 +82,10 @@ app.post("/api/chat-test", (req, res) => {
 async function startServer() {
   try {
     await connectMongo();
+    await Store.initializeSeedStores();
     await User.initializeSeedUsers();
     await Inventory.initializeSeedInventory();
     await Voucher.initializeSeedVouchers();
-    await Store.initializeSeedStores();
 
     app.get("/", (req, res) => {
       res.send("DripTea backend is running");

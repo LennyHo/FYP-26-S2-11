@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 async function getInventory(req, res) {
   try {
-    const items = await Inventory.getAll();
+    const items = await Inventory.getAll(req.user.storeId);
     res.json({ ok: true, data: items });
   } catch (error) {
     console.error("[InventoryController] getInventory error:", error.message);
@@ -18,7 +18,7 @@ async function getInventoryItem(req, res) {
       return res.status(400).json({ ok: false, message: "Invalid inventory item ID." });
     }
     const item = await Inventory.getById(id);
-    if (!item) {
+    if (!item || String(item.storeId) !== req.user.storeId) {
       return res.status(404).json({ ok: false, message: "Inventory item not found." });
     }
     res.json({ ok: true, data: item });
@@ -45,7 +45,16 @@ async function createInventory(req, res) {
       return res.status(400).json({ ok: false, message: "Quantity must be a non-negative number." });
     }
 
-    const item = await Inventory.create({ name, quantity, unit, lowStockThreshold, description });
+    // storeId always comes from the authenticated staff session, never the client,
+    // so a staff account can't write into another store's inventory.
+    const item = await Inventory.create({
+      name,
+      quantity,
+      unit,
+      lowStockThreshold,
+      description,
+      storeId: req.user.storeId,
+    });
     res.status(201).json({ ok: true, data: item });
   } catch (error) {
     console.error("[InventoryController] createInventory error:", error.message);
@@ -64,15 +73,17 @@ async function updateInventoryQuantity(req, res) {
       return res.status(400).json({ ok: false, message: "Quantity must be a non-negative number." });
     }
 
+    const existing = await Inventory.getById(id);
+    if (!existing || String(existing.storeId) !== req.user.storeId) {
+      return res.status(404).json({ ok: false, message: "Inventory item not found." });
+    }
+
     const item = await Inventory.findByIdAndUpdate(
       id,
       { $set: { quantity } },
       { new: true, runValidators: true }
     ).lean();
 
-    if (!item) {
-      return res.status(404).json({ ok: false, message: "Inventory item not found." });
-    }
     res.json({ ok: true, data: item });
   } catch (error) {
     console.error("[InventoryController] updateInventoryQuantity error:", error.message);
@@ -86,10 +97,13 @@ async function deleteInventory(req, res) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ ok: false, message: "Invalid inventory item ID." });
     }
-    const item = await Inventory.findByIdAndDelete(id).lean();
-    if (!item) {
+
+    const existing = await Inventory.getById(id);
+    if (!existing || String(existing.storeId) !== req.user.storeId) {
       return res.status(404).json({ ok: false, message: "Inventory item not found." });
     }
+
+    await Inventory.findByIdAndDelete(id).lean();
     res.json({ ok: true, data: { id } });
   } catch (error) {
     console.error("[InventoryController] deleteInventory error:", error.message);

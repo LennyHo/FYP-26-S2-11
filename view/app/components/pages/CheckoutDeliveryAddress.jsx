@@ -189,6 +189,7 @@ export default function CheckoutDeliveryAddress({
 
     return {
       type: "delivery",
+      storeCode: selectedOutlet.storeCode,
       outletName: selectedOutlet.name,
       outletAddress: selectedOutlet.address,
       outletLat: selectedOutlet.lat,

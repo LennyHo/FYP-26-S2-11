@@ -20,6 +20,7 @@ const Payment = require("../models/payment.model");
 const CartItem = require("../models/cartItem.model");
 const User = require("../models/user.model");
 const Voucher = require("../models/voucher.model");
+const Store = require("../models/store.model");
 
 function toObjectId(id) {
     return mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
@@ -129,6 +130,28 @@ async function processPayment(req, res) {
         });
     }
 
+    // The store a customer picked at checkout (pickup outlet, or delivery's
+    // "from" outlet) is what determines which store's dashboard the order lands in.
+    const storeCode = String(
+        orderType === "delivery" ? deliveryDetails?.storeCode || "" : req.body.storeCode || ""
+    ).trim();
+
+    if (!storeCode) {
+        return res.status(400).json({
+            ok: false,
+            message: "A store must be selected to place an order.",
+        });
+    }
+
+    const store = await Store.findOne({ storeCode }).lean();
+
+    if (!store) {
+        return res.status(400).json({
+            ok: false,
+            message: "The selected store could not be found.",
+        });
+    }
+
     const cartItems = await CartItem.getCart(userId);
 
     if (!cartItems.length) {
@@ -162,6 +185,7 @@ async function processPayment(req, res) {
 
     const order = await createOrderWithUniqueNumber({
         userId,
+        storeId: store._id,
         orderNo: `DT-${Date.now()}`,
         items: cartItems.map((item) => ({
             menuItemId: item.menuItemId,
@@ -176,7 +200,9 @@ async function processPayment(req, res) {
         status: "pending",
         voucherCode: appliedVoucherCode,
         discountAmount,
-        deliveryDetails: orderType === "delivery" && deliveryDetails ? deliveryDetails : null,
+        deliveryDetails: orderType === "delivery"
+            ? (deliveryDetails || null)
+            : { type: "pickup", storeCode: store.storeCode, outletName: store.name, outletAddress: store.address },
     });
 
     const orderItems = cartItems.map((item) => ({
@@ -250,6 +276,7 @@ async function getOrders(req, res) {
         }
 
         const query = status === "all" ? {} : { status };
+        query.storeId = req.user.storeId;
         const orders = await Order.find(query).sort({ createdAt: -1 }).limit(200).lean();
         const orderIds = orders.map((order) => order._id);
         const userIds = [

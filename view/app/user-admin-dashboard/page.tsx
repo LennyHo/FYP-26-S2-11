@@ -43,6 +43,7 @@ import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaSearch, FaTimes } from 'react-i
 import AdminHeader from '../components/layout/AdminHeader';
 import { createUserAccount, getUsers, suspendUser, updateUser } from '../utils/adminApi';
 import { clearStoredUser, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
+import { useOutlets } from '../utils/outlets';
 import styles from './page.module.css';
 
 type ActiveTab = 'profiles' | 'accounts';
@@ -55,6 +56,7 @@ type UserFormState = {
   role: string;
   status: string;
   addresses: DripTeaAddress[];
+  storeCode: string;
 };
 
 const roleOptions = [
@@ -114,6 +116,7 @@ function emptyForm(): UserFormState {
     role: 'customer',
     status: 'active',
     addresses: withMinimumRows([]),
+    storeCode: '',
   };
 }
 
@@ -125,6 +128,7 @@ function formFromUser(user: DripTeaUser): UserFormState {
     role: user.role,
     status: user.status,
     addresses: withMinimumRows(user.addresses ?? []),
+    storeCode: user.storeCode || '',
   };
 }
 
@@ -151,6 +155,7 @@ export default function UserAdminDashboardPage() {
   const [formMode, setFormMode] = useState<FormMode | null>(null);
   const [editingUser, setEditingUser] = useState<DripTeaUser | null>(null);
   const [formData, setFormData] = useState<UserFormState>(emptyForm());
+  const { outlets } = useOutlets();
 
   async function refreshUsers() {
     try {
@@ -275,11 +280,21 @@ export default function UserAdminDashboardPage() {
     event.preventDefault();
     setFormError('');
     if (emailError) return;
+
+    if (formData.role === 'store_staff' && !formData.storeCode) {
+      setFormError('A store is required for store staff accounts.');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
       if (formMode === 'create') {
-        const response = await createUserAccount({ ...formData, addresses: filledAddresses(formData.addresses) });
+        const response = await createUserAccount({
+          ...formData,
+          addresses: filledAddresses(formData.addresses),
+          storeCode: formData.role === 'store_staff' ? formData.storeCode : null,
+        });
         setUsers(current => [...current, response.data].sort((a, b) => a.fullName.localeCompare(b.fullName)));
         setMessage('User created.');
       } else if (formMode === 'edit' && editingUser) {
@@ -289,6 +304,7 @@ export default function UserAdminDashboardPage() {
           role: formData.role,
           status: formData.status,
           addresses: filledAddresses(formData.addresses),
+          storeCode: formData.role === 'store_staff' ? formData.storeCode : null,
         });
         setUsers(current => current.map(user => (user.id === response.data.id ? response.data : user)));
         setMessage('User updated.');
@@ -724,6 +740,17 @@ export default function UserAdminDashboardPage() {
                     ))}
                   </select>
                 </label>
+                {formData.role === 'store_staff' && (
+                  <label>
+                    Store
+                    <select value={formData.storeCode} onChange={(event) => updateFormField('storeCode', event.target.value)} required>
+                      <option value="">Select a store</option>
+                      {outlets.map(outlet => (
+                        <option key={outlet.storeCode} value={outlet.storeCode}>{outlet.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <label>
                   Status
                   <select value={formData.status} onChange={(event) => updateFormField('status', event.target.value)}>
