@@ -88,12 +88,6 @@
   overflow: hidden;
 }
 
-/* Left accent stripe by status */
-.purchase-order[data-status="pending"]   { border-left: 4px solid #f59e0b; }
-.purchase-order[data-status="preparing"] { border-left: 4px solid #3b82f6; }
-.purchase-order[data-status="ready"]     { border-left: 4px solid #10b981; }
-.purchase-order[data-status="completed"] { border-left: 4px solid #16a34a; }
-.purchase-order[data-status="cancelled"] { border-left: 4px solid #ef4444; }
 
 /* ── Order card header ───────────────────────── */
 .purchase-order-head {
