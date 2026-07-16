@@ -75,6 +75,19 @@ function totalSpent(orders: DripTeaPurchaseHistoryItem[]) {
   return orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
 }
 
+// order.orderType is set explicitly at checkout ("pickup" or "delivery") and is
+// authoritative. deliveryDetails is now populated for BOTH modes (it carries the
+// pickup outlet too), so it must never be used as a delivery signal on its own —
+// only fall back to it for legacy/manual orders that predate orderType.
+function resolveIsDeliveryOrder(
+  order: DripTeaPurchaseHistoryItem,
+  deliverySnapshotIds: Set<string>
+) {
+  if (order.orderType === "delivery") return true;
+  if (order.orderType === "pickup") return false;
+  return Boolean(order.deliveryDetails) || deliverySnapshotIds.has(order.id);
+}
+
 function openAvyFeedbackPrompt(order: DripTeaPurchaseHistoryItem) {
   window.dispatchEvent(
     new CustomEvent("chatbotSystemMessage", {
@@ -149,7 +162,7 @@ export default function PurchaseHistory() {
       const status = (order.status || "").toLowerCase();
       if (!order.createdAt) return;
       const age = now - new Date(order.createdAt).getTime();
-      const isDeliveryOrder = order.orderType === "delivery" || Boolean(order.deliveryDetails) || deliverySnapshotIds.has(order.id);
+      const isDeliveryOrder = resolveIsDeliveryOrder(order, deliverySnapshotIds);
 
       if (isDeliveryOrder && status !== "completed" && age >= COMPLETED_AFTER_MS) {
         void updateOrderStatus(order.id, "completed").catch(console.error);
@@ -225,7 +238,7 @@ export default function PurchaseHistory() {
           <div className="purchase-list">
             {orders.filter((order) => order.items && order.items.length > 0).map((order) => {
               const status = (order.status || "pending").toLowerCase();
-              const isDeliveryOrder = order.orderType === "delivery" || Boolean(order.deliveryDetails) || deliverySnapshotIds.has(order.id);
+              const isDeliveryOrder = resolveIsDeliveryOrder(order, deliverySnapshotIds);
               const isCompleted = status === "completed";
               const customerCollected = localCollectedIds.has(order.id);
               // Show Collect until the customer explicitly clicks it (tracked in localStorage)
@@ -246,6 +259,11 @@ export default function PurchaseHistory() {
                         <span className="purchase-type-badge">
                           {isDeliveryOrder ? "Delivery" : "Pickup"}
                         </span>
+                        {!isDeliveryOrder && order.deliveryDetails?.outletName && (
+                          <span className="purchase-outlet-badge">
+                            {order.deliveryDetails.outletName}
+                          </span>
+                        )}
                         <span className={`purchase-status-badge purchase-status-${status}`}>
                           {formatStatus(order.status, isDeliveryOrder)}
                         </span>
@@ -275,6 +293,9 @@ export default function PurchaseHistory() {
                             <p className="purchase-item-custom">
                               {formatCustomization(item.customization)}
                             </p>
+                            <p className="purchase-item-unit">
+                              S$ {Number(item.unitPrice || 0).toFixed(2)} each
+                            </p>
                           </div>
                           <span className="purchase-item-price">
                             S$ {Number(item.lineTotal || 0).toFixed(2)}
@@ -283,6 +304,12 @@ export default function PurchaseHistory() {
                       ))
                     ) : (
                       <p className="purchase-message">No items recorded for this order.</p>
+                    )}
+                    {isDeliveryOrder && order.deliveryDetails?.deliveryFee != null && (
+                      <div className="purchase-delivery-fee-row">
+                        <span>Delivery Fee</span>
+                        <span>S$ {Number(order.deliveryDetails.deliveryFee).toFixed(2)}</span>
+                      </div>
                     )}
                   </div>
 
