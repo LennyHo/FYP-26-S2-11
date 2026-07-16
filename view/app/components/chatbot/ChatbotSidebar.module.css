@@ -2061,7 +2061,7 @@
   }
 
   .userInput {
-    padding: 10px 12px;
+    padding: 14px 12px 8px;
     font-size: 1.05rem;
   }
 
@@ -2105,7 +2105,7 @@
   .subtitle { font-size: 0.82rem; }
   .chatHeader { padding: 8px 10px; }
   .chatWindow { padding: 8px 10px; }
-  .userInput { padding: 8px 10px; font-size: 1.05rem; }
+  .userInput { padding: 12px 10px 6px; font-size: 1.05rem; }
   .welcomeGreeting { font-size: 1.62rem; max-width: 14ch; }
 }
 

@@ -159,6 +159,20 @@ function isNutriGradeQuestion(message) {
 }
 // End of User Story #31
 
+// Detects queries browsing drinks by a specific Nutri-Grade letter, e.g. "I want a B grade
+// drink", "show me grade C drinks". Requires the letter to sit directly next to the word
+// "grade" so it can't collide with an unrelated "b" or "a" elsewhere in the message.
+function isGradeFilterRequest(message) {
+    const msg = String(message || "").toLowerCase();
+    return /\b[abcd][\s-]?grade\b/.test(msg) || /\bgrade[\s-]?[abcd]\b/.test(msg);
+}
+
+function extractRequestedGrade(message) {
+    const msg = String(message || "").toLowerCase();
+    const match = msg.match(/\b([abcd])[\s-]?grade\b/) || msg.match(/\bgrade[\s-]?([abcd])\b/);
+    return match ? match[1].toUpperCase() : null;
+}
+
 // Detects queries asking which drinks have low/high sugar or low/high calories.
 function isHealthRankingQuery(message) {
     const msg = String(message || "").toLowerCase();
@@ -2242,6 +2256,30 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         };
     }
     // End of User Story #31
+
+    // User Story #31 (extension): Browse drinks by Nutri-Grade letter — "I want a B grade drink".
+    // Deterministic DB filter on nutritionInfo.nutriGrade, run before isRecommendationRequest /
+    // isAddToCartRequest so Gemini never free-picks a blended set of grades for this query.
+    if (isGradeFilterRequest(intentMessage)) {
+        const requestedGrade = extractRequestedGrade(intentMessage);
+        const allDrinks = await MenuItem.find({ status: "active" }).lean();
+        const gradeDrinks = allDrinks.filter(
+            (d) => String(d.nutritionInfo?.nutriGrade || "").toUpperCase() === requestedGrade
+        );
+
+        const reply = gradeDrinks.length > 0
+            ? `Here are our Grade ${requestedGrade} drinks:`
+            : `We don't currently have any Grade ${requestedGrade} drinks on the menu.`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        return {
+            reply,
+            ...(gradeDrinks.length > 0 ? { recommendedDrinks: formatDrinkCards(gradeDrinks) } : {}),
+            system_action: { ui_navigation: "none" },
+        };
+    }
 
     // User Story #32 (extension): Symptom-based recommendations — "I have a flu", "feeling bloated", etc.
     // Runs before the generic recommendation/health-ranking checks since phrases like
