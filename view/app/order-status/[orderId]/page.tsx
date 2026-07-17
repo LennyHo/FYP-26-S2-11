@@ -382,11 +382,17 @@ export default function OrderStatusPage() {
   }
 
   async function handleCollect() {
+    // Mark collected and prompt for feedback immediately (client-side, same as the
+    // delivery auto-complete path below) rather than gating on the PATCH request —
+    // if that request fails or races with the page's own polling, the customer still
+    // sees "Collected" from the next poll anyway, so the prompt should fire regardless
+    // of whether this specific request resolves cleanly.
+    markCollectedLocally(orderId);
+    setCollected(true);
+    dispatchFeedbackPrompt(order);
+
     try {
       await updateOrderStatus(orderId, "completed");
-      markCollectedLocally(orderId);
-      setCollected(true);
-      dispatchFeedbackPrompt(order);
     } catch (e) {
       console.error(e);
     }
