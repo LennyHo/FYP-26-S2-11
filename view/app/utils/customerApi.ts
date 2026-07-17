@@ -292,19 +292,8 @@ export async function submitFeedback(payload: {
   rating: number;
   comment?: string;
 }) {
-  const response = await fetch("http://localhost:5000/api/feedback", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+  return requestJson<{ ok: boolean; data: unknown }>('/api/feedback', {
+    method: 'POST',
     body: JSON.stringify(payload),
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Failed to submit feedback.");
-  }
-
-  return data;
 }

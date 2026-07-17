@@ -6,6 +6,7 @@ import Header from "../layout/Header";
 import { getPurchaseHistory } from "../../utils/customerApi";
 import { updateOrderStatus } from "../../utils/staffApi";
 import { getStoredUser, type DripTeaPurchaseHistoryItem } from "../../utils/api.base";
+import FeedbackModal from "../ui/FeedbackModal";
 import "./PurchaseHistory.css";
 
 const TRACK_STATUSES = new Set(["pending", "preparing", "ready"]);
@@ -88,26 +89,6 @@ function resolveIsDeliveryOrder(
   return Boolean(order.deliveryDetails) || deliverySnapshotIds.has(order.id);
 }
 
-function openAvyFeedbackPrompt(order: DripTeaPurchaseHistoryItem) {
-  window.dispatchEvent(
-    new CustomEvent("chatbotSystemMessage", {
-      detail: {
-        text:
-          "We hope you enjoyed your order. We'd love to hear your thoughts - your feedback helps us deliver a better experience every time.",
-        feedbackOrderId: order.id,
-        feedbackItems: (order.items || []).map((item) => ({
-          name: item.name,
-          image: item.image,
-          quantity: item.quantity,
-          customization: item.customization,
-          menuItemId: item.menuItemId,
-          menuItemCode: item.menuItemCode,
-        })),
-      },
-    })
-  );
-}
-
 export default function PurchaseHistory() {
   const [orders, setOrders] = useState<DripTeaPurchaseHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -115,6 +96,7 @@ export default function PurchaseHistory() {
   const [customerName, setCustomerName] = useState("");
   const [localCollectedIds, setLocalCollectedIds] = useState<Set<string>>(getLocalCollectedIds);
   const [deliverySnapshotIds, setDeliverySnapshotIds] = useState<Set<string>>(getDeliverySnapshotIds);
+  const [feedbackOrder, setFeedbackOrder] = useState<DripTeaPurchaseHistoryItem | null>(null);
 
   // Re-sync localStorage when the customer navigates back from the order-status page
   useEffect(() => {
@@ -345,7 +327,7 @@ export default function PurchaseHistory() {
                           <button
                             type="button"
                             className="purchase-feedback-btn"
-                            onClick={() => openAvyFeedbackPrompt(order)}
+                            onClick={() => setFeedbackOrder(order)}
                           >
                             Feedback
                           </button>
@@ -361,6 +343,19 @@ export default function PurchaseHistory() {
         )}
 
       </main>
+
+      {feedbackOrder && (
+        <FeedbackModal
+          order={feedbackOrder}
+          onClose={() => setFeedbackOrder(null)}
+          onSubmitted={() => {
+            setOrders((prev) =>
+              prev.map((o) => (o.id === feedbackOrder.id ? { ...o, hasFeedback: true } : o))
+            );
+            setFeedbackOrder(null);
+          }}
+        />
+      )}
     </div>
   );
 }
