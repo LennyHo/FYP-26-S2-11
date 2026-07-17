@@ -2656,9 +2656,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             })),
         };
 
-        // The CTA message + button remain deterministic too (not left to Gemini) so the
         // Vouchers page link always appears, and always in the correct language via REPLY_STRINGS —
-        // the same pattern buildCartSummaryReply uses for its "View Cart"/"Checkout" buttons.
+        // Display a button to view all vouchers
         const reply =
             `${t('voucherCardTitle')}<br><br>${t('exploreRewardsCta')}<br><br>` +
             `<button class="chat-nav-btn-compact" onclick="handleVouchers()">${t('exploreRewardsBtn')}</button>`;

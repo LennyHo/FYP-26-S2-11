@@ -76,3 +76,22 @@
     color: rgba(255, 255, 255, 0.75);
     text-align: right;
 }
+
+.btnPrimary {
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px 16px;
+    border-radius: 20px;
+    border: none;
+    background: #2b7da3;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btnPrimary:hover {
+    background: #1a5279;
+    transform: translateY(-1px);
+}

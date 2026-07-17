@@ -56,6 +56,14 @@ export default function VoucherCard({ voucherCard }: Props) {
             </div>
             </div>
         ))}
+
+        <button
+            type="button"
+            className={styles.btnPrimary}
+            onClick={() => (window as any).handleVouchers?.()}
+        >
+            View All Vouchers
+        </button>
         </div>
     );
 }
