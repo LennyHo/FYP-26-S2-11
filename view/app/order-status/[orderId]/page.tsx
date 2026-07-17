@@ -13,6 +13,7 @@ import { useParams, useRouter } from "next/navigation";
 import Header from "../../components/layout/Header";
 import { getOrder, updateOrderStatus, type DripTeaOrder } from "../../utils/staffApi";
 import ReceiptModal, { type ReceiptData } from "../../components/ui/ReceiptModal";
+import { useOutlets } from "../../utils/outlets";
 import "../../components/pages/Checkout.css";
 
 const PREPARING_MS = 5_000;
@@ -267,6 +268,7 @@ export default function OrderStatusPage() {
   const [collected, setCollected] = useState(false);
   const [nowMs, setNowMs] = useState(Date.now());
   const [showReceipt, setShowReceipt] = useState(false);
+  const { outlets } = useOutlets();
 
   useEffect(() => {
     if (orderId) setSnapshot(getTrackingSnapshot(orderId));
@@ -396,6 +398,11 @@ export default function OrderStatusPage() {
   const total = snapshot?.total ?? Number(order?.totalAmount || subtotal + deliveryFee);
   const orderNo = snapshot?.orderNo || order?.orderNo || orderId;
 
+  // Older orders may not have outletName/outletAddress saved on the order record
+  // itself — storeCode is always present, so resolve against the live stores list
+  // as a fallback rather than showing a generic placeholder.
+  const resolvedOutlet = outlets.find((o) => o.storeCode === order?.deliveryDetails?.storeCode);
+
   const receiptData: ReceiptData | null = order
     ? {
         orderNo,
@@ -403,8 +410,8 @@ export default function OrderStatusPage() {
         orderType: isDeliveryOrder ? "Delivery" : "Pickup",
         customerName: order.customer || "Guest",
         customerAddress: isDeliveryOrder ? delivery?.customerAddress : undefined,
-        outletName: order.deliveryDetails?.outletName || delivery?.outletName,
-        outletAddress: order.deliveryDetails?.outletAddress || delivery?.outletAddress,
+        outletName: order.deliveryDetails?.outletName || delivery?.outletName || resolvedOutlet?.name,
+        outletAddress: order.deliveryDetails?.outletAddress || delivery?.outletAddress || resolvedOutlet?.address,
         paymentStatus: order.paymentStatus,
         items: order.items.map((item) => {
           const quantity = Number(item.quantity || 1);

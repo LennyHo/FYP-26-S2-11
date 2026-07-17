@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import styles from "./ReceiptModal.module.css";
 
 export interface ReceiptLineItem {
@@ -45,7 +46,10 @@ function formatReceiptDate(value?: string) {
 }
 
 export default function ReceiptModal({ receipt, onClose }: Props) {
-  return (
+  // Rendered via a portal directly on <body>, outside the app's nested flex/scroll
+  // shell (globalShell/mainPane) — that layout otherwise creates an ambiguous
+  // positioning context for print, splitting the receipt across pages.
+  return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modalShell} onClick={(e) => e.stopPropagation()}>
         <button type="button" className={`${styles.closeBtn} ${styles.noPrint}`} onClick={onClose} aria-label="Close">
@@ -149,6 +153,7 @@ export default function ReceiptModal({ receipt, onClose }: Props) {
           <button type="button" className={styles.primaryBtn} onClick={() => window.print()}>Download Receipt</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

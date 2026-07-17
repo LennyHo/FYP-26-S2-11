@@ -280,12 +280,23 @@
 .primaryBtn:hover { background: #7d5638; transform: translateY(-1px); }
 
 /* ── Print (Download Receipt) ───────────────────────────── */
+@page {
+  margin: 12mm;
+}
+
 @media print {
   body * { visibility: hidden; }
   .printArea, .printArea * { visibility: visible; }
   .noPrint { display: none !important; }
+  /* visibility:hidden keeps hidden elements in the layout flow, so without this
+     the whole (invisible) rest of the app pushes the receipt down onto page 2+
+     and the print preview's page 1 looks empty. Taking .overlay out of flow with
+     absolute positioning pins the receipt to the top of page 1 regardless. */
   .overlay {
-    position: static;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     background: none;
     padding: 0;
   }
@@ -296,6 +307,10 @@
     max-height: none;
     overflow: visible;
     padding: 0;
+  }
+  .printArea {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }
 
