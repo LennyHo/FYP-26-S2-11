@@ -42,7 +42,7 @@ import { useRouter } from 'next/navigation';
 import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUsers } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
 import { createUserAccount, getUsers, suspendUser, updateUser } from '../utils/adminApi';
-import { clearStoredUser, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
+import { clearStoredUser, isSessionExpiredError, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
 import { useOutlets } from '../utils/outlets';
 import styles from './page.module.css';
 
@@ -164,6 +164,7 @@ export default function UserAdminDashboardPage() {
       setUsers(response.data || []);
       setMessage('');
     } catch (error) {
+      if (isSessionExpiredError(error)) return handleLogout();
       console.error('[DripTea admin users]', error);
       setMessage(error instanceof Error ? error.message : 'Unable to load users.');
     } finally {
@@ -312,6 +313,7 @@ export default function UserAdminDashboardPage() {
 
       closeFormModal();
     } catch (error) {
+      if (isSessionExpiredError(error)) return handleLogout();
       console.error('[DripTea save user]', error);
       setFormError(error instanceof Error ? error.message : 'Unable to save user.');
     } finally {
@@ -328,6 +330,7 @@ export default function UserAdminDashboardPage() {
         : await updateUser(user.id, { status: 'active' });
       setUsers(current => current.map(row => (row.id === response.data.id ? response.data : row)));
     } catch (error) {
+      if (isSessionExpiredError(error)) return handleLogout();
       console.error('[DripTea toggle user status]', error);
       setMessage(error instanceof Error ? error.message : 'Unable to update user status.');
     }

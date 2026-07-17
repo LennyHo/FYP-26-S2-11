@@ -35,6 +35,7 @@ import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getMenuItems } from '../utils/customerApi';
 import {
   updateMenuItemStatus,
@@ -48,6 +49,7 @@ import {
   deleteInventoryItem,
   type DripTeaInventoryItem,
 } from '../utils/staffApi';
+import { isSessionExpiredError, clearStoredUser } from '../utils/api.base';
 
 type StaffSection = 'menu' | 'inventory';
 
@@ -68,6 +70,7 @@ const EMPTY_INVENTORY_FORM: CreateInventoryForm = {
 };
 
 export default function StoreStaffPage() {
+  const router = useRouter();
   const [items, setItems] = useState<DripTeaMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -135,6 +138,13 @@ export default function StoreStaffPage() {
     reader.readAsDataURL(file);
   }
 
+  // Sends the staff member back to login instead of retrying an expired/invalid
+  // session forever, which just spams console errors.
+  function handleSessionExpired() {
+    clearStoredUser();
+    router.push('/login');
+  }
+
   async function fetchItems() {
     try {
       const res = await getMenuItems('all');
@@ -153,6 +163,7 @@ export default function StoreStaffPage() {
       setInventory(res.data);
       setInventoryError('');
     } catch (err) {
+      if (isSessionExpiredError(err)) return handleSessionExpired();
       console.error('[Store staff inventory]', err);
       setInventoryError('Unable to load inventory from the backend.');
     }
@@ -166,6 +177,7 @@ export default function StoreStaffPage() {
     try {
       await updateInventoryQty(item._id, newQty);
     } catch (err) {
+      if (isSessionExpiredError(err)) return handleSessionExpired();
       console.error('[Store staff inventory adjust]', err);
       setInventory(prev => prev.map(i => i._id === item._id ? { ...i, quantity: item.quantity } : i));
     }
@@ -179,6 +191,7 @@ export default function StoreStaffPage() {
       setInventory(prev => prev.filter(i => i._id !== id));
       if (selectedItem?._id === id) setSelectedItem(null);
     } catch (err) {
+      if (isSessionExpiredError(err)) return handleSessionExpired();
       console.error('[Store staff inventory delete]', err);
       setInventoryError('Failed to delete inventory item.');
     } finally {
@@ -206,6 +219,7 @@ export default function StoreStaffPage() {
       setShowCreateModal(false);
       setCreateForm(EMPTY_INVENTORY_FORM);
     } catch (err) {
+      if (isSessionExpiredError(err)) return handleSessionExpired();
       console.error('[Store staff inventory create]', err);
       setInventoryError('Failed to create inventory item.');
     } finally {

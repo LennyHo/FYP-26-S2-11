@@ -19,6 +19,7 @@
 import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   getOrders,
   updateOrderStatus,
@@ -26,6 +27,7 @@ import {
   getOrderFeedbacks,
   type DripTeaFeedback,
 } from '../utils/staffApi';
+import { isSessionExpiredError, clearStoredUser } from '../utils/api.base';
 
 type StaffTab = 'orders' | 'completed';
 
@@ -85,6 +87,7 @@ function renderStars(rating: number) {
 }
 
 export default function StoreStaffDashboardPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<StaffTab>('orders');
   const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState<StaffOrderRow[]>([]);
@@ -97,6 +100,15 @@ export default function StoreStaffDashboardPage() {
   const [orderFeedbacks, setOrderFeedbacks] = useState<Record<string, DripTeaFeedback[]>>({});
   const [feedbackModalOrder, setFeedbackModalOrder] = useState<StaffOrderRow | null>(null);
   const loadedFeedbackIdsRef = useRef(new Set<string>());
+  const pollTimerRef = useRef<number | undefined>(undefined);
+
+  // Stops the auto-refresh poll and sends the staff member back to login instead of
+  // retrying an expired/invalid session forever (which just spams console errors).
+  function handleSessionExpired() {
+    if (pollTimerRef.current) window.clearInterval(pollTimerRef.current);
+    clearStoredUser();
+    router.push('/login');
+  }
 
   async function refreshOrders() {
     setIsRefreshing(true);
@@ -106,6 +118,10 @@ export default function StoreStaffDashboardPage() {
       setOrdersError('');
       setLastUpdated(new Date());
     } catch (error) {
+      if (isSessionExpiredError(error)) {
+        handleSessionExpired();
+        return;
+      }
       console.error('[Store staff orders]', error);
       setOrdersError('Unable to load live orders from the backend.');
     } finally {
@@ -119,13 +135,18 @@ export default function StoreStaffDashboardPage() {
       setOrders(response.data.map(toStaffOrderRow));
       setLastUpdated(new Date());
     } catch (error) {
+      if (isSessionExpiredError(error)) {
+        handleSessionExpired();
+        return;
+      }
       console.error('[Store staff orders auto-refresh]', error);
     }
   }
 
   useEffect(() => {
     void refreshOrders();
-    const timer = window.setInterval(() => void silentRefreshOrders(), 3000);
+    pollTimerRef.current = window.setInterval(() => void silentRefreshOrders(), 3000);
+    const timer = pollTimerRef.current;
     return () => window.clearInterval(timer);
   }, []);
 

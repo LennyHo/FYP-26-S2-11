@@ -230,8 +230,29 @@ export function getDripTeaApiBase() {
 //   - 4xx (client error e.g. 404, 401)      → throw immediately, no retry
 //   - 2xx (success)                          → return the parsed JSON payload
 
+// Thrown by requestJson for non-2xx responses. Carries the HTTP status so callers
+// can distinguish "session expired" (401) from other failures without string-matching
+// the message, which can change with the server's wording.
+export class ApiError extends Error {
+  status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+// True for 401 responses — an expired/invalid/missing session. Callers that poll in
+// the background (dashboards, auto-refresh) should use this to stop polling and send
+// the user back to /login instead of retrying forever and spamming console.error.
+export function isSessionExpiredError(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 401;
+}
+
 export async function requestJson<T>(path: string, init: RequestInit = {}, logLabel?: string): Promise<T> {
   let lastMessage = 'DripTea backend request failed.';
+  let lastStatus: number | undefined;
 
   for (let index = 0; index < API_BASES.length; index += 1) {
     const apiBase = API_BASES[index];
@@ -268,6 +289,7 @@ export async function requestJson<T>(path: string, init: RequestInit = {}, logLa
 
       // 4xx → stop immediately; 5xx → try next backend
       lastMessage = typeof payload?.message === 'string' ? payload.message : 'DripTea backend request failed.';
+      lastStatus = response.status;
       shouldTryNext = response.status >= 500;
       if (logLabel) {
         console.warn(`[${logLabel}] FAILED backend=${apiBase} status=${response.status} retrying=${shouldTryNext} message="${lastMessage}"`);
@@ -275,6 +297,7 @@ export async function requestJson<T>(path: string, init: RequestInit = {}, logLa
     } catch (error) {
       // Network error (backend unreachable) → try next backend
       lastMessage = error instanceof Error ? error.message : 'DripTea backend request failed.';
+      lastStatus = undefined;
       shouldTryNext = true;
       if (logLabel) {
         console.warn(`[${logLabel}] ERROR backend=${apiBase} retrying=true message="${lastMessage}"`);
@@ -282,12 +305,12 @@ export async function requestJson<T>(path: string, init: RequestInit = {}, logLa
     }
 
     if (!shouldTryNext) {
-      throw new Error(lastMessage);
+      throw new ApiError(lastMessage, lastStatus);
     }
   }
 
   // All backends exhausted
-  throw new Error(lastMessage);
+  throw new ApiError(lastMessage, lastStatus);
 }
 
 // ── Auth session (localStorage) ───────────────────────────────────────────────

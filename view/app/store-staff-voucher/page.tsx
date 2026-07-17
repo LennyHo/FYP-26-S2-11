@@ -14,7 +14,9 @@
 import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getStaffVouchers, deleteVoucher, type DripTeaVoucher } from '../utils/staffApi';
+import { isSessionExpiredError, clearStoredUser } from '../utils/api.base';
 
 type VoucherStatus = 'active' | 'inactive' | 'expired';
 
@@ -58,12 +60,20 @@ function matchesVoucherSearch(voucher: DripTeaVoucher, query: string) {
 }
 
 export default function StoreStaffVoucherPage() {
+  const router = useRouter();
   const [vouchers, setVouchers] = useState<DripTeaVoucher[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedVoucher, setSelectedVoucher] = useState<DripTeaVoucher | null>(null);
+
+  // Sends the staff member back to login instead of retrying an expired/invalid
+  // session forever, which just spams console errors.
+  function handleSessionExpired() {
+    clearStoredUser();
+    router.push('/login');
+  }
 
   async function loadVouchers() {
     setIsRefreshing(true);
@@ -72,6 +82,7 @@ export default function StoreStaffVoucherPage() {
       setVouchers(response.data || []);
       setError('');
     } catch (err) {
+      if (isSessionExpiredError(err)) return handleSessionExpired();
       console.error('[Store staff vouchers]', err);
       setError('Unable to load vouchers from the backend.');
     } finally {
@@ -91,6 +102,7 @@ export default function StoreStaffVoucherPage() {
       setVouchers(prev => prev.filter(v => v._id !== id));
       if (selectedVoucher?._id === id) setSelectedVoucher(null);
     } catch (err) {
+      if (isSessionExpiredError(err)) return handleSessionExpired();
       console.error('[Store staff voucher delete]', err);
       setError('Failed to delete voucher.');
     } finally {

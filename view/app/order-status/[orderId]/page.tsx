@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import Header from "../../components/layout/Header";
 import { getOrder, updateOrderStatus, type DripTeaOrder } from "../../utils/staffApi";
+import ReceiptModal, { type ReceiptData } from "../../components/ui/ReceiptModal";
 import "../../components/pages/Checkout.css";
 
 const PREPARING_MS = 5_000;
@@ -142,6 +143,12 @@ function formatOrderDetails(items: DripTeaOrder["items"]) {
     .join(" | ");
 }
 
+function describeCustomization(customization: Record<string, unknown> | undefined) {
+  const c = (customization || {}) as { size?: string; ice?: string; sugar?: string; toppings?: string[] };
+  const toppings = Array.isArray(c.toppings) ? c.toppings.join(", ") : "";
+  return [c.size, c.ice, c.sugar, toppings].filter(Boolean).join(", ");
+}
+
 function fromOrderItems(items: DripTeaOrder["items"]): TrackingItem[] {
   return items.map((item) => {
     const c = item.customization || {};
@@ -259,6 +266,7 @@ export default function OrderStatusPage() {
   const [countdown, setCountdown] = useState(5);
   const [collected, setCollected] = useState(false);
   const [nowMs, setNowMs] = useState(Date.now());
+  const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
     if (orderId) setSnapshot(getTrackingSnapshot(orderId));
@@ -387,6 +395,35 @@ export default function OrderStatusPage() {
   const deliveryFee = snapshot?.deliveryFee ?? delivery?.deliveryFee ?? 0;
   const total = snapshot?.total ?? Number(order?.totalAmount || subtotal + deliveryFee);
   const orderNo = snapshot?.orderNo || order?.orderNo || orderId;
+
+  const receiptData: ReceiptData | null = order
+    ? {
+        orderNo,
+        orderDate: order.createdAt,
+        orderType: isDeliveryOrder ? "Delivery" : "Pickup",
+        customerName: order.customer || "Guest",
+        customerAddress: isDeliveryOrder ? delivery?.customerAddress : undefined,
+        outletName: order.deliveryDetails?.outletName || delivery?.outletName,
+        outletAddress: order.deliveryDetails?.outletAddress || delivery?.outletAddress,
+        paymentStatus: order.paymentStatus,
+        items: order.items.map((item) => {
+          const quantity = Number(item.quantity || 1);
+          const amount = Number(item.lineTotal || 0);
+          return {
+            name: item.name,
+            quantity,
+            unitPrice: quantity > 0 ? amount / quantity : amount,
+            amount,
+            customization: describeCustomization(item.customization),
+          };
+        }),
+        subtotal,
+        deliveryFee,
+        discountAmount: snapshot?.discountAmount,
+        total,
+      }
+    : null;
+
   const etaEnd = addSeconds(createdAt, isDeliveryOrder ? 20 : 20);
   const progressStep = collected ? 4 : phase;
   const visualProgressStep = collected ? 5 : progressStep;
@@ -624,7 +661,7 @@ export default function OrderStatusPage() {
                   <p><span>Order Type</span><strong>{isDeliveryOrder ? "Delivery" : "Pickup"}</strong></p>
                   <p><span>Payment Method</span><strong>Visa **** 4242</strong></p>
                   <p><span>Order Placed</span><strong>{formatOrderDate(order.createdAt)}</strong></p>
-                  <button type="button" onClick={() => window.print()}>View Receipt</button>
+                  <button type="button" onClick={() => setShowReceipt(true)}>View Receipt</button>
                 </section>
 
                 <section className="tracking-card">
@@ -640,6 +677,10 @@ export default function OrderStatusPage() {
             <p className="page-disclaimer">
               Nutritional information is provided for general reference only and is not a substitute for professional medical advice. Consume at your own risk. DripTea is not liable for any health consequences arising from your order.
             </p>
+
+            {showReceipt && receiptData && (
+              <ReceiptModal receipt={receiptData} onClose={() => setShowReceipt(false)} />
+            )}
           </>
         )}
       </main>

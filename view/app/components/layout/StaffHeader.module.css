@@ -1,13 +1,11 @@
 ﻿.header {
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 2px solid rgba(59, 130, 246, 0.18);
+  background: #ffffff;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   padding: 0;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 16px rgba(59, 130, 246, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .container {
@@ -17,7 +15,7 @@
   height: 68px;
   display: flex;
   align-items: center;
-  gap: 40px;
+  /*gap: 40px;*/
 }
 
 .brand {

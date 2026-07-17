@@ -1,0 +1,308 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(49, 35, 26, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.modalShell {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(49, 35, 26, 0.32);
+  padding: 36px 40px 24px;
+  animation: receiptIn 0.2s ease-out;
+}
+
+@keyframes receiptIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(155, 109, 74, 0.08);
+  border: none;
+  color: #6b5a4c;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.closeBtn:hover { background: rgba(234, 88, 12, 0.14); color: #ea580c; }
+
+/* ── Receipt content ─────────────────────────────────────── */
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.companyBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.companyBlock strong {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent-brown, #9b6d4a);
+  margin-bottom: 2px;
+}
+
+.companyBlock span {
+  font-size: 0.82rem;
+  color: #6b5a4c;
+}
+
+.logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.receiptTitle {
+  text-align: right;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--accent-brown, #9b6d4a);
+  margin: 18px 0 20px;
+}
+
+.midRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.toLabel {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-brown, #9b6d4a);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.customerBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid rgba(155, 109, 74, 0.25);
+  border-radius: 10px;
+  background: #fffaf5;
+  min-width: 190px;
+}
+
+.customerBlock strong {
+  font-size: 0.95rem;
+  color: #31231a;
+}
+
+.customerBlock span {
+  font-size: 0.78rem;
+  color: #6b5a4c;
+}
+
+.metaTable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px;
+  border: 1px solid rgba(155, 109, 74, 0.2);
+  border-radius: 8px;
+  background: #fffaf5;
+}
+
+.metaRow span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-brown, #9b6d4a);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metaRow strong {
+  font-size: 0.85rem;
+  color: #31231a;
+}
+
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 4px;
+}
+
+.itemsTable thead tr {
+  background: var(--accent-brown, #9b6d4a);
+}
+
+.itemsTable th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff7ef;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.itemsTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(155, 109, 74, 0.15);
+  vertical-align: top;
+}
+
+.itemsTable tbody tr:nth-child(odd) { background: rgba(155, 109, 74, 0.04); }
+
+.qtyCol { width: 48px; text-align: center; }
+.priceCol { text-align: right; white-space: nowrap; }
+
+.itemName {
+  display: block;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #31231a;
+}
+
+.itemCustom {
+  display: block;
+  font-size: 0.72rem;
+  color: #6b5a4c;
+  margin-top: 2px;
+}
+
+.totalsBlock {
+  margin-left: auto;
+  width: 220px;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.totalsRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #6b5a4c;
+}
+
+.grandTotal {
+  border-top: 1px solid rgba(155, 109, 74, 0.3);
+  margin-top: 4px;
+  padding-top: 8px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #31231a;
+}
+
+.footerNote {
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(155, 109, 74, 0.3);
+  text-align: center;
+}
+
+.footerNote p {
+  margin: 2px 0;
+  font-size: 0.8rem;
+  color: #6b5a4c;
+}
+
+.footerNote p:first-child {
+  font-weight: 700;
+  color: var(--accent-brown, #9b6d4a);
+}
+
+/* ── Actions ─────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(155, 109, 74, 0.15);
+}
+
+.secondaryBtn,
+.primaryBtn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+  border: none;
+}
+
+.secondaryBtn {
+  background: rgba(155, 109, 74, 0.1);
+  color: var(--accent-brown, #9b6d4a);
+}
+.secondaryBtn:hover { background: rgba(155, 109, 74, 0.18); }
+
+.primaryBtn {
+  background: var(--accent-brown, #9b6d4a);
+  color: #fff7ef;
+}
+.primaryBtn:hover { background: #7d5638; transform: translateY(-1px); }
+
+/* ── Print (Download Receipt) ───────────────────────────── */
+@media print {
+  body * { visibility: hidden; }
+  .printArea, .printArea * { visibility: visible; }
+  .noPrint { display: none !important; }
+  .overlay {
+    position: static;
+    background: none;
+    padding: 0;
+  }
+  .modalShell {
+    position: static;
+    box-shadow: none;
+    max-width: 100%;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .modalShell { padding: 24px 18px 18px; }
+  .topRow, .midRow { flex-direction: column; }
+  .receiptTitle { text-align: left; }
+  .totalsBlock { width: 100%; }
+}
