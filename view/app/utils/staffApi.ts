@@ -8,6 +8,7 @@
 //   Menu management  → toggleMenuItemNewArrival → PATCH /api/menu-items/:id/new-arrival
 //                    → updateMenuItemStatus      → PATCH /api/menu-items/:id/status
 //                    → createMenuItem            → POST /api/menu-items
+//                    → updateMenuItem            → PATCH /api/menu-items/:id
 //
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 
@@ -134,4 +135,24 @@ export function createMenuItem(payload: {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+}
+
+// Updates a menu item's full details (name, category, price, description, ingredients, nutrition, tags, image).
+// PATCH /api/menu-items/:id
+export function updateMenuItem(id: string, payload: {
+  name: string;
+  category: string;
+  price: number;
+  description?: string;
+  ingredients?: string[];
+  calories?: number;
+  sugar?: number;
+  nutriGrade?: string;
+  tags?: string[];
+  image?: string;
+}) {
+  return requestJson<{ ok: boolean; data: DripTeaMenuItem }>(
+    `/api/menu-items/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(payload) }
+  );
 }

@@ -40,6 +40,7 @@ import {
   updateMenuItemStatus,
   toggleMenuItemNewArrival,
   createMenuItem,
+  updateMenuItem,
   type DripTeaMenuItem,
   getInventory,
   createInventoryItem,
@@ -79,6 +80,7 @@ export default function StoreStaffPage() {
   const [addError, setAddError] = useState('');
   const [nameError, setNameError] = useState('');
   const [adding, setAdding] = useState(false);
+  const [editingMenuItem, setEditingMenuItem] = useState<DripTeaMenuItem | null>(null);
 
   // Inventory
   const [activeSection, setActiveSection] = useState<StaffSection>('menu');
@@ -94,7 +96,7 @@ export default function StoreStaffPage() {
     setAddForm(f => ({ ...f, name: value }));
     const normalized = value.trim().toLowerCase();
     if (!normalized) { setNameError(''); return; }
-    const duplicate = items.some(i => i.name.trim().toLowerCase() === normalized);
+    const duplicate = items.some(i => i.name.trim().toLowerCase() === normalized && i.mongoId !== editingMenuItem?.mongoId);
     setNameError(duplicate ? `A drink named "${value.trim()}" already exists.` : '');
   }
 
@@ -102,6 +104,27 @@ export default function StoreStaffPage() {
     setShowAddModal(false);
     setAddError('');
     setNameError('');
+    setEditingMenuItem(null);
+  }
+
+  function openEditModal(item: DripTeaMenuItem) {
+    setEditingMenuItem(item);
+    setAddForm({
+      name: item.name,
+      category: item.category,
+      price: String(item.price),
+      description: item.description || '',
+      ingredients: (item.drinkInfo?.ingredients || []).join(', '),
+      calories: item.base_calories != null ? String(item.base_calories) : '',
+      sugar: item.base_sugar_g != null ? String(item.base_sugar_g) : '',
+      nutriGrade: item.nutri_grade || 'B',
+      tags: (item.tags || []).join(', '),
+      status: item.status,
+      image: item.image || '',
+    });
+    setAddError('');
+    setNameError('');
+    setShowAddModal(true);
   }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -226,7 +249,7 @@ export default function StoreStaffPage() {
     }
     setAdding(true);
     try {
-      const res = await createMenuItem({
+      const payload = {
         name: addForm.name.trim(),
         category: addForm.category.trim(),
         price,
@@ -236,15 +259,22 @@ export default function StoreStaffPage() {
         sugar: addForm.sugar ? parseFloat(addForm.sugar) : undefined,
         nutriGrade: addForm.nutriGrade || 'B',
         tags: addForm.tags.split(',').map(t => t.trim()).filter(Boolean),
-        status: addForm.status,
         image: addForm.image,
-      });
-      setItems(prev => [...prev, res.data]);
+      };
+
+      if (editingMenuItem) {
+        const res = await updateMenuItem(editingMenuItem.mongoId, payload);
+        setItems(prev => prev.map(i => i.mongoId === editingMenuItem.mongoId ? res.data : i));
+      } else {
+        const res = await createMenuItem({ ...payload, status: addForm.status });
+        setItems(prev => [...prev, res.data]);
+      }
       setShowAddModal(false);
       setNameError('');
+      setEditingMenuItem(null);
       setAddForm({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
     } catch (err) {
-      setAddError(err instanceof Error ? err.message : 'Failed to add drink.');
+      setAddError(err instanceof Error ? err.message : `Failed to ${editingMenuItem ? 'update' : 'add'} drink.`);
     } finally {
       setAdding(false);
     }
@@ -321,7 +351,17 @@ export default function StoreStaffPage() {
 
         {/* Toolbar */}
         <div className={styles.toolbar}>
-          <button type="button" className={styles.addBtn} onClick={() => { setAddError(''); setNameError(''); setShowAddModal(true); }}>
+          <button
+            type="button"
+            className={styles.addBtn}
+            onClick={() => {
+              setEditingMenuItem(null);
+              setAddForm({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
+              setAddError('');
+              setNameError('');
+              setShowAddModal(true);
+            }}
+          >
             + Add Drink
           </button>
           <div className={styles.catTabs}>
@@ -388,7 +428,9 @@ export default function StoreStaffPage() {
                             <div className={styles.itemImgPlaceholder} />
                           )}
                           <div>
-                            <span className={styles.itemName}>{item.name}</span>
+                            <button type="button" className={styles.itemNameLink} onClick={() => openEditModal(item)}>
+                              {item.name}
+                            </button>
                             {item.description && (
                               <span className={styles.itemDesc}>{item.description}</span>
                             )}
@@ -526,7 +568,7 @@ export default function StoreStaffPage() {
 
             {/* Header */}
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Add New Drink</h2>
+              <h2 className={styles.modalTitle}>{editingMenuItem ? 'Edit Drink' : 'Add New Drink'}</h2>
               <button type="button" className={styles.modalClose} onClick={closeAddModal} aria-label="Close">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
@@ -629,13 +671,15 @@ export default function StoreStaffPage() {
                     <label className={styles.formLabel}>Tags <span className={styles.formHint}>(comma-separated)</span></label>
                     <input className={styles.formInput} value={addForm.tags} onChange={e => setAddForm(f => ({ ...f, tags: e.target.value }))} placeholder="sweet, popular, vegan" />
                   </div>
-                  <div className={styles.formField}>
-                    <label className={styles.formLabel}>Status</label>
-                    <select className={styles.formInput} title="Status" value={addForm.status} onChange={e => setAddForm(f => ({ ...f, status: e.target.value }))}>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
+                  {!editingMenuItem && (
+                    <div className={styles.formField}>
+                      <label className={styles.formLabel}>Status</label>
+                      <select className={styles.formInput} title="Status" value={addForm.status} onChange={e => setAddForm(f => ({ ...f, status: e.target.value }))}>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 {addError && <p className={styles.formError}>{addError}</p>}
@@ -643,7 +687,9 @@ export default function StoreStaffPage() {
 
               <div className={styles.modalFooter}>
                 <button type="button" className={styles.cancelBtn} onClick={closeAddModal}>Cancel</button>
-                <button type="submit" className={styles.saveBtn} disabled={adding || Boolean(nameError)}>{adding ? 'Adding…' : 'Add Drink'}</button>
+                <button type="submit" className={styles.saveBtn} disabled={adding || Boolean(nameError)}>
+                  {adding ? (editingMenuItem ? 'Saving…' : 'Adding…') : (editingMenuItem ? 'Save Changes' : 'Add Drink')}
+                </button>
               </div>
             </form>
 

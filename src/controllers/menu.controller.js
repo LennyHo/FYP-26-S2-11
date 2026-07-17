@@ -180,6 +180,97 @@ async function createMenuItem(req, res) {
 }
 
 // #35 - As store staff, I want to update menu items so that prices, descriptions, and availability remain accurate.
+// Finds menu item by id or itemId → updates the editable fields (name, category, price, description,
+// ingredients, nutrition, tags, image) in the menu_items collection.
+async function updateMenuItem(req, res) {
+  try {
+    const id = String(req.params.id || "");
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { itemId: id }] }
+      : { itemId: id };
+
+    const name = String(req.body.name || "").trim();
+    const category = String(req.body.category || "").trim();
+    const price = Number(req.body.price);
+    const description = String(req.body.description || "").trim();
+    const tags = Array.isArray(req.body.tags) ? req.body.tags.map(String) : [];
+    const ingredients = Array.isArray(req.body.ingredients) ? req.body.ingredients.map(String) : [];
+    const calories = Number.isFinite(Number(req.body.calories)) ? Number(req.body.calories) : 0;
+    const sugar = Number.isFinite(Number(req.body.sugar)) ? Number(req.body.sugar) : 0;
+    const allowedGrades = ["A", "B", "C", "D"];
+    const nutriGrade = allowedGrades.includes(String(req.body.nutriGrade || "").toUpperCase())
+      ? String(req.body.nutriGrade).toUpperCase()
+      : "B";
+
+    if (!name || !category || !Number.isFinite(price) || price < 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "Name, category, and valid price are required.",
+      });
+    }
+
+    const current = await MenuItem.findOne(query).lean();
+    if (!current) {
+      return res.status(404).json({
+        ok: false,
+        message: "Menu item not found.",
+      });
+    }
+
+    const duplicate = await MenuItem.findOne({
+      _id: { $ne: current._id },
+      name: { $regex: `^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+    }).lean();
+    if (duplicate) {
+      return res.status(409).json({
+        ok: false,
+        message: `A drink named "${name}" already exists.`,
+      });
+    }
+
+    const updateFields = {
+      name,
+      category,
+      price,
+      description,
+      tags,
+      "drinkInfo.ingredients": ingredients,
+      "nutritionInfo.baseCalories": calories,
+      "nutritionInfo.baseSugarG": sugar,
+      "nutritionInfo.nutriGrade": nutriGrade,
+    };
+
+    if (typeof req.body.image === "string" && req.body.image) {
+      updateFields.image = req.body.image;
+    }
+
+    const item = await MenuItem.findOneAndUpdate(
+      query,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!item) {
+      return res.status(404).json({
+        ok: false,
+        message: "Menu item not found.",
+      });
+    }
+
+    res.json({
+      ok: true,
+      data: publicMenuItem(item),
+    });
+  } catch (error) {
+    console.error("[MenuController] updateMenuItem failed:", error);
+    res.status(500).json({
+      ok: false,
+      message: "Unable to update menu item.",
+    });
+  }
+}
+
+// #35 - As store staff, I want to update menu items so that prices, descriptions, and availability remain accurate.
 // Finds menu item by id or itemId → updates status field to active or inactive in menu_items collection.
 async function updateMenuItemStatus(req, res) {
   try {
@@ -259,6 +350,7 @@ module.exports = {
   getMenu,
   searchBeverage,
   createMenuItem,
+  updateMenuItem,
   updateMenuItemStatus,
   toggleNewArrival,
 };

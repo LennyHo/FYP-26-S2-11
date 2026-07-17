@@ -273,13 +273,6 @@
   flex-shrink: 0;
 }
 
-.itemName {
-  display: block;
-  font-weight: 700;
-  color: #1e293b;
-  font-size: 0.9rem;
-}
-
 .itemDesc {
   display: block;
   font-size: 0.75rem;
