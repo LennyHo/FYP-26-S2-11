@@ -17,6 +17,18 @@
 //
 // #38  Logout (Store Staff)
 //      View: store-staff/page.tsx (this file) — client-side: JWT cleared from localStorage
+//
+// #310 Create Inventory Item (Store Staff)
+//      View: store-staff/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
+//
+// #311  View Inventory (Store Staff)
+//      View: store-staff/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
+//
+// #312  Update Inventory (Store Staff)
+//      View: store-staff/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
+//
+// #313  Delete Inventory Item (Store Staff)
+//     View: store-staff/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
 'use client';
 
 import StaffHeader from '../components/layout/StaffHeader';
@@ -24,7 +36,35 @@ import styles from './page.module.css';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { getMenuItems } from '../utils/customerApi';
-import { updateMenuItemStatus, toggleMenuItemNewArrival, createMenuItem, type DripTeaMenuItem } from '../utils/staffApi';
+import {
+  updateMenuItemStatus,
+  toggleMenuItemNewArrival,
+  createMenuItem,
+  type DripTeaMenuItem,
+  getInventory,
+  createInventoryItem,
+  updateInventoryQty,
+  deleteInventoryItem,
+  type DripTeaInventoryItem,
+} from '../utils/staffApi';
+
+type StaffSection = 'menu' | 'inventory';
+
+type CreateInventoryForm = {
+  name: string;
+  quantity: string;
+  unit: string;
+  lowStockThreshold: string;
+  description: string;
+};
+
+const EMPTY_INVENTORY_FORM: CreateInventoryForm = {
+  name: '',
+  quantity: '0',
+  unit: '',
+  lowStockThreshold: '5',
+  description: '',
+};
 
 export default function StoreStaffPage() {
   const [items, setItems] = useState<DripTeaMenuItem[]>([]);
@@ -39,6 +79,16 @@ export default function StoreStaffPage() {
   const [addError, setAddError] = useState('');
   const [nameError, setNameError] = useState('');
   const [adding, setAdding] = useState(false);
+
+  // Inventory
+  const [activeSection, setActiveSection] = useState<StaffSection>('menu');
+  const [inventory, setInventory] = useState<DripTeaInventoryItem[]>([]);
+  const [inventoryError, setInventoryError] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<DripTeaInventoryItem | null>(null);
+  const [createForm, setCreateForm] = useState<CreateInventoryForm>(EMPTY_INVENTORY_FORM);
+  const [isCreating, setIsCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function handleNameChange(value: string) {
     setAddForm(f => ({ ...f, name: value }));
@@ -74,7 +124,71 @@ export default function StoreStaffPage() {
     }
   }
 
-  useEffect(() => { void fetchItems(); }, []);
+  async function loadInventory() {
+    try {
+      const res = await getInventory();
+      setInventory(res.data);
+      setInventoryError('');
+    } catch (err) {
+      console.error('[Store staff inventory]', err);
+      setInventoryError('Unable to load inventory from the backend.');
+    }
+  }
+
+  useEffect(() => { void fetchItems(); void loadInventory(); }, []);
+
+  const adjustQty = async (item: DripTeaInventoryItem, delta: number) => {
+    const newQty = Math.max(0, item.quantity + delta);
+    setInventory(prev => prev.map(i => i._id === item._id ? { ...i, quantity: newQty } : i));
+    try {
+      await updateInventoryQty(item._id, newQty);
+    } catch (err) {
+      console.error('[Store staff inventory adjust]', err);
+      setInventory(prev => prev.map(i => i._id === item._id ? { ...i, quantity: item.quantity } : i));
+    }
+  };
+
+  const handleDeleteInventoryItem = async (id: string) => {
+    setDeletingId(id);
+    setInventoryError('');
+    try {
+      await deleteInventoryItem(id);
+      setInventory(prev => prev.filter(i => i._id !== id));
+      if (selectedItem?._id === id) setSelectedItem(null);
+    } catch (err) {
+      console.error('[Store staff inventory delete]', err);
+      setInventoryError('Failed to delete inventory item.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleCreateInventorySubmit = async () => {
+    const name = createForm.name.trim();
+    const unit = createForm.unit.trim();
+    const quantity = Number(createForm.quantity);
+    const lowStockThreshold = Number(createForm.lowStockThreshold);
+    const description = createForm.description.trim();
+
+    if (!name || !unit) {
+      setInventoryError('Name and unit are required.');
+      return;
+    }
+
+    setIsCreating(true);
+    setInventoryError('');
+    try {
+      const res = await createInventoryItem({ name, quantity, unit, lowStockThreshold, description });
+      setInventory(prev => [...prev, res.data]);
+      setShowCreateModal(false);
+      setCreateForm(EMPTY_INVENTORY_FORM);
+    } catch (err) {
+      console.error('[Store staff inventory create]', err);
+      setInventoryError('Failed to create inventory item.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   async function toggleNewArrival(item: DripTeaMenuItem) {
     setTogglingNewArrivalId(item.mongoId);
@@ -148,11 +262,35 @@ export default function StoreStaffPage() {
   const activeCount   = items.filter(i => i.status === 'active').length;
   const inactiveCount = items.filter(i => i.status === 'inactive').length;
 
+  const filteredInventory = inventory.filter(i => i.name.toLowerCase().includes(search.trim().toLowerCase()));
+  const lowStockCount = inventory.filter(i => i.quantity <= i.lowStockThreshold).length;
+
   return (
     <div className={styles.page}>
       <StaffHeader />
       <main className={styles.main}>
 
+        {/* Section tabs */}
+        <div className={styles.sectionTabsBar}>
+          <button
+            type="button"
+            className={`${styles.sectionTab} ${activeSection === 'menu' ? styles.sectionTabActive : ''}`}
+            onClick={() => setActiveSection('menu')}
+          >
+            Menu Items
+          </button>
+          <button
+            type="button"
+            className={`${styles.sectionTab} ${activeSection === 'inventory' ? styles.sectionTabActive : ''}`}
+            onClick={() => setActiveSection('inventory')}
+          >
+            Inventory
+            {lowStockCount > 0 && <span className={`${styles.sectionBadge} ${styles.sectionBadgeRed}`}>{lowStockCount}</span>}
+          </button>
+        </div>
+
+        {activeSection === 'menu' && (
+        <>
         {/* Stats */}
         <div className={styles.statsRow}>
           <div className={styles.statCard}>
@@ -300,6 +438,85 @@ export default function StoreStaffPage() {
             </div>
           )}
         </div>
+        </>
+        )}
+
+        {activeSection === 'inventory' && (
+        <>
+        {/* Inventory toolbar */}
+        <div className={styles.toolbar}>
+          <button type="button" className={styles.addBtn} onClick={() => { setInventoryError(''); setShowCreateModal(true); }}>
+            + New Item
+          </button>
+          <div className={styles.searchWrap}>
+            <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search inventory..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
+        </div>
+
+        {inventoryError && <p className={styles.errorBanner}>{inventoryError}</p>}
+
+        <div className={styles.tableCard}>
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Stock</th>
+                  <th>Unit</th>
+                  <th>Adjust</th>
+                  <th>Delete</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredInventory.length > 0 ? filteredInventory.map(item => (
+                  <tr key={item._id} className={item.quantity <= item.lowStockThreshold ? styles.rowLowStock : ''}>
+                    <td>
+                      <button
+                        type="button"
+                        className={styles.itemNameLink}
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        {item.name}
+                      </button>
+                      {item.quantity <= item.lowStockThreshold && <span className={styles.lowBadge}>Low stock</span>}
+                    </td>
+                    <td className={`${styles.qtyCell} ${item.quantity <= item.lowStockThreshold ? styles.qtyLow : ''}`}>{item.quantity}</td>
+                    <td className={styles.unitCell}>{item.unit}</td>
+                    <td>
+                      <div className={styles.qtyControls}>
+                        <button type="button" className={styles.qtyBtn} onClick={() => void adjustQty(item, -1)} disabled={item.quantity === 0}>-</button>
+                        <button type="button" className={`${styles.qtyBtn} ${styles.qtyBtnAdd}`} onClick={() => void adjustQty(item, 1)}>+</button>
+                      </div>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className={styles.btnDelete}
+                        onClick={() => void handleDeleteInventoryItem(item._id)}
+                        disabled={deletingId === item._id}
+                      >
+                        {deletingId === item._id ? '...' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan={5} className={styles.empty}>No items found</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        </>
+        )}
 
       </main>
 
@@ -430,6 +647,122 @@ export default function StoreStaffPage() {
               </div>
             </form>
 
+          </div>
+        </div>
+      )}
+
+      {showCreateModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowCreateModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>New Inventory Item</h2>
+              <button type="button" className={styles.modalClose} onClick={() => setShowCreateModal(false)} aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Name <span className={styles.required}>*</span></label>
+                <input
+                  className={styles.formInput}
+                  placeholder="e.g. Oolong Tea"
+                  value={createForm.name}
+                  onChange={e => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Quantity <span className={styles.required}>*</span></label>
+                  <input
+                    type="number"
+                    min="0"
+                    className={styles.formInput}
+                    value={createForm.quantity}
+                    onChange={e => setCreateForm(prev => ({ ...prev, quantity: e.target.value }))}
+                  />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Unit <span className={styles.required}>*</span></label>
+                  <input
+                    type="text"
+                    className={styles.formInput}
+                    placeholder="e.g. bags, kg, pcs"
+                    value={createForm.unit}
+                    onChange={e => setCreateForm(prev => ({ ...prev, unit: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Low Stock Threshold</label>
+                <input
+                  type="number"
+                  min="0"
+                  className={styles.formInput}
+                  value={createForm.lowStockThreshold}
+                  onChange={e => setCreateForm(prev => ({ ...prev, lowStockThreshold: e.target.value }))}
+                />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Description</label>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  placeholder="Optional notes"
+                  value={createForm.description}
+                  onChange={e => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+              {inventoryError && <p className={styles.formError}>{inventoryError}</p>}
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.cancelBtn} onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button type="button" className={styles.saveBtn} onClick={() => void handleCreateInventorySubmit()} disabled={isCreating}>
+                {isCreating ? 'Creating…' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedItem && (
+        <div className={styles.modalOverlay} onClick={() => setSelectedItem(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>{selectedItem.name}</h2>
+              <button type="button" className={styles.modalClose} onClick={() => setSelectedItem(null)} aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.detailGrid}>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Stock</span>
+                  <span className={styles.detailValue}>
+                    {selectedItem.quantity} {selectedItem.unit}
+                    {selectedItem.quantity <= selectedItem.lowStockThreshold && (
+                      <span className={styles.lowBadge} style={{ marginLeft: 8 }}>Low stock</span>
+                    )}
+                  </span>
+                </div>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Unit</span>
+                  <span className={styles.detailValue}>{selectedItem.unit}</span>
+                </div>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Low Stock Alert</span>
+                  <span className={styles.detailValue}>≤ {selectedItem.lowStockThreshold} {selectedItem.unit}</span>
+                </div>
+                {selectedItem.description && (
+                  <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>Description</span>
+                    <span className={styles.detailValue}>{selectedItem.description}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.cancelBtn} onClick={() => setSelectedItem(null)}>Close</button>
+            </div>
           </div>
         </div>
       )}

@@ -9,17 +9,7 @@
 // #38  Logout (Store Staff)
 //      View: store-staff-dashboard/page.tsx (this file) — client-side: JWT cleared from localStorage
 //
-// #310 Create Inventory Item (Store Staff)
-//      View: store-staff-dashboard/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
-//
-// #311  View Inventory (Store Staff)
-//      View: store-staff-dashboard/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
-//
-// #312  Update Inventory (Store Staff)
-//      View: store-staff-dashboard/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
-//
-// #313  Delete Inventory Item (Store Staff)
-//     View: store-staff-dashboard/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
+// #310-313 Manage Inventory (Store Staff) — moved to store-staff/page.tsx (Menu Management)
 //
 // #314  View Order Feedback (Store Staff)
 //     View: store-staff-dashboard/page.tsx (this file) → Route: feedback.routes.js → Ctrl: feedback.controller.js → Model: feedback.model.js
@@ -33,16 +23,11 @@ import {
   getOrders,
   updateOrderStatus,
   type DripTeaOrder,
-  getInventory,
-  createInventoryItem,
-  updateInventoryQty,
-  deleteInventoryItem,
-  type DripTeaInventoryItem,
   getOrderFeedbacks,
   type DripTeaFeedback,
 } from '../utils/staffApi';
 
-type StaffTab = 'orders' | 'completed' | 'inventory';
+type StaffTab = 'orders' | 'completed';
 
 type StaffOrderRow = {
   id: string;
@@ -52,14 +37,6 @@ type StaffOrderRow = {
   total: string;
   totalAmount: number;
   itemSummary: string;
-};
-
-type CreateInventoryForm = {
-  name: string;
-  quantity: string;
-  unit: string;
-  lowStockThreshold: string;
-  description: string;
 };
 
 function formatStatus(status: string) {
@@ -107,14 +84,6 @@ function renderStars(rating: number) {
   return '★'.repeat(full) + '☆'.repeat(5 - full);
 }
 
-const EMPTY_FORM: CreateInventoryForm = {
-  name: '',
-  quantity: '0',
-  unit: '',
-  lowStockThreshold: '5',
-  description: '',
-};
-
 export default function StoreStaffDashboardPage() {
   const [activeTab, setActiveTab] = useState<StaffTab>('orders');
   const [searchQuery, setSearchQuery] = useState('');
@@ -124,30 +93,10 @@ export default function StoreStaffDashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Inventory state
-  const [inventory, setInventory] = useState<DripTeaInventoryItem[]>([]);
-  const [inventoryError, setInventoryError] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<DripTeaInventoryItem | null>(null);
-  const [createForm, setCreateForm] = useState<CreateInventoryForm>(EMPTY_FORM);
-  const [isCreating, setIsCreating] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
   // Feedback state
   const [orderFeedbacks, setOrderFeedbacks] = useState<Record<string, DripTeaFeedback[]>>({});
   const [feedbackModalOrder, setFeedbackModalOrder] = useState<StaffOrderRow | null>(null);
   const loadedFeedbackIdsRef = useRef(new Set<string>());
-
-  async function loadInventory() {
-    try {
-      const response = await getInventory();
-      setInventory(response.data);
-      setInventoryError('');
-    } catch (error) {
-      console.error('[Store staff inventory]', error);
-      setInventoryError('Unable to load inventory from the backend.');
-    }
-  }
 
   async function refreshOrders() {
     setIsRefreshing(true);
@@ -176,7 +125,6 @@ export default function StoreStaffDashboardPage() {
 
   useEffect(() => {
     void refreshOrders();
-    void loadInventory();
     const timer = window.setInterval(() => void silentRefreshOrders(), 3000);
     return () => window.clearInterval(timer);
   }, []);
@@ -198,59 +146,6 @@ export default function StoreStaffDashboardPage() {
       setOrdersError('Failed to update order. Please try again.');
     } finally {
       setUpdatingId(null);
-    }
-  };
-
-  const adjustQty = async (item: DripTeaInventoryItem, delta: number) => {
-    const newQty = Math.max(0, item.quantity + delta);
-    setInventory(prev => prev.map(i => i._id === item._id ? { ...i, quantity: newQty } : i));
-    try {
-      await updateInventoryQty(item._id, newQty);
-    } catch (error) {
-      console.error('[Store staff inventory adjust]', error);
-      setInventory(prev => prev.map(i => i._id === item._id ? { ...i, quantity: item.quantity } : i));
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    setDeletingId(id);
-    setInventoryError('');
-    try {
-      await deleteInventoryItem(id);
-      setInventory(prev => prev.filter(i => i._id !== id));
-      if (selectedItem?._id === id) setSelectedItem(null);
-    } catch (error) {
-      console.error('[Store staff inventory delete]', error);
-      setInventoryError('Failed to delete inventory item.');
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const handleCreateSubmit = async () => {
-    const name = createForm.name.trim();
-    const unit = createForm.unit.trim();
-    const quantity = Number(createForm.quantity);
-    const lowStockThreshold = Number(createForm.lowStockThreshold);
-    const description = createForm.description.trim();
-
-    if (!name || !unit) {
-      setInventoryError('Name and unit are required.');
-      return;
-    }
-
-    setIsCreating(true);
-    setInventoryError('');
-    try {
-      const response = await createInventoryItem({ name, quantity, unit, lowStockThreshold, description });
-      setInventory(prev => [...prev, response.data]);
-      setShowCreateModal(false);
-      setCreateForm(EMPTY_FORM);
-    } catch (error) {
-      console.error('[Store staff inventory create]', error);
-      setInventoryError('Failed to create inventory item.');
-    } finally {
-      setIsCreating(false);
     }
   };
 
@@ -285,20 +180,14 @@ export default function StoreStaffDashboardPage() {
   const visibleOrders = activeTab === 'completed' ? completedOrders : queueOrders;
 
   const filteredOrders = visibleOrders.filter(order => matchesOrderSearch(order, searchQuery));
-  const filteredInventory = inventory.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
-  );
 
   const openCount = queueOrders.length;
   const completedCount = completedOrders.length;
   const preparingCount = orders.filter(order => order.status.toLowerCase() === 'preparing').length;
-  const lowStockCount = inventory.filter(item => item.quantity <= item.lowStockThreshold).length;
 
-  const searchPlaceholder = activeTab === 'inventory'
-    ? 'Search inventory...'
-    : activeTab === 'completed'
-      ? 'Search completed orders...'
-      : 'Search orders or customer...';
+  const searchPlaceholder = activeTab === 'completed'
+    ? 'Search completed orders...'
+    : 'Search orders or customer...';
 
   return (
     <div className={styles.page}>
@@ -324,12 +213,6 @@ export default function StoreStaffDashboardPage() {
               <strong className={styles.statValue}>{completedCount}</strong>
             </div>
           </div>
-          <div className={`${styles.statCard} ${lowStockCount > 0 ? styles.statAlert : ''}`}>
-            <div>
-              <span className={styles.statLabel}>Low Stock</span>
-              <strong className={`${styles.statValue} ${lowStockCount > 0 ? styles.red : ''}`}>{lowStockCount}</strong>
-            </div>
-          </div>
         </div>
 
         <div className={styles.tabsBar}>
@@ -342,19 +225,10 @@ export default function StoreStaffDashboardPage() {
               Completed Orders
               {completedCount > 0 && <span className={styles.badge}>{completedCount}</span>}
             </button>
-            <button type="button" className={`${styles.tab} ${activeTab === 'inventory' ? styles.active : ''}`} onClick={() => setActiveTab('inventory')}>
-              Inventory
-              {lowStockCount > 0 && <span className={`${styles.badge} ${styles.badgeRed}`}>{lowStockCount}</span>}
-            </button>
           </div>
 
           <div className={styles.toolbarRight}>
-            {activeTab === 'inventory' && (
-              <button type="button" className={styles.btnCreate} onClick={() => { setInventoryError(''); setShowCreateModal(true); }}>
-                + New Item
-              </button>
-            )}
-            <button type="button" className={styles.refreshBtn} onClick={() => { void refreshOrders(); if (activeTab === 'inventory') void loadInventory(); }} disabled={isRefreshing}>
+            <button type="button" className={styles.refreshBtn} onClick={() => void refreshOrders()} disabled={isRefreshing}>
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
             <div className={styles.searchWrap}>
@@ -375,12 +249,6 @@ export default function StoreStaffDashboardPage() {
         {ordersError && (
           <div className={styles.errorBanner}>
             {ordersError}
-          </div>
-        )}
-
-        {inventoryError && activeTab === 'inventory' && (
-          <div className={styles.errorBanner}>
-            {inventoryError}
           </div>
         )}
 
@@ -459,132 +327,7 @@ export default function StoreStaffDashboardPage() {
           </div>
         )}
 
-        {activeTab === 'inventory' && (
-          <div className={styles.tableCard}>
-            <div className={styles.tableContainer}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Stock</th>
-                    <th>Unit</th>
-                    <th>Adjust</th>
-                    <th>Delete</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredInventory.length > 0 ? filteredInventory.map(item => (
-                    <tr key={item._id} className={item.quantity <= item.lowStockThreshold ? styles.rowLowStock : ''}>
-                      <td>
-                        <button
-                          type="button"
-                          className={styles.itemNameLink}
-                          onClick={() => setSelectedItem(item)}
-                        >
-                          {item.name}
-                        </button>
-                        {item.quantity <= item.lowStockThreshold && <span className={styles.lowBadge}>Low stock</span>}
-                      </td>
-                      <td className={`${styles.qtyCell} ${item.quantity <= item.lowStockThreshold ? styles.qtyLow : ''}`}>{item.quantity}</td>
-                      <td className={styles.unitCell}>{item.unit}</td>
-                      <td>
-                        <div className={styles.qtyControls}>
-                          <button type="button" className={styles.qtyBtn} onClick={() => void adjustQty(item, -1)} disabled={item.quantity === 0}>-</button>
-                          <button type="button" className={`${styles.qtyBtn} ${styles.qtyBtnAdd}`} onClick={() => void adjustQty(item, 1)}>+</button>
-                        </div>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className={styles.btnDelete}
-                          onClick={() => void handleDelete(item._id)}
-                          disabled={deletingId === item._id}
-                        >
-                          {deletingId === item._id ? '...' : 'Delete'}
-                        </button>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan={5} className={styles.empty}>No items found</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </main>
-
-      {/* Create Inventory Modal */}
-      {showCreateModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowCreateModal(false)}>
-          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>New Inventory Item</h2>
-              <button type="button" className={styles.modalClose} onClick={() => setShowCreateModal(false)}>×</button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Name *</label>
-                <input
-                  type="text"
-                  className={styles.formInput}
-                  placeholder="e.g. Oolong Tea"
-                  value={createForm.name}
-                  onChange={e => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Quantity *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className={styles.formInput}
-                    value={createForm.quantity}
-                    onChange={e => setCreateForm(prev => ({ ...prev, quantity: e.target.value }))}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Unit *</label>
-                  <input
-                    type="text"
-                    className={styles.formInput}
-                    placeholder="e.g. bags, kg, pcs"
-                    value={createForm.unit}
-                    onChange={e => setCreateForm(prev => ({ ...prev, unit: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Low Stock Threshold</label>
-                <input
-                  type="number"
-                  min="0"
-                  className={styles.formInput}
-                  value={createForm.lowStockThreshold}
-                  onChange={e => setCreateForm(prev => ({ ...prev, lowStockThreshold: e.target.value }))}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Description</label>
-                <input
-                  type="text"
-                  className={styles.formInput}
-                  placeholder="Optional notes"
-                  value={createForm.description}
-                  onChange={e => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnCancel} onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button type="button" className={styles.btnSubmit} onClick={() => void handleCreateSubmit()} disabled={isCreating}>
-                {isCreating ? 'Creating...' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Feedback Detail Modal */}
       {feedbackModalOrder && (
@@ -613,48 +356,6 @@ export default function StoreStaffDashboardPage() {
             </div>
             <div className={styles.modalFooter}>
               <button type="button" className={styles.btnCancel} onClick={() => setFeedbackModalOrder(null)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Inventory Detail Modal */}
-      {selectedItem && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedItem(null)}>
-          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>{selectedItem.name}</h2>
-              <button type="button" className={styles.modalClose} onClick={() => setSelectedItem(null)}>×</button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.detailGrid}>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Stock</span>
-                  <span className={`${styles.detailValue} ${selectedItem.quantity <= selectedItem.lowStockThreshold ? styles.qtyLow : ''}`}>
-                    {selectedItem.quantity} {selectedItem.unit}
-                    {selectedItem.quantity <= selectedItem.lowStockThreshold && (
-                      <span className={styles.lowBadge} style={{ marginLeft: 8 }}>Low stock</span>
-                    )}
-                  </span>
-                </div>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Unit</span>
-                  <span className={styles.detailValue}>{selectedItem.unit}</span>
-                </div>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Low Stock Alert</span>
-                  <span className={styles.detailValue}>≤ {selectedItem.lowStockThreshold} {selectedItem.unit}</span>
-                </div>
-                {selectedItem.description && (
-                  <div className={styles.detailRow}>
-                    <span className={styles.detailLabel}>Description</span>
-                    <span className={styles.detailValue}>{selectedItem.description}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnCancel} onClick={() => setSelectedItem(null)}>Close</button>
             </div>
           </div>
         </div>

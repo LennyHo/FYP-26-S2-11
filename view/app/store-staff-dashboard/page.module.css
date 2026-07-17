@@ -22,7 +22,7 @@
 /* ── Stats row ────────────────────────────────────────────── */
 .statsRow {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 }
 
@@ -61,7 +61,6 @@
 }
 
 .statValue.orange { color: #c2690a; }
-.statValue.red    { color: #c0321d; }
 
 /* ── Tabs bar ─────────────────────────────────────────────── */
 .tabsBar {
@@ -264,7 +263,6 @@
 .table tbody tr:hover td { background: rgba(234, 88, 12, 0.04); }
 
 .rowDone td { opacity: 0.45; }
-.rowLowStock { background: rgba(255, 240, 236, 0.6) !important; }
 
 /* Cell content */
 .orderNo { font-weight: 700; color: #1e293b; font-size: 0.95rem; }
@@ -325,53 +323,6 @@
 .btnComplete { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
 
 .doneLabel { font-size: 0.82rem; font-weight: 700; color: #059669; }
-
-/* ── Inventory specifics ──────────────────────────────────── */
-.itemNameLink {
-  background: none;
-  border: none;
-  padding: 0;
-  font-weight: 600;
-  color: #3b82f6;
-  font-size: 0.9rem;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color 0.15s;
-}
-
-.itemNameLink:hover { color: #ea580c; }
-
-.btnCreate {
-  border: 1.5px solid #3b82f6;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: #fafcff;
-  font-size: 0.82rem;
-  font-weight: 800;
-  padding: 10px 16px;
-  cursor: pointer;
-  transition: opacity 0.15s, transform 0.12s;
-  white-space: nowrap;
-}
-
-.btnCreate:hover { opacity: 0.88; transform: translateY(-1px); }
-
-.btnDelete {
-  padding: 5px 12px;
-  border: 1px solid rgba(192, 50, 29, 0.35);
-  border-radius: 8px;
-  background: rgba(192, 50, 29, 0.07);
-  color: #c0321d;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.12s;
-  white-space: nowrap;
-}
-
-.btnDelete:hover    { background: rgba(192, 50, 29, 0.15); transform: scale(1.04); }
-.btnDelete:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 /* ── Modal ──────────────────────────────────────────────── */
 .modalOverlay {
@@ -449,44 +400,6 @@
   border-top: 1px solid rgba(147, 197, 253, 0.5);
 }
 
-.formRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.formGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.formLabel {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: #3b82f6;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.formInput {
-  padding: 9px 12px;
-  border: 1px solid rgba(147, 197, 253, 0.8);
-  border-radius: 9px;
-  font-size: 0.9rem;
-  background: rgba(248, 250, 252, 0.95);
-  color: #1e293b;
-  outline: none;
-  transition: border 0.18s, box-shadow 0.18s;
-}
-
-.formInput::placeholder { color: #64748b; }
-
-.formInput:focus {
-  border-color: #ea580c;
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
-}
-
 .btnCancel {
   padding: 9px 18px;
   border: 1px solid rgba(147, 197, 253, 0.8);
@@ -500,21 +413,6 @@
 }
 
 .btnCancel:hover { background: rgba(147, 197, 253, 0.3); }
-
-.btnSubmit {
-  padding: 9px 22px;
-  border: none;
-  border-radius: 9px;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: #fafcff;
-  font-size: 0.85rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: opacity 0.15s, transform 0.12s;
-}
-
-.btnSubmit:hover    { opacity: 0.88; transform: translateY(-1px); }
-.btnSubmit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 /* ── Feedback column ─────────────────────────────────────── */
 .feedbackBtn {
@@ -580,82 +478,6 @@
   padding: 16px 0;
   margin: 0;
 }
-
-/* Detail view */
-.detailGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.detailRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(147, 197, 253, 0.3);
-}
-
-.detailRow:last-child { border-bottom: none; padding-bottom: 0; }
-
-.detailLabel {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.detailValue {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1e293b;
-  text-align: right;
-}
-
-/* ── Inventory specifics (original) ───────────────────────── */
-.itemName   { font-weight: 600; color: #1e293b; }
-.unitCell   { color: #475569; font-size: 0.88rem; }
-
-.qtyCell    { font-weight: 700; font-size: 1rem; color: #1e293b; }
-.qtyLow     { color: #c0321d; }
-
-.lowBadge {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 2px 8px;
-  border-radius: 99px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  background: rgba(192, 50, 29, 0.12);
-  color: #c0321d;
-}
-
-.qtyControls { display: flex; gap: 6px; }
-
-.qtyBtn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid rgba(147, 197, 253, 0.7);
-  background: rgba(248, 250, 252, 0.95);
-  color: #3b82f6;
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, transform 0.12s;
-}
-
-.qtyBtn:hover    { background: rgba(234, 88, 12, 0.12); transform: scale(1.08); }
-.qtyBtn:active   { transform: scale(0.96); }
-.qtyBtn:disabled { opacity: 0.32; cursor: not-allowed; transform: none; }
-.qtyBtnAdd       { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.35); color: #3b82f6; }
-.qtyBtnAdd:hover { background: rgba(234, 88, 12, 0.2); }
 
 /* Empty state */
 .empty {

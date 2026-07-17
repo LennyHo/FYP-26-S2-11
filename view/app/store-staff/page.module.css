@@ -61,6 +61,56 @@
 
 .statValue.green  { color: #059669; }
 .statValue.orange { color: #c2690a; }
+.statValue.red    { color: #c0321d; }
+
+/* ── Section tabs (Menu Items / Inventory) ─────────────────── */
+.sectionTabsBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fffaf5;
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid rgba(155, 109, 74, 0.2);
+  width: fit-content;
+}
+
+.sectionTab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.sectionTab:hover { color: #ea580c; background: rgba(234, 88, 12, 0.08); }
+
+.sectionTabActive {
+  background: var(--accent-brown);
+  color: #fff7ef;
+}
+
+.sectionBadge {
+  background: var(--accent-brown);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 1px 7px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.sectionTabActive .sectionBadge { background: rgba(255, 255, 255, 0.25); }
+
+.sectionBadgeRed { background: #c0321d; }
 
 /* ── Toolbar ────────────────────────────────────────────────── */
 .toolbar {
@@ -646,12 +696,117 @@
 .saveBtn:hover { background: #ea580c; }
 .saveBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* ── Inventory tab ──────────────────────────────────────────── */
+.rowLowStock { background: rgba(255, 240, 236, 0.6) !important; }
+
+.itemNameLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-weight: 600;
+  color: #3b82f6;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+.itemNameLink:hover { color: #ea580c; }
+
+.unitCell { color: #475569; font-size: 0.88rem; }
+.qtyCell  { font-weight: 700; font-size: 1rem; color: #1e293b; }
+.qtyLow   { color: #c0321d; }
+
+.lowBadge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(192, 50, 29, 0.12);
+  color: #c0321d;
+}
+
+.qtyControls { display: flex; gap: 6px; }
+
+.qtyBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(147, 197, 253, 0.7);
+  background: rgba(248, 250, 252, 0.95);
+  color: #3b82f6;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.12s;
+}
+
+.qtyBtn:hover    { background: rgba(234, 88, 12, 0.12); transform: scale(1.08); }
+.qtyBtn:active   { transform: scale(0.96); }
+.qtyBtn:disabled { opacity: 0.32; cursor: not-allowed; transform: none; }
+.qtyBtnAdd       { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.35); color: #3b82f6; }
+.qtyBtnAdd:hover { background: rgba(234, 88, 12, 0.2); }
+
+.btnDelete {
+  padding: 5px 12px;
+  border: 1px solid rgba(192, 50, 29, 0.35);
+  border-radius: 8px;
+  background: rgba(192, 50, 29, 0.07);
+  color: #c0321d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+  white-space: nowrap;
+}
+
+.btnDelete:hover    { background: rgba(192, 50, 29, 0.15); transform: scale(1.04); }
+.btnDelete:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.detailGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(147, 197, 253, 0.3);
+}
+.detailRow:last-child { border-bottom: none; padding-bottom: 0; }
+
+.detailLabel {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.detailValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: right;
+}
+
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .statsRow   { grid-template-columns: repeat(2, 1fr); }
-  .toolbar    { flex-direction: column; align-items: stretch; }
-  .searchWrap { max-width: 100%; }
-  .catTabs    { overflow-x: auto; }
+  .statsRow      { grid-template-columns: repeat(2, 1fr); }
+  .toolbar       { flex-direction: column; align-items: stretch; }
+  .searchWrap    { max-width: 100%; }
+  .catTabs       { overflow-x: auto; }
+  .sectionTabsBar { width: 100%; overflow-x: auto; }
 }
 
 @media (max-width: 480px) {
