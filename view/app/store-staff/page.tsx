@@ -89,6 +89,7 @@ export default function StoreStaffPage() {
   const [activeSection, setActiveSection] = useState<StaffSection>('menu');
   const [inventory, setInventory] = useState<DripTeaInventoryItem[]>([]);
   const [inventoryError, setInventoryError] = useState('');
+  const [createFormError, setCreateFormError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<DripTeaInventoryItem | null>(null);
   const [createForm, setCreateForm] = useState<CreateInventoryForm>(EMPTY_INVENTORY_FORM);
@@ -207,12 +208,12 @@ export default function StoreStaffPage() {
     const description = createForm.description.trim();
 
     if (!name || !unit) {
-      setInventoryError('Name and unit are required.');
+      setCreateFormError('Name and unit are required.');
       return;
     }
 
     setIsCreating(true);
-    setInventoryError('');
+    setCreateFormError('');
     try {
       const res = await createInventoryItem({ name, quantity, unit, lowStockThreshold, description });
       setInventory(prev => [...prev, res.data]);
@@ -221,7 +222,7 @@ export default function StoreStaffPage() {
     } catch (err) {
       if (isSessionExpiredError(err)) return handleSessionExpired();
       console.error('[Store staff inventory create]', err);
-      setInventoryError('Failed to create inventory item.');
+      setCreateFormError('Failed to create inventory item.');
     } finally {
       setIsCreating(false);
     }
@@ -478,7 +479,7 @@ export default function StoreStaffPage() {
                       <td>
                         <button
                           type="button"
-                          className={`${styles.toggleBtn} ${item.status === 'active' ? styles.toggleOff : styles.toggleOn}`}
+                          className={`${styles.toggleBtn} ${item.status === 'active' ? styles.toggleOff : styles.toggleActivate}`}
                           onClick={() => void toggleStatus(item)}
                           disabled={togglingId === item.mongoId}
                         >
@@ -501,7 +502,7 @@ export default function StoreStaffPage() {
         <>
         {/* Inventory toolbar */}
         <div className={styles.toolbar}>
-          <button type="button" className={styles.addBtn} onClick={() => { setInventoryError(''); setShowCreateModal(true); }}>
+          <button type="button" className={styles.addBtn} onClick={() => { setCreateFormError(''); setShowCreateModal(true); }}>
             + New Item
           </button>
           <div className={styles.searchWrap}>
@@ -772,7 +773,7 @@ export default function StoreStaffPage() {
                   onChange={e => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
                 />
               </div>
-              {inventoryError && <p className={styles.formError}>{inventoryError}</p>}
+              {createFormError && <p className={styles.formError}>{createFormError}</p>}
             </div>
             <div className={styles.modalFooter}>
               <button type="button" className={styles.cancelBtn} onClick={() => setShowCreateModal(false)}>Cancel</button>

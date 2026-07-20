@@ -693,12 +693,14 @@ export default function UserAdminDashboardPage() {
             <div className={styles.modalAccent} />
             <div className={styles.modalBody}>
               <div className={styles.modalHeader}>
-                <div className={styles.modalAvatar}>
-                  {formMode === 'create' ? <FaPlus /> : <FaPen />}
-                </div>
+                {formMode === 'edit' && (
+                  <div className={styles.modalAvatar}>
+                    <FaPen />
+                  </div>
+                )}
                 <div className={styles.modalHeaderText}>
                   <h2 id="edit-user-title">{formMode === 'create' ? 'Create User' : 'Edit User'}</h2>
-                  <p>{formMode === 'create' ? 'Fill in the details below' : `Editing ${editingUser?.fullName ?? ''}`}</p>
+                  <p>{formMode === 'create' ? 'Fill in the details of the user that you would like to add below' : `Editing ${editingUser?.fullName ?? ''}`}</p>
                 </div>
                 <button type="button" className={styles.iconButton} onClick={closeFormModal} aria-label="Close">
                   <FaTimes />

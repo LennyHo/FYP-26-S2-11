@@ -13,7 +13,7 @@
 .main {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 28px 20px 48px;
+  padding: 28px 36px 48px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -33,7 +33,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  border: 1px solid rgba(155, 109, 74, 0.2);
+  border: 1px solid rgba(234, 88, 12, 0.2);
 }
 
 .statAlert {
@@ -71,7 +71,7 @@
   background: #fffaf5;
   border-radius: 12px;
   padding: 4px;
-  border: 1px solid rgba(155, 109, 74, 0.2);
+  border: 1px solid rgba(234, 88, 12, 0.2);
   width: fit-content;
 }
 
@@ -93,12 +93,12 @@
 .sectionTab:hover { color: #ea580c; background: rgba(234, 88, 12, 0.08); }
 
 .sectionTabActive {
-  background: var(--accent-brown);
+  background: #ea580c;
   color: #fff7ef;
 }
 
 .sectionBadge {
-  background: var(--accent-brown);
+  background: #ea580c;
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
@@ -124,11 +124,10 @@
 .catTabs {
   display: flex;
   gap: 4px;
-  background: rgba(248, 250, 252, 0.95);
+  background: #fffaf5;
   border-radius: 12px;
   padding: 4px;
-  border: 1px solid rgba(147, 197, 253, 0.6);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.07);
+  border: 1px solid rgba(234, 88, 12, 0.15);
   flex-wrap: wrap;
 }
 
@@ -147,7 +146,7 @@
 }
 
 .catTab:hover    { color: #ea580c; background: rgba(234, 88, 12, 0.08); }
-.catTabActive    { background: var(--accent-brown) !important; color: #fff7ef !important; }
+.catTabActive    { background: #ea580c !important; color: #fff7ef !important; }
 
 /* Search */
 .searchWrap {
@@ -210,7 +209,7 @@
 .tableCard {
   background: #fffaf5;
   border-radius: 16px;
-  border: 1px solid rgba(155, 109, 74, 0.2);
+  border: 1px solid rgba(234, 88, 12, 0.2);
   overflow: hidden;
 }
 
@@ -222,8 +221,8 @@
 }
 
 .table thead {
-  background: rgba(59, 130, 246, 0.07);
-  border-bottom: 1px solid rgba(147, 197, 253, 0.5);
+  background: #fffaf5;
+  border-bottom: 1px solid rgba(234, 88, 12, 0.18);
 }
 
 .table th {
@@ -231,7 +230,7 @@
   text-align: left;
   font-size: 0.76rem;
   font-weight: 700;
-  color: #3b82f6;
+  color: #78716c;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -239,7 +238,7 @@
 
 .table td {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(147, 197, 253, 0.25);
+  border-bottom: 1px solid rgba(234, 88, 12, 0.1);
   vertical-align: middle;
   transition: background 0.15s;
 }
@@ -261,15 +260,15 @@
   border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1px solid rgba(147, 197, 253, 0.5);
+  border: 1px solid rgba(234, 88, 12, 0.2);
 }
 
 .itemImgPlaceholder {
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(147, 197, 253, 0.4);
+  background: rgba(234, 88, 12, 0.06);
+  border: 1px solid rgba(234, 88, 12, 0.15);
   flex-shrink: 0;
 }
 
@@ -291,8 +290,8 @@
   border-radius: 99px;
   font-size: 0.75rem;
   font-weight: 700;
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background: rgba(120, 113, 108, 0.1);
+  color: #57534e;
   text-transform: capitalize;
   white-space: nowrap;
 }
@@ -307,11 +306,11 @@
 .tag {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 99px;
+  border-radius: 6px;
   font-size: 0.7rem;
   font-weight: 600;
-  background: rgba(147, 197, 253, 0.3);
-  color: #475569;
+  background: rgba(120, 113, 108, 0.08);
+  color: #6b6560;
 }
 
 /* Price */
@@ -353,6 +352,16 @@
 .toggleOff { background: rgba(192, 50, 29, 0.12); color: #c0321d; }
 .toggleOn  { background: rgba(16, 185, 129, 0.12); color: #059669; }
 
+/* Reactivating a deactivated drink is a more consequential action than "Mark New",
+   so it gets a solid, higher-contrast style instead of the shared light .toggleOn pill. */
+.toggleActivate {
+  background: #059669;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35);
+}
+
+.toggleActivate:hover { background: #047857; opacity: 1; }
+
 /* Empty state */
 .empty {
   text-align: center;
@@ -366,7 +375,7 @@
   padding: 9px 18px;
   border: none;
   border-radius: 11px;
-  background: var(--accent-brown);
+  background: #ea580c;
   color: #fff7ef;
   font-size: 0.88rem;
   font-weight: 700;
@@ -374,7 +383,7 @@
   white-space: nowrap;
   transition: background 0.15s;
 }
-.addBtn:hover { background: #ea580c; }
+.addBtn:hover { background: #c2410c; }
 
 /* ── Modal ──────────────────────────────────────────────────── */
 .modalOverlay {
@@ -664,7 +673,7 @@
 
 .cancelBtn {
   padding: 7px 16px;
-  border: 1px solid rgba(155, 109, 74, 0.4);
+  border: 1px solid rgba(234, 88, 12, 0.4);
   border-radius: 8px;
   background: transparent;
   color: #475569;
@@ -679,14 +688,14 @@
   padding: 7px 18px;
   border: none;
   border-radius: 8px;
-  background: var(--accent-brown);
+  background: #ea580c;
   color: #fff7ef;
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
 }
-.saveBtn:hover { background: #ea580c; }
+.saveBtn:hover { background: #c2410c; }
 .saveBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Inventory tab ──────────────────────────────────────────── */
@@ -697,11 +706,10 @@
   border: none;
   padding: 0;
   font-weight: 600;
-  color: #3b82f6;
+  color: #1e293b;
   font-size: 0.9rem;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration: none;
   transition: color 0.15s;
 }
 .itemNameLink:hover { color: #ea580c; }

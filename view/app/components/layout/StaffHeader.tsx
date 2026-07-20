@@ -42,6 +42,7 @@ export default function StaffHeader() {
             onClick={() => router.push('/')}
             style={{ cursor: 'pointer' }}
           />
+          <span className={styles.brandText}>Store Staff</span>
         </div>
 
         <nav className={styles.nav}>
