@@ -82,15 +82,15 @@
 }
 
 .refreshBtn {
-  border: 1px solid rgba(234, 88, 12, 0.3);
+  border: 1px solid rgba(120, 113, 108, 0.25);
   border-radius: 10px;
   background: #fffaf5;
-  color: #ea580c;
+  color: #57534e;
   font-size: 0.82rem;
   font-weight: 800;
   padding: 10px 14px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
 
@@ -180,8 +180,8 @@
 }
 
 .table thead {
-  background: rgba(234, 88, 12, 0.07);
-  border-bottom: 1px solid rgba(234, 88, 12, 0.2);
+  background: #fffaf5;
+  border-bottom: 1px solid rgba(234, 88, 12, 0.18);
 }
 
 .table th {
@@ -189,7 +189,7 @@
   text-align: left;
   font-size: 0.76rem;
   font-weight: 700;
-  color: #ea580c;
+  color: #78716c;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -197,7 +197,7 @@
 
 .table td {
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(234, 88, 12, 0.14);
+  border-bottom: 1px solid rgba(234, 88, 12, 0.1);
   vertical-align: middle;
   transition: background 0.15s;
 }
@@ -213,11 +213,10 @@
   border: none;
   padding: 0;
   font-weight: 600;
-  color: #ea580c;
+  color: #1e293b;
   font-size: 0.9rem;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration: none;
   transition: color 0.15s;
 }
 
