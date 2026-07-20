@@ -64,6 +64,7 @@ const Order = require("../models/order.model");
 const OrderItem = require("../models/orderItem.model");
 const Feedback = require("../models/feedback.model");
 const Voucher = require("../models/voucher.model");
+const Store = require("../models/store.model");
 
 // Common functions for most features
 async function findDrinkByName(message) {
@@ -778,6 +779,34 @@ function isVoucherRequest(message) {
         msg.includes("any discount") ||
         msg.includes("any deals") ||
         msg.includes("any promotion")
+    );
+}
+
+// Store location/hours — matches questions about outlets, addresses, or opening times.
+// Deliberately excludes bare "store"/"stores" (too broad, collides with other intents) and
+// the isNavigationRequest phrasing ("where is the store page"), which is checked earlier.
+function isStoreInfoRequest(message) {
+    const msg = String(message || "").toLowerCase();
+    return (
+        msg.includes("store hours") ||
+        msg.includes("store location") ||
+        msg.includes("store address") ||
+        msg.includes("opening hours") ||
+        msg.includes("outlet hours") ||
+        msg.includes("outlet location") ||
+        msg.includes("outlet address") ||
+        msg.includes("what time do you open") ||
+        msg.includes("what time do you close") ||
+        msg.includes("when do you open") ||
+        msg.includes("when do you close") ||
+        msg.includes("what time you open") ||
+        msg.includes("what time you close") ||
+        msg.includes("where are your stores") ||
+        msg.includes("where are your outlets") ||
+        msg.includes("which stores") ||
+        msg.includes("which outlets") ||
+        msg.includes("nearest store") ||
+        msg.includes("nearest outlet")
     );
 }
 
@@ -2117,6 +2146,30 @@ const REPLY_STRINGS = {
         ms: "Anda tiada baucar yang tersedia sekarang. Semak semula untuk tawaran baharu!",
         ta: "தற்போது உங்களிடம் வவுச்சர்கள் இல்லை. புதிய சலுகைகளுக்காக மீண்டும் பாருங்கள்!",
     },
+    storeListTitle: {
+        en: "Here are our store locations and opening hours:",
+        zh: "以下是我们的门店位置和营业时间：",
+        ms: "Berikut adalah lokasi kedai dan waktu operasi kami:",
+        ta: "எங்கள் கடை இருப்பிடங்களும் இயங்கும் நேரங்களும் இதோ:",
+    },
+    noStoresAvailable: {
+        en: "Sorry, I couldn't find any store information right now. Please try again shortly.",
+        zh: "抱歉，暂时无法获取门店信息，请稍后再试。",
+        ms: "Maaf, maklumat kedai tidak tersedia sekarang. Sila cuba sebentar lagi.",
+        ta: "மன்னிக்கவும், தற்போது கடை தகவல் கிடைக்கவில்லை. பின்னர் மீண்டும் முயற்சிக்கவும்.",
+    },
+    weekdayLabel: {
+        en: "Mon–Fri",
+        zh: "周一至周五",
+        ms: "Isnin–Jumaat",
+        ta: "திங்கள்–வெள்ளி",
+    },
+    weekendLabel: {
+        en: "Sat–Sun",
+        zh: "周六至周日",
+        ms: "Sabtu–Ahad",
+        ta: "சனி–ஞாயிறு",
+    },
 };
 
 // Main chatbot message handler
@@ -2672,6 +2725,41 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         };
     }
     // End of User Story #202
+
+    // Store location/hours — always queried live from MongoDB (Store collection) so any
+    // change made there (new outlet, updated hours, closed store) is reflected immediately
+    // without redeploying the chatbot, mirroring the deterministic-reply approach used above.
+    if (isStoreInfoRequest(intentMessage)) {
+        const stores = await Store.getActiveStores();
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+
+        if (!stores.length) {
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: t('noStoresAvailable') });
+            return {
+                reply: t('noStoresAvailable'),
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
+        const weekdayLabel = t('weekdayLabel');
+        const weekendLabel = t('weekendLabel');
+        const storeLines = stores.map((s) =>
+            `<strong>${s.name}</strong><br>${s.address}` +
+            (s.phone ? `<br>${s.phone}` : "") +
+            `<br>${weekdayLabel}: ${s.openingHours?.weekday || "-"} | ${weekendLabel}: ${s.openingHours?.weekend || "-"}`
+        ).join("<br><br>");
+
+        const reply = `${t('storeListTitle')}<br><br>${storeLines}`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: t('storeListTitle') });
+
+        return {
+            reply,
+            system_action: { ui_navigation: "none" },
+        };
+    }
+    // End of store location/hours intent
 
     // User Story #198: View Purchase History
     if (isReorderPurchaseHistoryRequest(intentMessage)) {
