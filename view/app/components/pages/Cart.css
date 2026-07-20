@@ -16,12 +16,12 @@
 
 /* ── Page ──────────────────────────────────────────────────────────────── */
 .cart-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: #fbf7f1;
   font-family: Arial, Helvetica, sans-serif;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
   box-sizing: border-box;
 }
 
@@ -31,7 +31,6 @@
   padding: 0 0 48px;
   display: flex;
   flex-direction: column;
-  flex: 1;
   box-sizing: border-box;
 }
 
@@ -57,13 +56,14 @@
   transform: translateY(-2px);
 }
 
-/* Panel fills remaining height; only the item list scrolls inside it */
-.cart-panel {
-  flex: 1;
+.cart-scroll-area {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
+}
+
+.cart-panel {
+  display: flex;
+  flex-direction: column;
   background: rgba(255, 255, 255, 0.72);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   backdrop-filter: blur(14px) saturate(1.5);
@@ -78,8 +78,8 @@
   font-size: 26px;
   line-height: 1.2;
   margin: 0 0 18px;
-  font-weight: 900;
-  color: #000;
+  font-weight: 700;
+  color: #2d1a0e;
 }
 
 .cart-empty-text {
@@ -196,15 +196,10 @@
 .cart-item-row:nth-child(9)  { animation-delay: 480ms; }
 .cart-item-row:nth-child(10) { animation-delay: 540ms; }
 
-/* ── Item list is the only scrollable region ───────────────────────────── */
 .cart-list {
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  overflow-y: auto;
-  min-height: 0;
-  padding-right: 4px;
 }
 
 .cart-item-row {
@@ -248,14 +243,14 @@
 
 .cart-item-name {
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   margin: 0 0 4px;
-  color: #000;
+  color: #2d1a0e;
 }
 
 .cart-item-details {
   margin: 0;
-  color: #555;
+  color: #7a5c45;
   font-size: 13px;
   line-height: 1.6;
   font-weight: 500;
@@ -287,9 +282,9 @@
 .cart-action-btn {
   border: none;
   background: transparent;
-  color: #000;
+  color: #5b351f;
   font-size: 22px;
-  font-weight: 900;
+  font-weight: 700;
   cursor: pointer;
   line-height: 1;
   padding: 2px 6px;
@@ -306,9 +301,9 @@
 }
 
 .cart-price {
-  color: #000;
+  color: #2d1a0e;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   min-width: 70px;
   text-align: center;
 }
@@ -345,14 +340,14 @@
 .cart-total-section h2 {
   margin: 0 0 3px;
   font-size: 16px;
-  font-weight: 900;
-  color: #000;
+  font-weight: 600;
+  color: #7a5c45;
 }
 
 .cart-total-section strong {
   font-size: 18px;
-  font-weight: 900;
-  color: #000;
+  font-weight: 700;
+  color: #2d1a0e;
 }
 
 .checkout-row {
@@ -390,6 +385,7 @@
 
 /* ── Sugar Snapshot Widget ───────────────────────────────────────────────── */
 .sugar-widget {
+  flex-shrink: 0;
   background: rgba(255, 255, 255, 0.72);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   backdrop-filter: blur(14px) saturate(1.5);
@@ -410,7 +406,7 @@
 
 .sugar-widget-title {
   font-size: 19px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: #2d1a0e;
 }
@@ -427,7 +423,7 @@
   align-items: center;
   gap: 5px;
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 700;
   color: #5b351f;
   line-height: 1;
 }
@@ -494,7 +490,7 @@
 
 .sugar-current {
   font-size: 22px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1;
   animation: sugarBump 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   will-change: transform, opacity;
@@ -513,14 +509,14 @@
 
 .sugar-who-limit {
   font-size: 22px;
-  font-weight: 900;
+  font-weight: 700;
   color: #d0c8c0;
 }
 
 .sugar-pct-pill {
   margin-left: auto;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   padding: 5px 13px;
   border-radius: 999px;
   white-space: nowrap;

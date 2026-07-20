@@ -496,7 +496,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
                 onClick={() => setSize(s)}
               >
                 {s.label}
-                {s.surcharge > 0 && <span className={styles.surcharge}>+S$ {s.surcharge.toFixed(2)}</span>}
+                <span className={styles.surcharge}>+S$ {s.surcharge.toFixed(2)}</span>
               </button>
             ))}
           </div>
@@ -549,7 +549,7 @@ export default function DrinkCustomize({ mode = "add" }: DrinkCustomizeProps) {
                 onClick={() => setTopping(opt)}
               >
                 {opt.name}
-                {opt.price > 0 && <span className={styles.surcharge}>+S$ {opt.price.toFixed(2)}</span>}
+                <span className={styles.surcharge}>+S$ {opt.price.toFixed(2)}</span>
               </button>
             ))}
           </div>

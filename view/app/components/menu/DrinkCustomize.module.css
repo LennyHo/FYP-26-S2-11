@@ -77,12 +77,13 @@
   padding: 6px 14px 6px 10px;
   width: fit-content;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
-  transition: background 0.15s, transform 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .backBtn:hover {
-  background: rgba(255, 255, 255, 0.96);
-  transform: translateX(-2px);
+  background: var(--accent-brown);
+  color: #fff8f1;
+  border-color: var(--accent-brown);
 }
 
 .backBtnArrow {
@@ -270,6 +271,10 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.actionRow > .addToCartBtn:only-child {
+  grid-column: 1 / -1;
 }
 
 .addToCartBtn {

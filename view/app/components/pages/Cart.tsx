@@ -470,6 +470,7 @@ export default function Cart() {
           Back to Menu
         </button>
 
+        <div className="cart-scroll-area">
         {!isLoading && cartItems.length > 0 && totalSugarG !== null && sugarGradeKey && (
           <div className="sugar-widget">
             <div className="sugar-widget-header">
@@ -629,6 +630,7 @@ export default function Cart() {
             </>
           )}
         </section>
+        </div>
 
         <div className="checkout-row">
           <button
