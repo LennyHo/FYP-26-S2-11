@@ -549,7 +549,7 @@ export default function Cart() {
             </div>
           ) : cartItems.length === 0 ? (
             <div className="cart-empty-state">
-              <h2 className="cart-empty-title">Your cart is empty! Do you want to browse our menu?</h2>
+              <h2 className="cart-empty-title">Your cart is empty!</h2>
 
               <p className="cart-empty-subtitle">
                 Looks like you haven't added anything yet.

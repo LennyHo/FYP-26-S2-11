@@ -2746,8 +2746,9 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         const contextPrompt =
             `The customer asked: "${safeMessage}"\n\nHere is the current, up-to-date list of our store locations:\n${storeContext}\n\n` +
-            `Answer the customer's question using ONLY the store details above (do not invent any store, address, or hours). ` +
-            `Reply naturally in 2-4 sentences, formatted with <br> line breaks between stores.`;
+            `Write a short, friendly 1-2 sentence reply acknowledging their question. ` +
+            `Do NOT list out the address, phone number, or opening hours in your reply — that information is already shown to the customer in visual cards right below your message, so repeating it would be redundant. ` +
+            `You may mention the store name(s) by name, but nothing more specific than that.`;
         const systemPrompt = await buildSystemPrompt(safeMessage, "");
         const reply = await aiClient.generateText(contextPrompt, recentHistory, systemPrompt);
 
