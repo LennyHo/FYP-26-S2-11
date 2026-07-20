@@ -45,15 +45,15 @@
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(60, 35, 20, 0.28);
+  box-shadow: 0 2px 5px rgba(60, 35, 20, 0.15);
   margin-top: 24px;
   margin-bottom: 24px;
-  transition: transform 0.15s ease, background 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .back-menu-btn:hover {
-  background: #462717;
-  transform: translateY(-2px);
+  background: var(--color-secondary);
+  color: #fff;
 }
 
 .cart-scroll-area {
@@ -367,20 +367,19 @@
   font-size: 15px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(60, 35, 20, 0.25);
-  transition: transform 0.15s ease, background 0.2s ease;
+  box-shadow: 0 2px 5px rgba(60, 35, 20, 0.15);
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .checkout-btn:hover {
-  background: #462717;
-  transform: translateY(-2px);
+  background: var(--color-secondary);
+  color: #fff;
 }
 
 .checkout-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
   box-shadow: none;
-  transform: none;
 }
 
 /* ── Sugar Snapshot Widget ───────────────────────────────────────────────── */
