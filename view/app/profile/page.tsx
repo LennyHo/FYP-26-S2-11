@@ -56,10 +56,14 @@ export default function ProfilePage() {
   const [addresses, setAddresses] = useState<DripTeaAddress[]>([]);
   const [activeAddressCategory, setActiveAddressCategory] = useState<AddressCategory>("Home");
   const [status, setStatus] = useState("");
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   const filteredAddresses = addresses
     .map((entry, index) => ({ entry, index }))
     .filter(({ entry }) => getAddressCategory(String(entry.label || "")) === activeAddressCategory);
+
+  const carouselMax = Math.max(filteredAddresses.length - 1, 0);
+  const currentSlide = Math.min(carouselIndex, carouselMax);
 
   useEffect(() => {
     const user = getStoredUser();
@@ -179,9 +183,7 @@ export default function ProfilePage() {
       <div className={styles.card}>
         <div className={styles.header}>
           <button type="button" className={styles.backBtn} onClick={() => router.back()} aria-label="Go back">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
-            </svg>
+            <span className={styles.backBtnArrow}>‹</span>
             Back
           </button>
           <div className={styles.headingGroup}>
@@ -203,7 +205,7 @@ export default function ProfilePage() {
               className={styles.avatarImg}
             />
             <label htmlFor="profilePic" className={styles.avatarEditBtn} aria-label="Change profile picture">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
@@ -302,6 +304,7 @@ export default function ProfilePage() {
                       className={`${styles.addressPillar} ${activeAddressCategory === category ? styles.addressPillarActive : ""}`}
                       onClick={() => {
                         setActiveAddressCategory(category);
+                        setCarouselIndex(0);
                       }}
                     >
                       <span className={styles.addressPillarDot} />
@@ -323,58 +326,108 @@ export default function ProfilePage() {
                     <p>No {activeAddressCategory.toLowerCase()} addresses yet.</p>
                   </div>
                 ) : (
-                  <div className={styles.addressList}>
-                    {filteredAddresses.map(({ entry, index }) => (
+                  <div className={styles.addressCarousel}>
+                    <div className={styles.addressCarouselViewport}>
                       <div
-                        key={index}
-                        className={styles.addressCard}
-                        data-category={activeAddressCategory.toLowerCase()}
+                        className={styles.addressCarouselTrack}
+                        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                       >
-                        <div className={styles.addressCardHeader}>
-                          <span>{activeAddressCategory} address</span>
-                        </div>
-                        <div className={styles.addressInputs}>
-                          <input
-                            className={styles.input}
-                            value={entry.label || ""}
-                            onChange={event => updateAddressField(index, "label", event.target.value)}
-                            placeholder="Label, e.g. Home"
-                          />
-                          <textarea
-                            className={`${styles.input} ${styles.addressTextarea}`}
-                            value={entry.address || ""}
-                            onChange={event => updateAddressField(index, "address", event.target.value)}
-                            placeholder="Full delivery address"
-                            rows={3}
-                          />
-                        </div>
-
-                        <div className={styles.addressActions}>
-                          {entry.isDefault ? (
-                            <span className={styles.defaultAddressBadge}>
-                              <span className={styles.defaultAddressDot} />
-                              Default address
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              className={styles.setDefaultAddressBtn}
-                              onClick={() => setDefaultAddress(index)}
+                        {filteredAddresses.map(({ entry, index }) => (
+                          <div key={index} className={styles.addressCarouselSlide}>
+                            <div
+                              className={styles.addressCard}
+                              data-category={activeAddressCategory.toLowerCase()}
                             >
-                              Set as default
-                            </button>
-                          )}
+                              <div className={styles.addressCardHeader}>
+                                <span>{activeAddressCategory} address</span>
+                              </div>
+                              <div className={styles.addressInputs}>
+                                <input
+                                  className={styles.input}
+                                  value={entry.label || ""}
+                                  onChange={event => updateAddressField(index, "label", event.target.value)}
+                                  placeholder="Label, e.g. Home"
+                                />
+                                <textarea
+                                  className={`${styles.input} ${styles.addressTextarea}`}
+                                  value={entry.address || ""}
+                                  onChange={event => updateAddressField(index, "address", event.target.value)}
+                                  placeholder="Full delivery address"
+                                  rows={3}
+                                />
+                              </div>
+
+                              <div className={styles.addressActions}>
+                                {entry.isDefault ? (
+                                  <span className={styles.defaultAddressBadge}>
+                                    <span className={styles.defaultAddressDot} />
+                                    Default address
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className={styles.setDefaultAddressBtn}
+                                    onClick={() => setDefaultAddress(index)}
+                                  >
+                                    Set as default
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  className={styles.removeAddressBtn}
+                                  onClick={() => removeAddress(index)}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className={`${styles.carouselNav} ${filteredAddresses.length <= 1 ? styles.carouselNavHidden : ""}`}>
+                      {filteredAddresses.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            className={styles.carouselArrow}
+                            aria-label="Previous address"
+                            onClick={() => setCarouselIndex(current => Math.max(current - 1, 0))}
+                            disabled={currentSlide === 0}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                          </button>
+
+                          <div className={styles.carouselDots}>
+                            {filteredAddresses.map((_, dotIndex) => (
+                              <button
+                                key={dotIndex}
+                                type="button"
+                                className={`${styles.carouselDot} ${dotIndex === currentSlide ? styles.carouselDotActive : ""}`}
+                                aria-label={`Go to address ${dotIndex + 1}`}
+                                onClick={() => setCarouselIndex(dotIndex)}
+                              />
+                            ))}
+                          </div>
 
                           <button
                             type="button"
-                            className={styles.removeAddressBtn}
-                            onClick={() => removeAddress(index)}
+                            className={styles.carouselArrow}
+                            aria-label="Next address"
+                            onClick={() => setCarouselIndex(current => Math.min(current + 1, carouselMax))}
+                            disabled={currentSlide === carouselMax}
                           >
-                            Remove
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M9 18l6-6-6-6" />
+                            </svg>
                           </button>
-                        </div>
-                      </div>
-                    ))}
+                        </>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

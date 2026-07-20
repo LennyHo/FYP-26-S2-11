@@ -4,17 +4,17 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 2.5rem 1rem 4rem;
+  padding: 2rem 1rem 3rem;
 }
 
 .card {
   width: 100%;
-  max-width: 1200px;
+  max-width: 880px;
   box-sizing: border-box;
   background: #fff;
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  padding: 2rem 2rem 2.5rem;
+  padding: 1.4rem 1.5rem 1.8rem;
   margin-top: 1rem;
 }
 
@@ -29,22 +29,24 @@
 
 .headingGroup {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.6rem;
   flex: 0 1 auto;
 }
 
 .heading {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
   text-align: left;
+  white-space: nowrap;
 }
 
 .headingHint {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: #918471;
 }
 
@@ -56,25 +58,41 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: none;
-  border: none;
-  color: #555;
-  font-size: 0.88rem;
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  color: #4b311f;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  padding: 0;
-  transition: color 0.18s;
+  padding: 8px 18px 8px 14px;
+  width: fit-content;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .backBtn:hover {
-  color: #1a1a1a;
+  background: var(--accent-brown);
+  color: #fff8f1;
+  border-color: var(--accent-brown);
+}
+
+.backBtnArrow {
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 400;
+  margin-top: -1px;
 }
 
 /* Avatar */
 .avatarSection {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
   grid-column: 1;
   margin-bottom: 0.7rem;
 }
@@ -86,28 +104,28 @@
 }
 
 .avatarImg {
-  width: 110px;
-  height: 110px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--accent-brown);
+  border: 2.5px solid var(--accent-brown);
   display: block;
   background: #f0ece4;
 }
 
 .avatarEditBtn {
   position: absolute;
-  bottom: 4px;
-  right: 4px;
-  width: 26px;
-  height: 26px;
+  bottom: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
   background: var(--accent-brown);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border: 2px solid #fff;
+  border: 1.5px solid #fff;
   color: #fff;
   transition: background 0.18s;
 }
@@ -121,15 +139,15 @@
 }
 
 .avatarHint {
-  margin: 0.6rem 0 0;
-  font-size: 0.8rem;
+  margin: 0;
+  font-size: 0.72rem;
   color: #888;
 }
 
 /* Form */
 .form {
   display: grid;
-  grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(260px, 0.6fr) minmax(0, 1.7fr);
   align-items: stretch;
   gap: 2rem;
   width: 100%;
@@ -154,16 +172,16 @@
 }
 
 .label {
-  font-size: 0.93rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #1a1a1a;
 }
 
 .input {
-  padding: 0.75rem 1rem;
+  padding: 0.55rem 0.85rem;
   border: 1.5px solid #e0dbd0;
   border-radius: 10px;
-  font-size: 0.97rem;
+  font-size: 0.85rem;
   background: #f5f0e8;
   color: #1a1a1a;
   outline: none;
@@ -188,7 +206,7 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.75rem 1rem;
+  padding: 0.55rem 0.85rem;
   border: 1.5px solid #e0dbd0;
   border-radius: 10px;
   background: #f5f0e8;
@@ -199,7 +217,7 @@
 
 .passwordDots {
   flex: 1;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: #555;
   letter-spacing: 0.15em;
   line-height: 1;
@@ -209,7 +227,7 @@
   background: none;
   border: none;
   color: #1a1a1a;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -254,7 +272,7 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-  font-size: 0.98rem;
+  font-size: 0.88rem;
   color: #1a1a1a;
 }
 
@@ -270,7 +288,7 @@
 .addressHint {
   margin: 0.25rem 0 0;
   color: #777;
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   line-height: 1.35;
 }
 
@@ -415,33 +433,88 @@
   font-size: 0.84rem;
 }
 
-.addressList {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 0.85rem) / 2);
-  gap: 0.85rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.15rem 0 0.65rem;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  overscroll-behavior-inline: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: #c8c0b4 transparent;
+.addressCarousel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
 }
 
-.addressList::-webkit-scrollbar {
+.addressCarouselViewport {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.addressCarouselTrack {
+  display: flex;
+  transition: transform 0.32s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.addressCarouselSlide {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+.carouselNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  height: 28px;
+}
+
+.carouselNavHidden {
+  visibility: hidden;
+}
+
+.carouselArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #e0dbd0;
+  background: #fff;
+  color: #6b5f4f;
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s, opacity 0.18s;
+}
+
+.carouselArrow:hover:not(:disabled) {
+  border-color: var(--accent-brown);
+  color: var(--accent-brown);
+}
+
+.carouselArrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.carouselDots {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.carouselDot {
+  width: 7px;
   height: 7px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: #ddd4c5;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.18s;
 }
 
-.addressList::-webkit-scrollbar-track {
-  background: transparent;
+.carouselDot:hover {
+  background: #c2b6a1;
 }
 
-.addressList::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: #c8c0b4;
+.carouselDotActive {
+  background: var(--accent-brown);
+  transform: scale(1.2);
 }
 
 .addressCard {
@@ -451,23 +524,16 @@
   grid-template-rows: auto 1fr auto;
   gap: 0.7rem;
   border: 1px solid #e7dfd4;
-  border-top: 3px solid var(--pillar-color, var(--accent-brown));
   border-radius: 12px;
   background: #fff;
   padding: 1rem;
   min-height: 300px;
   min-width: 0;
-  scroll-snap-align: start;
   transition: border-color 0.18s;
 }
 
-.addressCard[data-category="home"] { --pillar-color: var(--accent-brown); }
-.addressCard[data-category="work"] { --pillar-color: var(--accent-blue); }
-.addressCard[data-category="others"] { --pillar-color: #c9932e; }
-
 .addressCard:hover {
   border-color: #cec5b8;
-  border-top-color: var(--pillar-color, var(--accent-brown));
 }
 
 .addressCardHeader {
@@ -564,10 +630,10 @@
 
 .saveBtn {
   margin-top: auto;
-  padding: 0.85rem;
+  padding: 0.65rem;
   background: var(--accent-brown);
   color: #fff8f1;
-  font-size: 0.97rem;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   border: none;
@@ -604,27 +670,23 @@
    desktop and iPad landscape. The address cards remain horizontally scrollable. */
 @media (min-width: 801px) {
   .page {
-    height: 100dvh;
-    min-height: 0;
-    box-sizing: border-box;
-    align-items: stretch;
+    min-height: 100vh;
+    align-items: center;
     padding: 12px clamp(12px, 3vw, 56px);
-    overflow: hidden;
   }
 
   .card {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    min-height: 0;
+    max-height: 92vh;
     margin-top: 0;
-    padding: clamp(1.25rem, 2.8vh, 2rem) 2rem;
+    padding: clamp(1.1rem, 2.4vh, 1.4rem) 1.5rem;
     overflow: hidden;
   }
 
   .header {
     flex: 0 0 auto;
-    margin-bottom: clamp(0.9rem, 2.2vh, 1.6rem);
+    margin-bottom: clamp(0.7rem, 1.8vh, 1.1rem);
   }
 
   .form {
@@ -643,13 +705,13 @@
   }
 
   .avatarImg {
-    width: clamp(84px, 13vh, 110px);
-    height: clamp(84px, 13vh, 110px);
+    width: clamp(60px, 9vh, 76px);
+    height: clamp(60px, 9vh, 76px);
   }
 
   .input,
   .passwordRow {
-    padding-block: clamp(0.55rem, 1.3vh, 0.75rem);
+    padding-block: clamp(0.45rem, 1vh, 0.55rem);
   }
 
   .addressCard {
