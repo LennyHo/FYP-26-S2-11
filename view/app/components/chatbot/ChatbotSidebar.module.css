@@ -2772,6 +2772,48 @@
   width: 100% !important;
 }
 
+.storeCardList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.storeCard {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.storeCardImage {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+}
+
+.storeCardBody {
+  padding: 10px 14px 14px;
+}
+
+.storeCardName {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #fff;
+  margin: 0 0 4px;
+}
+
+.storeCardLine {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 2px;
+  line-height: 1.4;
+}
+
 .healthCard {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 12px;

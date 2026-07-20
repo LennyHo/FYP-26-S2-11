@@ -758,12 +758,12 @@ button { touch-action: manipulation; }
 
 .order-type-card h1 {
   margin-bottom: 10px;
-  color: #31231a;
+  color: #2d1a0e;
   font-size: 28px;
 }
 
 .order-type-card p {
-  color: #6e6050;
+  color: #7a5c45;
 }
 
 .order-type-options {
@@ -809,7 +809,7 @@ button { touch-action: manipulation; }
 
 .order-type-option h2 {
   margin-bottom: 8px;
-  color: #31231a;
+  color: #2d1a0e;
   font-size: 20px;
 }
 
@@ -817,7 +817,7 @@ button { touch-action: manipulation; }
   min-height: 42px;
   font-size: 14.5px;
   line-height: 1.5;
-  color: #6e6050;
+  color: #7a5c45;
 }
 
 .order-type-option strong {

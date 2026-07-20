@@ -130,6 +130,14 @@ export interface Message {
       minSpend?: number;
     }[];
   } | null;
+  storeCards?: {
+    name: string;
+    address: string;
+    phone?: string;
+    weekdayHours: string;
+    weekendHours: string;
+    image?: string | null;
+  }[];
 }
 
 export interface ChatbotSidebarProps {

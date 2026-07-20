@@ -563,6 +563,24 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                     </div>
                   )}
 
+                  {!msg.isUser && msg.storeCards && msg.storeCards.length > 0 && (
+                    <div className={styles.storeCardList}>
+                      {msg.storeCards.map((store) => (
+                        <div key={store.name} className={styles.storeCard}>
+                          {store.image && (
+                            <img src={store.image} alt={store.name} className={styles.storeCardImage} />
+                          )}
+                          <div className={styles.storeCardBody}>
+                            <p className={styles.storeCardName}>{store.name}</p>
+                            <p className={styles.storeCardLine}>{store.address}</p>
+                            {store.phone && <p className={styles.storeCardLine}>{store.phone}</p>}
+                            <p className={styles.storeCardLine}>Mon–Fri: {store.weekdayHours} | Sat–Sun: {store.weekendHours}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {isLatestBot && options.length > 0 && msg.id !== dismissedMsgId && (
                     <div className={styles.inlineOptions}>
                       <div className={styles.inlineOptionsHeader}>
@@ -988,6 +1006,24 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                                   : "brown"
                               }
                             />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {!msg.isUser && msg.storeCards && msg.storeCards.length > 0 && (
+                      <div className={styles.storeCardList}>
+                        {msg.storeCards.map((store) => (
+                          <div key={store.name} className={styles.storeCard}>
+                            {store.image && (
+                              <img src={store.image} alt={store.name} className={styles.storeCardImage} />
+                            )}
+                            <div className={styles.storeCardBody}>
+                              <p className={styles.storeCardName}>{store.name}</p>
+                              <p className={styles.storeCardLine}>{store.address}</p>
+                              {store.phone && <p className={styles.storeCardLine}>{store.phone}</p>}
+                              <p className={styles.storeCardLine}>Mon–Fri: {store.weekdayHours} | Sat–Sun: {store.weekendHours}</p>
+                            </div>
                           </div>
                         ))}
                       </div>

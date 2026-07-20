@@ -66,6 +66,13 @@ const Feedback = require("../models/feedback.model");
 const Voucher = require("../models/voucher.model");
 const Store = require("../models/store.model");
 
+// Client-only outlet photos — the stores collection has no image field, so this maps each
+// outlet by name to the building it's located in. Mirrors OUTLET_IMAGES in Checkout.tsx.
+const STORE_OUTLET_IMAGES = {
+    "DripTea Jurong East": "/img/Jem_Mall.jpg",
+    "DripTea Orchard": "/img/313somerset.webp",
+};
+
 // Common functions for most features
 async function findDrinkByName(message) {
     const msg = String(message || "").toLowerCase();
@@ -782,32 +789,37 @@ function isVoucherRequest(message) {
     );
 }
 
+// Narrows the live store list down to whichever specific outlet(s) the customer named
+// (e.g. "jurong east" or "orchard"), by matching each store's name minus the "DripTea" brand
+// prefix against the message. Falls back to the full list when no specific outlet is named,
+// so "what are the available stores" still returns all of them.
+function filterStoresByMention(stores, message) {
+    const msg = String(message || "").toLowerCase();
+    const matched = stores.filter((s) => {
+        const suffix = s.name.toLowerCase().replace(/\bdriptea\b/g, "").trim();
+        return suffix && msg.includes(suffix);
+    });
+    return matched.length > 0 ? matched : stores;
+}
+
 // Store location/hours — matches questions about outlets, addresses, or opening times.
-// Deliberately excludes bare "store"/"stores" (too broad, collides with other intents) and
-// the isNavigationRequest phrasing ("where is the store page"), which is checked earlier.
+// isNavigationRequest (checked earlier) already claims "where is the store page" style phrasing,
+// so it's safe here to match on any store/outlet word paired with an info-seeking word.
+const STORE_WORD_RE = /\b(store|stores|outlet|outlets|orchard|jurong east)\b/;
+const STORE_INFO_WORD_RE = /\b(available|list|where|which|what|any|all|how many|nearest|hours|location|locations|address|open|close|opens|closes|opening|info|details)\b/;
+
 function isStoreInfoRequest(message) {
     const msg = String(message || "").toLowerCase();
-    return (
-        msg.includes("store hours") ||
-        msg.includes("store location") ||
-        msg.includes("store address") ||
-        msg.includes("opening hours") ||
-        msg.includes("outlet hours") ||
-        msg.includes("outlet location") ||
-        msg.includes("outlet address") ||
+    if (
         msg.includes("what time do you open") ||
         msg.includes("what time do you close") ||
         msg.includes("when do you open") ||
         msg.includes("when do you close") ||
         msg.includes("what time you open") ||
-        msg.includes("what time you close") ||
-        msg.includes("where are your stores") ||
-        msg.includes("where are your outlets") ||
-        msg.includes("which stores") ||
-        msg.includes("which outlets") ||
-        msg.includes("nearest store") ||
-        msg.includes("nearest outlet")
-    );
+        msg.includes("what time you close")
+    ) return true;
+
+    return STORE_WORD_RE.test(msg) && STORE_INFO_WORD_RE.test(msg);
 }
 
 // Queries Voucher collection for vouchers the customer can still redeem
@@ -2146,29 +2158,11 @@ const REPLY_STRINGS = {
         ms: "Anda tiada baucar yang tersedia sekarang. Semak semula untuk tawaran baharu!",
         ta: "தற்போது உங்களிடம் வவுச்சர்கள் இல்லை. புதிய சலுகைகளுக்காக மீண்டும் பாருங்கள்!",
     },
-    storeListTitle: {
-        en: "Here are our store locations and opening hours:",
-        zh: "以下是我们的门店位置和营业时间：",
-        ms: "Berikut adalah lokasi kedai dan waktu operasi kami:",
-        ta: "எங்கள் கடை இருப்பிடங்களும் இயங்கும் நேரங்களும் இதோ:",
-    },
     noStoresAvailable: {
         en: "Sorry, I couldn't find any store information right now. Please try again shortly.",
         zh: "抱歉，暂时无法获取门店信息，请稍后再试。",
         ms: "Maaf, maklumat kedai tidak tersedia sekarang. Sila cuba sebentar lagi.",
         ta: "மன்னிக்கவும், தற்போது கடை தகவல் கிடைக்கவில்லை. பின்னர் மீண்டும் முயற்சிக்கவும்.",
-    },
-    weekdayLabel: {
-        en: "Mon–Fri",
-        zh: "周一至周五",
-        ms: "Isnin–Jumaat",
-        ta: "திங்கள்–வெள்ளி",
-    },
-    weekendLabel: {
-        en: "Sat–Sun",
-        zh: "周六至周日",
-        ms: "Sabtu–Ahad",
-        ta: "சனி–ஞாயிறு",
     },
 };
 
@@ -2726,9 +2720,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     }
     // End of User Story #202
 
-    // Store location/hours — always queried live from MongoDB (Store collection) so any
-    // change made there (new outlet, updated hours, closed store) is reflected immediately
-    // without redeploying the chatbot, mirroring the deterministic-reply approach used above.
+    // Store location/hours — live store data is pulled from MongoDB (Store collection) on every
+    // request, then handed to Gemini as grounding context so the reply is natural-language and
+    // conversational, not a fixed template, while still being accurate to whatever is currently
+    // in the database (new outlet, updated hours, closed store — no redeploy needed).
     if (isStoreInfoRequest(intentMessage)) {
         const stores = await Store.getActiveStores();
 
@@ -2742,20 +2737,34 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             };
         }
 
-        const weekdayLabel = t('weekdayLabel');
-        const weekendLabel = t('weekendLabel');
-        const storeLines = stores.map((s) =>
-            `<strong>${s.name}</strong><br>${s.address}` +
-            (s.phone ? `<br>${s.phone}` : "") +
-            `<br>${weekdayLabel}: ${s.openingHours?.weekday || "-"} | ${weekendLabel}: ${s.openingHours?.weekend || "-"}`
-        ).join("<br><br>");
+        const relevantStores = filterStoresByMention(stores, intentMessage);
 
-        const reply = `${t('storeListTitle')}<br><br>${storeLines}`;
+        const storeContext = relevantStores.map((s) =>
+            `- ${s.name}\n  Address: ${s.address}\n  Phone: ${s.phone || "N/A"}\n  ` +
+            `Hours: Mon-Fri ${s.openingHours?.weekday || "-"}, Sat-Sun ${s.openingHours?.weekend || "-"}`
+        ).join("\n");
 
-        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: t('storeListTitle') });
+        const contextPrompt =
+            `The customer asked: "${safeMessage}"\n\nHere is the current, up-to-date list of our store locations:\n${storeContext}\n\n` +
+            `Answer the customer's question using ONLY the store details above (do not invent any store, address, or hours). ` +
+            `Reply naturally in 2-4 sentences, formatted with <br> line breaks between stores.`;
+        const systemPrompt = await buildSystemPrompt(safeMessage, "");
+        const reply = await aiClient.generateText(contextPrompt, recentHistory, systemPrompt);
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        const storeCards = relevantStores.map((s) => ({
+            name: s.name,
+            address: s.address,
+            phone: s.phone || "",
+            weekdayHours: s.openingHours?.weekday || "-",
+            weekendHours: s.openingHours?.weekend || "-",
+            image: STORE_OUTLET_IMAGES[s.name] || null,
+        }));
 
         return {
             reply,
+            storeCards,
             system_action: { ui_navigation: "none" },
         };
     }

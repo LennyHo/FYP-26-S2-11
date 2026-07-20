@@ -88,11 +88,13 @@ export function useChatApi({
       ? (payload.orderStatusCard as Message['orderStatusCard']) : null;
     const voucherCard = payload.voucherCard && typeof payload.voucherCard === 'object'
       ? (payload.voucherCard as Message['voucherCard']) : null;
+    const storeCards = Array.isArray(payload.storeCards)
+      ? (payload.storeCards as Message['storeCards']) : [];
     const systemAction = payload.system_action && typeof payload.system_action === 'object'
       ? (payload.system_action as { ui_navigation?: string }) : null;
     const strippedReply = rawReply.replace(/<div[^>]*class="[^"]*hidden-cart-data[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
     const sanitizedReply = strippedReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
-    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, showViewCart: payload.showViewCart, systemAction };
+    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, storeCards, showViewCart: payload.showViewCart, systemAction };
   }
 
   async function sendMessage(messageText: string, shouldSpeak: boolean = false, isQuickPrompt: boolean = false) {
@@ -161,8 +163,8 @@ export function useChatApi({
 
     try {
       const response = await sendChatMessage({ message: messageText, conversationId: convId, userId: getCurrentUserId(), isQuickPrompt });
-      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, showViewCart, systemAction } = parsePayload(await response.json());
-      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard };
+      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, storeCards, showViewCart, systemAction } = parsePayload(await response.json());
+      const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, storeCards };
       setMessages(prev => [...prev, botMsg]);
 
       // #26 - Navigate Website via Chatbot: backend resolved a destination page, jump there now.
@@ -213,6 +215,7 @@ export function useChatApi({
         purchaseHistory: payload.purchaseHistory && typeof payload.purchaseHistory === 'object' ? (payload.purchaseHistory as Message['purchaseHistory']) : null,
         orderStatusCard: payload.orderStatusCard && typeof payload.orderStatusCard === 'object' ? (payload.orderStatusCard as Message['orderStatusCard']) : null,
         voucherCard: payload.voucherCard && typeof payload.voucherCard === 'object' ? (payload.voucherCard as Message['voucherCard']) : null,
+        storeCards: Array.isArray(payload.storeCards) ? (payload.storeCards as Message['storeCards']) : [],
       };
       setOverlayMessages(prev => [...prev, botMsg]);
 
