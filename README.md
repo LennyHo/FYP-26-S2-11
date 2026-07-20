@@ -19,6 +19,7 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 11. [Essential API Endpoints](#essential-api-endpoints)
 12. [Frontend Pages & Features](#frontend-pages--features)
 13. [Chatbot Test Prompts](#chatbot-test-prompts)
+14. [Maps & Geocoding (OneMap + Leaflet)](#maps--geocoding-onemap--leaflet)
 
 ---
 
@@ -33,6 +34,8 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 | AI — Image   | Gemini 2.5 Flash                                    |
 | AI — STT     | ElevenLabs Scribe v1 (multilingual speech-to-text)  |
 | AI — TTS     | ElevenLabs eleven_multilingual_v2 (bot voice)       |
+| Maps         | Leaflet + react-leaflet (interactive store/delivery maps) |
+| Geocoding    | OneMap API (Singapore address search & reverse geocoding) |
 | HTTP         | Axios                                               |
 | i18n         | react-i18next                                       |
 
@@ -66,7 +69,7 @@ Make sure all of the following are installed and working on your machine **befor
 - A **Gemini API key** — [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 - An **ElevenLabs API key** — [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) (used for both STT transcription and TTS bot voice)
 - An **ElevenLabs Voice ID** — [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library) → pick a voice → copy its ID
-- A **OneMap Accouunt** - https://www.onemap.gov.sg/apidocs/register
+- A **OneMap account** — [onemap.gov.sg/apidocs/register](https://www.onemap.gov.sg/apidocs/register) (used for address search/autocomplete on the delivery page)
 
 ---
 
@@ -143,10 +146,15 @@ DRIPTEA_API_BASE=http://localhost:5000
 # These are server-side only (no NEXT_PUBLIC_ prefix) — never exposed to the browser
 ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 ELEVENLABS_VOICE_ID=your_elevenlabs_voice_id_here
+
+# OneMap — used by the Next.js /api/onemap/search route (address search on the delivery page)
+ONEMAP_EMAIL=your_onemap_account_email
+ONEMAP_PASSWORD=your_onemap_account_password
 ```
 
 > - `DRIPTEA_API_BASE` tells the frontend where the backend is running. Change this to your deployed backend URL when going to production.
 > - `ELEVENLABS_VOICE_ID` sets which voice Avy uses when speaking replies. Find voice IDs at [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library).
+> - `ONEMAP_EMAIL` / `ONEMAP_PASSWORD` authenticate against the OneMap API to fetch a search token — register a free account at [onemap.gov.sg/apidocs/register](https://www.onemap.gov.sg/apidocs/register). Reverse geocoding (map-click → address) uses OneMap's public endpoint and needs no credentials.
 
 ---
 
@@ -408,11 +416,27 @@ All backend routes are prefixed with `/api` except the chatbot.
 | `/profile`                     | Customer profile                                      |
 | `/purchase-history`            | Customer order history                                |
 | `/contact`                     | Contact / enquiry page                                |
-| `/global-stores`               | Global store locator                                  |
+| `/global-stores`               | Global store locator (Leaflet map)                    |
+| `/delivery`                    | Delivery address picker — OneMap search + Leaflet map, distance-based fee |
 | `/our-story`                   | Brand story page                                      |
 | `/store-staff`                 | Store staff login                                     |
 | `/store-staff-dashboard`       | Order queue management (staff)                        |
 | `/user-admin`                  | Admin login                                           |
 | `/user-admin-dashboard`        | User & menu management (admin)                        |
 | `/store-staff-voucher`         | Voucher management — view, search, delete (staff)     |
+
+---
+
+## Maps & Geocoding (OneMap + Leaflet)
+
+Two libraries power location features, used together on `/delivery` and separately on `/global-stores`:
+
+- **Leaflet + react-leaflet** render the interactive maps themselves (tiles, markers, popups).
+  - `view/app/global-stores/StoreMap.tsx` — plots both DripTea outlets as pins on a static map.
+  - `view/app/components/DeliveryMap.jsx` — plots the selected outlet + the customer's chosen delivery point, and calculates straight-line distance (`calculateDistanceKm`) to derive the delivery fee.
+- **OneMap** (Singapore government's official mapping API) supplies the address data behind the delivery map:
+  - **Search/autocomplete** — typing an address on `/delivery` calls the Next.js proxy route `view/app/api/onemap/search/route.ts`, which authenticates with `ONEMAP_EMAIL`/`ONEMAP_PASSWORD` to get a token, then queries OneMap's `elastic/search` endpoint. The proxy exists so the OneMap credentials stay server-side.
+  - **Reverse geocoding** — clicking directly on the delivery map calls OneMap's public `revgeocode` endpoint client-side (no credentials needed) to turn the clicked coordinates into a readable address.
+
+See [Environment Variables](#environment-variables) for the required `ONEMAP_EMAIL` / `ONEMAP_PASSWORD` setup.
 
