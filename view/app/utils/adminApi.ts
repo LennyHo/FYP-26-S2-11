@@ -56,3 +56,21 @@ export function suspendUser(userId: string) {
   });
 }
 
+// ── Role descriptions (User Profiles tab) ───────────────────────────────────────
+
+// Fetches the description text for each profile/role type. GET /api/role-descriptions
+export function getRoleDescriptions() {
+  return requestJson<{ ok: boolean; data: Record<string, string> }>('/api/role-descriptions');
+}
+
+// Updates the description text for a profile/role type. PATCH /api/role-descriptions/:role
+export function updateRoleDescription(role: string, description: string) {
+  return requestJson<{ ok: boolean; data: { role: string; description: string } }>(
+    `/api/role-descriptions/${encodeURIComponent(role)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ description }),
+    }
+  );
+}
+

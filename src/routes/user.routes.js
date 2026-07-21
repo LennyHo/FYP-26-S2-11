@@ -38,6 +38,7 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 const User = require("../models/user.model");
 const Store = require("../models/store.model");
+const RoleDescription = require("../models/roleDescription.model");
 const { requireAuth, requireRole } = require("../middleware/auth.middleware");
 
 const router = express.Router();
@@ -260,6 +261,41 @@ router.patch("/users/:id", async (req, res) => {
       ok: false,
       message: "Unable to update user.",
     });
+  }
+});
+
+// As a user admin, I want to view and update a profile type's description
+// so that I can explain what each role (Customer / Store Staff / Admin) means.
+router.get("/role-descriptions", async (req, res) => {
+  try {
+    const rows = await RoleDescription.find().lean();
+    const data = {};
+    rows.forEach((row) => { data[row.role] = row.description; });
+    res.json({ ok: true, data });
+  } catch (error) {
+    console.error("[RoleDescriptions] Failed to load:", error);
+    res.status(500).json({ ok: false, message: "Unable to load role descriptions." });
+  }
+});
+
+router.patch("/role-descriptions/:role", requireAuth, requireRole("user_admin"), async (req, res) => {
+  try {
+    const allowedRoles = ["customer", "store_staff", "user_admin"];
+    if (!allowedRoles.includes(req.params.role)) {
+      return res.status(400).json({ ok: false, message: "Role is invalid." });
+    }
+
+    const description = String(req.body.description || "").trim();
+    const updated = await RoleDescription.findOneAndUpdate(
+      { role: req.params.role },
+      { description },
+      { new: true, upsert: true }
+    );
+
+    res.json({ ok: true, data: { role: updated.role, description: updated.description } });
+  } catch (error) {
+    console.error("[RoleDescriptions] Failed to update:", error);
+    res.status(500).json({ ok: false, message: "Unable to update role description." });
   }
 });
 
