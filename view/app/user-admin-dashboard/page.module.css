@@ -274,6 +274,7 @@
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .table td {
@@ -365,6 +366,20 @@
 .btnSmall svg {
   width: 16px;
   height: 16px;
+}
+
+.descriptionCell {
+  display: block;
+  max-width: 320px;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.descriptionCellEmpty {
+  font-style: italic;
+  color: #94a3b8;
 }
 
 .noResults {
@@ -630,7 +645,8 @@
 }
 
 .formGrid input,
-.formGrid select {
+.formGrid select,
+.formGrid textarea {
   width: 100%;
   min-height: 40px;
   border: 1.5px solid rgba(147, 197, 253, 0.8);
@@ -645,8 +661,13 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.formGrid textarea {
+  resize: vertical;
+}
+
 .formGrid input:focus,
-.formGrid select:focus {
+.formGrid select:focus,
+.formGrid textarea:focus {
   border-color: #ea580c;
   box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.12);
   background: #fff;
