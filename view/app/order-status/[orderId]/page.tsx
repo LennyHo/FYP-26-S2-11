@@ -466,7 +466,7 @@ export default function OrderStatusPage() {
                 </p>
               </div>
               <button type="button" onClick={() => router.push("/")}>
-                Back to Home
+                Back to Menu
               </button>
             </div>
 
@@ -629,6 +629,7 @@ export default function OrderStatusPage() {
                         <div>
                           <strong>Alex Tan <span>4.9</span></strong>
                           <p>{collected ? "Delivered your order" : "Delivering your order"}</p>
+                          <p className="tracking-rider-phone">+65 1234 5678</p>
                         </div>
                         <div className="tracking-rider-actions">
                           <button type="button">Call Rider</button>
@@ -642,7 +643,7 @@ export default function OrderStatusPage() {
 
               <aside className="tracking-sidebar">
                 <section className="tracking-card">
-                  <h2>Your Order <span>({displayItems.length} items)</span></h2>
+                  <h2>Your Order</h2>
                   <div className="tracking-order-items">
                     {displayItems.map((item, index) => (
                       <div className="tracking-order-item" key={`${item.name}-${index}`}>
@@ -681,7 +682,7 @@ export default function OrderStatusPage() {
                   <h2>Need Help?</h2>
                   <p>Our support team is here to help you.</p>
                   <div className="tracking-help-actions">
-                    <button type="button" onClick={() => router.push("/contact")}>Chat with Us</button>
+                    <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("openAvyChat"))}>Chat with Us</button>
                   </div>
                 </section>
               </aside>

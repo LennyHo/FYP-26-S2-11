@@ -148,10 +148,12 @@
 .voucher-card-image {
   width: 120px;
   height: 96px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 14px;
   border: 1px solid rgba(220, 199, 180, 0.7);
   background: #f5f0ea;
+  padding: 14px;
+  box-sizing: border-box;
 }
 
 .voucher-card-body {

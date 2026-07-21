@@ -41,13 +41,13 @@
   grid-template-columns: 1fr 340px;
   align-items: center;
   gap: 40px;
-  padding: 60px 56px;
+  padding: 40px 56px;
 }
 
 .copy {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .eyebrow {
@@ -77,44 +77,6 @@
   font-size: 1rem;
   line-height: 1.65;
   max-width: 480px;
-  margin: 0;
-}
-
-.featureList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.featureItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-.featureDot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #c9a8e8;
-  margin-top: 6px;
-}
-
-.featureLabel {
-  color: #f7eeff;
-  font-weight: 700;
-  font-size: 0.95rem;
-  margin: 0 0 2px;
-}
-
-.featureDesc {
-  color: rgba(245, 238, 250, 0.56);
-  font-size: 0.85rem;
-  line-height: 1.5;
   margin: 0;
 }
 
@@ -196,17 +158,12 @@
 @media (max-width: 860px) {
   .inner {
     grid-template-columns: 1fr;
-    padding: 40px 28px;
+    padding: 28px 28px;
     text-align: center;
   }
 
   .sub {
     max-width: 100%;
-  }
-
-  .featureItem {
-    justify-content: flex-start;
-    text-align: left;
   }
 
   .cta {

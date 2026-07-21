@@ -322,27 +322,30 @@ export default function StoreStaffVoucherPage() {
         </div>
 
         <div className={styles.tabsBar}>
-          <h1 className={styles.pageTitle}>Voucher Management</h1>
+          <div className={styles.tabsBarTop}>
+            <h1 className={styles.pageTitle}>Voucher Management</h1>
 
-          <div className={styles.toolbarRight}>
-            <button type="button" className={styles.btnCreate} onClick={openCreateModal}>
-              + New Voucher
-            </button>
-            <button type="button" className={styles.refreshBtn} onClick={() => void loadVouchers()} disabled={isRefreshing}>
-              {isRefreshing ? 'Refreshing...' : 'Refresh'}
-            </button>
-            <div className={styles.searchWrap}>
-              <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search vouchers by code or title..."
-                value={searchQuery}
-                onChange={event => setSearchQuery(event.target.value)}
-                className={styles.searchInput}
-              />
+            <div className={styles.toolbarRight}>
+              <button type="button" className={styles.btnCreate} onClick={openCreateModal}>
+                + New Voucher
+              </button>
+              <button type="button" className={styles.refreshBtn} onClick={() => void loadVouchers()} disabled={isRefreshing}>
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+              </button>
             </div>
+          </div>
+
+          <div className={styles.searchWrap}>
+            <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search vouchers by code or title..."
+              value={searchQuery}
+              onChange={event => setSearchQuery(event.target.value)}
+              className={styles.searchInput}
+            />
           </div>
         </div>
 

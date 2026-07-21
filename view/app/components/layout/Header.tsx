@@ -58,6 +58,7 @@ export default function Header() {
   const [cartTotal, setCartTotal] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   // done by "HDC" - customer/admin/staff login state from backend auth.
   const [currentUser, setCurrentUser] = useState<DripTeaUser | null>(null);
   // end done by "HDC"
@@ -183,17 +184,17 @@ export default function Header() {
   };
   // end done by "HDC"
 
-  const openMenu = () => { setMenuOpen(true); setMenuClosing(false); };
+  const openMenu = () => { setMenuOpen(true); setMenuClosing(false); setProfileMenuOpen(false); };
   const closeMenu = () => { if (menuOpen && !menuClosing) setMenuClosing(true); };
   const toggleMenu = () => { menuOpen ? closeMenu() : openMenu(); };
   const handleNavAnimEnd = () => { if (menuClosing) { setMenuOpen(false); setMenuClosing(false); } };
 
   const authContent = currentUser || isStaffDashboard
-    ? <ProfileDropdown onLogout={handleLogout} />
+    ? <ProfileDropdown onLogout={handleLogout} open={profileMenuOpen} onOpenChange={setProfileMenuOpen} onWillOpen={closeMenu} />
     : <Link href="/login" className={styles.loginLink}>Log in</Link>;
 
   const mobileAuthContent = currentUser || isStaffDashboard
-    ? <ProfileDropdown onLogout={handleLogout} />
+    ? <ProfileDropdown onLogout={handleLogout} open={profileMenuOpen} onOpenChange={setProfileMenuOpen} onWillOpen={closeMenu} />
     : (
       <Link href="/login" className={styles.loginIconBtn} aria-label="Log in">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -279,8 +280,17 @@ export default function Header() {
 }
 
 // Profile dropdown component for better click usability
-function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
-  const [open, setOpen] = useState(false);
+function ProfileDropdown({
+  onLogout,
+  open,
+  onOpenChange,
+  onWillOpen,
+}: {
+  onLogout: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onWillOpen: () => void;
+}) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [profilePic, setProfilePic] = useState<string>("/profile_empty.png");
   useEffect(() => {
@@ -297,20 +307,24 @@ function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
   }, []);
 
   function handleMenuItemClick(action: () => void) {
-    setOpen(false);
+    onOpenChange(false);
     action();
   }
 
   useEffect(() => {
     if (!open) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
+      // Desktop and mobile both mount a wrapper (CSS just hides one), so a
+      // click inside either counts as "inside" — otherwise the hidden
+      // instance's ref never contains the click and closes the shared state
+      // before the visible Link's navigation can fire.
+      if (!(e.target as Element).closest(`.${styles.profileMenuWrapper}`)) {
+        onOpenChange(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open]);
+  }, [open, onOpenChange]);
 
   return (
     <div className={styles.profileMenuWrapper} ref={menuRef}>
@@ -320,19 +334,22 @@ function ProfileDropdown({ onLogout }: { onLogout: () => void }) {
         tabIndex={0}
         aria-haspopup="true"
         aria-expanded={open}
-        onClick={() => setOpen(v => !v)}
+        onClick={() => {
+          if (!open) onWillOpen();
+          onOpenChange(!open);
+        }}
       >
         <img src={profilePic} alt="Profile" className={styles.profilePic} />
       </button>
       {open && (
         <div className={styles.profileDropdown}>
-          <Link href="/profile" className={styles.profileDropdownItem} onClick={() => setOpen(false)}>
+          <Link href="/profile" className={styles.profileDropdownItem} onClick={() => onOpenChange(false)}>
             Settings
           </Link>
-          <Link href="/vouchers" className={styles.profileDropdownItem} onClick={() => setOpen(false)}>
+          <Link href="/vouchers" className={styles.profileDropdownItem} onClick={() => onOpenChange(false)}>
             Vouchers
           </Link>
-          <Link href="/purchase-history" className={styles.profileDropdownItem} onClick={() => setOpen(false)}>
+          <Link href="/purchase-history" className={styles.profileDropdownItem} onClick={() => onOpenChange(false)}>
             Purchase History
           </Link>
           <button type="button" className={styles.profileDropdownItem} onClick={() => handleMenuItemClick(onLogout)}>

@@ -717,6 +717,13 @@
 /* ── Inventory tab ──────────────────────────────────────────── */
 .rowLowStock { background: rgba(255, 240, 236, 0.6) !important; }
 
+.itemNameCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
 .itemNameLink {
   font-weight: 600;
   color: #1e293b;
@@ -729,13 +736,13 @@
 
 .lowBadge {
   display: inline-block;
-  margin-left: 8px;
   padding: 2px 8px;
   border-radius: 99px;
   font-size: 0.7rem;
   font-weight: 700;
   background: rgba(192, 50, 29, 0.12);
   color: #c0321d;
+  white-space: nowrap;
 }
 
 .qtyControls { display: flex; gap: 6px; }
@@ -802,7 +809,15 @@
   .toolbar       { flex-direction: column; align-items: stretch; }
   .searchWrap    { max-width: 100%; }
   .catTabs       { overflow-x: auto; }
-  .sectionTabsBar { width: 100%; overflow-x: auto; }
+
+  .sectionTabsBar {
+    width: 100%;
+  }
+
+  .sectionTab {
+    flex: 1;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
