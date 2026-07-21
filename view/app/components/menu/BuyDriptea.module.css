@@ -742,6 +742,8 @@
   color: #2c1810;
   outline: none;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .menuSearchInput::placeholder {

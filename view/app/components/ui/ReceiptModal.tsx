@@ -52,7 +52,7 @@ export default function ReceiptModal({ receipt, onClose }: Props) {
   return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modalShell} onClick={(e) => e.stopPropagation()}>
-        <button type="button" className={`${styles.closeBtn} ${styles.noPrint}`} onClick={onClose} aria-label="Close">
+        <button type="button" className={`${styles.closeBtn} ${styles.noPrint}`} onClick={onClose} aria-label="Close receipt">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -85,7 +85,7 @@ export default function ReceiptModal({ receipt, onClose }: Props) {
                 <strong>{receipt.orderNo}</strong>
               </div>
               <div className={styles.metaRow}>
-                <span>Receipt Date</span>
+                <span>Date</span>
                 <strong>{formatReceiptDate(receipt.orderDate)}</strong>
               </div>
               <div className={styles.metaRow}>
@@ -95,29 +95,31 @@ export default function ReceiptModal({ receipt, onClose }: Props) {
             </div>
           </div>
 
-          <table className={styles.itemsTable}>
-            <thead>
-              <tr>
-                <th className={styles.qtyCol}>Qty</th>
-                <th>Description</th>
-                <th className={styles.priceCol}>Unit Price</th>
-                <th className={styles.priceCol}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {receipt.items.map((item, index) => (
-                <tr key={`${item.name}-${index}`}>
-                  <td className={styles.qtyCol}>{item.quantity}</td>
-                  <td>
-                    <span className={styles.itemName}>{item.name}</span>
-                    {item.customization && <span className={styles.itemCustom}>{item.customization}</span>}
-                  </td>
-                  <td className={styles.priceCol}>{money(item.unitPrice)}</td>
-                  <td className={styles.priceCol}>{money(item.amount)}</td>
+          <div className={styles.itemsTableWrap}>
+            <table className={styles.itemsTable}>
+              <thead>
+                <tr>
+                  <th className={styles.qtyCol}>Qty</th>
+                  <th>Description</th>
+                  <th className={styles.priceCol}>Unit Price</th>
+                  <th className={styles.priceCol}>Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {receipt.items.map((item, index) => (
+                  <tr key={`${item.name}-${index}`}>
+                    <td className={styles.qtyCol}>{item.quantity}</td>
+                    <td>
+                      <span className={styles.itemName}>{item.name}</span>
+                      {item.customization && <span className={styles.itemCustom}>{item.customization}</span>}
+                    </td>
+                    <td className={styles.priceCol}>{money(item.unitPrice)}</td>
+                    <td className={styles.priceCol}>{money(item.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div className={styles.totalsBlock}>
             <div className={styles.totalsRow}>
@@ -149,7 +151,6 @@ export default function ReceiptModal({ receipt, onClose }: Props) {
         </div>
 
         <div className={`${styles.actions} ${styles.noPrint}`}>
-          <button type="button" className={styles.secondaryBtn} onClick={onClose}>Close</button>
           <button type="button" className={styles.primaryBtn} onClick={() => window.print()}>Download Receipt</button>
         </div>
       </div>

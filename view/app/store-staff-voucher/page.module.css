@@ -59,6 +59,12 @@
 /* ── Toolbar ──────────────────────────────────────────────── */
 .tabsBar {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tabsBarTop {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -76,9 +82,6 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1;
-  justify-content: flex-end;
-  min-width: 320px;
 }
 
 .btnCreate {
@@ -124,8 +127,7 @@
 /* Search */
 .searchWrap {
   position: relative;
-  flex: 1;
-  max-width: 360px;
+  width: 100%;
   border-radius: 16px;
   transition: filter 0.18s ease;
 }
@@ -578,9 +580,10 @@
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
   .statsRow { grid-template-columns: repeat(2, 1fr); }
-  .tabsBar  { flex-direction: column; align-items: stretch; }
-  .toolbarRight { min-width: 0; width: 100%; justify-content: stretch; }
-  .searchWrap { max-width: 100%; }
+  .tabsBarTop { align-items: flex-start; }
+  .toolbarRight { width: 100%; }
+  .toolbarRight .btnCreate,
+  .toolbarRight .refreshBtn { flex: 1; }
 }
 
 @media (max-width: 480px) {

@@ -339,7 +339,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.3rem;
-  padding: 0.7rem 0.8rem 0.65rem 0.95rem;
+  padding: 1.5rem 0.8rem 0.65rem 0.95rem;
   border: 1.5px solid #e7dfd4;
   border-radius: 12px;
   background: #fff;
@@ -357,12 +357,7 @@
 }
 
 .addressPillarDot {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--pillar-color, var(--accent-brown));
-  opacity: 0;
-  transition: opacity 0.18s;
+  display: none;
 }
 
 .addressPillar[data-category="home"] { --pillar-color: var(--accent-brown); }
@@ -373,10 +368,6 @@
   border-color: var(--pillar-color, var(--accent-brown));
   background: color-mix(in srgb, var(--pillar-color, var(--accent-brown)) 8%, #fff);
   color: #1a1a1a;
-}
-
-.addressPillarActive .addressPillarDot {
-  opacity: 1;
 }
 
 .addressPillarActive svg {
@@ -730,6 +721,18 @@
     max-width: 480px;
   }
 
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .headingGroup {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
   .form {
     display: flex;
     flex-direction: column;
@@ -765,19 +768,30 @@
 
   .addressBody {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .addressPanel {
+    width: 100%;
   }
 
   .addressPillars {
     flex-direction: row;
     width: 100%;
     flex: 0 0 auto;
-    overflow-x: auto;
-    padding-bottom: 0.15rem;
   }
 
   .addressPillar {
     flex: 1 1 0;
-    min-width: 96px;
+    min-width: 0;
+    padding-left: 0.65rem;
+    padding-right: 0.55rem;
+  }
+
+  .addressPillarLabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
 }

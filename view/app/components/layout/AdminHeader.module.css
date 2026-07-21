@@ -136,7 +136,7 @@
   }
 
   .logoSvg { width: 34px; height: 34px; }
-  .brandText { display: none; }
+  .brandText { font-size: 0.8rem; }
   .divider { display: none; }
   .nav { display: none; }
   .logoutBtn { padding: 6px 12px; font-size: 0.8rem; }

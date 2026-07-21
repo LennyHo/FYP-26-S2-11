@@ -72,6 +72,16 @@
   font-weight: 700;
 }
 
+.navLogoutBtn {
+  display: none;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .actions {
   display: flex;
   gap: 12px;
@@ -111,6 +121,27 @@
   box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
 }
 
+.menuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1.5px solid rgba(59, 130, 246, 0.3);
+  border-radius: 9px;
+  background: transparent;
+  color: #3b82f6;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.menuBtn:hover,
+.menuBtnOpen {
+  background: rgba(59, 130, 246, 0.08);
+}
+
 @media (max-width: 720px) {
   .container {
     height: 60px;
@@ -124,17 +155,49 @@
   .logoutBtn { padding: 7px 16px; font-size: 0.85rem; }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 880px) {
   .container {
     height: 56px;
     padding: 0 14px;
     gap: 12px;
+    position: relative;
   }
 
   .logoSvg { width: 34px; height: 34px; }
-  .brandText { display: none; }
+  .brandText { font-size: 0.8rem; }
   .divider { display: none; }
-  .nav { display: none; }
-  .logoutBtn { padding: 6px 12px; font-size: 0.8rem; }
+  .logoutBtnDesktop { display: none; }
+
+  .menuBtn { display: flex; }
+
+  .nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 14px;
+    right: 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    margin-top: 8px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+    z-index: 50;
+  }
+
+  .navOpen { display: flex; }
+
+  .navLink { padding: 10px 14px; }
+
+  .navLogoutBtn {
+    display: block;
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(59, 130, 246, 0.12);
+    color: #c0321d;
+  }
 }
 

@@ -13,6 +13,7 @@ export default function StaffHeader() {
   const pathname = usePathname();
   const { outlets } = useOutlets();
   const [storeCode, setStoreCode] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     function syncStore() {
@@ -22,6 +23,8 @@ export default function StaffHeader() {
     window.addEventListener('authUpdated', syncStore);
     return () => window.removeEventListener('authUpdated', syncStore);
   }, []);
+
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
 
   const storeName = outlets.find((outlet) => outlet.storeCode === storeCode)?.name || storeCode;
 
@@ -44,7 +47,7 @@ export default function StaffHeader() {
           <span className={styles.brandText}>Store Staff</span>
         </div>
 
-        <nav className={styles.nav}>
+        <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`}>
           <Link
             href="/store-staff"
             className={`${styles.navLink} ${pathname.startsWith('/store-staff') && !pathname.startsWith('/store-staff-dashboard') && !pathname.startsWith('/store-staff-voucher') ? styles.active : ''}`}
@@ -55,7 +58,7 @@ export default function StaffHeader() {
             href="/store-staff-dashboard"
             className={`${styles.navLink} ${pathname.startsWith('/store-staff-dashboard') ? styles.active : ''}`}
           >
-            Dashboard
+            Orders Dashboard
           </Link>
           <Link
             href="/store-staff-voucher"
@@ -63,15 +66,40 @@ export default function StaffHeader() {
           >
             Vouchers
           </Link>
+          <button type="button" className={`${styles.navLink} ${styles.navLogoutBtn}`} onClick={handleLogout}>
+            Log Out
+          </button>
         </nav>
 
         <div className={styles.actions}>
           {storeName && <span className={styles.storeBadge}>{storeName}</span>}
           <button
-            className={styles.logoutBtn}
+            className={`${styles.logoutBtn} ${styles.logoutBtnDesktop}`}
             onClick={handleLogout}
           >
             Log Out
+          </button>
+          <button
+            type="button"
+            className={`${styles.menuBtn} ${menuOpen ? styles.menuBtnOpen : ''}`}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <svg width="20" height="16" viewBox="0 0 20 16" fill="none" aria-hidden="true">
+              {menuOpen ? (
+                <>
+                  <path d="M2 2L18 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M18 2L2 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </>
+              ) : (
+                <>
+                  <path d="M0 1h20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M0 8h20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path d="M0 15h20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </>
+              )}
+            </svg>
           </button>
         </div>
       </div>

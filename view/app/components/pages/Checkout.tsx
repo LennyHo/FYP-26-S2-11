@@ -226,6 +226,16 @@ export default function Checkout() {
     const [deliveryPreview, setDeliveryPreview] = useState<DeliveryData | null>(null);
     const [rightStep, setRightStep] = useState<1 | 2>(1);
     const [pickupOutlet, setPickupOutlet] = useState<DripTeaOutlet | null>(null);
+    const cartColRef = useRef<HTMLDivElement>(null);
+
+    // Confirming the address/outlet collapses a tall form (map, search, etc.) into
+    // the much shorter order summary, but the page keeps its old scroll offset — so
+    // the user lands wherever that pixel position now falls (often the footer).
+    // Scrolling the cart column back into view fixes that regardless of cart length.
+    function goToSummaryStep() {
+        setRightStep(2);
+        cartColRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     const { outlets: pickupOutlets } = useOutlets();
 
     function fillFakeDetails() {
@@ -391,7 +401,7 @@ export default function Checkout() {
     function confirmPickupOutlet() {
         if (!pickupOutlet) return;
         window.localStorage.setItem(PICKUP_OUTLET_KEY, JSON.stringify(pickupOutlet));
-        setRightStep(2);
+        goToSummaryStep();
     }
 
     function handleOrderTypeChange(nextOrderType: string) {
@@ -929,7 +939,7 @@ export default function Checkout() {
 
                             </div>
 
-                            <div className="checkout-cart-col">
+                            <div className="checkout-cart-col" ref={cartColRef}>
                                 <div className="checkout-stepper">
                                     <div className={`checkout-step ${rightStep === 1 ? "active" : "done"}`}>
                                         <span>{rightStep > 1 ? "✓" : "1"}</span>
@@ -948,7 +958,7 @@ export default function Checkout() {
                                             delivery={delivery}
                                             onConfirm={handleDeliveryConfirm}
                                             onPreviewChange={handleDeliveryPreviewChange}
-                                            onConfirmed={() => setRightStep(2)}
+                                            onConfirmed={goToSummaryStep}
                                             orderType={orderType}
                                             onOrderTypeChange={handleOrderTypeChange}
                                         />

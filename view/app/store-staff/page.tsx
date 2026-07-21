@@ -568,8 +568,10 @@ export default function StoreStaffPage() {
                 {filteredInventory.length > 0 ? filteredInventory.map(item => (
                   <tr key={item._id} className={item.quantity <= item.lowStockThreshold ? styles.rowLowStock : ''}>
                     <td>
-                      <span className={styles.itemNameLink}>{item.name}</span>
-                      {item.quantity <= item.lowStockThreshold && <span className={styles.lowBadge}>Low stock</span>}
+                      <div className={styles.itemNameCell}>
+                        <span className={styles.itemNameLink}>{item.name}</span>
+                        {item.quantity <= item.lowStockThreshold && <span className={styles.lowBadge}>Low stock</span>}
+                      </div>
                     </td>
                     <td className={`${styles.qtyCell} ${item.quantity <= item.lowStockThreshold ? styles.qtyLow : ''}`}>{item.quantity}</td>
                     <td className={styles.unitCell}>{item.unit}</td>

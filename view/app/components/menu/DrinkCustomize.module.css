@@ -350,7 +350,7 @@
 }
 
 .pageDisclaimer {
-  font-size: 0.78rem;
+  font-size: clamp(0.68rem, 0.6rem + 0.5vw, 0.78rem);
   color: #999;
   text-align: center;
   margin: 16px auto 0;
