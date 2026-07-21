@@ -18,10 +18,81 @@
 
 import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { FaChevronDown } from 'react-icons/fa';
 import { getStaffVouchers, deleteVoucher, createVoucher, type DripTeaVoucher } from '../utils/staffApi';
 import { isSessionExpiredError, clearStoredUser } from '../utils/api.base';
+
+type SelectOption = { value: string; label: string };
+
+function Select({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectOption[];
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(event: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
+
+  const selected = options.find(option => option.value === value);
+
+  return (
+    <div className={styles.select} ref={rootRef}>
+      <button
+        type="button"
+        className={`${styles.selectTrigger} ${open ? styles.selectTriggerOpen : ''}`}
+        onClick={() => setOpen(current => !current)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span>{selected ? selected.label : ''}</span>
+        <FaChevronDown className={styles.selectChevron} />
+      </button>
+      {open && (
+        <ul className={styles.selectMenu} role="listbox">
+          {options.map(option => (
+            <li
+              key={option.value}
+              role="option"
+              aria-selected={option.value === value}
+              className={`${styles.selectOption} ${option.value === value ? styles.selectOptionActive : ''}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onChange(option.value);
+                setOpen(false);
+              }}
+            >
+              {option.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 type CreateVoucherForm = {
   code: string;
@@ -431,15 +502,14 @@ export default function StoreStaffVoucherPage() {
               <div className={styles.formRow}>
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>Discount Type <span className={styles.required}>*</span></label>
-                  <select
-                    className={styles.formInput}
-                    title="Discount Type"
+                  <Select
                     value={createForm.discountType}
-                    onChange={e => setCreateForm(f => ({ ...f, discountType: e.target.value as 'percentage' | 'fixed' }))}
-                  >
-                    <option value="percentage">Percentage (%)</option>
-                    <option value="fixed">Fixed Amount (S$)</option>
-                  </select>
+                    onChange={(value) => setCreateForm(f => ({ ...f, discountType: value as 'percentage' | 'fixed' }))}
+                    options={[
+                      { value: 'percentage', label: 'Percentage (%)' },
+                      { value: 'fixed', label: 'Fixed Amount (S$)' },
+                    ]}
+                  />
                 </div>
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>
@@ -500,15 +570,14 @@ export default function StoreStaffVoucherPage() {
                 </div>
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>Status</label>
-                  <select
-                    className={styles.formInput}
-                    title="Status"
+                  <Select
                     value={createForm.isActive ? 'active' : 'inactive'}
-                    onChange={e => setCreateForm(f => ({ ...f, isActive: e.target.value === 'active' }))}
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                    onChange={(value) => setCreateForm(f => ({ ...f, isActive: value === 'active' }))}
+                    options={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                    ]}
+                  />
                 </div>
               </div>
 

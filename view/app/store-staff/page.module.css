@@ -26,6 +26,10 @@
   gap: 14px;
 }
 
+.statsRowThree {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .statCard {
   background: #fffaf5;
   border-radius: 16px;
@@ -714,17 +718,10 @@
 .rowLowStock { background: rgba(255, 240, 236, 0.6) !important; }
 
 .itemNameLink {
-  background: none;
-  border: none;
-  padding: 0;
   font-weight: 600;
   color: #1e293b;
   font-size: 0.9rem;
-  cursor: pointer;
-  text-decoration: none;
-  transition: color 0.15s;
 }
-.itemNameLink:hover { color: #ea580c; }
 
 .unitCell { color: #475569; font-size: 0.88rem; }
 .qtyCell  { font-weight: 700; font-size: 1rem; color: #1e293b; }
@@ -798,38 +795,6 @@
 
 .btnDelete:hover    { background: rgba(192, 50, 29, 0.15); transform: scale(1.04); }
 .btnDelete:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-.detailGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.detailRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(147, 197, 253, 0.3);
-}
-.detailRow:last-child { border-bottom: none; padding-bottom: 0; }
-
-.detailLabel {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.detailValue {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1e293b;
-  text-align: right;
-}
 
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {

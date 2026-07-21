@@ -92,7 +92,6 @@ export default function StoreStaffPage() {
   const [inventoryError, setInventoryError] = useState('');
   const [createFormError, setCreateFormError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<DripTeaInventoryItem | null>(null);
   const [createForm, setCreateForm] = useState<CreateInventoryForm>(EMPTY_INVENTORY_FORM);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -191,7 +190,6 @@ export default function StoreStaffPage() {
     try {
       await deleteInventoryItem(id);
       setInventory(prev => prev.filter(i => i._id !== id));
-      if (selectedItem?._id === id) setSelectedItem(null);
     } catch (err) {
       if (isSessionExpiredError(err)) return handleSessionExpired();
       console.error('[Store staff inventory delete]', err);
@@ -512,7 +510,7 @@ export default function StoreStaffPage() {
         {activeSection === 'inventory' && (
         <>
         {/* Inventory stats */}
-        <div className={styles.statsRow}>
+        <div className={`${styles.statsRow} ${styles.statsRowThree}`}>
           <div className={styles.statCard}>
             <div>
               <span className={styles.statLabel}>Total Items</span>
@@ -570,13 +568,7 @@ export default function StoreStaffPage() {
                 {filteredInventory.length > 0 ? filteredInventory.map(item => (
                   <tr key={item._id} className={item.quantity <= item.lowStockThreshold ? styles.rowLowStock : ''}>
                     <td>
-                      <button
-                        type="button"
-                        className={styles.itemNameLink}
-                        onClick={() => setSelectedItem(item)}
-                      >
-                        {item.name}
-                      </button>
+                      <span className={styles.itemNameLink}>{item.name}</span>
                       {item.quantity <= item.lowStockThreshold && <span className={styles.lowBadge}>Low stock</span>}
                     </td>
                     <td className={`${styles.qtyCell} ${item.quantity <= item.lowStockThreshold ? styles.qtyLow : ''}`}>{item.quantity}</td>
@@ -818,48 +810,6 @@ export default function StoreStaffPage() {
         </div>
       )}
 
-      {selectedItem && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedItem(null)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>{selectedItem.name}</h2>
-              <button type="button" className={styles.modalClose} onClick={() => setSelectedItem(null)} aria-label="Close">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.detailGrid}>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Stock</span>
-                  <span className={styles.detailValue}>
-                    {selectedItem.quantity} {selectedItem.unit}
-                    {selectedItem.quantity <= selectedItem.lowStockThreshold && (
-                      <span className={styles.lowBadge} style={{ marginLeft: 8 }}>Low stock</span>
-                    )}
-                  </span>
-                </div>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Unit</span>
-                  <span className={styles.detailValue}>{selectedItem.unit}</span>
-                </div>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Low Stock Alert</span>
-                  <span className={styles.detailValue}>≤ {selectedItem.lowStockThreshold} {selectedItem.unit}</span>
-                </div>
-                {selectedItem.description && (
-                  <div className={styles.detailRow}>
-                    <span className={styles.detailLabel}>Description</span>
-                    <span className={styles.detailValue}>{selectedItem.description}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setSelectedItem(null)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
