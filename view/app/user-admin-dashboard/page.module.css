@@ -449,9 +449,7 @@
 }
 
 .modalAccent {
-  flex-shrink: 0;
-  height: 3px;
-  background: #2563eb;
+  display: none;
 }
 
 .modalBody {
