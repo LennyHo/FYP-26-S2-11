@@ -34,6 +34,7 @@
 import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
 import Image from 'next/image';
+import { FaPen } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getMenuItems } from '../utils/customerApi';
@@ -443,9 +444,19 @@ export default function StoreStaffPage() {
                             <div className={styles.itemImgPlaceholder} />
                           )}
                           <div>
-                            <button type="button" className={styles.itemNameLink} onClick={() => openEditModal(item)}>
-                              {item.name}
-                            </button>
+                            <div className={styles.itemNameRow}>
+                              <span className={styles.itemName}>{item.name}</span>
+                              <button
+                                type="button"
+                                className={styles.btnEdit}
+                                disabled={item.status === 'inactive'}
+                                title={item.status === 'inactive' ? 'Activate this drink before editing' : 'Edit drink'}
+                                aria-label={`Edit ${item.name}`}
+                                onClick={() => openEditModal(item)}
+                              >
+                                <FaPen />
+                              </button>
+                            </div>
                             {item.description && (
                               <span className={styles.itemDesc}>{item.description}</span>
                             )}
@@ -500,6 +511,28 @@ export default function StoreStaffPage() {
 
         {activeSection === 'inventory' && (
         <>
+        {/* Inventory stats */}
+        <div className={styles.statsRow}>
+          <div className={styles.statCard}>
+            <div>
+              <span className={styles.statLabel}>Total Items</span>
+              <strong className={styles.statValue}>{inventory.length}</strong>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <div>
+              <span className={styles.statLabel}>Well Stocked</span>
+              <strong className={`${styles.statValue} ${styles.green}`}>{inventory.length - lowStockCount}</strong>
+            </div>
+          </div>
+          <div className={`${styles.statCard} ${lowStockCount > 0 ? styles.statAlert : ''}`}>
+            <div>
+              <span className={styles.statLabel}>Low Stock</span>
+              <strong className={`${styles.statValue} ${lowStockCount > 0 ? styles.orange : ''}`}>{lowStockCount}</strong>
+            </div>
+          </div>
+        </div>
+
         {/* Inventory toolbar */}
         <div className={styles.toolbar}>
           <button type="button" className={styles.addBtn} onClick={() => { setCreateFormError(''); setShowCreateModal(true); }}>
