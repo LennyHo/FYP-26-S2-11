@@ -39,10 +39,10 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUsers } from 'react-icons/fa';
+import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUserPlus, FaUsers } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
-import { createUserAccount, getUsers, suspendUser, updateUser } from '../utils/adminApi';
-import { clearStoredUser, isSessionExpiredError, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
+import { createUserAccount, getRoleDescriptions, getUsers, suspendUser, updateRoleDescription, updateUser } from '../utils/adminApi';
+import { clearStoredUser, getStoredUser, isSessionExpiredError, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
 import { useOutlets } from '../utils/outlets';
 import styles from './page.module.css';
 
@@ -155,6 +155,10 @@ export default function UserAdminDashboardPage() {
   const [formMode, setFormMode] = useState<FormMode | null>(null);
   const [editingUser, setEditingUser] = useState<DripTeaUser | null>(null);
   const [formData, setFormData] = useState<UserFormState>(emptyForm());
+  const [roleDescriptions, setRoleDescriptions] = useState<Record<string, string>>({});
+  const [editingDescriptionRole, setEditingDescriptionRole] = useState<typeof roleOptions[number] | null>(null);
+  const [descriptionDraft, setDescriptionDraft] = useState('');
+  const [isSavingDescription, setIsSavingDescription] = useState(false);
   const { outlets } = useOutlets();
 
   async function refreshUsers() {
@@ -172,8 +176,18 @@ export default function UserAdminDashboardPage() {
     }
   }
 
+  async function refreshRoleDescriptions() {
+    try {
+      const response = await getRoleDescriptions();
+      setRoleDescriptions(response.data || {});
+    } catch (error) {
+      console.error('[DripTea role descriptions]', error);
+    }
+  }
+
   useEffect(() => {
     void refreshUsers();
+    void refreshRoleDescriptions();
   }, []);
 
   useEffect(() => {
@@ -336,6 +350,58 @@ export default function UserAdminDashboardPage() {
     }
   }
 
+  // Bulk-suspends (or reactivates) every user under a profile/role. The signed-in
+  // admin's own account is skipped when suspending the Admin row, so they can't
+  // lock themselves out of the dashboard in one click.
+  async function toggleRoleStatus(profile: typeof roleOptions[number]) {
+    const roleUsers = users.filter(u => u.role === profile.value);
+    if (roleUsers.length === 0) return;
+
+    const isSuspended = roleUsers.every(u => u.status === 'suspended');
+    const currentUser = getStoredUser();
+    const targets = isSuspended ? roleUsers : roleUsers.filter(u => u.id !== currentUser?.id);
+    if (targets.length === 0) return;
+
+    setMessage('');
+
+    try {
+      const results = await Promise.all(
+        targets.map(u => (isSuspended ? updateUser(u.id, { status: 'active' }) : suspendUser(u.id)))
+      );
+      const byId = new Map(results.map(r => [r.data.id, r.data]));
+      setUsers(current => current.map(u => byId.get(u.id) ?? u));
+    } catch (error) {
+      if (isSessionExpiredError(error)) return handleLogout();
+      console.error('[DripTea bulk role status]', error);
+      setMessage(error instanceof Error ? error.message : 'Unable to update profile status.');
+    }
+  }
+
+  function openDescriptionModal(profile: typeof roleOptions[number]) {
+    setMessage('');
+    setEditingDescriptionRole(profile);
+    setDescriptionDraft(roleDescriptions[profile.value] || '');
+  }
+
+  async function saveDescription(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingDescriptionRole) return;
+
+    setIsSavingDescription(true);
+
+    try {
+      const response = await updateRoleDescription(editingDescriptionRole.value, descriptionDraft.trim());
+      setRoleDescriptions(current => ({ ...current, [response.data.role]: response.data.description }));
+      setEditingDescriptionRole(null);
+    } catch (error) {
+      if (isSessionExpiredError(error)) return handleLogout();
+      console.error('[DripTea save role description]', error);
+      setMessage(error instanceof Error ? error.message : 'Unable to update description.');
+    } finally {
+      setIsSavingDescription(false);
+    }
+  }
+
   function handleLogout() {
     clearStoredUser();
     router.push('/login');
@@ -475,23 +541,37 @@ export default function UserAdminDashboardPage() {
                 <thead>
                   <tr>
                     <th>Profile</th>
+                    <th>Description</th>
                     <th>Status</th>
                     <th>Last Updated</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {roleOptions.map(profile => {
+                  {roleOptions
+                    .filter(profile => profile.label.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+                    .map(profile => {
                     const roleUsers = users.filter(u => u.role === profile.value);
                     const latestDate = roleUsers.reduce<string | undefined>((latest, u) => {
                       const d = u.updatedAt || u.createdAt;
                       if (!d) return latest;
                       return !latest || d > latest ? d : latest;
                     }, undefined);
+                    const description = roleDescriptions[profile.value] || '';
+                    const isRoleSuspended = roleUsers.length > 0 && roleUsers.every(u => u.status === 'suspended');
                     return (
                     <tr key={profile.value}>
                       <td><span className={styles.badge}>{profile.label}</span></td>
-                      <td><span className={`${styles.status} ${styles.active}`}>Active</span></td>
+                      <td>
+                        <span className={`${styles.descriptionCell} ${description ? '' : styles.descriptionCellEmpty}`} title={description}>
+                          {description || 'No description yet.'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`${styles.status} ${isRoleSuspended ? styles.suspended : styles.active}`}>
+                          {isRoleSuspended ? 'Suspended' : 'Active'}
+                        </span>
+                      </td>
                       <td>{formatDate(latestDate)}</td>
                       <td className={styles.actions}>
                         <button
@@ -506,24 +586,40 @@ export default function UserAdminDashboardPage() {
                         <button
                           type="button"
                           className={styles.btnSmall}
-                          title={`Create ${profile.label}`}
-                          aria-label={`Create ${profile.label}`}
-                          onClick={() => {
-                            setFormData({ ...emptyForm(), role: profile.value });
-                            setEditingUser(null);
-                            setFormMode('create');
-                          }}
+                          title="Edit description"
+                          aria-label={`Edit description for ${profile.label}`}
+                          onClick={() => openDescriptionModal(profile)}
                         >
                           <FaPen />
                         </button>
                         <button
                           type="button"
                           className={styles.btnSmall}
-                          disabled
-                          title="Cannot suspend a profile type"
-                          aria-label={`Suspend ${profile.label}`}
+                          title={`Add ${profile.label} user`}
+                          aria-label={`Add ${profile.label} user`}
+                          onClick={() => {
+                            setFormData({ ...emptyForm(), role: profile.value });
+                            setEditingUser(null);
+                            setFormMode('create');
+                          }}
                         >
-                          <FaBan />
+                          <FaUserPlus />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.btnSmall}
+                          disabled={roleUsers.length === 0}
+                          title={
+                            roleUsers.length === 0
+                              ? `No ${profile.label} accounts yet`
+                              : isRoleSuspended
+                                ? `Activate all ${profile.label} accounts`
+                                : `Suspend all ${profile.label} accounts`
+                          }
+                          aria-label={isRoleSuspended ? `Activate all ${profile.label} accounts` : `Suspend all ${profile.label} accounts`}
+                          onClick={() => void toggleRoleStatus(profile)}
+                        >
+                          {isRoleSuspended ? <FaCheck /> : <FaBan />}
                         </button>
                       </td>
                     </tr>
@@ -684,6 +780,47 @@ export default function UserAdminDashboardPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {editingDescriptionRole && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="edit-description-title">
+          <form className={styles.modal} onSubmit={saveDescription}>
+            <div className={styles.modalAccent} />
+            <div className={styles.modalBody}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalAvatar}><FaPen /></div>
+                <div className={styles.modalHeaderText}>
+                  <h2 id="edit-description-title">{editingDescriptionRole.label} Description</h2>
+                  <p>Explain what this profile type means</p>
+                </div>
+                <button type="button" className={styles.iconButton} onClick={() => setEditingDescriptionRole(null)} aria-label="Close">
+                  <FaTimes />
+                </button>
+              </div>
+              <div className={styles.modalScroll}>
+                <div className={styles.formGrid}>
+                  <label className={styles.formGridFull}>
+                    Description
+                    <textarea
+                      value={descriptionDraft}
+                      onChange={(event) => setDescriptionDraft(event.target.value)}
+                      placeholder={`Describe what a ${editingDescriptionRole.label} profile is for...`}
+                      rows={4}
+                    />
+                  </label>
+                </div>
+              </div>
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.secondaryButton} onClick={() => setEditingDescriptionRole(null)}>
+                  Cancel
+                </button>
+                <button type="submit" className={styles.primaryButton} disabled={isSavingDescription}>
+                  {isSavingDescription ? 'Saving...' : 'Save Description'}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       )}
 
