@@ -65,13 +65,15 @@
   border: 1px solid rgba(59, 130, 246, 0.18);
   box-shadow: 0 20px 48px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 39, 26, 0.06);
   max-width: 960px;
+  min-height: 560px;
 }
 
 .copyPanel {
   padding: 24px 26px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: center;
+  gap: 16px;
   background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(239, 246, 255, 0.9));
 }
 
