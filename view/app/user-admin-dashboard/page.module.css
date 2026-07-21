@@ -369,6 +369,7 @@
 }
 
 .descriptionCell {
+  display: block;
   max-width: 320px;
   color: #475569;
   overflow: hidden;
