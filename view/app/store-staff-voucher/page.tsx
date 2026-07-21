@@ -9,7 +9,7 @@
 // #317 Search Vouchers (Store Staff)
 //      View: store-staff-voucher/page.tsx (this file) → Route: voucher.routes.js → Ctrl: voucher.controller.js → Model: voucher.model.js
 //
-// #318 Create Voucher (Store Staff)
+// #391 Create Voucher (Store Staff)
 //      View: store-staff-voucher/page.tsx (this file) → Route: voucher.routes.js → Ctrl: voucher.controller.js → Model: voucher.model.js
 //      Vouchers have no store/outlet field, so every voucher created here is shared
 //      by every store staff account via the same GET /api/staff/vouchers list.

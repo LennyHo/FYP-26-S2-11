@@ -9,7 +9,7 @@
 // #317 Search Vouchers (Store Staff)
 //      View: store-staff-voucher/page.tsx → Route: voucher.routes.js → Ctrl: voucher.controller.js (this file) → Model: voucher.model.js
 //
-// #318 Create Voucher (Store Staff)
+// #391 Create Voucher (Store Staff)
 //      View: store-staff-voucher/page.tsx → Route: voucher.routes.js → Ctrl: voucher.controller.js (this file) → Model: voucher.model.js
 //      Vouchers are a single global collection (no storeId/outlet field on the model),
 //      so every voucher created here is immediately visible to every store staff account.
@@ -77,7 +77,7 @@ async function deleteVoucher(req, res) {
   }
 }
 
-// #318 As a store staff, I want to create vouchers so that I can launch new promotions.
+// #391 As a store staff, I want to create vouchers so that I can launch new promotions.
 // Vouchers have no store/outlet field, so a newly created voucher is shared by all staff immediately.
 async function createVoucher(req, res) {
   try {
