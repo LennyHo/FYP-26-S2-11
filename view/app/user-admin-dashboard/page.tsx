@@ -37,9 +37,9 @@
 //      View: user-admin-dashboard/page.tsx (this file) — client-side: JWT cleared from localStorage
 'use client';
 
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaBan, FaCheck, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUserPlus, FaUsers } from 'react-icons/fa';
+import { FaBan, FaCheck, FaChevronDown, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUserPlus, FaUsers } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
 import { createUserAccount, getRoleDescriptions, getUsers, suspendUser, updateRoleDescription, updateUser } from '../utils/adminApi';
 import { clearStoredUser, getStoredUser, isSessionExpiredError, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
@@ -91,6 +91,80 @@ function formatDate(value?: string) {
     month: 'short',
     day: '2-digit',
   });
+}
+
+type SelectOption = { value: string; label: string };
+
+function Select({
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectOption[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(event: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
+
+  const selected = options.find(option => option.value === value);
+
+  return (
+    <div className={styles.select} ref={rootRef}>
+      <button
+        type="button"
+        className={`${styles.selectTrigger} ${open ? styles.selectTriggerOpen : ''}`}
+        onClick={() => setOpen(current => !current)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className={selected ? undefined : styles.selectPlaceholder}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <FaChevronDown className={styles.selectChevron} />
+      </button>
+      {open && (
+        <ul className={styles.selectMenu} role="listbox">
+          {options.map(option => (
+            <li
+              key={option.value}
+              role="option"
+              aria-selected={option.value === value}
+              className={`${styles.selectOption} ${option.value === value ? styles.selectOptionActive : ''}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onChange(option.value);
+                setOpen(false);
+              }}
+            >
+              {option.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 const MIN_ADDRESS_ROWS = 2;
@@ -153,6 +227,7 @@ export default function UserAdminDashboardPage() {
   const [emailError, setEmailError] = useState('');
   const [viewingUser, setViewingUser] = useState<DripTeaUser | null>(null);
   const [formMode, setFormMode] = useState<FormMode | null>(null);
+  const [roleFieldLocked, setRoleFieldLocked] = useState(false);
   const [editingUser, setEditingUser] = useState<DripTeaUser | null>(null);
   const [formData, setFormData] = useState<UserFormState>(emptyForm());
   const [roleDescriptions, setRoleDescriptions] = useState<Record<string, string>>({});
@@ -223,6 +298,7 @@ export default function UserAdminDashboardPage() {
     setEmailError('');
     setEditingUser(null);
     setFormData(emptyForm());
+    setRoleFieldLocked(false);
     setFormMode('create');
   }
 
@@ -600,6 +676,7 @@ export default function UserAdminDashboardPage() {
                           onClick={() => {
                             setFormData({ ...emptyForm(), role: profile.value });
                             setEditingUser(null);
+                            setRoleFieldLocked(true);
                             setFormMode('create');
                           }}
                         >
@@ -882,33 +959,37 @@ export default function UserAdminDashboardPage() {
                       />
                     </label>
                   )}
-                  <label>
+                  <div className={styles.fieldGroup}>
                     User Type
-                    <select value={formData.role} onChange={(event) => updateFormField('role', event.target.value)}>
-                      {roleOptions.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </label>
+                    {formMode === 'create' && roleFieldLocked ? (
+                      <input value={roleLabel(formData.role)} disabled />
+                    ) : (
+                      <Select
+                        value={formData.role}
+                        onChange={(value) => updateFormField('role', value)}
+                        options={roleOptions}
+                      />
+                    )}
+                  </div>
                   {formData.role === 'store_staff' && (
-                    <label>
+                    <div className={styles.fieldGroup}>
                       Store
-                      <select value={formData.storeCode} onChange={(event) => updateFormField('storeCode', event.target.value)} required>
-                        <option value="">Select a store</option>
-                        {outlets.map(outlet => (
-                          <option key={outlet.storeCode} value={outlet.storeCode}>{outlet.name}</option>
-                        ))}
-                      </select>
-                    </label>
+                      <Select
+                        value={formData.storeCode}
+                        onChange={(value) => updateFormField('storeCode', value)}
+                        options={outlets.map(outlet => ({ value: outlet.storeCode, label: outlet.name }))}
+                        placeholder="Select a store"
+                      />
+                    </div>
                   )}
-                  <label>
+                  <div className={styles.fieldGroup}>
                     Status
-                    <select value={formData.status} onChange={(event) => updateFormField('status', event.target.value)}>
-                      {statusOptions.map(option => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </label>
+                    <Select
+                      value={formData.status}
+                      onChange={(value) => updateFormField('status', value)}
+                      options={statusOptions}
+                    />
+                  </div>
                 </div>
 
                 <div className={styles.addressEditor}>
