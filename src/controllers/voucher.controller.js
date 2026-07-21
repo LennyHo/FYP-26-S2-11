@@ -8,6 +8,11 @@
 //
 // #317 Search Vouchers (Store Staff)
 //      View: store-staff-voucher/page.tsx → Route: voucher.routes.js → Ctrl: voucher.controller.js (this file) → Model: voucher.model.js
+//
+// #318 Create Voucher (Store Staff)
+//      View: store-staff-voucher/page.tsx → Route: voucher.routes.js → Ctrl: voucher.controller.js (this file) → Model: voucher.model.js
+//      Vouchers are a single global collection (no storeId/outlet field on the model),
+//      so every voucher created here is immediately visible to every store staff account.
 
 const mongoose = require("mongoose");
 const Voucher = require("../models/voucher.model");
@@ -72,7 +77,94 @@ async function deleteVoucher(req, res) {
   }
 }
 
+// #318 As a store staff, I want to create vouchers so that I can launch new promotions.
+// Vouchers have no store/outlet field, so a newly created voucher is shared by all staff immediately.
+async function createVoucher(req, res) {
+  try {
+    const code = String(req.body.code || "").trim().toUpperCase();
+    const title = String(req.body.title || "").trim();
+    const description = String(req.body.description || "").trim();
+    const discountType = String(req.body.discountType || "").trim();
+    const discountValue = Number(req.body.discountValue);
+    const minSpend = Number.isFinite(Number(req.body.minSpend)) ? Number(req.body.minSpend) : 0;
+    const isActive = req.body.isActive !== false;
+    const expiresAt = req.body.expiresAt ? new Date(req.body.expiresAt) : null;
+    const maxDiscount =
+      req.body.maxDiscount !== undefined && req.body.maxDiscount !== null && req.body.maxDiscount !== ""
+        ? Number(req.body.maxDiscount)
+        : null;
+
+    if (!code || !title) {
+      return res.status(400).json({
+        ok: false,
+        message: "Code and title are required.",
+      });
+    }
+
+    if (!["percentage", "fixed"].includes(discountType)) {
+      return res.status(400).json({
+        ok: false,
+        message: "Discount type must be percentage or fixed.",
+      });
+    }
+
+    if (!Number.isFinite(discountValue) || discountValue < 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "A valid discount value is required.",
+      });
+    }
+
+    if (discountType === "percentage" && discountValue > 100) {
+      return res.status(400).json({
+        ok: false,
+        message: "Percentage discount cannot exceed 100.",
+      });
+    }
+
+    if (expiresAt && Number.isNaN(expiresAt.getTime())) {
+      return res.status(400).json({
+        ok: false,
+        message: "Invalid expiry date.",
+      });
+    }
+
+    const existing = await Voucher.findOne({ code }).lean();
+    if (existing) {
+      return res.status(409).json({
+        ok: false,
+        message: `A voucher with code "${code}" already exists.`,
+      });
+    }
+
+    const voucher = await Voucher.create({
+      code,
+      title,
+      description,
+      discountType,
+      discountValue,
+      maxDiscount: discountType === "percentage" ? maxDiscount : null,
+      minSpend,
+      isActive,
+      expiresAt,
+    });
+
+    return res.status(201).json({
+      ok: true,
+      data: voucher,
+    });
+  } catch (error) {
+    console.error("[VoucherController] createVoucher error:", error.message);
+
+    return res.status(500).json({
+      ok: false,
+      message: "Failed to create voucher.",
+    });
+  }
+}
+
 module.exports = {
   getVouchers,
   deleteVoucher,
+  createVoucher,
 };

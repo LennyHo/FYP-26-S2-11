@@ -9,6 +9,9 @@
 //                    → updateMenuItemStatus      → PATCH /api/menu-items/:id/status
 //                    → createMenuItem            → POST /api/menu-items
 //                    → updateMenuItem            → PATCH /api/menu-items/:id
+//   Vouchers         → getStaffVouchers          → GET /api/staff/vouchers
+//                    → createVoucher             → POST /api/staff/vouchers
+//                    → deleteVoucher             → DELETE /api/staff/vouchers/:id
 //
 // All functions call requestJson from api.base.ts — no direct fetch calls here.
 
@@ -78,6 +81,26 @@ export function deleteVoucher(id: string) {
     `/api/staff/vouchers/${encodeURIComponent(id)}`,
     { method: 'DELETE' }
   );
+}
+
+// Creates a new voucher. Vouchers have no store/outlet field, so this is immediately
+// visible to every store staff account (same GET /api/staff/vouchers list for everyone).
+// POST /api/staff/vouchers
+export function createVoucher(payload: {
+  code: string;
+  title: string;
+  description?: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  maxDiscount?: number | null;
+  minSpend?: number;
+  isActive?: boolean;
+  expiresAt?: string | null;
+}) {
+  return requestJson<{ ok: boolean; data: DripTeaVoucher }>('/api/staff/vouchers', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
 // ── Inventory management ──────────────────────────────────────────────────────

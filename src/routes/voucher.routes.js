@@ -8,6 +8,9 @@
 //
 // #317 Search Vouchers (Store Staff)
 //      View: store-staff-voucher/page.tsx → Route: voucher.routes.js (this file) → Ctrl: voucher.controller.js  → Model: voucher.model.js
+//
+// #318 Create Voucher (Store Staff)
+//      View: store-staff-voucher/page.tsx → Route: voucher.routes.js (this file) → Ctrl: voucher.controller.js  → Model: voucher.model.js
 
 const express = require("express");
 const voucherController = require("../controllers/voucher.controller");
@@ -15,6 +18,7 @@ const voucherController = require("../controllers/voucher.controller");
 const router = express.Router();
 
 router.get("/staff/vouchers", voucherController.getVouchers);
+router.post("/staff/vouchers", voucherController.createVoucher);
 router.delete("/staff/vouchers/:id", voucherController.deleteVoucher);
 
 module.exports = router;

@@ -8,6 +8,11 @@
 //
 // #317 Search Vouchers (Store Staff)
 //      View: store-staff-voucher/page.tsx (this file) → Route: voucher.routes.js → Ctrl: voucher.controller.js → Model: voucher.model.js
+//
+// #318 Create Voucher (Store Staff)
+//      View: store-staff-voucher/page.tsx (this file) → Route: voucher.routes.js → Ctrl: voucher.controller.js → Model: voucher.model.js
+//      Vouchers have no store/outlet field, so every voucher created here is shared
+//      by every store staff account via the same GET /api/staff/vouchers list.
 
 'use client';
 
@@ -15,8 +20,32 @@ import StaffHeader from '../components/layout/StaffHeader';
 import styles from './page.module.css';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getStaffVouchers, deleteVoucher, type DripTeaVoucher } from '../utils/staffApi';
+import { getStaffVouchers, deleteVoucher, createVoucher, type DripTeaVoucher } from '../utils/staffApi';
 import { isSessionExpiredError, clearStoredUser } from '../utils/api.base';
+
+type CreateVoucherForm = {
+  code: string;
+  title: string;
+  description: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: string;
+  maxDiscount: string;
+  minSpend: string;
+  expiresAt: string;
+  isActive: boolean;
+};
+
+const EMPTY_VOUCHER_FORM: CreateVoucherForm = {
+  code: '',
+  title: '',
+  description: '',
+  discountType: 'percentage',
+  discountValue: '',
+  maxDiscount: '',
+  minSpend: '0',
+  expiresAt: '',
+  isActive: true,
+};
 
 type VoucherStatus = 'active' | 'inactive' | 'expired';
 
@@ -67,6 +96,11 @@ export default function StoreStaffVoucherPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedVoucher, setSelectedVoucher] = useState<DripTeaVoucher | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateVoucherForm>(EMPTY_VOUCHER_FORM);
+  const [createError, setCreateError] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   // Sends the staff member back to login instead of retrying an expired/invalid
   // session forever, which just spams console errors.
@@ -109,6 +143,73 @@ export default function StoreStaffVoucherPage() {
       setDeletingId(null);
     }
   };
+
+  function openCreateModal() {
+    setCreateForm(EMPTY_VOUCHER_FORM);
+    setCreateError('');
+    setCodeError('');
+    setShowCreateModal(true);
+  }
+
+  function closeCreateModal() {
+    setShowCreateModal(false);
+    setCreateError('');
+    setCodeError('');
+  }
+
+  function handleCodeChange(value: string) {
+    setCreateForm(f => ({ ...f, code: value }));
+    const normalized = value.trim().toUpperCase();
+    if (!normalized) { setCodeError(''); return; }
+    const duplicate = vouchers.some(v => v.code.toUpperCase() === normalized);
+    setCodeError(duplicate ? `A voucher with code "${normalized}" already exists.` : '');
+  }
+
+  async function handleCreateSubmit() {
+    if (codeError) return;
+
+    const code = createForm.code.trim().toUpperCase();
+    const title = createForm.title.trim();
+    const discountValue = Number(createForm.discountValue);
+
+    if (!code || !title) {
+      setCreateError('Code and title are required.');
+      return;
+    }
+    if (!Number.isFinite(discountValue) || discountValue < 0) {
+      setCreateError('A valid discount value is required.');
+      return;
+    }
+    if (createForm.discountType === 'percentage' && discountValue > 100) {
+      setCreateError('Percentage discount cannot exceed 100.');
+      return;
+    }
+
+    setIsCreating(true);
+    setCreateError('');
+    try {
+      const res = await createVoucher({
+        code,
+        title,
+        description: createForm.description.trim(),
+        discountType: createForm.discountType,
+        discountValue,
+        maxDiscount: createForm.discountType === 'percentage' && createForm.maxDiscount
+          ? Number(createForm.maxDiscount)
+          : null,
+        minSpend: createForm.minSpend ? Number(createForm.minSpend) : 0,
+        isActive: createForm.isActive,
+        expiresAt: createForm.expiresAt || null,
+      });
+      setVouchers(prev => [res.data, ...prev]);
+      closeCreateModal();
+    } catch (err) {
+      if (isSessionExpiredError(err)) return handleSessionExpired();
+      setCreateError(err instanceof Error ? err.message : 'Failed to create voucher.');
+    } finally {
+      setIsCreating(false);
+    }
+  }
 
   const filteredVouchers = vouchers.filter(voucher => matchesVoucherSearch(voucher, searchQuery));
 
@@ -153,6 +254,9 @@ export default function StoreStaffVoucherPage() {
           <h1 className={styles.pageTitle}>Voucher Management</h1>
 
           <div className={styles.toolbarRight}>
+            <button type="button" className={styles.btnCreate} onClick={openCreateModal}>
+              + New Voucher
+            </button>
             <button type="button" className={styles.refreshBtn} onClick={() => void loadVouchers()} disabled={isRefreshing}>
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -278,6 +382,143 @@ export default function StoreStaffVoucherPage() {
             </div>
             <div className={styles.modalFooter}>
               <button type="button" className={styles.btnCancel} onClick={() => setSelectedVoucher(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Voucher Modal */}
+      {showCreateModal && (
+        <div className={styles.modalOverlay} onClick={closeCreateModal}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>New Voucher</h2>
+              <button type="button" className={styles.modalClose} onClick={closeCreateModal}>×</button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Code <span className={styles.required}>*</span></label>
+                  <input
+                    className={`${styles.formInput} ${codeError ? styles.formInputError : ''}`}
+                    value={createForm.code}
+                    onChange={e => handleCodeChange(e.target.value)}
+                    placeholder="e.g. SAVE10"
+                  />
+                  {codeError && <p className={styles.fieldError}>{codeError}</p>}
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Title <span className={styles.required}>*</span></label>
+                  <input
+                    className={styles.formInput}
+                    value={createForm.title}
+                    onChange={e => setCreateForm(f => ({ ...f, title: e.target.value }))}
+                    placeholder="e.g. S$10 OFF"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Description</label>
+                <input
+                  className={styles.formInput}
+                  value={createForm.description}
+                  onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="e.g. S$10 off orders above S$30"
+                />
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Discount Type <span className={styles.required}>*</span></label>
+                  <select
+                    className={styles.formInput}
+                    title="Discount Type"
+                    value={createForm.discountType}
+                    onChange={e => setCreateForm(f => ({ ...f, discountType: e.target.value as 'percentage' | 'fixed' }))}
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount (S$)</option>
+                  </select>
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>
+                    Discount Value <span className={styles.required}>*</span>
+                    <span className={styles.formHint}> ({createForm.discountType === 'percentage' ? '%' : 'S$'})</span>
+                  </label>
+                  <input
+                    className={styles.formInput}
+                    type="number"
+                    min="0"
+                    max={createForm.discountType === 'percentage' ? 100 : undefined}
+                    step="0.01"
+                    value={createForm.discountValue}
+                    onChange={e => setCreateForm(f => ({ ...f, discountValue: e.target.value }))}
+                    placeholder={createForm.discountType === 'percentage' ? '15' : '10.00'}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                {createForm.discountType === 'percentage' && (
+                  <div className={styles.formField}>
+                    <label className={styles.formLabel}>Max Discount <span className={styles.formHint}>(S$, optional)</span></label>
+                    <input
+                      className={styles.formInput}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={createForm.maxDiscount}
+                      onChange={e => setCreateForm(f => ({ ...f, maxDiscount: e.target.value }))}
+                      placeholder="e.g. 8"
+                    />
+                  </div>
+                )}
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Min Spend <span className={styles.formHint}>(S$)</span></label>
+                  <input
+                    className={styles.formInput}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={createForm.minSpend}
+                    onChange={e => setCreateForm(f => ({ ...f, minSpend: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Expiry Date <span className={styles.formHint}>(optional)</span></label>
+                  <input
+                    className={styles.formInput}
+                    type="date"
+                    value={createForm.expiresAt}
+                    onChange={e => setCreateForm(f => ({ ...f, expiresAt: e.target.value }))}
+                  />
+                </div>
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Status</label>
+                  <select
+                    className={styles.formInput}
+                    title="Status"
+                    value={createForm.isActive ? 'active' : 'inactive'}
+                    onChange={e => setCreateForm(f => ({ ...f, isActive: e.target.value === 'active' }))}
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              {createError && <p className={styles.formError}>{createError}</p>}
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnCancel} onClick={closeCreateModal}>Cancel</button>
+              <button type="button" className={styles.btnSubmit} onClick={() => void handleCreateSubmit()} disabled={isCreating || Boolean(codeError)}>
+                {isCreating ? 'Creating…' : 'Create Voucher'}
+              </button>
             </div>
           </div>
         </div>
