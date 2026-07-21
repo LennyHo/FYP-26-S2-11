@@ -68,6 +68,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/login') ||
     pathname.startsWith('/register') ||
     pathname.startsWith('/profile') ||
+    pathname.startsWith('/change-password') ||
     pathname.startsWith('/marketing');
 
   const rootClass = `${styles.globalShell} ${(pathname === '/login' || hideChatbot) ? 'loginPage' : ''}`;
