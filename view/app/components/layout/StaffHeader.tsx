@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { clearStoredUser, getStoredUser } from '../../utils/api.base';
@@ -10,6 +10,7 @@ import styles from './StaffHeader.module.css';
 
 export default function StaffHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const { outlets } = useOutlets();
   const [storeCode, setStoreCode] = useState<string | null>(null);
 
@@ -39,20 +40,27 @@ export default function StaffHeader() {
             width={48}
             height={27}
             className={styles.logoSvg}
-            onClick={() => router.push('/')}
-            style={{ cursor: 'pointer' }}
           />
           <span className={styles.brandText}>Store Staff</span>
         </div>
 
         <nav className={styles.nav}>
-          <Link href="/store-staff" className={styles.navLink}>
+          <Link
+            href="/store-staff"
+            className={`${styles.navLink} ${pathname.startsWith('/store-staff') && !pathname.startsWith('/store-staff-dashboard') && !pathname.startsWith('/store-staff-voucher') ? styles.active : ''}`}
+          >
             Menu Management
           </Link>
-          <Link href="/store-staff-dashboard" className={styles.navLink}>
+          <Link
+            href="/store-staff-dashboard"
+            className={`${styles.navLink} ${pathname.startsWith('/store-staff-dashboard') ? styles.active : ''}`}
+          >
             Dashboard
           </Link>
-          <Link href="/store-staff-voucher" className={styles.navLink}>
+          <Link
+            href="/store-staff-voucher"
+            className={`${styles.navLink} ${pathname.startsWith('/store-staff-voucher') ? styles.active : ''}`}
+          >
             Vouchers
           </Link>
         </nav>

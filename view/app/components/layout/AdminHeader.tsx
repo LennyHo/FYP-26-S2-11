@@ -23,8 +23,6 @@ export default function AdminHeader() {
             width={48}
             height={27}
             className={styles.logoSvg}
-            onClick={() => router.push('/')}
-            style={{ cursor: 'pointer' }}
           />
           <span className={styles.brandText}>Admin Panel</span>
         </div>

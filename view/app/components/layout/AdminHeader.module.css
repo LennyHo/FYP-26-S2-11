@@ -1,11 +1,9 @@
 ﻿.header {
   width: 100%;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  background: transparent;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .container {
