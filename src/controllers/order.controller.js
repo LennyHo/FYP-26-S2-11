@@ -18,9 +18,13 @@ const Order = require("../models/order.model");
 const OrderItem = require("../models/orderItem.model");
 const Payment = require("../models/payment.model");
 const CartItem = require("../models/cartItem.model");
+const MenuItem = require("../models/menuItem.model");
 const User = require("../models/user.model");
 const Voucher = require("../models/voucher.model");
 const Store = require("../models/store.model");
+
+const QUEUE_STATUSES = ["pending", "paid", "preparing"];
+const ACTIVE_ORDER_STATUSES = ["pending", "paid", "preparing", "ready"];
 
 function toObjectId(id) {
     return mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
@@ -359,6 +363,228 @@ async function getOrder(req, res) {
     }
 }
 
+// #301 - Customer queue/crowd status for a specific pickup or delivery order.
+async function getOrderQueueStatus(req, res) {
+    try {
+        const orderId = toObjectId(req.params.id);
+
+        if (!orderId) {
+            return res.status(400).json({
+                ok: false,
+                message: "A valid order id is required.",
+            });
+        }
+
+        const order = await Order.findById(orderId).lean();
+
+        if (!order) {
+            return res.status(404).json({
+                ok: false,
+                message: "Order not found.",
+            });
+        }
+
+        const status = String(order.status || "").toLowerCase();
+        const orderIsQueued = QUEUE_STATUSES.includes(status);
+        const store = order.storeId ? await Store.findById(order.storeId).lean() : null;
+        const activeStoreOrders = order.storeId
+            ? await Order.find({
+                storeId: order.storeId,
+                status: { $in: ACTIVE_ORDER_STATUSES },
+            }).sort({ createdAt: 1 }).lean()
+            : [];
+
+        const ordersBefore = orderIsQueued
+            ? activeStoreOrders.filter((row) =>
+                ACTIVE_ORDER_STATUSES.includes(String(row.status || "").toLowerCase()) &&
+                String(row._id) !== String(order._id) &&
+                new Date(row.createdAt).getTime() < new Date(order.createdAt).getTime()
+            )
+            : [];
+
+        const relevantOrderIds = [
+            ...new Set([
+                ...activeStoreOrders.map((row) => String(row._id)),
+                ...ordersBefore.map((row) => String(row._id)),
+                String(order._id),
+            ]),
+        ].map((id) => new mongoose.Types.ObjectId(id));
+        const cupsByOrderId = new Map();
+
+        if (relevantOrderIds.length) {
+            const cupRows = await OrderItem.aggregate([
+                { $match: { orderId: { $in: relevantOrderIds } } },
+                { $group: { _id: "$orderId", cups: { $sum: "$quantity" } } },
+            ]);
+
+            cupRows.forEach((row) => {
+                cupsByOrderId.set(String(row._id), Number(row.cups || 0));
+            });
+        }
+
+        const cupsBefore = ordersBefore.reduce(
+            (sum, row) => sum + Number(cupsByOrderId.get(String(row._id)) || 0),
+            0
+        );
+        const activeCupCount = activeStoreOrders.reduce(
+            (sum, row) => sum + Number(cupsByOrderId.get(String(row._id)) || 0),
+            0
+        );
+
+        return res.json({
+            ok: true,
+            data: {
+                orderId: String(order._id),
+                orderNo: order.orderNo,
+                status: order.status,
+                orderType: order.orderType,
+                storeCode: store?.storeCode || order.deliveryDetails?.storeCode || "",
+                storeName: store?.name || order.deliveryDetails?.outletName || "Selected store",
+                activeOrderCount: activeStoreOrders.length,
+                activeCupCount,
+                ordersBefore: ordersBefore.length,
+                cupsBefore,
+                orderCupCount: Number(cupsByOrderId.get(String(order._id)) || 0),
+                position: orderIsQueued ? ordersBefore.length + 1 : 0,
+                isQueueActive: orderIsQueued,
+                deliveryStatus: order.orderType === "delivery" ? order.status : null,
+                updatedAt: new Date().toISOString(),
+            },
+        });
+    } catch (error) {
+        console.error("[OrderController] Failed to load order queue status:", error);
+        return res.status(500).json({
+            ok: false,
+            message: "Failed to load order queue status.",
+        });
+    }
+}
+
+// Development helper for testing #301 without needing several real checkouts.
+async function createTestQueueOrders(req, res) {
+    try {
+        if (process.env.NODE_ENV === "production") {
+            return res.status(404).json({ ok: false, message: "Not found." });
+        }
+
+        const storeCode = String(req.body?.storeCode || "DT-001").trim();
+        const orderCount = Math.min(Math.max(Number(req.body?.orders || 3), 0), 10);
+        const cupsPerOrder = Math.min(Math.max(Number(req.body?.cupsPerOrder || 2), 1), 10);
+        const clearExisting = Boolean(req.body?.clearExisting);
+
+        const [store, customer, menuItem] = await Promise.all([
+            Store.findOne({ storeCode }).lean(),
+            User.findOne({ role: "customer" }).lean(),
+            MenuItem.findOne({ status: "active" }).lean(),
+        ]);
+
+        if (!store) {
+            return res.status(400).json({ ok: false, message: "Store not found." });
+        }
+
+        if (!customer) {
+            return res.status(400).json({ ok: false, message: "No customer user found." });
+        }
+
+        if (!menuItem) {
+            return res.status(400).json({ ok: false, message: "No active menu item found." });
+        }
+
+        if (clearExisting) {
+            const existing = await Order.find({
+                storeId: store._id,
+                status: { $in: ACTIVE_ORDER_STATUSES },
+                "deliveryDetails.isTestQueue": true,
+            }).lean();
+            const existingIds = existing.map((order) => order._id);
+
+            if (existingIds.length) {
+                await Promise.all([
+                    OrderItem.deleteMany({ orderId: { $in: existingIds } }),
+                    Order.deleteMany({ _id: { $in: existingIds } }),
+                ]);
+            }
+        }
+
+        if (orderCount === 0) {
+            return res.status(200).json({
+                ok: true,
+                message: `Cleared test queue orders for ${store.name}.`,
+                data: {
+                    storeCode: store.storeCode,
+                    storeName: store.name,
+                    orders: [],
+                },
+            });
+        }
+
+        const created = [];
+        const unitPrice = Number(menuItem.price || 5.2);
+
+        for (let index = 0; index < orderCount; index += 1) {
+            const quantity = cupsPerOrder;
+            const lineTotal = Math.round(unitPrice * quantity * 100) / 100;
+            const order = await createOrderWithUniqueNumber({
+                userId: customer._id,
+                storeId: store._id,
+                totalAmount: lineTotal,
+                orderType: "pickup",
+                status: "pending",
+                voucherCode: null,
+                discountAmount: 0,
+                deliveryDetails: {
+                    type: "pickup",
+                    storeCode: store.storeCode,
+                    outletName: store.name,
+                    outletAddress: store.address,
+                    isTestQueue: true,
+                },
+            });
+
+            await OrderItem.create({
+                orderId: order._id,
+                userId: customer._id,
+                menuItemId: menuItem._id,
+                menuItemCode: menuItem.code || menuItem.id || "test",
+                name: menuItem.name || "Test Drink",
+                image: menuItem.image || "",
+                category: menuItem.category || "Milk Tea",
+                quantity,
+                unitPrice,
+                lineTotal,
+                customization: {
+                    size: "Regular",
+                    ice: "Normal Ice",
+                    sugar: "100% Sugar",
+                    toppings: [],
+                },
+            });
+
+            created.push({
+                id: String(order._id),
+                orderNo: order.orderNo,
+                cups: quantity,
+            });
+        }
+
+        return res.status(201).json({
+            ok: true,
+            message: `Created ${created.length} test queue orders for ${store.name}.`,
+            data: {
+                storeCode: store.storeCode,
+                storeName: store.name,
+                orders: created,
+            },
+        });
+    } catch (error) {
+        console.error("[OrderController] Failed to create test queue orders:", error);
+        return res.status(500).json({
+            ok: false,
+            message: "Failed to create test queue orders.",
+        });
+    }
+}
+
 // #28  - As a customer, I want to track my order status so that I know when my drink will be ready.
 // #203 - As a customer, I want to track my order status through the chatbot so that I know when my drink will be ready.
 // Updates the status field (pending → preparing → ready → completed) in the orders collection.
@@ -408,5 +634,7 @@ module.exports = {
     processPayment,
     getOrders,
     getOrder,
+    getOrderQueueStatus,
+    createTestQueueOrders,
     updateOrderStatus,
 };

@@ -12,4 +12,7 @@ const router = express.Router();
 // As a customer, I want to view store locations so that I can find a DripTea near me.
 router.get("/stores", storeController.getStores);
 
+// #301 - As a customer, I want to see live store crowd/order load before ordering.
+router.get("/stores/crowd", storeController.getStoreCrowdStats);
+
 module.exports = router;

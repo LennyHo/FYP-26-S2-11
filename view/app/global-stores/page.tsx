@@ -4,12 +4,40 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import Header from '../components/layout/Header';
 import { useOutlets } from '../utils/outlets';
+import { getStoreCrowdStats } from '../utils/customerApi';
+import type { DripTeaStoreCrowdStat } from '../utils/api.base';
 import styles from './GlobalStores.module.css';
 
 const StoreMap = dynamic(() => import('./StoreMap'), { ssr: false });
 
 export default function GlobalStoresPage() {
   const { outlets: stores } = useOutlets();
+  const [crowdStats, setCrowdStats] = React.useState<Record<string, DripTeaStoreCrowdStat>>({});
+
+  React.useEffect(() => {
+    let isActive = true;
+
+    async function loadCrowdStats() {
+      try {
+        const response = await getStoreCrowdStats();
+        if (!isActive) return;
+
+        setCrowdStats(
+          Object.fromEntries((response.data || []).map((stat) => [stat.storeCode, stat]))
+        );
+      } catch (error) {
+        console.error("[Stores crowd]", error);
+      }
+    }
+
+    void loadCrowdStats();
+    const timer = window.setInterval(() => void loadCrowdStats(), 5000);
+
+    return () => {
+      isActive = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   return (
     <>
@@ -41,6 +69,20 @@ export default function GlobalStoresPage() {
                   <div className={styles.cardHead}>
                     <h2 className={styles.cardName}>{store.name}</h2>
                     <p className={styles.cardCode}>{store.storeCode}</p>
+                  </div>
+
+                  <div className={styles.crowdPanel}>
+                    <div>
+                      <span>Current orders</span>
+                      <strong>{crowdStats[store.storeCode]?.activeOrderCount ?? 0}</strong>
+                    </div>
+                    <div>
+                      <span>Cups in queue</span>
+                      <strong>{crowdStats[store.storeCode]?.activeCupCount ?? 0}</strong>
+                    </div>
+                    <p className={`${styles.crowdBadge} ${styles[`crowd_${crowdStats[store.storeCode]?.crowdLevel || 'quiet'}`]}`}>
+                      {(crowdStats[store.storeCode]?.crowdLevel || "quiet").toUpperCase()}
+                    </p>
                   </div>
 
                   <div className={styles.cardDivider} />

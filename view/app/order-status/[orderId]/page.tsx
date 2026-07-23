@@ -12,6 +12,8 @@ import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import Header from "../../components/layout/Header";
 import { getOrder, updateOrderStatus, type DripTeaOrder } from "../../utils/staffApi";
+import { getOrderQueueStatus } from "../../utils/customerApi";
+import type { DripTeaOrderQueueStatus } from "../../utils/api.base";
 import ReceiptModal, { type ReceiptData } from "../../components/ui/ReceiptModal";
 import { useOutlets } from "../../utils/outlets";
 import "../../components/pages/Checkout.css";
@@ -131,6 +133,10 @@ function getTrackingSnapshot(orderId: string): TrackingSnapshot | null {
   } catch {
     return null;
   }
+}
+
+function isMongoObjectId(value: string) {
+  return /^[a-f\d]{24}$/i.test(value);
 }
 
 function formatOrderDetails(items: DripTeaOrder["items"]) {
@@ -268,6 +274,7 @@ export default function OrderStatusPage() {
   const [collected, setCollected] = useState(false);
   const [nowMs, setNowMs] = useState(Date.now());
   const [showReceipt, setShowReceipt] = useState(false);
+  const [queueStatus, setQueueStatus] = useState<DripTeaOrderQueueStatus | null>(null);
   const { outlets } = useOutlets();
 
   useEffect(() => {
@@ -309,6 +316,29 @@ export default function OrderStatusPage() {
     return () => {
       running = false;
       if (pollTimer) window.clearInterval(pollTimer);
+    };
+  }, [orderId]);
+
+  useEffect(() => {
+    if (!orderId || !isMongoObjectId(orderId)) return;
+
+    let running = true;
+
+    async function loadQueueStatus() {
+      try {
+        const response = await getOrderQueueStatus(orderId);
+        if (running) setQueueStatus(response.data);
+      } catch {
+        if (running) setQueueStatus(null);
+      }
+    }
+
+    void loadQueueStatus();
+    const timer = window.setInterval(() => void loadQueueStatus(), 5000);
+
+    return () => {
+      running = false;
+      window.clearInterval(timer);
     };
   }, [orderId]);
 
@@ -676,6 +706,39 @@ export default function OrderStatusPage() {
                   <p><span>Payment Method</span><strong>Visa **** 4242</strong></p>
                   <p><span>Order Placed</span><strong>{formatOrderDate(order.createdAt)}</strong></p>
                   <button type="button" onClick={() => setShowReceipt(true)}>View Receipt</button>
+                </section>
+
+                <section className="tracking-card tracking-queue-card">
+                  <h2>Store Queue</h2>
+                  <p><span>Outlet</span><strong>{queueStatus?.storeName || pickupOutletName || delivery?.outletName || "Selected store"}</strong></p>
+                  <div className="tracking-queue-grid">
+                    <div>
+                      <span>Orders now</span>
+                      <strong>{queueStatus?.activeOrderCount ?? 0}</strong>
+                    </div>
+                    <div>
+                      <span>Cups in queue</span>
+                      <strong>{queueStatus?.activeCupCount ?? 0}</strong>
+                    </div>
+                    <div>
+                      <span>Orders before you</span>
+                      <strong>{queueStatus?.ordersBefore ?? 0}</strong>
+                    </div>
+                    <div>
+                      <span>Cups before you</span>
+                      <strong>{queueStatus?.cupsBefore ?? 0}</strong>
+                    </div>
+                  </div>
+                  <p className="tracking-queue-note">
+                    {queueStatus?.isQueueActive
+                      ? `You are #${queueStatus.position} in this store queue. Ready orders leave after collection.`
+                      : isDeliveryOrder
+                        ? (collected ? "Delivered to your address." : "Your drink has left the store queue.")
+                        : (collected ? "Collected at the counter." : "Your drink is ready for collection.")}
+                  </p>
+                  {isDeliveryOrder && (
+                    <p><span>Delivery Status</span><strong>{collected ? "Delivered" : phase >= 3 ? "Out for delivery" : "Preparing"}</strong></p>
+                  )}
                 </section>
 
                 <section className="tracking-card">

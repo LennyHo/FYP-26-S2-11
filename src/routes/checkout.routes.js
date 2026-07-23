@@ -25,6 +25,8 @@ router.post("/checkout", orderController.processPayment);
 // GET /orders/:id and PATCH .../status stay open — they're also used by the
 // customer-facing order-tracking page and are id-scoped, not list-scoped.
 router.get("/orders", requireAuth, requireRole("store_staff"), orderController.getOrders);
+router.post("/orders/test-queue", orderController.createTestQueueOrders);
+router.get("/orders/:id/queue", orderController.getOrderQueueStatus);
 router.get("/orders/:id", orderController.getOrder);
 
 // #28 Track Order Status | #203 Track Order Status via Chatbot
