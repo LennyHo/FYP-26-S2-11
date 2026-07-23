@@ -27,6 +27,8 @@ import type {
   DripTeaVoucher,
   DripTeaDeliveryDetails,
   DripTeaStore,
+  DripTeaStoreCrowdStat,
+  DripTeaOrderQueueStatus,
 } from './api.base';
 
 
@@ -103,6 +105,18 @@ export function searchBeverage(keyword: string) {
 // Fetches all active store locations. GET /api/stores
 export function getStores() {
   return requestJson<{ ok: boolean; data: DripTeaStore[] }>('/api/stores');
+}
+
+// #301 - Fetches live store crowd/order load. GET /api/stores/crowd
+export function getStoreCrowdStats() {
+  return requestJson<{ ok: boolean; data: DripTeaStoreCrowdStat[] }>('/api/stores/crowd');
+}
+
+// #301 - Fetches queue position/cups before one customer order. GET /api/orders/:id/queue
+export function getOrderQueueStatus(orderId: string) {
+  return requestJson<{ ok: boolean; data: DripTeaOrderQueueStatus }>(
+    `/api/orders/${encodeURIComponent(orderId)}/queue`
+  );
 }
 
 // ── Cart ──────────────────────────────────────────────────────────────────────

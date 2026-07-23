@@ -169,6 +169,33 @@ export type DripTeaStore = {
   status?: string;
 };
 
+export type DripTeaStoreCrowdStat = {
+  storeCode: string;
+  storeName: string;
+  activeOrderCount: number;
+  activeCupCount: number;
+  crowdLevel: 'quiet' | 'steady' | 'busy';
+  updatedAt?: string;
+};
+
+export type DripTeaOrderQueueStatus = {
+  orderId: string;
+  orderNo: string;
+  status: string;
+  orderType: string;
+  storeCode: string;
+  storeName: string;
+  activeOrderCount: number;
+  activeCupCount: number;
+  ordersBefore: number;
+  cupsBefore: number;
+  orderCupCount: number;
+  position: number;
+  isQueueActive: boolean;
+  deliveryStatus?: string | null;
+  updatedAt?: string;
+};
+
 export type DripTeaInventoryItem = {
   _id: string;
   name: string;

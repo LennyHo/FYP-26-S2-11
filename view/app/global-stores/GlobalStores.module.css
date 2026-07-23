@@ -121,6 +121,59 @@
   margin: 2px 0 4px;
 }
 
+.crowdPanel {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.crowdPanel > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(155, 109, 74, 0.16);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.crowdPanel span {
+  color: #6b625b;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.crowdPanel strong {
+  color: #0a1832;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.crowdBadge {
+  display: grid;
+  place-items: center;
+  min-width: 72px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.crowd_quiet {
+  background: #2f7d4a;
+}
+
+.crowd_steady {
+  background: #a76b2e;
+}
+
+.crowd_busy {
+  background: #b42318;
+}
+
 /* ─── Info rows ─────────────────────────────────── */
 .infoRow {
   display: flex;
@@ -170,6 +223,15 @@
 
   .cardsRow {
     grid-template-columns: 1fr;
+  }
+
+  .crowdPanel {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .crowdBadge {
+    grid-column: 1 / -1;
+    min-height: 34px;
   }
 
   .mapPanel {
