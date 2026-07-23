@@ -200,11 +200,17 @@ function isHealthRankingQuery(message) {
     const hasSugar = msg.includes("sugar");
     const hasCalorie = msg.includes("calorie") || msg.includes("calories") || msg.includes("cal");
     const hasHealthy = msg.includes("healthy") || msg.includes("healthier") || msg.includes("healthiest");
-    const hasDrinkRef = msg.includes("which drink") || msg.includes("which beverage") || msg.includes("drinks") || msg.includes("beverages");
+    // "which one" / "these" / "them" / "both" cover follow-up comparisons that refer back to
+    // drinks already shown earlier in the conversation, without naming them again —
+    // e.g. "Between these, which one has lesser sugar?" after the bot listed some drinks.
+    const hasDrinkRef =
+        msg.includes("which drink") || msg.includes("which beverage") || msg.includes("which one") ||
+        msg.includes("drinks") || msg.includes("beverages") ||
+        /\b(these|them|both|those|either)\b/.test(msg);
     return (
-        (msg.includes("low sugar") || msg.includes("lower sugar") || msg.includes("least sugar") || msg.includes("lowest sugar") || msg.includes("less sugar")) ||
+        (msg.includes("low sugar") || msg.includes("lower sugar") || msg.includes("least sugar") || msg.includes("lowest sugar") || msg.includes("less sugar") || msg.includes("lesser sugar")) ||
         (msg.includes("high sugar") || msg.includes("higher sugar") || msg.includes("most sugar") || msg.includes("highest sugar")) ||
-        (msg.includes("low calorie") || msg.includes("lower calorie") || msg.includes("least calorie") || msg.includes("lowest calorie") || msg.includes("low cal")) ||
+        (msg.includes("low calorie") || msg.includes("lower calorie") || msg.includes("least calorie") || msg.includes("lowest calorie") || msg.includes("low cal") || msg.includes("lesser calorie")) ||
         (msg.includes("high calorie") || msg.includes("higher calorie") || msg.includes("most calorie") || msg.includes("highest calorie")) ||
         (msg.includes("healthiest") || msg.includes("healthier option") || msg.includes("healthier choice") || msg.includes("healthier drink")) ||
         (hasDrinkRef && (hasSugar || hasCalorie || hasHealthy))
@@ -905,43 +911,82 @@ function extractOrdinalIndex(message) {
     return -1;
 }
 
-// #199 / #201 - Single source of truth for all 12 drink keyword aliases.
-// Used by resolveBeverageId (add-to-cart) and getCartUpdateIntent (edit-cart)
-// so "strawberry", "milo", "frappe" etc. resolve to the correct full drink name.
+// #199 / #201 - Single source of truth for all drink keyword aliases, ordered from most
+// to least specific so multi-word names win before their generic single-word fallback
+// (e.g. "jasmine matcha" is checked before the bare "jasmine"/"matcha" entries).
+// Used by resolveDrinkNameFromMessage (single best match) and findMentionedDrinks
+// (all matches, for nutrition comparison questions naming two drinks at once).
+const DRINK_NAME_ALIAS_PAIRS = [
+    [["da hong bao"], "Da Hong Bao Milk Tea"],
+    [["osmanthus"], "Osmanthus Milk Tea"],
+    [["oolong"], "Oolong Milk Tea"],
+    [["jasmine matcha"], "Jasmine Matcha Tea"],
+    [["strawberry matcha"], "Strawberry Matcha Tea"],
+    [["cranberry matcha"], "Cranberry Matcha Tea"],
+    [["matcha latte"], "Matcha Latte"],
+    [["classic milk tea"], "Classic Milk Tea"],
+    [["peach green tea ice blended"], "Peach Green Tea Ice Blended"],
+    [["mango green tea ice blended"], "Mango Green Tea Ice Blended"],
+    [["ice lemon tea", "lemon tea"], "Ice Lemon Tea"],
+    [["peach green tea"], "Peach Green Tea"],
+    [["mango fruit tea"], "Mango Fruit Tea"],
+    [["lychee jasmine"], "Lychee Jasmine Tea"],
+    [["grapefruit green tea"], "Grapefruit Green Tea"],
+    [["watermelon fruit tea"], "Watermelon Fruit Tea"],
+    [["jasmine green"], "Jasmine Green Tea"],
+    [["matcha"], "Matcha Latte"],
+    [["strawberry"], "Strawberry Matcha Tea"],
+    [["cranberry"], "Cranberry Matcha Tea"],
+    [["jasmine"], "Jasmine Green Tea"],
+    [["milk tea"], "Classic Milk Tea"],
+    [["watermelon"], "Watermelon Fruit Tea"],
+    [["grapefruit"], "Grapefruit Green Tea"],
+    [["lychee"], "Lychee Jasmine Tea"],
+    [["lemon"], "Ice Lemon Tea"],
+    [["mango"], "Mango Fruit Tea"],
+    [["peach"], "Peach Green Tea"],
+    [["ice blended"], "Peach Green Tea Ice Blended"],
+];
+
 function resolveDrinkNameFromMessage(message) {
     const msg = String(message || "").toLowerCase();
-
-    if (msg.includes("da hong bao")) return "Da Hong Bao Milk Tea";
-    if (msg.includes("osmanthus")) return "Osmanthus Milk Tea";
-    if (msg.includes("oolong")) return "Oolong Milk Tea";
-    if (msg.includes("jasmine matcha")) return "Jasmine Matcha Tea";
-    if (msg.includes("strawberry matcha")) return "Strawberry Matcha Tea";
-    if (msg.includes("cranberry matcha")) return "Cranberry Matcha Tea";
-    if (msg.includes("matcha latte")) return "Matcha Latte";
-    if (msg.includes("classic milk tea")) return "Classic Milk Tea";
-    if (msg.includes("peach green tea ice blended")) return "Peach Green Tea Ice Blended";
-    if (msg.includes("mango green tea ice blended")) return "Mango Green Tea Ice Blended";
-    if (msg.includes("ice lemon tea") || msg.includes("lemon tea")) return "Ice Lemon Tea";
-    if (msg.includes("peach green tea")) return "Peach Green Tea";
-    if (msg.includes("mango fruit tea")) return "Mango Fruit Tea";
-    if (msg.includes("lychee jasmine")) return "Lychee Jasmine Tea";
-    if (msg.includes("grapefruit green tea")) return "Grapefruit Green Tea";
-    if (msg.includes("watermelon fruit tea")) return "Watermelon Fruit Tea";
-    if (msg.includes("jasmine green")) return "Jasmine Green Tea";
-    if (msg.includes("matcha")) return "Matcha Latte";
-    if (msg.includes("strawberry")) return "Strawberry Matcha Tea";
-    if (msg.includes("cranberry")) return "Cranberry Matcha Tea";
-    if (msg.includes("jasmine")) return "Jasmine Green Tea";
-    if (msg.includes("milk tea")) return "Classic Milk Tea";
-    if (msg.includes("watermelon")) return "Watermelon Fruit Tea";
-    if (msg.includes("grapefruit")) return "Grapefruit Green Tea";
-    if (msg.includes("lychee")) return "Lychee Jasmine Tea";
-    if (msg.includes("lemon")) return "Ice Lemon Tea";
-    if (msg.includes("mango")) return "Mango Fruit Tea";
-    if (msg.includes("peach")) return "Peach Green Tea";
-    if (msg.includes("ice blended")) return "Peach Green Tea Ice Blended";
-
+    for (const [keywords, name] of DRINK_NAME_ALIAS_PAIRS) {
+        if (keywords.some((kw) => msg.includes(kw))) return name;
+    }
     return null;
+}
+
+// #29/#31 extension - As a customer, I want to ask the chatbot to compare sugar/calories
+// between two named drinks (e.g. "which has less sugar, Matcha Latte or Ice Lemon Tea?")
+// so I can pick between them directly instead of getting a generic top-5 list.
+// Matches full drink names first (most reliable when the customer names drinks precisely),
+// then falls back to the shared alias table for shorthand mentions, preserving message order.
+function findMentionedDrinks(message, drinks) {
+    const msg = String(message || "").toLowerCase();
+    const matches = [];
+    const matchedIds = new Set();
+
+    for (const drink of drinks) {
+        const name = String(drink.name || "").toLowerCase();
+        if (name && msg.includes(name)) {
+            matches.push({ drink, index: msg.indexOf(name) });
+            matchedIds.add(String(drink._id));
+        }
+    }
+
+    if (matches.length < 2) {
+        for (const [keywords, canonicalName] of DRINK_NAME_ALIAS_PAIRS) {
+            const keyword = keywords.find((kw) => msg.includes(kw));
+            if (!keyword) continue;
+            const drink = drinks.find((d) => String(d.name || "").toLowerCase() === canonicalName.toLowerCase());
+            if (drink && !matchedIds.has(String(drink._id))) {
+                matches.push({ drink, index: msg.indexOf(keyword) });
+                matchedIds.add(String(drink._id));
+            }
+        }
+    }
+
+    return matches.sort((a, b) => a.index - b.index).map((m) => m.drink);
 }
 
 async function resolveBeverageId(message) {
@@ -1735,6 +1780,11 @@ const MULTI_ORDER_DRINK_KEYWORDS = [
     'matcha', 'jasmine', 'oolong', 'osmanthus', 'classic', 'strawberry', 'cranberry',
     'milk\\s+tea', 'latte', 'lemon', 'mango', 'peach', 'lychee',
     'grapefruit', 'watermelon', 'ice\\s+blended', 'da\\s+hong\\s+bao',
+    // "Ice Lemon Tea" is the only menu item whose first word ("ice") isn't otherwise
+    // covered here — without this, "and a ice lemon tea" never matches the "and a/an
+    // [drink]" pattern below, so a second drink named this way is silently dropped
+    // instead of being added as a separate item.
+    'ice\\s+lemon\\s+tea',
 ];
 const MULTI_ORDER_AND_A_RE = new RegExp(
     `\\band\\s+an?\\s+(?:${MULTI_ORDER_DRINK_KEYWORDS.join('|')})\\b`, 'i'
@@ -2394,6 +2444,51 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             msg.includes("calorie") || msg.includes("calories") || msg.includes("cal");
 
         const allDrinks = await MenuItem.find({ status: "active" }).lean();
+
+        // Direct comparison: the customer named specific drinks ("... between A and B",
+        // "A or B"), so answer with exactly those two instead of a generic top-5 list.
+        let mentionedDrinks = findMentionedDrinks(intentMessage, allDrinks);
+
+        // "these" / "them" / "both" — the customer isn't naming drinks, they're referring
+        // back to ones the bot already mentioned earlier in this conversation. Search the
+        // recent chat history text for the same drink names/aliases instead.
+        if (mentionedDrinks.length < 2 && /\b(these|them|both|those|either)\b/.test(msg)) {
+            const historyText = recentHistory
+                .map((h) => String(h.content || "").replace(/<[^>]*>/g, " "))
+                .join(" ");
+            mentionedDrinks = findMentionedDrinks(historyText, allDrinks);
+        }
+
+        if (mentionedDrinks.length >= 2) {
+            const [first, second] = mentionedDrinks;
+            const label = rankByCalorie ? "calories" : "sugar";
+            const unit = rankByCalorie ? "kcal" : "g";
+            const getValue = (d) => Number((d.nutritionInfo || {})[rankByCalorie ? "baseCalories" : "baseSugarG"] ?? 0);
+            const firstValue = getValue(first);
+            const secondValue = getValue(second);
+
+            let reply;
+            if (firstValue === secondValue) {
+                reply = `${first.name} and ${second.name} both have about the same ${label} — ${firstValue}${unit} each.`;
+            } else {
+                const winner = wantHigh === (firstValue > secondValue) ? first : second;
+                const loser = winner === first ? second : first;
+                const winnerValue = winner === first ? firstValue : secondValue;
+                const loserValue = loser === first ? firstValue : secondValue;
+                const comparisonWord = wantHigh ? "more" : "less";
+                reply = `${winner.name} has ${comparisonWord} ${label} than ${loser.name} — ${winner.name} has ${winnerValue}${unit}, while ${loser.name} has ${loserValue}${unit}.`;
+            }
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+            return {
+                reply,
+                recommendedDrinks: formatDrinkCards(mentionedDrinks.slice(0, 2)),
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
         const withNutrition = allDrinks.filter((d) => {
             const n = d.nutritionInfo || {};
             return n.baseSugarG != null || n.baseCalories != null;
