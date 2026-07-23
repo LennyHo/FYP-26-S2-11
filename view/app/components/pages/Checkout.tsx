@@ -778,16 +778,6 @@ export default function Checkout() {
 
                         {collected ? (
                             <div className="order-collected-actions">
-                                {!confirmation.orderId.startsWith("GUEST-") && (
-                                    <button
-                                        type="button"
-                                        className="order-more-btn"
-                                        onClick={() => router.push(`/feedback/${confirmation.orderId}`)}
-                                    >
-                                        Leave Feedback
-                                    </button>
-                                )}
-
                                 <button
                                     type="button"
                                     className="order-more-btn"
