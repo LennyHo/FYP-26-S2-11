@@ -1,4 +1,4 @@
-function isChatbotAddToCartRequest(message) {
+/*function isChatbotAddToCartRequest(message) {
   const msg = String(message || "").toLowerCase();
 
   return (
@@ -12,3 +12,4 @@ function isChatbotAddToCartRequest(message) {
 module.exports = {
   isChatbotAddToCartRequest,
 };
+*/

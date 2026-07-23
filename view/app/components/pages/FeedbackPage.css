@@ -1,4 +1,4 @@
-.feedback-page {
+/*.feedback-page {
     min-height: 100vh;
     background: linear-gradient(160deg, #f5e8f8 0%, #f8efe6 40%, #fdf6ee 70%, #f0eafc 100%);
 }
@@ -221,7 +221,7 @@
     color: #c4a898;
 }
 
-/* ── Submit button ── */
+/* ── Submit button ── *//*
 .feedback-submit-btn {
     width: 100%;
     border: none;
@@ -261,3 +261,4 @@
         font-size: 1.35rem;
     }
 }
+*/
