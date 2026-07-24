@@ -1180,6 +1180,37 @@ async function resolveBeverageId(message) {
     return beverageId;
 }
 
+// Detects when the customer named a drink generically enough to match MULTIPLE real menu items
+// — e.g. "green tea" alone matches Jasmine/Grapefruit/Peach/Lychee Green Tea plus both Green Tea
+// Ice Blended drinks. Without this check, resolveBeverageId fails to resolve a single item, and
+// the add-to-cart handler used to fall back to resolveLastDrinkFromHistory — silently substituting
+// whatever drink was last discussed earlier in the conversation for what the customer actually just
+// asked for (confirmed bug: "one large green tea" got added as an unrelated "Oolong Milk Tea" from
+// an earlier turn, with no clarifying question asked). Real ambiguity must be asked about, never
+// guessed via stale history or left to the model to free-associate.
+// Ordered longest-phrase-first so a specific compound match ("peach green tea", exactly one drink)
+// is checked before the bare "green tea" substring it contains would be.
+const GENERIC_DRINK_PHRASES = [
+    "green tea ice blended", "green tea", "milk tea", "fruit tea", "matcha tea", "ice blended",
+];
+
+async function findAmbiguousMenuMatches(message) {
+    const msg = String(message || "").toLowerCase();
+
+    for (const phrase of GENERIC_DRINK_PHRASES) {
+        if (!msg.includes(phrase)) continue;
+
+        const allDrinks = await MenuItem.find({ status: "active" }).lean();
+        const matches = allDrinks.filter((d) => String(d.name || "").toLowerCase().includes(phrase));
+
+        // 2+ real matches for this phrase = genuinely ambiguous, ask which one.
+        // 0 or 1 match means the normal resolution path already handles it (or correctly fails).
+        return matches.length >= 2 ? matches.map((d) => d.name) : null;
+    }
+
+    return null;
+}
+
 function resolveLastDrinkFromHistory(history) {
     if (!Array.isArray(history)) return null;
 
@@ -3418,7 +3449,20 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
             for (const segment of segments) {
                 let beverageId = await resolveBeverageId(segment);
-                if (!beverageId) beverageId = lastBeverageId;
+
+                if (!beverageId) {
+                    // Ambiguous-but-real reference within this segment ("...and a green tea") —
+                    // ask which one instead of silently reusing whichever drink the previous
+                    // segment in this same message happened to resolve to.
+                    const ambiguousMatches = await findAmbiguousMenuMatches(segment);
+                    if (ambiguousMatches) {
+                        const reply = `We have a few options for "${segment.trim()}": ${ambiguousMatches.join(", ")} — which one would you like? You can add the rest of your order after.`;
+                        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+                        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+                        return { reply, system_action: { ui_navigation: "none" } };
+                    }
+                    beverageId = lastBeverageId;
+                }
                 if (!beverageId) continue;
                 lastBeverageId = beverageId;
 
@@ -3511,6 +3555,16 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         let beverageId = await resolveBeverageId(intentMessage);
 
         if (!beverageId) {
+            // Ambiguous-but-real drink reference ("green tea") — ask which one instead of
+            // silently falling back to an unrelated drink from earlier in the conversation.
+            const ambiguousMatches = await findAmbiguousMenuMatches(intentMessage);
+            if (ambiguousMatches) {
+                const reply = `We have a few options for that: ${ambiguousMatches.join(", ")} — which one would you like?`;
+                await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+                await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+                return { reply, system_action: { ui_navigation: "none" } };
+            }
+
             const lastDrinkName = resolveLastDrinkFromHistory(history);
             if (lastDrinkName) {
                 beverageId = await resolveBeverageId(lastDrinkName);
