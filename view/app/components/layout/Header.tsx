@@ -247,7 +247,7 @@ export default function Header() {
       {/* Brand logo — click to go home */}
       <div
         className={`${styles.brand} ${styles.brandImage}`}
-        onClick={() => router.push('/')}
+        onClick={() => router.push('/home')}
       >
         <div
           className={styles.logoSvg}

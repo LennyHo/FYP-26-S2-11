@@ -495,7 +495,7 @@ export default function OrderStatusPage() {
                   Order #{orderNo} <span>-</span> Placed on {formatOrderDate(order.createdAt)}
                 </p>
               </div>
-              <button type="button" onClick={() => router.push("/")}>
+              <button type="button" onClick={() => router.push("/home")}>
                 Back to Menu
               </button>
             </div>
