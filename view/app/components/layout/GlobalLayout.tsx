@@ -51,6 +51,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
   }, [isChatOpen]);
 
   const hideChatbot =
+    pathname === '/' ||
     pathname.startsWith('/user-admin') ||
     pathname.startsWith('/store-staff') ||
     pathname.startsWith('/login') ||
@@ -61,6 +62,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/marketing');
 
   const hideFooter =
+    pathname === '/' ||
     pathname.startsWith('/user-admin') ||
     pathname.startsWith('/store-staff') ||
     pathname.startsWith('/user-admin-dashboard') ||
@@ -71,7 +73,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/change-password') ||
     pathname.startsWith('/marketing');
 
-  const rootClass = `${styles.globalShell} ${(pathname === '/login' || hideChatbot) ? 'loginPage' : ''}`;
+  const rootClass = `${styles.globalShell} ${(pathname === '/login' || pathname === '/' || hideChatbot) ? 'loginPage' : ''}`;
   
   return (
     <div className={rootClass}>
