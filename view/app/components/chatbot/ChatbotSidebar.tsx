@@ -542,7 +542,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                             id={drink.id}
                             name={drink.name}
                             price={`S$ ${Number(drink.price).toFixed(2)}`}
-                            image={drink.image ?? `/img/bubble_teas/${drink.id}.jpg`}
+                            image={drink.image || (/^b\d{3}$/.test(drink.id) ? `/img/bubble_teas/${drink.id}.jpg` : "/img/bubble_teas/b001.jpg")}
                             categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
                             nutriGrade={drink.nutri_grade ?? undefined}
                             sugar={drink.base_sugar_g ?? undefined}
@@ -991,7 +991,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                               id={drink.id}
                               name={drink.name}
                               price={`S$ ${Number(drink.price).toFixed(2)}`}
-                              image={drink.image ?? `/img/bubble_teas/${drink.id}.jpg`}
+                              image={drink.image || (/^b\d{3}$/.test(drink.id) ? `/img/bubble_teas/${drink.id}.jpg` : "/img/bubble_teas/b001.jpg")}
                               categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
                               nutriGrade={drink.nutri_grade ?? undefined}
                               sugar={drink.base_sugar_g ?? undefined}
