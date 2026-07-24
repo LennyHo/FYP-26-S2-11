@@ -212,11 +212,11 @@ export default function BuyDripTeaPage() {
                     <article key={drink.id} className={styles.searchDrinkCard}>
                       <div className={styles.searchImageWrapper}>
                         <img
-                          src={drink.image || `/img/bubble_teas/${drink.id}.png`}
+                          src={drink.image || "/img/bubble_teas/b001.jpg"}
                           alt={drink.name}
                           className={styles.searchDrinkImage}
                           onError={(event) => {
-                            event.currentTarget.src = "/img/bubble_teas/b001.png";
+                            event.currentTarget.src = "/img/bubble_teas/b001.jpg";
                           }}
                         />
                         <span className={styles.searchPriceTag}>
@@ -278,11 +278,11 @@ export default function BuyDripTeaPage() {
                       <article key={drink.id} className={styles.searchDrinkCard}>
                         <div className={styles.searchImageWrapper}>
                           <img
-                            src={drink.image || `/img/bubble_teas/${drink.id}.png`}
+                            src={drink.image || "/img/bubble_teas/b001.jpg"}
                             alt={drink.name}
                             className={styles.searchDrinkImage}
                             onError={(event) => {
-                              event.currentTarget.src = "/img/bubble_teas/b001.png";
+                              event.currentTarget.src = "/img/bubble_teas/b001.jpg";
                             }}
                           />
                           <span className={styles.searchPriceTag}>

@@ -137,8 +137,11 @@ interface CartItem {
 }
 
 function getCartItemImage(item: CartItem) {
-  if (item.drinkId) return `/img/bubble_teas/${item.drinkId}.jpg`;
+  // The real stored image (imageSrc) must win — guessing a filename from drinkId 404s for
+  // any custom staff-added item, whose id looks like "custom_<timestamp>" and has no matching
+  // file in public/img/bubble_teas/. Only fall back to the guess for the real seeded catalog.
   if (item.imageSrc) return item.imageSrc;
+  if (item.drinkId && /^b\d{3}$/.test(item.drinkId)) return `/img/bubble_teas/${item.drinkId}.jpg`;
   return "/img/bubble_teas/b001.jpg";
 }
 

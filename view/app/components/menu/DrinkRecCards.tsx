@@ -179,7 +179,7 @@ export default function DrinkRecCards({ msgText, flippedCard, setFlippedCard }: 
                     <div className={styles.drinkFlipCardFront}>
                       <div className={styles.drinkFlipCardImgWrapFull}>
                         <img
-                          src={mongoData?.image || `/img/bubble_teas/${resolvedId}.jpg`}
+                          src={mongoData?.image || (/^b\d{3}$/.test(resolvedId) ? `/img/bubble_teas/${resolvedId}.jpg` : "/img/bubble_teas/b001.jpg")}
                           alt={drink.name}
                           className={styles.drinkFlipCardImg}
                           onError={(e) => { e.currentTarget.src = "/img/bubble_teas/b001.jpg"; }}
