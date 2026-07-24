@@ -377,6 +377,29 @@ function hasCustomizationWords(msg) {
     return ORDER_CUSTOMIZATION_WORDS.some((w) => msg.includes(w));
 }
 
+function hasExplicitOrderIntent(message) {
+    const msg = String(message || "").toLowerCase();
+
+    // Named drink + a concrete customization detail ("large", "less sugar", "no ice"...) is
+    // always an explicit order, regardless of any preceding rambling/emotional context.
+    if (hasCustomizationWords(msg)) return true;
+
+    // "give me one X" / "one matcha latte" / "2 taro slush" — quantity-based direct order.
+    if (/\bgive me\s+(one|two|three|four|five|\d+)\b/i.test(msg)) return true;
+    if (/^(one|two|three|four|five|six|\d+)\s+\w/i.test(msg.trim())) return true;
+
+    // Direct ordering verbs — "i want X", "get me X", "give me X", "order me X", etc.
+    if (/\b(i want|i like to have|i would like|i'd like|i'll have|i'll take|can i have|can i get|can i order|give me|get me|order me)\s+(?:a\s+|an\s+)?\w/i.test(msg)) return true;
+
+    // "add [drink]" / "add a X to my cart" — add-to-cart phrasing.
+    if (/\badd\s+(?!one\s+more\b|another\b)/i.test(msg)) return true;
+
+    // "order the/a/an X (for me)" — explicit order verb naming a specific item.
+    if (/\border\s+(?:the|a|an)\s+\w/i.test(msg)) return true;
+
+    return false;
+}
+
 function detectMessageLanguage(message) {
     const msg = String(message || "");
     if (/[一-鿿]/.test(msg)) return "zh";
@@ -395,16 +418,42 @@ const HANDOFF_OFFER =
     "You can reach our team at **yiyuanzhuan@driptea.com** or WhatsApp **+6123 4567**. " +
     "Otherwise, just tell me a flavour you like (fruity, milky, or matcha) and I'll suggest something!";
 
-// Conservative "unintelligible" check: true only when NO token contains a vowel and there are no
-// digits — i.e. random consonant strings like "zzxxqqjj asdkfj". Real words and drink names almost
-// always contain a vowel, so this won't misfire on legitimate (even misspelled) orders.
+// A "word-like" token (3+ Latin letters) counts as gibberish-looking when either:
+//  - its vowel ratio is at or below 20% — catches consonant-heavy strings like "asdkfj" (1/6 =
+//    16.7%) and "plmokn" (1/6 = 16.7%). The old check only looked for a TOTAL absence of vowels,
+//    which missed these — each happens to contain exactly one stray vowel letter — even though the
+//    function's own original example comment cited "asdkfj" as what should trigger it (T51); or
+//  - it's a short chunk (1-3 chars) repeated to fill the whole token — a keyboard-mashing pattern
+//    like "qweqwe" ("qwe"×2), "asdasd" ("asd"×2), or "jkjkjk" ("jk"×3). These can have an ordinary-
+//    looking vowel ratio (e.g. "qweqwe" is 2/6 = 33%), so the ratio check alone can't catch them.
+function tokenLooksGibberish(token) {
+    const letters = token.replace(/[^a-z]/g, "");
+    if (letters.length < 3) return false;
+    if (/^(.{1,3})\1+$/.test(letters)) return true;
+    const vowelCount = (letters.match(/[aeiou]/g) || []).length;
+    return vowelCount / letters.length <= 0.2;
+}
+
+// Conservative "unintelligible" check. Requires at least two evaluable (3+ letter) tokens that ALL
+// look gibberish — a single short word is never enough evidence on its own, so a name, a short
+// reply, or an ordinary misspelling ("Chris", "OK", "sory") is never misclassified. Messages with
+// digits (order numbers, voucher/product codes, prices, quantities) or Chinese/Tamil script are
+// exempted outright — those are real, meaningful input handled by their own language-specific
+// paths elsewhere, never gibberish.
 function looksUnintelligible(message) {
     const msg = String(message || "").trim().toLowerCase();
-    if (!msg || /\d/.test(msg)) return false;
-    const tokens = msg.split(/\s+/).filter(Boolean);
-    if (tokens.length === 0) return false;
-    const hasAnyRealWord = tokens.some((t) => /[a-z]/.test(t) && /[aeiou]/.test(t));
-    return !hasAnyRealWord;
+    if (!msg) return false;
+    if (/\d/.test(msg)) return false;
+    if (/[一-鿿]/.test(msg)) return false; // Chinese
+    if (/[஀-௿]/.test(msg)) return false; // Tamil
+
+    const evaluableTokens = msg
+        .split(/\s+/)
+        .filter((t) => t.replace(/[^a-z]/g, "").length >= 3);
+
+    if (evaluableTokens.length < 2) return false;
+
+    return evaluableTokens.every(tokenLooksGibberish);
 }
 
 // True when the customer is mid-order — i.e. the most recent assistant turn asked them to pick a
@@ -864,6 +913,15 @@ function findOrdersByDateQuery(allOrders, dateQuery) {
 }
 // End of #198
 
+// #203 - Matches an order-number reference: "order 0149", "order #0149", "order number 0149",
+// "order no 0149", "order no. 0149", or a bare "#0149". The digits must sit directly against
+// "order" (optionally via "number"/"no"/"no."/"#") or a leading "#", so this can't misfire on
+// unrelated numbers elsewhere in the message — quantities ("2 milk teas"), prices ("$12.50"),
+// phone numbers, or sugar/discount percentages never sit next to those words. The 3-6 digit
+// window covers real order numbers (zero-padded to 4 digits, see extractOrderNoFromMessage)
+// while staying well short of an 8-digit phone number.
+const ORDER_NUMBER_RE = /(?:\border\b\s*(?:number|no\.?|#)?\s*|#\s*)(\d{3,6})\b/i;
+
 // #203 - As a customer, I want to track my order status through the chatbot.
 // Detects current-order tracking intent (distinct from #198 purchase history which shows past orders).
 function isTrackOrderRequest(message) {
@@ -894,17 +952,18 @@ function isTrackOrderRequest(message) {
         msg.includes("do i have any orders") ||
         /\border\b.*\bready\b/i.test(msg) ||
         /\border\b.*\bstatus\b/i.test(msg) ||
-        // "track order 0149" / "order #0149" / "where is order 0149" — an order number is an
-        // unambiguous tracking request even without the possessive "my order". Lets the handler's
-        // extractOrderNoFromMessage + getOrderStatus run instead of falling through to Gemini,
-        // which would otherwise invent a "can't find that order" reply for a real order.
-        /\border\s*#?\s*\d{3,6}\b/i.test(msg)
+        // "track order 0149" / "order #0149" / "order number 0149" / "where is order 0149" — an
+        // order number is an unambiguous tracking request even without the possessive "my order".
+        // Lets the handler's extractOrderNoFromMessage + getOrderStatus run instead of falling
+        // through to Gemini, which would otherwise invent a "can't find that order" reply for a
+        // real order.
+        ORDER_NUMBER_RE.test(msg)
     );
 }
 
 // #203 - Track Order Status via Chatbot
 function extractOrderNoFromMessage(message) {
-    const match = String(message || "").match(/(?:order\s*#?|#)\s*(\d{3,6})\b/i);
+    const match = String(message || "").match(ORDER_NUMBER_RE);
     return match ? match[1].padStart(4, "0") : null;
 }
 
@@ -932,7 +991,13 @@ function isVoucherRequest(message) {
         msg.includes("coupon") ||
         msg.includes("any discount") ||
         msg.includes("any deals") ||
-        msg.includes("any promotion")
+        msg.includes("any promotion") ||
+        // Bare "promo"/"promotion" — catches genuine promo inquiries like "50% off matcha promo"
+        // or "is there a promotion right now" that don't use one of the narrower phrasings above.
+        // Checked ahead of isDiscountNegotiation() so these route to the real voucher lookup
+        // instead of the generic custom-discount decline.
+        msg.includes("promo") ||
+        msg.includes("promotion")
     );
 }
 
@@ -2618,7 +2683,11 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // User Story #32 (extension): Symptom-based recommendations — "I have a flu", "feeling bloated", etc.
     // Runs before the generic recommendation/health-ranking checks since phrases like
     // "what should I drink for a cough" would otherwise be caught by isRecommendationRequest.
-    if (isSymptomRequest(intentMessage)) {
+    // Guarded against explicit ordering language / an active order flow so a clear order embedded
+    // in an otherwise rambling or emotional message ("I'm so tired... just get me a Classic Milk
+    // Tea with less sugar") is placed as an order instead of being hijacked into a fatigue
+    // recommendation by the incidental symptom keyword (T25 fix — see hasExplicitOrderIntent).
+    if (isSymptomRequest(intentMessage) && !hasExplicitOrderIntent(intentMessage) && !hasActiveOrderFlow(recentHistory)) {
         const category = detectSymptomCategory(intentMessage);
         const drinks = await getDrinksByItemIds(category.itemIds);
 
@@ -4144,7 +4213,13 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         } catch (_) {}
     }
 
-    const systemPrompt = await buildSystemPrompt(effectiveMessage, nutritionContext + cartContext);
+    // Use intentMessage (English) here — buildSystemPrompt's own isMenuRequest()/filterMenu() menu-
+    // context gate only recognises English (plus a hardcoded set of Chinese) keywords, so a Malay or
+    // Tamil order (e.g. "Saya nak teh susu klasik") would otherwise never load the live drink/price
+    // context, leaving Gemini to guess the price instead of quoting the real MenuItem.price (T57 fix).
+    // effectiveMessage (original language) is still what's actually sent to Gemini below via
+    // geminiInput, so the reply language/detection is unaffected.
+    const systemPrompt = await buildSystemPrompt(intentMessage, nutritionContext + cartContext);
 
     // When the user's message is a bare topping selection (e.g. "Brown Sugar (+S$1.00)", "珍珠",
     // "Mutiara", "No toppings"), Gemini tends to shortcut to "added to your cart" without
@@ -4402,4 +4477,11 @@ module.exports = {
     handleChatMessage,
     handleImageMessage,
     generateNavigationResponse,
+    // Exported for focused unit tests (T25/T38/T51) — pure intent-detection / extraction helpers,
+    // no DB or AI calls.
+    isTrackOrderRequest,
+    extractOrderNoFromMessage,
+    isSymptomRequest,
+    hasExplicitOrderIntent,
+    looksUnintelligible,
 };
