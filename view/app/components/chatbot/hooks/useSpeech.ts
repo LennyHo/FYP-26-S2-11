@@ -78,6 +78,11 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
   // Compat shim: useChatbotState calls recognitionRef.current.stop() when sidebar closes
   const recognitionRef = useRef<any>({ stop: () => stopCapture() });
+  // The plain mic button's own native SpeechRecognition instance (separate from speak mode's
+  // speechRecognitionRef). stopCapture() must be able to reach this directly — recognitionRef.current
+  // gets reset back to the compat shim on every render (see the effect below), so it can't be relied
+  // on to still hold the live instance by the time the user clicks stop.
+  const activeMicRecognitionRef = useRef<any>(null);
   const recognitionLangRef = useRef<string>(getBrowserSpeechLang());
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -170,6 +175,14 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
   function stopCapture() {
     if (vadTimerRef.current) { clearTimeout(vadTimerRef.current); vadTimerRef.current = null; }
+    if (activeMicRecognitionRef.current) {
+      // abort(), not stop() — stop() is graceful and keeps finalizing whatever audio was already
+      // buffered, which can fire onresult again seconds later with the same transcript, silently
+      // repopulating the input after the user already deactivated the mic. An explicit user click
+      // to stop should mean stop now, not "finish transcribing in the background."
+      try { activeMicRecognitionRef.current.abort(); } catch {}
+      activeMicRecognitionRef.current = null;
+    }
     if (mediaRecorderRef.current?.state !== 'inactive') {
       try { mediaRecorderRef.current?.stop(); } catch {}
     }
@@ -295,6 +308,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
       recognition.onend = () => {
         if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
         if (accumulated.trim()) setInputRef.current?.(accumulated.trim());
+        if (activeMicRecognitionRef.current === recognition) activeMicRecognitionRef.current = null;
         setIsListening(false);
         isListeningRef.current = false;
         isRecognitionStartingRef.current = false;
@@ -304,12 +318,14 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
         if (event.error !== 'no-speech' && event.error !== 'aborted') {
           console.error('[Speech] Recognition error:', event.error);
         }
+        if (activeMicRecognitionRef.current === recognition) activeMicRecognitionRef.current = null;
         setIsListening(false);
         isListeningRef.current = false;
         isRecognitionStartingRef.current = false;
       };
 
       recognitionRef.current = recognition;
+      activeMicRecognitionRef.current = recognition;
       recognition.start();
       setIsListening(true);
       isListeningRef.current = true;
