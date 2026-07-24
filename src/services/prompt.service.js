@@ -536,4 +536,5 @@ ${langInstruction}
 
 module.exports = {
   buildSystemPrompt,
+  isMenuRequest,
 };
