@@ -147,6 +147,7 @@ export default function BuyDripTeaPage() {
           <div className={styles.heroOverlay} />
 
           <div className={styles.heroCopy}>
+            <p className={styles.heroEyebrow}>Explore bold flavors and soothing blends</p>
             <h1 className={styles.title}>Refresh Your Day</h1>
             <p className={styles.description}>
               Explore bold flavors and soothing blends. Find your new favorite DripTea now!
@@ -157,19 +158,17 @@ export default function BuyDripTeaPage() {
         {/* OUR MENU CATEGORIES SECTION */}
         <section className={styles.section} id="menu-section" ref={menuSectionRef}>
           <div className={styles.menuHeaderCard}>
+            <div className={styles.menuHeaderStarfield} aria-hidden="true" />
+            <div className={styles.menuHeaderRingOuter} aria-hidden="true" />
+            <div className={styles.menuHeaderRingInner} aria-hidden="true" />
             <div className={styles.sectionHeading}>
-              <span className={styles.menuHeaderBadge}>✦ Now Brewing</span>
-              <h2 className={styles.menuTitle}>Our <span className={styles.menuTitleAccent}>Menu</span></h2>
+              <h2 className={styles.menuTitle}>Our Menu</h2>
               <div className={styles.menuHeaderStats}>
                 <span className={styles.menuHeaderStat}><span className={styles.menuHeaderStatNum}>15+</span> Drinks</span>
                 <span className={styles.menuHeaderStatDot} aria-hidden="true" />
                 <span className={styles.menuHeaderStat}><span className={styles.menuHeaderStatNum}>4</span> Categories</span>
-                <span className={styles.menuHeaderStatDot} aria-hidden="true" />
-                <span className={styles.menuHeaderStat}><span className={styles.menuHeaderStatNum}>∞</span> Customisations</span>
               </div>
             </div>
-
-            <div className={styles.menuHeaderDivider} />
 
           <div className={styles.menuSearchContainer}>
             <svg className={styles.menuSearchIcon} viewBox="0 0 20 20" fill="none" aria-hidden="true">
