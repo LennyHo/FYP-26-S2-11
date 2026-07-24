@@ -273,7 +273,7 @@ export function parseDrinkFromHtml(html: string) {
     return {
       id: idMatch[1],
       name: nameMatch[1]?.trim() || altMatch?.[1]?.trim() || 'Recommended drink',
-      image: imageMatch?.[1] || `/img/bubble_teas/${idMatch[1]}.jpg`,
+      image: imageMatch?.[1] || (/^b\d{3}$/.test(idMatch[1]) ? `/img/bubble_teas/${idMatch[1]}.jpg` : "/img/bubble_teas/b001.jpg"),
       price: nameMatch[2].trim(),
       grade: statsMatch[1].trim(),
       sugar: statsMatch[2].trim(),
