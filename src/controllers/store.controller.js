@@ -1,6 +1,6 @@
 // User Story Architecture Trace — store.controller.js
 //
-// #StoreLocator  View Store Locations (Customer)
+// #24 - StoreLocator  View Store Locations (Customer)
 //      View: global-stores/page.tsx, StoreMap.tsx, MeetTheCrew.tsx, DeliveryMap.jsx
 //      → Route: store.routes.js → Ctrl: store.controller.js (this file) → Model: store.model.js
 
@@ -29,7 +29,7 @@ function publicStore(store) {
   };
 }
 
-// As a customer, I want to view store locations so that I can find a DripTea near me.
+// #24: As a customer, I want to view store locations so that I can find a DripTea near me.
 // Calls Store.getActiveStores() → queries stores collection filtered by status → returns sorted list.
 async function getStores(req, res) {
   try {
