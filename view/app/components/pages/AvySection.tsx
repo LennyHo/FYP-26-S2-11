@@ -30,8 +30,6 @@ export default function AvySection() {
         </div>
 
         <div className={styles.visual}>
-          <div className={styles.ringOuter} />
-          <div className={styles.ringInner} />
           <div className={styles.avyGlow} />
           <Image
             src="/avy_flying.png"

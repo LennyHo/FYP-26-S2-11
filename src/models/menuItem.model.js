@@ -116,11 +116,38 @@ menuItemSchema.statics.recommendByMessage = async function recommendByMessage(me
     "the",
     "for",
     "please",
+    // Generic words that cause false substring matches: "tea"/"teas" match the "Teas" in every
+    // category name ("Fruit Teas", "Matcha Teas"), and short words like "me"/"show"/"us" match
+    // substrings ("me" inside "waterMElon"). Dropping them keeps the distinctive flavour word
+    // (matcha, fruit, mango…) as the only matcher, so "show me matcha teas" returns matcha only.
+    "show",
+    "me",
+    "us",
+    "tea",
+    "teas",
+    "some",
+    "something",
+    "get",
   ];
+
+  // Map flavour/category adjectives to the terms actually stored in the DB (category names,
+  // tags, descriptions). Without this, "something fruity" matches nothing — the category is
+  // "Fruit Teas" and the tags say "fruit", neither of which contains the word "fruity" — so the
+  // request would fall through to the model, which then fabricates drink data. "floral" already
+  // works because it appears verbatim in descriptions; this brings the other adjectives to parity.
+  const SYNONYMS = {
+    fruity: "fruit",
+    fruits: "fruit",
+    creamy: "milk",
+    milky: "milk",
+    chocolatey: "chocolate",
+    nutty: "taro",
+  };
 
   const keywords = text
     .split(/[^a-z0-9]+/)
-    .filter((word) => word && !stopWords.includes(word));
+    .filter((word) => word && !stopWords.includes(word))
+    .map((word) => SYNONYMS[word] || word);
 
   if (!keywords.length) return [];
 

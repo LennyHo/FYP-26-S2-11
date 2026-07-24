@@ -27,12 +27,16 @@ export function useChatUI({ messages, input }: UseChatUIProps) {
     }
   }, [messages]);
 
-  // Auto-resize textarea as input grows
+  // Auto-resize textarea as input grows (typing or live speech-to-text). Also keeps the caret end
+  // scrolled into view, since once content passes max-height (see .userInput CSS) the box scrolls
+  // instead of clipping — without this, a long dictated message would only ever show whichever
+  // line happened to be at the top of the scroll position.
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
+    el.scrollTop = el.scrollHeight;
   }, [input]);
 
   // Keyboard navigation for image preview modal

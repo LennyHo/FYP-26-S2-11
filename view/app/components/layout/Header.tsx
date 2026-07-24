@@ -214,6 +214,7 @@ export default function Header() {
         onAnimationEnd={handleNavAnimEnd}
       >
           <Link href="/order-type" className={styles.navLink} onClick={closeMenu}>BUY DRIPTEA</Link>
+          <Link href="/our-story" className={styles.navLink} onClick={closeMenu}>OUR STORY</Link>
           <Link href="/global-stores" className={styles.navLink} onClick={closeMenu}>STORES</Link>
       </nav>
 

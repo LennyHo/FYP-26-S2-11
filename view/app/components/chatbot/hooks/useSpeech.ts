@@ -261,10 +261,25 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
       // Primary path: native browser SpeechRecognition — text appears live, no network round trip
       const recognition = new SpeechRecognitionAPI();
       recognition.lang = recognitionLangRef.current;
-      recognition.continuous = false;
+      // continuous=true so the mic keeps listening through natural pauses (breaths, thinking
+      // mid-sentence) instead of the browser ending the session on the very first silence gap —
+      // that was cutting the user off before they'd finished speaking. End-of-turn is now our own
+      // 10s-of-silence timer below, not the browser's built-in single-utterance cutoff.
+      recognition.continuous = true;
       recognition.interimResults = true;
 
       let accumulated = '';
+      let silenceTimer: ReturnType<typeof setTimeout> | null = null;
+
+      // Auto-stop 10s after the last new word (final or interim) — not 10s from when listening
+      // started. Resets on every onresult, so a long pause mid-thought doesn't cut the mic, but
+      // genuinely finishing (or walking away) does eventually stop it.
+      const resetSilenceTimer = () => {
+        if (silenceTimer) clearTimeout(silenceTimer);
+        silenceTimer = setTimeout(() => {
+          try { recognition.stop(); } catch {}
+        }, 10000);
+      };
 
       recognition.onresult = (event: any) => {
         let interim = '';
@@ -274,9 +289,11 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
           else interim = t;
         }
         setInputRef.current?.((accumulated + interim).trim());
+        resetSilenceTimer();
       };
 
       recognition.onend = () => {
+        if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
         if (accumulated.trim()) setInputRef.current?.(accumulated.trim());
         setIsListening(false);
         isListeningRef.current = false;
@@ -297,9 +314,11 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
       setIsListening(true);
       isListeningRef.current = true;
       isRecognitionStartingRef.current = false;
+      resetSilenceTimer();
 
-      // Auto-stop after 15 s
-      setTimeout(() => { if (isListeningRef.current) try { recognition.stop(); } catch {} }, 15000);
+      // Hard outer cap — safety net in case background noise keeps resetting the silence timer
+      // indefinitely (continuous mode has no built-in maximum duration on its own).
+      setTimeout(() => { if (isListeningRef.current) try { recognition.stop(); } catch {} }, 60000);
       return;
     }
 
