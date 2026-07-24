@@ -1325,7 +1325,8 @@ function resolveCustomizationFromHistory(history) {
         // Detect lang from the Phase 5 content so the Cart page can translate labels
         const hasMs = /besar|biasa|kurang ais|tanpa ais|ais normal|panas|mutiara|busa keju|gula perang|tanpa topping/i.test(content);
         const hasZh = /大杯|中杯|少冰|去冰|正常冰|热饮|珍珠|黑糖|芝士泡沫|不加配料/.test(content);
-        const lang = hasMs ? 'ms' : hasZh ? 'zh' : 'en';
+        const hasTa = /[஀-௿]/.test(content);
+        const lang = hasMs ? 'ms' : hasZh ? 'zh' : hasTa ? 'ta' : 'en';
 
         return { size, ice, sugar, lang };
     }
@@ -1766,10 +1767,11 @@ function parseCustomization(details) {
         .map((part) => part.trim())
         .filter(Boolean);
 
-    // Detect ordering language from Malay/Chinese keywords so Cart can translate labels back
+    // Detect ordering language from Malay/Chinese/Tamil keywords so Cart can translate labels back
     const hasMs = /besar|biasa|kurang ais|tanpa ais|ais normal|panas|mutiara|busa keju|gula perang|tanpa topping/i.test(text);
     const hasZh = /大杯|中杯|少冰|去冰|正常冰|热饮|珍珠|黑糖|芝士泡沫|不加配料/.test(text);
-    const lang = hasMs ? "ms" : hasZh ? "zh" : "en";
+    const hasTa = /[஀-௿]/.test(text);
+    const lang = hasMs ? "ms" : hasZh ? "zh" : hasTa ? "ta" : "en";
 
     // --- SIZE ---
     const sizePart = parts.find((p) =>
@@ -2806,6 +2808,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 en: "Which drink would you like the sugar and calorie details for?",
                 zh: "您想了解哪款饮品的糖分和卡路里信息呢？",
                 ms: "Minuman mana yang anda ingin tahu maklumat gula dan kalorinya?",
+                ta: "எந்த பானத்தின் சர்க்கரை மற்றும் கலோரி விவரங்களை நீங்கள் அறிய விரும்புகிறீர்கள்?",
             };
             const reply = WHICH_DRINK[detectedLang] || WHICH_DRINK.en;
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
@@ -2817,12 +2820,12 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         const calKcal = drink.base_calories ?? drink.nutritionInfo?.baseCalories ?? 0;
         const grade = String(drink.nutri_grade || drink.nutritionInfo?.nutriGrade || "").toUpperCase();
 
-        // Localized templates; Tamil/other fall back to English so numbers stay correct rather than
-        // risk an ungrammatical machine translation of the sentence around them.
+        // Localized templates; numbers are interpolated as-is so translation can't corrupt them.
         const NUTRITION_FACT_TEMPLATES = {
             en: `${drink.name} has ${sugarG}g of sugar and ${calKcal} kcal, with a Nutri-Grade of ${grade}.`,
             zh: `${drink.name} 含有 ${sugarG} 克糖和 ${calKcal} 千卡，营养等级为 ${grade}。`,
             ms: `${drink.name} mengandungi ${sugarG}g gula dan ${calKcal} kcal, dengan Nutri-Grade ${grade}.`,
+            ta: `${drink.name} இல் ${sugarG}g சர்க்கரை மற்றும் ${calKcal} கலோரி உள்ளது, Nutri-Grade ${grade}.`,
         };
         const reply = NUTRITION_FACT_TEMPLATES[detectedLang] || NUTRITION_FACT_TEMPLATES.en;
 

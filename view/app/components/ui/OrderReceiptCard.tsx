@@ -60,6 +60,24 @@ const RECEIPT_LABELS: Record<string, Record<string, string>> = {
     Current: "当前", "Reduce to 25%": "减少至25%",
     "g sugar": "g糖",
   },
+  ta: {
+    Regular: "சாதாரண அளவு", Large: "பெரிய அளவு",
+    "Normal Ice": "சாதாரண பனிக்கட்டி", "Less Ice": "குறைந்த பனிக்கட்டி", "No Ice": "பனிக்கட்டி இல்லாமல்", Hot: "சூடானது",
+    "Normal Sweet": "சாதாரண இனிப்பு",
+    "0% Sugar": "0% சர்க்கரை", "25% Sugar": "25% சர்க்கரை", "50% Sugar": "50% சர்க்கரை", "100% Sugar": "100% சர்க்கரை",
+    "Tapioca Pearls": "மரவள்ளி முத்துக்கள்", "Brown Sugar": "பழுப்பு சர்க்கரை", "Cheese Foam": "சீஸ் நுரை",
+    "No toppings": "மேலோடு இல்லை",
+    Sugar: "சர்க்கரை", Cal: "கலோரி", Grade: "தரம்",
+    Total: "மொத்தம்",
+    "Thank you for your order!": "உங்கள் ஆர்டருக்கு நன்றி!",
+    "View Cart": "கார்ட்டைப் பார்க்க",
+    "Proceed to Checkout": "செக்அவுட்டுக்குச் செல்ல",
+    "Want to reduce your sugar intake?": "உங்கள் சர்க்கரை உட்கொள்ளலைக் குறைக்க விரும்புகிறீர்களா?",
+    "Based on your current customization, here's how switching to 25% sugar would look.":
+      "உங்கள் தற்போதைய தேர்வின் அடிப்படையில், 25% சர்க்கரைக்கு மாறினால் இப்படி இருக்கும்.",
+    Current: "தற்போதைய", "Reduce to 25%": "25% ஆகக் குறைக்க",
+    "g sugar": "கி சர்க்கரை",
+  },
 };
 
 function tR(label: string, lang?: string): string {

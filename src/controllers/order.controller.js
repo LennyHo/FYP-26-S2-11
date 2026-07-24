@@ -6,11 +6,15 @@
 // #23  Make Payment
 //      View: checkout/page.tsx → Route: checkout.routes.js → Ctrl: order.controller.js (this file) → Model: order.model.js, payment.model.js
 //
+// #24 - StoreLocator  View Store Locations (Customer)
+//      → Route: store.routes.js → Ctrl: store.controller.js (this file) → Model: store.model.js
+//
 // #28  Track Order Status
 //      View: order-status/[orderId]/page.tsx → Route: checkout.routes.js → Ctrl: order.controller.js (this file) → Model: order.model.js
 //
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Ctrl: order.controller.js (this file) → Model: order.model.js
+//
 
 const crypto = require("crypto");
 const mongoose = require("mongoose");

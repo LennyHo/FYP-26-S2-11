@@ -69,6 +69,23 @@ const CART_LABELS: Record<string, Record<string, string>> = {
     "Brown Sugar": "黑糖",
     "Cheese Foam": "芝士泡沫",
   },
+  ta: {
+    Qty: "எண்ணிக்கை",
+    Regular: "சாதாரண அளவு",
+    Large: "பெரிய அளவு",
+    "Normal Ice": "சாதாரண பனிக்கட்டி",
+    "Less Ice": "குறைந்த பனிக்கட்டி",
+    "No Ice": "பனிக்கட்டி இல்லாமல்",
+    Hot: "சூடானது",
+    "Normal Sweet": "சாதாரண இனிப்பு",
+    "0% Sugar": "0% சர்க்கரை",
+    "25% Sugar": "25% சர்க்கரை",
+    "50% Sugar": "50% சர்க்கரை",
+    "100% Sugar": "100% சர்க்கரை",
+    "Tapioca Pearls": "மரவள்ளி முத்துக்கள்",
+    "Brown Sugar": "பழுப்பு சர்க்கரை",
+    "Cheese Foam": "சீஸ் நுரை",
+  },
 };
 
 function tLabel(label: string, lang?: string): string {
