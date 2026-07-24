@@ -105,18 +105,25 @@ async function getConversationHistory(conversationId) {
 // #31 - As a customer, I want the chatbot to show me the nutritional grading of each beverage so that I can choose the suitable option.
 // Reads baseSugarG and baseCalories from menu_items → applies sugar/topping adjustments → calculates Nutri-Grade.
 function calculateNutrition(drink, sugarLevel, toppings = []) {
-    const sugarMap = {
+    // Sugar level scales the drink's base sugar proportionally (0% = none, 100% = the full base
+    // value) rather than adding a flat offset on top of it — matches the multiplier table already
+    // used for the cart's own recalculation (view/app/components/pages/Cart.tsx SUGAR_MULTIPLIERS).
+    // "Normal Sweet" and any unrecognised/missing level default to the full base sugar (×1).
+    const sugarMultiplier = {
         "0% Sugar": 0,
-        "25% Sugar": 10,
-        "50% Sugar": 20,
-        "100% Sugar": 40,
+        "25% Sugar": 0.25,
+        "50% Sugar": 0.5,
+        "70% Sugar": 0.7,
+        "100% Sugar": 1,
+        "Normal Sweet": 1,
     };
 
     const nutrition = drink.nutritionInfo || {};
 
-    let sugar =
-        Number(nutrition.baseSugarG ?? drink.base_sugar_g ?? 0) +
-        (sugarMap[sugarLevel] || 0);
+    let sugar = Math.round(
+        Number(nutrition.baseSugarG ?? drink.base_sugar_g ?? 0) *
+        (sugarMultiplier[sugarLevel] ?? 1)
+    );
 
     let calories =
         Number(nutrition.baseCalories ?? drink.base_calories ?? 0);
