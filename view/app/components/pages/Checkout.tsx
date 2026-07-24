@@ -4,8 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Header from "../layout/Header";
-import { checkoutCart, getCartItems, getVouchers, applyVoucher } from "../../utils/customerApi";
-import type { DripTeaVoucher } from "../../utils/api.base";
+import { checkoutCart, getCartItems, getVouchers, applyVoucher, getStoreCrowdStats } from "../../utils/customerApi";
+import type { DripTeaVoucher, DripTeaStoreCrowdStat } from "../../utils/api.base";
 import { getOrder, updateOrderStatus } from "../../utils/staffApi";
 import { getStoredUser, parseLocalCartLine, PENDING_VOUCHER_KEY, type DripTeaCartItem } from "../../utils/api.base";
 import { useOutlets, type DripTeaOutlet } from "../../utils/outlets";
@@ -237,6 +237,30 @@ export default function Checkout() {
         cartColRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
     const { outlets: pickupOutlets } = useOutlets();
+
+    // Live queue/crowd stats per outlet, shown as a compact line on each pickup card
+    // (same source as the store-locator page's crowd panel, just without its card UI).
+    const [crowdStats, setCrowdStats] = useState<Record<string, DripTeaStoreCrowdStat>>({});
+    useEffect(() => {
+        let isActive = true;
+
+        async function loadCrowdStats() {
+            try {
+                const response = await getStoreCrowdStats();
+                if (!isActive) return;
+                setCrowdStats(Object.fromEntries((response.data || []).map((stat) => [stat.storeCode, stat])));
+            } catch (error) {
+                console.error("[Checkout] crowd stats error:", error);
+            }
+        }
+
+        void loadCrowdStats();
+        const timer = window.setInterval(() => void loadCrowdStats(), 5000);
+        return () => {
+            isActive = false;
+            window.clearInterval(timer);
+        };
+    }, []);
 
     function fillFakeDetails() {
         setCardNumber("4532 1234 5678 9012");
@@ -977,6 +1001,9 @@ export default function Checkout() {
                                                             <div className="checkout-outlet-info">
                                                                 <strong>{outlet.name}</strong>
                                                                 <span>{outlet.address}</span>
+                                                                <span className="checkout-outlet-queue">
+                                                                    Current orders: {crowdStats[outlet.storeCode]?.activeOrderCount ?? 0} . Cup in queue: {crowdStats[outlet.storeCode]?.activeCupCount ?? 0}. Status: {(crowdStats[outlet.storeCode]?.crowdLevel ?? "quiet").replace(/^./, c => c.toUpperCase())}
+                                                                </span>
                                                             </div>
                                                         </button>
                                                     ))}

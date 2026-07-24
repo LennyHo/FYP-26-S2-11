@@ -2217,12 +2217,11 @@
     overflow: hidden;
     border-radius: 14px;
     padding: 0;
-    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .checkout-pickup-outlet-card .checkout-outlet-options button:hover {
     border-color: #9b6a3e;
-    transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(66, 42, 25, 0.1);
 }
 
@@ -2248,6 +2247,12 @@
 .checkout-pickup-outlet-card .checkout-outlet-options span {
     font-size: 11px;
     margin-top: 3px;
+}
+
+.checkout-pickup-outlet-card .checkout-outlet-options .checkout-outlet-queue {
+    display: block;
+    color: #9a7560;
+    font-weight: 600;
 }
 
 .checkout-address-tabs {
