@@ -25,7 +25,6 @@
   border: 1px solid rgba(180, 220, 160, 0.20);
   border-radius: 30px;
   background: #0c1a0a;
-  box-shadow: var(--shadow);
   overflow: hidden;
   isolation: isolate;
 }
@@ -67,14 +66,21 @@
   text-transform: uppercase;
 }
 
+.heroEyebrow {
+  margin: 0;
+  color: rgba(255, 220, 180, 0.9);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
 .title {
   font-size: clamp(2.8rem, 8vw, 5.3rem);
   line-height: 0.92;
   letter-spacing: 0.03em;
-  background: linear-gradient(110deg, #fff8eb 0%, #f4d6a8 42%, #bfd37d 74%, #ffffff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #fff;
+  font-weight: 800;
   filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.34));
 }
 
@@ -85,13 +91,6 @@
   font-size: 0.97rem;
   font-weight: 500;
   line-height: 1.65;
-  padding: 12px 20px;
-  border-radius: 14px;
-  background: rgba(255, 248, 235, 0.10);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 248, 235, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.40);
 }
 
@@ -242,40 +241,74 @@
 }
 
 .menuHeaderCard {
-  background: rgba(255, 255, 255, 0.72);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  backdrop-filter: blur(18px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.82);
+  background: linear-gradient(135deg, #010919 0%, #011840 45%, #040d1f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 24px;
-  padding: 32px 36px 28px;
-  box-shadow: 0 6px 32px rgba(90, 50, 20, 0.09), 0 1px 0 rgba(255,255,255,0.9) inset;
+  padding: 44px 44px 40px;
   margin-bottom: 36px;
   position: relative;
   overflow: hidden;
 }
 
-
-.menuHeaderBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: linear-gradient(135deg, rgba(191,211,125,0.35), rgba(171,108,60,0.18));
-  color: #6b4c28;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(171,108,60,0.2);
-  width: fit-content;
+/* Lightweight starfield — a repeating dot pattern rather than hundreds of hardcoded
+   box-shadow positions, so it stays correct at any card width. */
+.menuHeaderStarfield {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(1.6px 1.6px at 8% 22%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 18% 68%, rgba(200,220,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.6px 1.6px at 32% 14%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 46% 78%, rgba(255,240,200,0.6) 0%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 58% 34%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 71% 58%, rgba(200,220,255,0.55) 0%, transparent 100%),
+    radial-gradient(1.6px 1.6px at 83% 20%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 92% 66%, rgba(255,240,200,0.55) 0%, transparent 100%),
+    radial-gradient(1px 1px at 12% 88%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 65% 90%, rgba(200,220,255,0.6) 0%, transparent 100%);
+  background-repeat: repeat;
+  background-size: 340px 200px;
 }
 
-.menuTitleAccent {
-  background: linear-gradient(135deg, #9b6d4a 0%, #c89a5a 50%, #bfd37d 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+.menuHeaderRingOuter {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  border: 1px solid rgba(2, 87, 173, 0.1);
+  top: 50%;
+  right: -120px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.menuHeaderRingInner {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 59, 3, 0.08);
+  top: 50%;
+  right: -40px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.menuHeaderBadge {
+  display: inline-block;
+  color: #F43B03;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  width: fit-content;
+  position: relative;
+  z-index: 1;
 }
 
 .menuHeaderStats {
@@ -284,34 +317,27 @@
   gap: 10px;
   margin-top: 4px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .menuHeaderStat {
   font-size: 0.82rem;
-  color: #8a6040;
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
 }
 
 .menuHeaderStatNum {
   font-weight: 800;
-  color: #5a3a1a;
+  color: #fff;
 }
 
 .menuHeaderStatDot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: rgba(141, 99, 63, 0.35);
+  background: rgba(255, 255, 255, 0.3);
   flex-shrink: 0;
-}
-
-.menuHeaderDivider {
-  width: 100%;
-  height: 1px;
-  background: rgba(141, 99, 63, 0.12);
-  margin: 20px 0;
-  position: relative;
-  z-index: 1;
 }
 
 .sectionHeading {
@@ -321,44 +347,13 @@
   position: relative;
 }
 
-/* Decorative bubble-glow orbs — evoke bubble tea */
-.sectionHeading::before {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: -16px;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, rgba(191, 211, 125, 0.20) 0%, transparent 68%);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.sectionHeading::after {
-  content: '';
-  position: absolute;
-  right: 90px;
-  top: 18px;
-  width: 80px;
-  height: 80px;
-  background: radial-gradient(circle, rgba(155, 109, 74, 0.14) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-
 .menuTitle {
   font-size: clamp(1.8rem, 4.5vw, 2.8rem);
   font-weight: 900;
   letter-spacing: -0.02em;
   margin: 0;
   line-height: 1.1;
-  background: linear-gradient(115deg, #2c1200 0%, #8b5a2b 36%, #4e7c22 70%, #2a6a18 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #fff;
   position: relative;
   z-index: 1;
 }
@@ -386,11 +381,10 @@
   background: #fff;
   box-shadow: 0 8px 24px rgba(59, 39, 26, 0.07);
   overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: box-shadow 0.25s ease;
 }
 
 .productCard:hover {
-  transform: translateY(-6px);
   box-shadow: 0 20px 44px rgba(59, 39, 26, 0.13);
 }
 
@@ -702,32 +696,46 @@
   align-items: center;
   max-width: 640px;
   min-height: 58px;
-  margin: 8px 0 0;
+  margin: 24px 0 0;
   position: relative;
   z-index: 1;
   padding: 6px 8px 6px 20px;
-  border: 1.5px solid rgba(141, 99, 63, 0.24);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
   border-radius: 20px;
-  background: #fffdfa;
-  transition: border-color 0.18s ease;
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, background 0.25s ease;
+}
+
+.menuSearchContainer:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .menuSearchContainer:focus-within {
-  border-color: #9a6a3d;
+  border-color: rgba(244, 89, 3, 0.55);
+  box-shadow: 0 0 0 4px rgba(244, 89, 3, 0.12), 0 8px 24px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
 }
 
 .menuSearchIcon {
   width: 18px;
   height: 18px;
-  color: #9a6a3d;
+  color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
   margin-right: 0;
+  transition: color 0.25s ease;
+}
+
+.menuSearchContainer:focus-within .menuSearchIcon {
+  color: #F43B03;
 }
 
 .menuSearchDivider {
   width: 1px;
   height: 20px;
-  background: rgba(141, 99, 63, 0.22);
+  background: rgba(255, 255, 255, 0.14);
   margin: 0 14px;
   flex-shrink: 0;
 }
@@ -739,7 +747,7 @@
   padding: 10px 4px;
   font-size: 15px;
   font-family: inherit;
-  color: #2c1810;
+  color: #fff;
   outline: none;
   min-width: 0;
   overflow: hidden;
@@ -747,7 +755,7 @@
 }
 
 .menuSearchInput::placeholder {
-  color: #aa8665;
+  color: rgba(255, 255, 255, 0.4);
   opacity: 1;
 }
 
@@ -757,21 +765,27 @@
   border-radius: 13px;
   min-height: 44px;
   padding: 10px 24px;
-  background: #75503b;
+  background: #F43B03;
   color: #fff;
   font-size: 0.88rem;
   font-weight: 800;
   cursor: pointer;
   letter-spacing: 0.02em;
-  transition: background 0.15s ease;
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .menuSearchButton:hover {
-  background: #5b351f;
+  background: #d63302;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(244, 59, 3, 0.35);
+}
+
+.menuSearchButton:active {
+  transform: translateY(0);
 }
 
 .menuSearchButton:focus-visible {
-  outline: 2px solid #9a6a3d;
+  outline: 2px solid #F43B03;
   outline-offset: 2px;
 }
 
@@ -819,12 +833,11 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 14px rgba(59, 39, 26, 0.07);
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
+  transition: box-shadow 0.25s ease;
 }
 
 .searchDrinkCard:hover {
   box-shadow: 0 12px 32px rgba(59, 39, 26, 0.13);
-  transform: translateY(-4px);
 }
 
 .searchImageWrapper {
@@ -928,11 +941,6 @@
 
   .menuHeaderCard {
     padding: 20px 16px;
-  }
-
-  .sectionHeading::before,
-  .sectionHeading::after {
-    display: none;
   }
 
   .searchCardGrid {
