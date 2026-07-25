@@ -233,10 +233,12 @@ export type DripTeaPurchaseHistoryItem = {
 
 // ── API base URLs ─────────────────────────────────────────────────────────────
 // Ordered list of backend URLs to try. requestJson tries them in sequence.
-// localhost:5000 is tried first (dev), then the env var (staging), then Render (prod).
-
+// localhost:5000 is only included in local dev builds — in production (e.g. the deployed
+// Vercel site), including it made every single API call first attempt a connection to the
+// *visitor's own machine*, which always fails (net::ERR_CONNECTION_REFUSED) before falling
+// through to the real backend. That failed attempt was the entire cause of the slow login.
 export const API_BASES = [
-  'http://localhost:5000',
+  process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : null,
   process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
   'https://driptea-trrn.onrender.com',
 ]
