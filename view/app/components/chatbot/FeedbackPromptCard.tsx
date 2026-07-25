@@ -10,11 +10,10 @@ type Props = {
     orderId: string;
     items: any[];
     initialSubmitted?: boolean;
-    onOpenPage: () => void;
     onSubmitted?: () => void;
 };
 
-export default function FeedbackPromptCard({ orderId, items, initialSubmitted, onOpenPage, onSubmitted }: Props) {
+export default function FeedbackPromptCard({ orderId, items, initialSubmitted, onSubmitted }: Props) {
     const [ratings, setRatings] = useState<Record<number, number>>({});
     const [comment, setComment] = useState("");
     const [message, setMessage] = useState(
@@ -146,14 +145,6 @@ export default function FeedbackPromptCard({ orderId, items, initialSubmitted, o
         >
             {submitted ? "Submitted" : "Submit Feedback"}
         </button>
-
-        {/*<button
-            type="button"
-            className={styles.openPageBtn}
-            onClick={onOpenPage}
-        >
-            Open Feedback Page
-        </button>*/}
         </div>
     </div>
     );

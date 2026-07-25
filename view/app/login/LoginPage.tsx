@@ -15,59 +15,7 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import styles from './login.module.css';
 import { useRouter } from 'next/navigation';
-import { syncStoredCartFromBackend, migrateLocalCartToBackend } from '../utils/customerApi';
-
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface LoginPayload {
-  user: { id: string; role: string; profilePic?: string };
-  token: string;
-}
-
-const DRIPTEA_API_BASES = [
-  'http://localhost:5000',
-  process.env.NEXT_PUBLIC_DRIPTEA_API_BASE,
-  'https://driptea-trrn.onrender.com',
-]
-  .filter(Boolean)
-  .map((value) => (value as string).replace(/\/$/, ''))
-  .filter((value, index, values) => values.indexOf(value) === index);
-
-async function loginAgainstAvailableBackend(credentials: LoginCredentials): Promise<LoginPayload> {
-  let lastMessage = 'Login failed.';
-
-  for (const apiBase of DRIPTEA_API_BASES) {
-    let shouldTryNext = false;
-
-    try {
-      const response = await fetch(`${apiBase}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      });
-      const payload = await response.json().catch(() => ({}));
-
-      if (response.ok) {
-        return payload as LoginPayload;
-      }
-
-      lastMessage = payload.message || 'Login failed.';
-      shouldTryNext = response.status >= 500;
-    } catch (error) {
-      lastMessage = error instanceof Error ? error.message : 'Login failed.';
-      shouldTryNext = true;
-    }
-
-    if (!shouldTryNext) {
-      throw new Error(lastMessage);
-    }
-  }
-
-  throw new Error(lastMessage);
-}
+import { syncStoredCartFromBackend, migrateLocalCartToBackend, loginCustomer } from '../utils/customerApi';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -127,13 +75,11 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const payload = await loginAgainstAvailableBackend({
+      const payload = await loginCustomer({
         email: emailRef.current?.value.trim() || '',
         password: passwordRef.current?.value || '',
       });
 
-      localStorage.setItem('dripTeaCurrentUser', JSON.stringify(payload.user));
-      localStorage.setItem('dripTeaAuthToken', payload.token);
       if (payload.user?.id && payload.user.role === 'customer') {
         try {
           // Push any guest cart items to MongoDB first so they survive the overwrite below
@@ -147,7 +93,6 @@ export default function LoginPage() {
       } else {
         localStorage.removeItem('dripTeaCartData');
       }
-      window.dispatchEvent(new Event('authUpdated'));
       window.dispatchEvent(new Event('cartUpdated'));
 
       if (payload.user.role === 'user_admin') {

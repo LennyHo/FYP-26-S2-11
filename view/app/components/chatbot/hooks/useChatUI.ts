@@ -15,7 +15,6 @@ export function useChatUI({ messages, input }: UseChatUIProps) {
   const [flippedCard, setFlippedCard] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -98,8 +97,6 @@ export function useChatUI({ messages, input }: UseChatUIProps) {
     setIsSearchOpen,
     searchQuery,
     setSearchQuery,
-    isSettingsOpen,
-    setIsSettingsOpen,
     chatWindowRef,
     textareaRef,
     handlePickedImage,
