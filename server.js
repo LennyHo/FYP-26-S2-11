@@ -14,38 +14,13 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json({ limit: "35mb" }));
 
-// User Story 13: View Menu
-const menuRoutes = require("./src/routes/menu.routes");
-app.use("/api", menuRoutes);
-
-// Inventory management
-const inventoryRoutes = require("./src/routes/inventory.routes");
-app.use("/api", inventoryRoutes);
-
-// Store Locator
-const storeRoutes = require("./src/routes/store.routes");
-app.use("/api", storeRoutes);
-
+// Backend Test
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     service: "DripTea backend",
   });
 });
-
-
-// User Story 14: Add Cart Item
-const cartRoutes = require("./src/routes/cart.routes");
-app.use("/api", cartRoutes);
-
-// User Story 23: Checkout Cart
-const checkoutRoutes = require("./src/routes/checkout.routes");
-app.use("/api", checkoutRoutes);
-
-// User Story 19: View Purchase History
-const purchaseHistoryRoutes = require("./src/routes/purchaseHistory.routes");
-app.use("/api", purchaseHistoryRoutes);
-console.log("[ROUTES] Purchase history routes mounted");
 
 // Chatbot routes
 const chatbotRoutes = require("./src/routes/chatbot.routes");
@@ -55,24 +30,45 @@ app.use("/api", chatbotRoutes);
 const transcribeRoutes = require("./src/routes/transcribe.routes");
 app.use("/api", transcribeRoutes);
 
+// View Menu
+const menuRoutes = require("./src/routes/menu.routes");
+app.use("/api", menuRoutes);
+
+// Add Cart Item
+const cartRoutes = require("./src/routes/cart.routes");
+app.use("/api", cartRoutes);
+
+// Checkout Cart
+const checkoutRoutes = require("./src/routes/checkout.routes");
+app.use("/api", checkoutRoutes);
+
+// View Purchase History
+const purchaseHistoryRoutes = require("./src/routes/purchaseHistory.routes");
+app.use("/api", purchaseHistoryRoutes);
+
 // Feedback
 const feedbackRoutes = require("./src/routes/feedback.routes");
 app.use("/api", feedbackRoutes);
-console.log("[ROUTES] Feedback routes mounted");
 
-// Voucher management (Store Staff)
-const voucherRoutes = require("./src/routes/voucher.routes");
-app.use("/api", voucherRoutes);
-console.log("[ROUTES] Voucher routes mounted");
+// Store Locator
+const storeRoutes = require("./src/routes/store.routes");
+app.use("/api", storeRoutes);
 
 // DripTea routes (authentication, users, etc.)
 const authRoutes = require("./src/routes/auth.routes");
 app.use("/api", authRoutes);
-console.log("[ROUTES] Auth routes mounted");
 
+// User Admin Management Routes
 const userRoutes = require("./src/routes/user.routes");
 app.use("/api", userRoutes);
-console.log("[ROUTES] User routes mounted");
+
+// Store Staff Inventory Management
+const inventoryRoutes = require("./src/routes/inventory.routes");
+app.use("/api", inventoryRoutes);
+
+// Store Staff Voucher Management
+const voucherRoutes = require("./src/routes/voucher.routes");
+app.use("/api", voucherRoutes);
 
 // Test
 app.post("/api/chat-test", (req, res) => {

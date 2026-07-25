@@ -1,7 +1,7 @@
 // User Story Architecture Trace — store.model.js
 //
-// #StoreLocator  View Store Locations (Customer)
-//      View: stores/page.tsx → Route: store.routes.js → Ctrl: store.controller.js → Model: store.model.js (this file)
+// #30  Check Store Location via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js  → Model: store.model.js (this file)
 //
 // #Pickup        Select Pickup Store at Checkout
 //      View: checkout/page.tsx → Route: checkout.routes.js → Ctrl: order.controller.js → Model: store.model.js (this file)

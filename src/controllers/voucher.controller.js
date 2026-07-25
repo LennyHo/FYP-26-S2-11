@@ -19,11 +19,6 @@ const Voucher = require("../models/voucher.model");
 
 // #315 As a store staff, I want to view vouchers so that I can verify customer discounts.
 // #317 As a store staff, I want to search for vouchers so that I can manage promotions.
-// Returns every voucher (including inactive/expired ones) — unlike the customer-facing
-// GET /api/vouchers, which only lists active, unexpired vouchers. #317 reuses this same
-// endpoint: the frontend fetches the full list once and filters it client-side by
-// code/title/description (matchesVoucherSearch in store-staff-voucher/page.tsx),
-// the same pattern already used for order/inventory search in store-staff-dashboard.
 async function getVouchers(req, res) {
   try {
     const vouchers = await Voucher.find({}).sort({ createdAt: -1 }).lean();

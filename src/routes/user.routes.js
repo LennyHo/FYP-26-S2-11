@@ -68,8 +68,6 @@ function publicUser(user) {
   };
 }
 
-// Strips an incoming addresses payload down to the fields the schema allows,
-// so callers can't inject arbitrary keys into address subdocuments.
 function sanitizeAddresses(rawAddresses) {
   if (!Array.isArray(rawAddresses)) return [];
 
@@ -264,8 +262,7 @@ router.patch("/users/:id", async (req, res) => {
   }
 });
 
-// As a user admin, I want to view and update a profile type's description
-// so that I can explain what each role (Customer / Store Staff / Admin) means.
+// For user admin to read role descriptions
 router.get("/role-descriptions", async (req, res) => {
   try {
     const rows = await RoleDescription.find().lean();

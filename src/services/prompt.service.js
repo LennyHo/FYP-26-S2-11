@@ -64,6 +64,7 @@ async function isMenuRequest(message) {
     msg.includes("what is") ||
     msg.includes("what are") ||
     msg.includes("tell me about") ||
+
     // Symptom / how-are-you-feeling phrasing — loads menu context so Gemini can still
     // recommend real drinks when the customer describes feeling unwell in a way the
     // rigid keyword matcher (isSymptomRequest in chatbot.service.js) doesn't catch.
@@ -99,6 +100,7 @@ async function isMenuRequest(message) {
     msg.includes("trouble sleeping") ||
     msg.includes("can't sleep") ||
     msg.includes("overwhelmed") ||
+    
     // Chinese drink / ordering keywords
     msg.includes("饮料") ||
     msg.includes("菜单") ||
