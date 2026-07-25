@@ -1,7 +1,6 @@
 ﻿
 import React from 'react';
 import styles from './Hero.module.css';
-import InteractiveBubbles from '../ui/InteractiveBubbles';
 
 // Inline SVG for the brand logo
 const mainLogoSvg = `
@@ -48,7 +47,6 @@ const mainLogoSvg = `
 export default function Hero() {
   return (
     <section className={styles.heroSection}>
-      {/* <InteractiveBubbles /> */}
       <div className={styles.heroContent}>
         <div
           className={styles.logoContainer}

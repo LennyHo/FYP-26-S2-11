@@ -1,32 +1,9 @@
 "use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './Footer.module.css';
 
 export default function Footer() {
-  const router = useRouter();
-  const [email, setEmail] = React.useState('');
-  const [message, setMessage] = React.useState('');
-
-  function handleSubscribe() {
-    if (!email.trim()) {
-      setMessage('Enter your email first.');
-      return;
-    }
-
-    // Student note: save newsletter signups locally for demo because no email service is built.
-    const saved = JSON.parse(window.localStorage.getItem('dripTeaNewsletterEmails') || '[]');
-    window.localStorage.setItem('dripTeaNewsletterEmails', JSON.stringify([...saved, email.trim()]));
-    setEmail('');
-    setMessage('Subscribed.');
-  }
-
-  function showDemoMessage(text: string) {
-    setMessage(text);
-  }
-
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>

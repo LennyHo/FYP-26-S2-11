@@ -117,7 +117,6 @@ export default function BuyDripTeaPage() {
       })()
     : [];
 
-  const handleSearch = () => {};
   return (
     <div className={styles.page}>
       <Header />
@@ -182,14 +181,10 @@ export default function BuyDripTeaPage() {
               placeholder="Search drinks, e.g. matcha, taro..."
               className={styles.menuSearchInput}
               onChange={(event) => setSearchTerm(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch();
-              }}
             />
             <button
               type="button"
               className={styles.menuSearchButton}
-              onClick={handleSearch}
             >
               Search
             </button>

@@ -5,6 +5,7 @@ import Hero from '../components/pages/Hero';
 import MeetTheCrew from '../components/pages/MeetTheCrew';
 import AboutUs from '../components/pages/AboutUs';
 import AvySection from '../components/pages/AvySection';
+import FAQ from '../components/pages/FAQ';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -16,6 +17,7 @@ export default function Home() {
         <AboutUs />
         <AvySection />
         <MeetTheCrew />
+        <FAQ />
       </main>
     </div>
   );

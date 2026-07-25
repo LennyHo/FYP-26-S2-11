@@ -734,7 +734,7 @@ export default function UserAdminDashboardPage() {
                   ) : filteredUsers.length > 0 ? (
                     filteredUsers.map(user => (
                       <tr key={user.id}>
-                        <td>{user.fullName}</td>
+                        <td>{usernameFromEmail(user.email)}</td>
                         <td>{user.email}</td>
                         <td><span className={styles.badge}>{roleLabel(user.role)}</span></td>
                         <td>

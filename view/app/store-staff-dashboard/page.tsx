@@ -249,6 +249,9 @@ export default function StoreStaffDashboardPage() {
           </div>
 
           <div className={styles.toolbarRight}>
+            {lastUpdated && (
+              <span className={styles.lastUpdated}>Updated {formatDate(lastUpdated.toISOString())}</span>
+            )}
             <button type="button" className={styles.refreshBtn} onClick={() => void refreshOrders()} disabled={isRefreshing}>
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>

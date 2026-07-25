@@ -147,14 +147,6 @@ export interface ChatbotSidebarProps {
   onCheckout?: () => void;
 }
 
-export const SLOW_HINTS = [
-  'Our barista is still brewing... ',
-  'Good things take a little time ',
-  'Avy is thinking hard for you!',
-  'Almost there, hang tight...',
-  'Stirring in some extra magic ✨',
-];
-
 // ==== HOOK ====
 
 export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: ChatbotSidebarProps) {
@@ -407,8 +399,6 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     setIsSearchOpen: ui.setIsSearchOpen,
     searchQuery: ui.searchQuery,
     setSearchQuery: ui.setSearchQuery,
-    isSettingsOpen: ui.isSettingsOpen,
-    setIsSettingsOpen: ui.setIsSettingsOpen,
     hintVisible: hint.hintVisible,
     displayedHintText: hint.displayedHintText,
     menuLookup: menu.menuLookup,
