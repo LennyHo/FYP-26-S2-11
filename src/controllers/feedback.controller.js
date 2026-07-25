@@ -1,3 +1,11 @@
+// User Story Architecture Trace — feedback.controller.js
+//
+// #307 Provide Feedback
+//      View: FeedbackModal.tsx → Route: feedback.routes.js  → Ctrl: feedback.controller.js (this file)  → Model: feedback.model.js 
+//
+// #318 Get Customer Feedback (Store Staff)
+//      View: FeedbackPrompt.tsx → Route: feedback.routes.js  → Ctrl: feedback.controller.js (this file) → Model: feedback.model.js
+
 const Feedback = require("../models/feedback.model");
 const MenuItem = require("../models/menuItem.model");
 

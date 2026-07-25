@@ -8,6 +8,12 @@
 //
 // #198 Purchase History via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: payment.model.js (this file)
+//
+// #307 Provide Feedback
+//      View: FeedbackModal.tsx → Ctrl: feedback.controller.js → Svc: chatbot.service.js → Model: payment.model.js (this file)
+//
+// #308 Provide Feedback via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: order.model.js, feedback.model.js, payment.js (this file)
 
 const mongoose = require("mongoose");
 
@@ -30,8 +36,8 @@ const paymentSchema = new mongoose.Schema(
 );
 
 // #19  - As a customer, I want to be able to view the purchase history so that I can review my past orders.
+// #23 - As a customer, I want to make payment on the checkout page so that I can complete my order.
 // #198 - As a customer, I want to browse my purchase history through the chatbot so that I can review my previous orders conveniently.
-// Queries orders by userId → joins order_items for drink details → returns full history sorted by date.
 // #307 - As a customer, I want to provide feedback manually so that I can share my experience with the service.
 // #308 - As a customer, I want to provide feedback via the chatbot so that I can share my experience conveniently.
 paymentSchema.statics.getPurchaseHistory = async function getPurchaseHistory(userId) {

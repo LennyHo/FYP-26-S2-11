@@ -1,9 +1,9 @@
 // User Story Architecture Trace — menuItem.model.js
 //
-// #13  View Menu (Customer)
+// #13  View Menu
 //      View: buy-driptea/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
 //
-// #21  Search Beverages (Customer)
+// #21  Search Beverages
 //      View: buy-driptea/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
 //
 // #27  Search Beverages via Chatbot

@@ -62,10 +62,6 @@ const messageSchema = new mongoose.Schema(
     { _id: false, timestamps: true }
 );
 
-// Collection: chatbot_sessions — stores conversation history per session (conversationId, userId, messages[]).
-// See file header above for full user story architecture trace.
-// Collection: chatbot_sessions — stores conversationId, userId, and full messages array (role + content).
-// Each POST /api/chat reads history here and appends both the user message and AI reply.
 const chatbotSessionSchema = new mongoose.Schema(
     {
     conversationId: {

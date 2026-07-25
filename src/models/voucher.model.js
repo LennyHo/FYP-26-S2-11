@@ -2,6 +2,8 @@
 //
 // #18  Apply Vouchers
 //      View: checkout/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js → Model: voucher.model.js (this file)
+// #202 Check Vouchers via Chatbot
+//      View: ChatbotSidebar.tsx → Route: chatbot.routes.js (this file) → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: Voucher.Model
 
 const mongoose = require("mongoose");
 
@@ -12,7 +14,6 @@ const voucherSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     discountType: { type: String, enum: ["percentage", "fixed"], required: true },
     discountValue: { type: Number, required: true, min: 0 },
-    // Caps the discount for percentage vouchers (e.g. 50% off, up to S$10). Ignored for fixed vouchers.
     maxDiscount: { type: Number, default: null },
     minSpend: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
@@ -45,13 +46,9 @@ voucherSchema.statics.calculateDiscount = function calculateDiscount(voucher, su
     discount = Math.min(discount, Number(voucher.maxDiscount));
   }
 
-  // Never discount more than the order is worth.
   return Math.round(Math.min(Math.max(discount, 0), amount) * 100) / 100;
 };
 
-// Canonical voucher lineup — single source of truth for the checkout dropdown,
-// the Voucher page catalogue, and the database. Keep this list in sync with
-// Voucher.tsx's VOUCHER_DISPLAY map (image + validity copy live client-side).
 const SEED_VOUCHERS = [
   {
     code: "BOGO2026",

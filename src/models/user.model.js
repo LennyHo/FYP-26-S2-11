@@ -112,16 +112,7 @@ const addressSchema = new mongoose.Schema(
   { _id: true }
 );
 
-// #01/#06 - Create user profile/account → stores fullName, email, role, passwordHash, passwordSalt in users collection.
-// #02/#07 - View user profile/account → reads from users collection (passwordHash excluded from response).
-// #03/#08 - Update user profile/account → findByIdAndUpdate on users collection.
-// #04/#09 - Suspend user profile/account → sets status: "suspended" in users collection via suspendUser().
-// #05/#10 - Search user profiles/accounts → regex query across fullName, email, role, status in users collection.
-// #11/#22/#37 - Login (admin/customer/staff) → finds user by email, verifies PBKDF2 hash via login().
-// #12/#20/#38 - Logout → handled client-side; no database operation required.
-// #14  - Reset password → finds user by email, updates passwordHash and passwordSalt via resetPassword().
-// #191 - Register customer → inserts new document with role: "customer" via register().
-// #246 - Update account → updates fullName, email, profilePic via PATCH /api/users/:id.
+
 const userSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true, trim: true },
