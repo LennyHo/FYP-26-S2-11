@@ -627,7 +627,7 @@ function formatDrinkCards(drinks) {
             category: drink.category,
             price: drink.price,
             description: drink.description || DRINK_TAGLINES[drink.itemId] || "",
-            image: `/img/bubble_teas/${drink.itemId}.jpg`,
+            image: drink.image || (/^b\d{3}$/.test(drink.itemId) ? `/img/bubble_teas/${drink.itemId}.jpg` : "/img/bubble_teas/b001.jpg"),
             tags: drink.tags || [],
             nutri_grade: nutrition.nutriGrade || null,
             base_sugar_g: nutrition.baseSugarG ?? null,
@@ -3485,7 +3485,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                     drink: {
                         name: first.cartItem.name,
                         price: first.cartItem.unitPrice,
-                        image: first.cartItem.image || `/img/bubble_teas/${first.cartItem.menuItemCode || ""}.jpg`,
+                        image: first.cartItem.image || (/^b\d{3}$/.test(first.cartItem.menuItemCode) ? `/img/bubble_teas/${first.cartItem.menuItemCode}.jpg` : "/img/bubble_teas/b001.jpg"),
                     },
                     customization: first.customization,
                     nutrition: firstNutrition,
@@ -3580,7 +3580,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 drink: {
                     name: cartItem.name,
                     price: cartItem.unitPrice,
-                    image: cartItem.image || `/img/bubble_teas/${beverageId}.jpg`,
+                    image: cartItem.image || (/^b\d{3}$/.test(beverageId) ? `/img/bubble_teas/${beverageId}.jpg` : "/img/bubble_teas/b001.jpg"),
                 },
                 customization,
                 nutrition,
@@ -4259,7 +4259,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             drink: {
                 name: firstItem.name,
                 price: Number(firstItem.unitPrice || 0),
-                image: firstItem.image || `/img/bubble_teas/${drink.itemId || ""}.jpg`,
+                image: firstItem.image || (/^b\d{3}$/.test(drink.itemId) ? `/img/bubble_teas/${drink.itemId}.jpg` : "/img/bubble_teas/b001.jpg"),
             },
             customization: {
                 size: customization.size || "Regular",

@@ -144,6 +144,7 @@ export default function DrinkCard({
         href={`/menu/${categorySlug}/${id}`}
         className={styles.tapLink}
         onClick={(e) => e.stopPropagation()}
+        prefetch={false}
       >
         Customize
       </Link>

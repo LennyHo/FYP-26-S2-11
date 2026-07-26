@@ -25,15 +25,18 @@ const MenuItem = require("../models/menuItem.model");
 const mongoose = require("mongoose");
 
 function normalizeImagePath(image, itemId) {
-  if (!image) return `/img/bubble_teas/${itemId}.jpg`;
-  // base64 data URLs and http(s) URLs are always valid — use as-is
-  if (image.startsWith("data:") || image.startsWith("http")) return image;
-  // Fix folder name with space: "/img/bubble teas/..." → "/img/bubble_teas/..."
-  const fixed = image.replace(/\/img\/bubble\s+teas?\//i, "/img/bubble_teas/");
-  // If the path resolves to a known bXXX pattern it's good; otherwise fall back
-  if (/\/img\/bubble_teas\/b\d+\.(jpg|png|webp)$/i.test(fixed)) return fixed;
-  // Unknown descriptive path — fall back to itemId-based file
-  return `/img/bubble_teas/${itemId}.jpg`;
+  if (image) {
+    // base64 data URLs and http(s) URLs are always valid — use as-is
+    if (image.startsWith("data:") || image.startsWith("http")) return image;
+    // Fix folder name with space: "/img/bubble teas/..." → "/img/bubble_teas/..."
+    const fixed = image.replace(/\/img\/bubble\s+teas?\//i, "/img/bubble_teas/");
+    // If the path resolves to a known bXXX pattern it's good; otherwise fall back
+    if (/\/img\/bubble_teas\/b\d+\.(jpg|png|webp)$/i.test(fixed)) return fixed;
+  }
+  // Only guess an itemId-based file for the seeded catalog (bNNN) — custom staff-added
+  // items (itemId like "custom_<timestamp>") have no matching file and would 404.
+  if (/^b\d+$/i.test(itemId)) return `/img/bubble_teas/${itemId}.jpg`;
+  return "/img/bubble_teas/b001.jpg";
 }
 
 function publicMenuItem(item) {

@@ -303,7 +303,7 @@ Only the visible summary text above the hidden-cart-data block is translated int
         sugar: parseNum(nutrition.baseSugarG),
         nutri_grade: nutrition.nutriGrade,
         tags: item.tags,
-        image: item.image || `/img/bubble_teas/${item.itemId}.jpg`,
+        image: item.image || (/^b\d{3}$/.test(item.itemId) ? `/img/bubble_teas/${item.itemId}.jpg` : "/img/bubble_teas/b001.jpg"),
       };
     });
 
