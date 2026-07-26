@@ -207,7 +207,10 @@ function extractRequestedGrade(message) {
 
 // Detects queries asking which drinks have low/high sugar or low/high calories.
 function isHealthRankingQuery(message) {
-    const msg = String(message || "").toLowerCase();
+    // Normalise hyphens to spaces so "low-sugar"/"high-calorie" match the same phrase checks as
+    // "low sugar"/"high calorie" below — otherwise a hyphenated phrasing silently fails every
+    // check here and falls through to the generic recommendation search instead.
+    const msg = String(message || "").toLowerCase().replace(/-/g, " ");
 
     // "less sugar" / "less sweet" used as an order customization — not a health ranking query.
     // e.g. "Can I have matcha latte, less sugar" should go to the ordering path.
@@ -244,6 +247,87 @@ function isHealthRankingQuery(message) {
         (msg.includes("healthiest") || msg.includes("healthier option") || msg.includes("healthier choice") || msg.includes("healthier drink")) ||
         (hasDrinkRef && (hasSugar || hasCalorie || hasHealthy))
     );
+}
+
+// Builds the reply + drink cards for a health-ranking query ("lowest sugar drink", "healthiest
+// option", "A vs B — which has less sugar"). Extracted out of the inline handler branch so the
+// same logic can be reused by the "recommend + navigate" compound-intent branch below without
+// duplicating the sort/comparison logic.
+async function buildHealthRankingReply(intentMessage, recentHistory) {
+    // Same hyphen normalisation as isHealthRankingQuery, so "low-sugar" is recognised consistently
+    // between the detector and the reply builder.
+    const msg = intentMessage.toLowerCase().replace(/-/g, " ");
+    const wantHigh =
+        msg.includes("high sugar") || msg.includes("higher sugar") || msg.includes("most sugar") || msg.includes("highest sugar") ||
+        msg.includes("high calorie") || msg.includes("higher calorie") || msg.includes("most calorie") || msg.includes("highest calorie");
+    const rankByCalorie =
+        msg.includes("calorie") || msg.includes("calories") || msg.includes("cal");
+
+    const allDrinks = await MenuItem.find({ status: "active" }).lean();
+
+    // Direct comparison: the customer named specific drinks ("... between A and B",
+    // "A or B"), so answer with exactly those two instead of a generic top-5 list.
+    let mentionedDrinks = findMentionedDrinks(intentMessage, allDrinks);
+
+    // "these" / "them" / "both" — the customer isn't naming drinks, they're referring
+    // back to ones the bot already mentioned earlier in this conversation. Search the
+    // recent chat history text for the same drink names/aliases instead.
+    if (mentionedDrinks.length < 2 && /\b(these|them|both|those|either)\b/.test(msg)) {
+        const historyText = recentHistory
+            .map((h) => String(h.content || "").replace(/<[^>]*>/g, " "))
+            .join(" ");
+        mentionedDrinks = findMentionedDrinks(historyText, allDrinks);
+    }
+
+    if (mentionedDrinks.length >= 2) {
+        const [first, second] = mentionedDrinks;
+        const label = rankByCalorie ? "calories" : "sugar";
+        const unit = rankByCalorie ? "kcal" : "g";
+        const getValue = (d) => Number((d.nutritionInfo || {})[rankByCalorie ? "baseCalories" : "baseSugarG"] ?? 0);
+        const firstValue = getValue(first);
+        const secondValue = getValue(second);
+
+        let reply;
+        if (firstValue === secondValue) {
+            reply = `${first.name} and ${second.name} both have about the same ${label} — ${firstValue}${unit} each.`;
+        } else {
+            const winner = wantHigh === (firstValue > secondValue) ? first : second;
+            const loser = winner === first ? second : first;
+            const winnerValue = winner === first ? firstValue : secondValue;
+            const loserValue = loser === first ? firstValue : secondValue;
+            const comparisonWord = wantHigh ? "more" : "less";
+            reply = `${winner.name} has ${comparisonWord} ${label} than ${loser.name} — ${winner.name} has ${winnerValue}${unit}, while ${loser.name} has ${loserValue}${unit}.`;
+        }
+
+        return { reply, recommendedDrinks: formatDrinkCards(mentionedDrinks.slice(0, 2)) };
+    }
+
+    const withNutrition = allDrinks.filter((d) => {
+        const n = d.nutritionInfo || {};
+        return n.baseSugarG != null || n.baseCalories != null;
+    });
+
+    if (withNutrition.length === 0) {
+        return {
+            reply: "I don't have nutritional data for our drinks right now. Please ask our staff for details!",
+            recommendedDrinks: [],
+        };
+    }
+
+    const sorted = [...withNutrition].sort((a, b) => {
+        const nA = a.nutritionInfo || {};
+        const nB = b.nutritionInfo || {};
+        const valA = rankByCalorie ? Number(nA.baseCalories ?? 9999) : Number(nA.baseSugarG ?? 9999);
+        const valB = rankByCalorie ? Number(nB.baseCalories ?? 9999) : Number(nB.baseSugarG ?? 9999);
+        return wantHigh ? valB - valA : valA - valB;
+    });
+
+    const top = sorted.slice(0, 5);
+    const label = rankByCalorie ? "calories" : "sugar";
+    const direction = wantHigh ? "highest" : "lowest";
+    const reply = `Here are our drinks with the ${direction} base ${label}:`;
+
+    return { reply, recommendedDrinks: formatDrinkCards(top) };
 }
 
 // Detects rating-ranking queries: "which beverage has the highest rating?", "best rated drink",
@@ -374,8 +458,8 @@ function hasExplicitOrderIntent(message) {
     if (/\bgive me\s+(one|two|three|four|five|\d+)\b/i.test(msg)) return true;
     if (/^(one|two|three|four|five|six|\d+)\s+\w/i.test(msg.trim())) return true;
 
-    // Direct ordering verbs — "i want X", "get me X", "give me X", "order me X", etc.
-    if (/\b(i want|i like to have|i would like|i'd like|i'll have|i'll take|can i have|can i get|can i order|give me|get me|order me)\s+(?:a\s+|an\s+)?\w/i.test(msg)) return true;
+    // Direct ordering verbs — "i want X", "i need X", "get me X", "give me X", "order me X", etc.
+    if (/\b(i want|i need|i like to have|i would like|i'd like|i'll have|i'll take|can i have|can i get|can i order|give me|get me|order me)\s+(?:a\s+|an\s+)?\w/i.test(msg)) return true;
 
     // "add [drink]" / "add a X to my cart" — add-to-cart phrasing.
     if (/\badd\s+(?!one\s+more\b|another\b)/i.test(msg)) return true;
@@ -474,6 +558,28 @@ const DRINK_ASSOCIATION_WORDS = [
     "fruit tea",
 ];
 
+// Standalone, unambiguous "does this message ask for a recommendation" check — deliberately
+// narrower than isRecommendationRequest below (no "give me"/"show me" catch-alls, which are too
+// generic and would misfire on e.g. "show my vouchers"). Used only to detect compound requests
+// like "recommend a fruity drink and show my vouchers", where isRecommendationRequest itself
+// would return false (it defers to isVoucherRequest), so the recommendation half is never lost.
+function mentionsRecommendationCue(message) {
+    const msg = String(message || "").toLowerCase();
+
+    if (
+        msg.includes("recommend") ||
+        msg.includes("suggest") ||
+        msg.includes("surprise me") ||
+        msg.includes("推荐") || msg.includes("建议") ||
+        msg.includes("cadangan") || msg.includes("boleh rekomen")
+    ) return true;
+
+    return (
+        /\b(something|anything|a drink that('?s| is)?)\b/.test(msg) &&
+        /\b(fruity|fruit|refreshing|sweet|citrus(y)?|floral|creamy|milky|chocolate(y)?|nutty|tangy|sour|light|icy|cold)\b/.test(msg)
+    );
+}
+
 function isRecommendationRequest(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -526,8 +632,8 @@ function isRecommendationRequest(message) {
     // "one matcha latte" / "two taro slush" / "1 milo" = direct order with quantity
     if (/^(one|two|three|four|five|six|\d+)\s+\w/i.test(msg.trim())) return false;
 
-    // "i want X" / "can i have X" / "i'd like X" / "give me X" = direct order intent (with or without article)
-    if (/\b(i want|i like to have|i would like|i'd like|i'll have|i'll take|can i have|can i get|can i order|give me)\s+(?:a\s+|an\s+)?\w/i.test(msg)) return false;
+    // "i want X" / "i need X" / "can i have X" / "i'd like X" / "give me X" = direct order intent (with or without article)
+    if (/\b(i want|i need|i like to have|i would like|i'd like|i'll have|i'll take|can i have|can i get|can i order|give me)\s+(?:a\s+|an\s+)?\w/i.test(msg)) return false;
 
     // "show me my cart" / "show me what is inside my cart"
     if (/\bshow me\b/i.test(msg) && (msg.includes("cart") || msg.includes("in my order"))) return false;
@@ -1017,9 +1123,10 @@ function isAddToCartRequest(message) {
         msg.includes("help me add")
     ) return true;
 
-    // "i want / i'd like / give me / can i get / i'll have / i like to have" + customization words → specific order
+    // "i want / i need / i'd like / give me / can i get / i'll have / i like to have" + customization words → specific order
     const hasOrderIntent = (
         msg.includes("i want") ||
+        msg.includes("i need") ||
         msg.includes("i'd like") ||
         msg.includes("i would like") ||
         msg.includes("i like to have") ||
@@ -1521,6 +1628,26 @@ function getCartUpdateIntent(message) {
         newCustomization: {},
         quantityDelta: 0,
     };
+
+    // "remove pearls" / "remove the pearls from my matcha latte" — a single-topping edit, not a
+    // whole-item removal. Must be detected before the generic remove/delete branch below, otherwise
+    // "remove" alone deletes the entire cart line instead of just dropping that topping. Returns
+    // early so the changeText-based parsing further down never runs — that logic would otherwise
+    // read "pearl" out of the same message and ADD pearls back via intent.newCustomization.toppings.
+    const TOPPING_NAME_MAP = [
+        ["Tapioca Pearls", /\b(pearl|pearls|tapioca|boba)\b/],
+        ["Brown Sugar", /\bbrown sugar\b/],
+        ["Cheese Foam", /\bcheese(\s*foam)?\b/],
+    ];
+    const mentionedToppings = TOPPING_NAME_MAP.filter(([, re]) => re.test(msg)).map(([name]) => name);
+    const isWholeItemRemoval = /\bremove\s+(the\s+|my\s+)?(whole\s+)?(drink|item|order)\b/.test(msg);
+
+    if ((msg.includes("remove") || msg.includes("delete")) && mentionedToppings.length > 0 && !isWholeItemRemoval) {
+        intent.action = "updateCustomization";
+        intent.removeToppings = mentionedToppings;
+        intent.targetName = resolveDrinkNameFromMessage(msg);
+        return intent;
+    }
 
     if (msg.includes("remove one") || /remove\s+\d+/.test(msg)) {
         intent.action = "decrease";
@@ -2427,6 +2554,15 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // Shorthand for localised short replies on non-Gemini paths.
     const t = (key) => REPLY_STRINGS[key]?.[detectedLang] ?? REPLY_STRINGS[key]?.en ?? key;
 
+    // Moved up from just before the health-ranking branch so both it AND the compound
+    // "recommend + navigate" branch below (which runs earlier, before isNavigationRequest) can use it.
+    // True when the customer is mid-order and just adjusting their pending drink ("actually make it
+    // less sugar") — that's a customization for the order flow below, not a request to rank the menu.
+    const midOrderModifier =
+        hasActiveOrderFlow(recentHistory) &&
+        /\b(make it|change it|actually|instead|switch to)\b/.test(intentMessage.toLowerCase()) &&
+        /\b(less|more|no|extra|half|quarter|zero|normal|regular|large|small|sugar|sweet|ice)\b/.test(intentMessage.toLowerCase());
+
     // Quick prompt button clicks bypass all hardcoded routes and go directly to Gemini.
     // The relevant drinks are still fetched from the DB and injected as context so Gemini
     // can write a natural response, while the frontend still receives the cards to render.
@@ -2447,6 +2583,37 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         gibberishStreak.set(activeConversationId, streak);
     } else {
         gibberishStreak.delete(activeConversationId);
+    }
+
+    // Multi-intent: "recommend a low-sugar drink and take me to the menu page" style compound
+    // requests. isNavigationRequest is checked first in the chain below (by design, so nav phrases
+    // aren't swallowed by other intents), which meant the health-ranking recommendation half was
+    // silently dropped whenever a navigation phrase was also present in the same message. Detect
+    // the combination up front and answer both: real ranked drinks AND the actual page navigation.
+    if (isNavigationRequest(intentMessage) && isHealthRankingQuery(intentMessage) && !midOrderModifier) {
+        const [page, healthResult] = await Promise.all([
+            generateNavigationResponse(intentMessage),
+            buildHealthRankingReply(intentMessage, recentHistory),
+        ]);
+
+        const replyParts = [healthResult.reply];
+
+        if (page) {
+            const label = page.labels[detectedLang] || page.labels.en;
+            const templateFn = NAV_REPLY_TEMPLATES[detectedLang] || NAV_REPLY_TEMPLATES.en;
+            replyParts.push(templateFn(label));
+        }
+
+        const reply = replyParts.join("<br><br>");
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        return {
+            reply,
+            recommendedDrinks: healthResult.recommendedDrinks,
+            system_action: { ui_navigation: page ? page.route : "none" },
+        };
     }
 
     // User Story #26: Navigate Website via Chatbot
@@ -2674,96 +2841,15 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // Skipped when the customer is mid-order and just adjusting their pending drink ("actually make
     // it less sugar") — that's a customization applied by the order flow below, not a request to
     // rank the whole menu by sugar.
-    const midOrderModifier =
-        hasActiveOrderFlow(recentHistory) &&
-        /\b(make it|change it|actually|instead|switch to)\b/.test(intentMessage.toLowerCase()) &&
-        /\b(less|more|no|extra|half|quarter|zero|normal|regular|large|small|sugar|sweet|ice)\b/.test(intentMessage.toLowerCase());
-
     if (isHealthRankingQuery(intentMessage) && !midOrderModifier) {
-        const msg = intentMessage.toLowerCase();
-        const wantHigh =
-            msg.includes("high sugar") || msg.includes("higher sugar") || msg.includes("most sugar") || msg.includes("highest sugar") ||
-            msg.includes("high calorie") || msg.includes("higher calorie") || msg.includes("most calorie") || msg.includes("highest calorie");
-        const rankByCalorie =
-            msg.includes("calorie") || msg.includes("calories") || msg.includes("cal");
-
-        const allDrinks = await MenuItem.find({ status: "active" }).lean();
-
-        // Direct comparison: the customer named specific drinks ("... between A and B",
-        // "A or B"), so answer with exactly those two instead of a generic top-5 list.
-        let mentionedDrinks = findMentionedDrinks(intentMessage, allDrinks);
-
-        // "these" / "them" / "both" — the customer isn't naming drinks, they're referring
-        // back to ones the bot already mentioned earlier in this conversation. Search the
-        // recent chat history text for the same drink names/aliases instead.
-        if (mentionedDrinks.length < 2 && /\b(these|them|both|those|either)\b/.test(msg)) {
-            const historyText = recentHistory
-                .map((h) => String(h.content || "").replace(/<[^>]*>/g, " "))
-                .join(" ");
-            mentionedDrinks = findMentionedDrinks(historyText, allDrinks);
-        }
-
-        if (mentionedDrinks.length >= 2) {
-            const [first, second] = mentionedDrinks;
-            const label = rankByCalorie ? "calories" : "sugar";
-            const unit = rankByCalorie ? "kcal" : "g";
-            const getValue = (d) => Number((d.nutritionInfo || {})[rankByCalorie ? "baseCalories" : "baseSugarG"] ?? 0);
-            const firstValue = getValue(first);
-            const secondValue = getValue(second);
-
-            let reply;
-            if (firstValue === secondValue) {
-                reply = `${first.name} and ${second.name} both have about the same ${label} — ${firstValue}${unit} each.`;
-            } else {
-                const winner = wantHigh === (firstValue > secondValue) ? first : second;
-                const loser = winner === first ? second : first;
-                const winnerValue = winner === first ? firstValue : secondValue;
-                const loserValue = loser === first ? firstValue : secondValue;
-                const comparisonWord = wantHigh ? "more" : "less";
-                reply = `${winner.name} has ${comparisonWord} ${label} than ${loser.name} — ${winner.name} has ${winnerValue}${unit}, while ${loser.name} has ${loserValue}${unit}.`;
-            }
-
-            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
-            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
-
-            return {
-                reply,
-                recommendedDrinks: formatDrinkCards(mentionedDrinks.slice(0, 2)),
-                system_action: { ui_navigation: "none" },
-            };
-        }
-
-        const withNutrition = allDrinks.filter((d) => {
-            const n = d.nutritionInfo || {};
-            return n.baseSugarG != null || n.baseCalories != null;
-        });
-
-        if (withNutrition.length === 0) {
-            const reply = "I don't have nutritional data for our drinks right now. Please ask our staff for details!";
-            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
-            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
-            return { reply, system_action: { ui_navigation: "none" } };
-        }
-
-        const sorted = [...withNutrition].sort((a, b) => {
-            const nA = a.nutritionInfo || {};
-            const nB = b.nutritionInfo || {};
-            const valA = rankByCalorie ? Number(nA.baseCalories ?? 9999) : Number(nA.baseSugarG ?? 9999);
-            const valB = rankByCalorie ? Number(nB.baseCalories ?? 9999) : Number(nB.baseSugarG ?? 9999);
-            return wantHigh ? valB - valA : valA - valB;
-        });
-
-        const top = sorted.slice(0, 5);
-        const label = rankByCalorie ? "calories" : "sugar";
-        const direction = wantHigh ? "highest" : "lowest";
-        const reply = `Here are our drinks with the ${direction} base ${label}:`;
+        const { reply, recommendedDrinks } = await buildHealthRankingReply(intentMessage, recentHistory);
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
 
         return {
             reply,
-            recommendedDrinks: formatDrinkCards(top),
+            recommendedDrinks,
             system_action: { ui_navigation: "none" },
         };
     }
@@ -2804,8 +2890,98 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         return { reply, system_action: { ui_navigation: "none" } };
     }
 
+    // Multi-intent: "recommend a fruity drink and show my vouchers" style compound requests.
+    // The dispatcher below is a strict sequential if/return chain, and isRecommendationRequest
+    // itself defers to isVoucherRequest when both are present in one message (see its guard above)
+    // — so previously only the voucher half ever ran and the recommendation was silently dropped.
+    // Detect the combination up front and answer both halves in a single reply.
+    if (userId && mentionsRecommendationCue(intentMessage) && isVoucherRequest(intentMessage)) {
+        const [drinks, vouchers] = await Promise.all([
+            MenuItem.recommendByMessage(intentMessage),
+            getAvailableVouchers(userId),
+        ]);
+
+        const replyParts = [];
+        let recommendedDrinks = [];
+        let voucherCard = null;
+
+        if (drinks.length > 0) {
+            recommendedDrinks = formatDrinkCards(drinks);
+            replyParts.push("Here are a few drinks you might love:");
+        }
+
+        if (vouchers.length > 0) {
+            voucherCard = {
+                title: t('voucherCardTitle'),
+                vouchers: vouchers.map((v) => ({
+                    code: v.code,
+                    title: v.title,
+                    description: v.description,
+                    discountType: v.discountType,
+                    discountValue: v.discountValue,
+                    maxDiscount: v.maxDiscount,
+                    minSpend: v.minSpend,
+                })),
+            };
+            replyParts.push(
+                `${t('voucherCardTitle')}<br><br>${t('exploreRewardsCta')}<br><br>` +
+                `<button class="chat-nav-btn-compact" onclick="handleVouchers()">${t('exploreRewardsBtn')}</button>`
+            );
+        } else {
+            replyParts.push(t('noVouchersAvailable'));
+        }
+
+        if (drinks.length > 0 || vouchers.length > 0) {
+            const reply = replyParts.join("<br><br>");
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+            return {
+                reply,
+                recommendedDrinks,
+                voucherCard,
+                system_action: { ui_navigation: "none" },
+            };
+        }
+    }
+
     // User Story #32: Recommend beverages based on user message
     if (isRecommendationRequest(intentMessage)) {
+        // "Hot" is an ice-level choice available on any drink at ordering time, not a searchable
+        // drink attribute — checked BEFORE the keyword search below, not after, because a plain
+        // substring search for "hot" can accidentally match an unrelated drink whose description
+        // just happens to contain the word (e.g. "...perfect for a hot day"), which would otherwise
+        // recommend a cold ice-blended drink for a "hot drink" request. Only short-circuits when no
+        // other real flavour/drink word is present, so "recommend a hot matcha latte" still recommends matcha normally.
+        const mentionsHot = /\bhot\b/i.test(intentMessage);
+        const mentionsOtherFlavour = DRINK_ASSOCIATION_WORDS.some((w) => intentMessage.toLowerCase().includes(w));
+        if (mentionsHot && !mentionsOtherFlavour) {
+            const allDrinks = await MenuItem.find({ status: "active" }).lean();
+            const featured = allDrinks
+                .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                .slice(0, 3);
+
+            const reply =
+                "We don't have a separate hot drinks menu — any of our drinks can be made hot, just choose the Hot option at the ice level step when ordering!<br><br>" +
+                "Here are a few customer favourites to start with:";
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "user",
+                content: safeMessage,
+            });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, {
+                role: "assistant",
+                content: reply,
+            });
+
+            return {
+                reply,
+                recommendedDrinks: formatDrinkCards(featured),
+                system_action: { ui_navigation: "none" },
+            };
+        }
+
         let drinks = await MenuItem.recommendByMessage(intentMessage);
 
         // For non-English queries (Chinese/Malay), recommendByMessage won't match English menu names.
@@ -2962,6 +3138,72 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     }
 
     // User Story #203: Track current order status via chatbot
+    // Multi-intent: "track my order and show my order history" style compound requests.
+    // isTrackOrderRequest is checked before isPurchaseHistory below, so the history half used to
+    // be silently dropped. The frontend's orderStatusCard and purchaseHistory card are mutually
+    // exclusive within one message (see ChatbotSidebar.tsx), so this answers both intents through
+    // a single purchaseHistory card — which already includes each order's status — plus a text
+    // sentence calling out the current in-progress order, rather than trying to render two cards.
+    if (isTrackOrderRequest(intentMessage) && isPurchaseHistory(intentMessage)) {
+        if (!userId) {
+            return { reply: t('loginForHistory'), system_action: { ui_navigation: "none" } };
+        }
+
+        const [activeOrders, allOrders] = await Promise.all([
+            getOrderStatus(userId),
+            Payment.getPurchaseHistory(userId),
+        ]);
+
+        if (!allOrders.length) {
+            const reply = t('noHistory');
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+            return { reply, system_action: { ui_navigation: "none" } };
+        }
+
+        const ACTIVE_STATUSES = new Set(["pending", "paid", "preparing", "ready"]);
+        const activeOrder = activeOrders.find((o) => ACTIVE_STATUSES.has(o.status));
+
+        const STATUS_PHRASES = {
+            pending: "awaiting confirmation",
+            paid: "queued for preparation",
+            preparing: "being prepared by our baristas",
+            ready: "ready for collection",
+            completed: "completed",
+            cancelled: "cancelled",
+        };
+
+        const statusSentence = activeOrder
+            ? `Your order <strong>#${activeOrder.orderNo}</strong> is currently ${STATUS_PHRASES[activeOrder.status] || activeOrder.status}.`
+            : "You don't have any order in progress right now.";
+
+        const recentOrders = allOrders.slice(0, 5);
+        const reply = `${statusSentence}<br><br>Here's your recent order history:`;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        return {
+            reply,
+            purchaseHistory: {
+                title: "Your Order History",
+                orders: recentOrders.map((order) => ({
+                    orderNo: order.displayOrderNo || order.orderNo,
+                    status: order.status,
+                    paymentStatus: order.paymentStatus || "Paid",
+                    items: order.items.map((item) => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        customization: item.customization || {},
+                        lineTotal: Number(item.lineTotal || 0),
+                    })),
+                    totalAmount: Number(order.totalAmount || 0),
+                })),
+            },
+            system_action: { ui_navigation: "none" },
+        };
+    }
+
     if (isTrackOrderRequest(intentMessage)) {
         if (!userId) {
             return {
@@ -3832,7 +4074,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 cartUpdate: buildCartUpdatePayload(cartItems, reply),
                 system_action: { ui_navigation: "none" },
             };
-        } else if (Object.keys(intent.newCustomization).length === 0 && intent.action === "updateCustomization") {
+        } else if (Object.keys(intent.newCustomization).length === 0 && !intent.removeToppings && intent.action === "updateCustomization") {
             // User said something like "second drink" — they identified a target but didn't say what to change.
             const name = targetItem.name || "that drink";
             const c = targetItem.customization || {};
@@ -3847,6 +4089,15 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 ...(targetItem.customization || {}),
                 ...intent.newCustomization,
             };
+
+            // "remove pearls" etc — strip just the named topping(s), keeping any others already on the drink.
+            if (Array.isArray(intent.removeToppings) && intent.removeToppings.length > 0) {
+                newCustomization.toppings = (Array.isArray(newCustomization.toppings) ? newCustomization.toppings : [])
+                    .filter((t) => {
+                        const clean = String(t || "").replace(/\s*\(\+S\$[\d.]+\)/i, "").trim();
+                        return !intent.removeToppings.includes(clean);
+                    });
+            }
 
             const menuItem = await MenuItem.findById(targetItem.menuItemId).lean();
             const basePrice = menuItem ? Number(menuItem.price) : 0;

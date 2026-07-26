@@ -140,28 +140,60 @@ menuItemSchema.statics.recommendByMessage = async function recommendByMessage(me
     fruits: "fruit",
     creamy: "milk",
     milky: "milk",
+    dairy: "milk",
     chocolatey: "chocolate",
     nutty: "taro",
   };
 
-  const keywords = text
-    .split(/[^a-z0-9]+/)
-    .filter((word) => word && !stopWords.includes(word))
-    .map((word) => SYNONYMS[word] || word);
+  // Negation triggers ("without milk", "no milk", "non-dairy", "excluding pearls") flip the
+  // following word from a positive match into an exclusion — otherwise "milk" alone matches
+  // every milk tea via the $or below, so "recommend a drink without milk" recommended milk teas.
+  const NEGATION_TRIGGERS = ["without", "no", "non", "excluding", "except"];
 
-  if (!keywords.length) return [];
+  const rawWords = text.split(/[^a-z0-9]+/).filter(Boolean);
 
-  const regexList = keywords.map((word) => new RegExp(word, "i"));
+  const keywords = [];
+  const negatedWords = [];
 
-  return this.find({
-    status: "active",
-    $or: [
+  for (let i = 0; i < rawWords.length; i++) {
+    const word = rawWords[i];
+    if (NEGATION_TRIGGERS.includes(word) && rawWords[i + 1]) {
+      negatedWords.push(SYNONYMS[rawWords[i + 1]] || rawWords[i + 1]);
+      i++; // consume the negated word too, so it isn't also added as a positive keyword
+      continue;
+    }
+    if (!stopWords.includes(word)) {
+      keywords.push(SYNONYMS[word] || word);
+    }
+  }
+
+  if (!keywords.length && !negatedWords.length) return [];
+
+  const query = { status: "active" };
+
+  if (keywords.length) {
+    const regexList = keywords.map((word) => new RegExp(word, "i"));
+    query.$or = [
       { name: { $in: regexList } },
       { category: { $in: regexList } },
       { description: { $in: regexList } },
       { tags: { $in: regexList } },
-    ],
-  })
+      { "drinkInfo.ingredients": { $in: regexList } },
+    ];
+  }
+
+  if (negatedWords.length) {
+    const negatedRegexList = negatedWords.map((word) => new RegExp(word, "i"));
+    query.$nor = [
+      { name: { $in: negatedRegexList } },
+      { category: { $in: negatedRegexList } },
+      { description: { $in: negatedRegexList } },
+      { tags: { $in: negatedRegexList } },
+      { "drinkInfo.ingredients": { $in: negatedRegexList } },
+    ];
+  }
+
+  return this.find(query)
     .limit(6)
     .lean();
 };
