@@ -585,8 +585,6 @@ Users may also ask:
 
 > Note: The example prompts above are provided for demonstration purposes only. The chatbot supports natural language conversations, and users are not required to follow the exact wording shown here. Similar questions with different phrasing will also be understood where supported.
 
-For a comprehensive QA methodology and the full list of verified findings/fixes, see the [`ai-chatbot-qa` skill](.claude/ai-chatbot-qa/SKILL.md) and its [latest report](.claude/ai-chatbot-qa/reports/).
-
 ---
 
 ## Maps & Geocoding (OneMap + Leaflet)
