@@ -1604,7 +1604,7 @@
     line-height: 1.4;
 }
 
-.tracking-pickup-steps li span {
+.tracking-pickup-steps li span:first-child {
     display: grid;
     place-items: center;
     flex: 0 0 30px;

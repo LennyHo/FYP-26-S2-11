@@ -1005,10 +1005,20 @@
     font-size: 1.4rem;
   }
 
+  /* table-layout: fixed squeezes columns to the viewport width instead of
+     letting the container scroll, which is what crushed/overlapped the
+     header and cell text on narrow screens. auto + min-width lets the
+     table keep readable column widths and scroll horizontally instead. */
+  .table {
+    table-layout: auto;
+    min-width: 640px;
+  }
+
   .table th,
   .table td {
     padding: 10px 12px;
     font-size: 0.85rem;
+    white-space: nowrap;
   }
 
   .tab {

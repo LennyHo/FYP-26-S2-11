@@ -637,17 +637,19 @@ export default function OrderStatusPage() {
                           {pickupDirections.steps.map((step, index) => (
                             <li key={step}>
                               <span>{index + 1}</span>
-                              {index === pickupDirections.steps.length - 1
-                                ? <>Show <strong>Order #{orderNo}</strong> at the counter.</>
-                                : step}
+                              <span>
+                                {index === pickupDirections.steps.length - 1
+                                  ? <>Show <strong>Order #{orderNo}</strong> at the counter.</>
+                                  : step}
+                              </span>
                             </li>
                           ))}
                         </ol>
                       </div>
                     ) : (
                       <ol className="tracking-pickup-steps">
-                        <li><span>1</span>Head to your selected outlet.</li>
-                        <li><span>2</span>Show <strong>Order #{orderNo}</strong> at the counter to collect.</li>
+                        <li><span>1</span><span>Head to your selected outlet.</span></li>
+                        <li><span>2</span><span>Show <strong>Order #{orderNo}</strong> at the counter to collect.</span></li>
                       </ol>
                     )}
                   </div>
