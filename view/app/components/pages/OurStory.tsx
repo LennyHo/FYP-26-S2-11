@@ -35,7 +35,7 @@ const TIMELINE = [
   {
     year: '2019',
     title: 'Innovation & Sustainability',
-    text: 'We launched our eco-friendly initiative — replacing single-use plastics with sustainable packaging — and developed proprietary blends that redefined what bubble tea could taste like.',
+    text: 'We launched our eco-friendly initiative, replacing single-use plastics with sustainable packaging, and developed proprietary blends that redefined what bubble tea could taste like.',
     icon: (
       <>
         <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z" />
@@ -56,7 +56,7 @@ const TIMELINE = [
   {
     year: '2026',
     title: 'Today & Tomorrow',
-    text: 'AS DripTea continues to innovate and expand worldwide alongside Avy, our vision remains: to craft exceptional beverages that bring joy to every cup, while honouring our planet and communities.',
+    text: 'As DripTea continues to innovate and expand worldwide alongside Avy, our vision remains: to craft exceptional beverages that bring joy to every cup, while honouring our planet and communities.',
     icon: (
       <>
         <circle cx="12" cy="12" r="10" />

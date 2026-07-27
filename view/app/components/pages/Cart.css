@@ -107,6 +107,7 @@
 }
 
 .cart-empty-subtitle {
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
   font-size: 14px;
   color: #7a5c45;
   line-height: 1.7;

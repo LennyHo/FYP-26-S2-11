@@ -540,6 +540,7 @@ button { touch-action: manipulation; }
 
 .order-type-card p {
   color: #7a5c45;
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
 }
 
 .order-type-options {
@@ -591,6 +592,7 @@ button { touch-action: manipulation; }
 
 .order-type-option p {
   min-height: 42px;
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
   font-size: 14.5px;
   line-height: 1.5;
   color: #7a5c45;

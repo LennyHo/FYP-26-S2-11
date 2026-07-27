@@ -10,13 +10,19 @@ import styles from './MeetTheCrew.module.css';
 
 const dancingScript = Dancing_Script({ subsets: ['latin'], weight: '700' });
 
-function storeHours(store: { openingHours?: { weekday: string; weekend: string } }) {
-  if (!store.openingHours) return '';
-  return `Mon – Fri: ${store.openingHours.weekday}  •  Sat – Sun: ${store.openingHours.weekend}`;
+function storeHoursLines(store: { openingHours?: { weekday: string; weekend: string } }) {
+  if (!store.openingHours) return ['', ''];
+  return [`Mon – Fri: ${store.openingHours.weekday}`, `Sat – Sun: ${store.openingHours.weekend}`];
 }
 
 function storeMapsUrl(store: { address: string }) {
   return `https://maps.google.com/?q=${encodeURIComponent(store.address)}`;
+}
+
+function addressLines(address: string) {
+  const parts = address.split(',').map((p) => p.trim());
+  const last = parts.pop() ?? '';
+  return [parts.join(', '), last];
 }
 
 export default function MeetTheCrew() {
@@ -103,29 +109,23 @@ export default function MeetTheCrew() {
           <div className={styles.memberBenefitsGrid}>
             {storeLocations.map((store) => (
               <div key={store.storeCode} className={styles.storeCard}>
-                <div className={styles.storeCardName}>
-                  <svg className={styles.storeCardIcon} viewBox="0 0 24 24" fill="none" stroke="rgba(255,185,100,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                    <circle cx="12" cy="9" r="2.5"/>
-                  </svg>
-                  {store.name}
-                </div>
-                <div className={styles.storeCardMeta}>
-                  <div className={styles.storeCardRow}>
-                    <svg className={styles.storeCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                      <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    {store.address}
-                  </div>
-                  <div className={styles.storeCardRow}>
-                    <svg className={styles.storeCardIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    {storeHours(store)}
-                  </div>
-                </div>
+                <p className={styles.storeCardName}>{store.name}</p>
+                <p className={styles.storeCardAddress}>
+                  {addressLines(store.address).map((line, i) => (
+                    <React.Fragment key={i}>
+                      {i > 0 && <br />}
+                      {line}
+                    </React.Fragment>
+                  ))}
+                </p>
+                <p className={styles.storeCardHours}>
+                  {storeHoursLines(store).map((line, i) => (
+                    <React.Fragment key={i}>
+                      {i > 0 && <br />}
+                      {line}
+                    </React.Fragment>
+                  ))}
+                </p>
                 <a href={storeMapsUrl(store)} target="_blank" rel="noopener noreferrer" className={styles.storeCardLink}>
                   Get Directions
                 </a>
@@ -134,13 +134,8 @@ export default function MeetTheCrew() {
           </div>
 
           <div className={styles.voucherBanner}>
-            <svg className={styles.voucherIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
-            </svg>
-            <div className={styles.voucherText}>
-              <span className={styles.voucherTitle}>Welcome Voucher Included</span>
-              <span className={styles.voucherDesc}>Sign up for a free account and a welcome voucher drops into your account automatically. Redeem it on your first order at any location.</span>
-            </div>
+            <span className={styles.voucherTitle}>Welcome Voucher Included</span>
+            <span className={styles.voucherDesc}>Sign up for a free account and a welcome voucher drops into your account automatically. Redeem it on your first order at any location.</span>
           </div>
 
           <Link href="/order-type" className={styles.ctaBannerBtn}>

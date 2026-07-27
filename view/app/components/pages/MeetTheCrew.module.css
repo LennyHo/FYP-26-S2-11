@@ -266,95 +266,66 @@
 }
 
 .storeCard {
-  padding: 20px 20px 16px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 235, 210, 0.14);
+  padding: 18px 20px;
+  background: linear-gradient(145deg, rgba(255, 235, 210, 0.1), rgba(0, 0, 0, 0.28));
   border-radius: 16px;
   text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
 }
 
 .storeCardName {
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  display: flex;
-  align-items: center;
-  gap: 7px;
+  margin-bottom: 8px;
 }
 
-.storeCardIcon {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-  opacity: 0.75;
-}
-
-.storeCardMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.storeCardRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  color: rgba(255, 235, 210, 0.65);
+.storeCardAddress {
+  color: rgba(255, 235, 210, 0.68);
   font-size: 0.82rem;
-  line-height: 1.4;
+  line-height: 1.5;
+}
+
+.storeCardHours {
+  color: rgba(255, 235, 210, 0.5);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  margin-top: 4px;
 }
 
 .storeCardLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
+  display: inline-block;
+  margin-top: 10px;
   font-size: 0.78rem;
   font-weight: 600;
-  color: rgba(255, 185, 100, 0.85);
+  color: rgba(255, 185, 100, 0.9);
   text-decoration: none;
   letter-spacing: 0.02em;
   transition: color 0.2s;
 }
 
 .storeCardLink:hover {
-  color: rgba(255, 210, 150, 1);
+  color: #fff;
+  text-decoration: underline;
 }
 
 .voucherBanner {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 235, 210, 0.14);
-  border-radius: 14px;
-  padding: 14px 18px;
+  flex-direction: column;
+  gap: 3px;
+  padding: 18px 20px;
+  background: linear-gradient(145deg, rgba(255, 235, 210, 0.1), rgba(0, 0, 0, 0.28));
+  border-radius: 16px;
   max-width: 640px;
   width: 100%;
   text-align: left;
-}
-
-.voucherIcon {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  margin-top: 1px;
-  color: rgba(255, 185, 100, 0.9);
-}
-
-.voucherText {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
 }
 
 .voucherTitle {
   color: rgba(255, 210, 150, 0.95);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 

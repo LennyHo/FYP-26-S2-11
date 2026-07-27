@@ -645,6 +645,7 @@
 
 .heroSub {
   color: rgba(255, 255, 255, 0.58);
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
   font-size: 1rem;
   line-height: 1.65;
   max-width: 440px;
@@ -872,6 +873,7 @@
 }
 
 .milestoneText {
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
   font-size: 0.9rem;
   line-height: 1.72;
   color: rgba(255, 255, 255, 0.62);
@@ -935,6 +937,7 @@
 }
 
 .valueText {
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
   font-size: 0.86rem;
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.60);
@@ -977,6 +980,7 @@
 
 .ctaSub {
   color: #39200d;
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
   font-size: 1rem;
   margin: 0;
   max-width: 400px;
