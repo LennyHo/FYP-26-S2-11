@@ -760,61 +760,12 @@
   position: relative;
 }
 
-/* Vertical center line — blue at the top, red/orange at the bottom */
-.spine::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 24px;
-  bottom: 24px;
-  width: 2px;
-  transform: translateX(-50%);
-  border-radius: 2px;
-  background: linear-gradient(
-    to bottom,
-    rgba(2, 87, 173, 0.0) 0%,
-    rgba(2, 87, 173, 0.55) 12%,
-    rgba(2, 87, 173, 0.55) 55%,
-    rgba(244, 59, 3, 0.5) 85%,
-    rgba(244, 59, 3, 0.0) 100%
-  );
-}
-
 .milestone {
   display: grid;
   grid-template-columns: 1fr 64px 1fr;
   align-items: start;
   min-height: 140px;
   position: relative;
-}
-
-/* Faint horizontal trace across the milestone row at node-centre height */
-.milestone::before {
-  content: '';
-  position: absolute;
-  top: 44px;
-  left: 5%;
-  right: 5%;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.07) 25%,
-    rgba(255, 255, 255, 0.07) 75%,
-    transparent
-  );
-  pointer-events: none;
-}
-
-/* Last milestone gets a red/orange horizontal trace */
-.milestone:last-child::before {
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(244, 59, 3, 0.14) 25%,
-    rgba(244, 59, 3, 0.14) 75%,
-    transparent
-  );
 }
 
 /* Center node column */
@@ -861,11 +812,6 @@
 
 .milestoneContent {
   padding-top: 8px;
-  transition: transform 0.22s ease;
-}
-
-.milestoneContent:hover {
-  transform: translateY(-3px);
 }
 
 /* Large ghost year — sits as background accent behind the text */
@@ -879,7 +825,8 @@
   -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
-  margin-bottom: -6px;
+  margin-bottom: 0;
+  overflow: hidden;
 }
 
 .colRight .ghostYear {
@@ -974,9 +921,6 @@
 .valueIconWrap {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  background: rgba(2, 87, 173, 0.22);
-  border: 1px solid rgba(2, 87, 173, 0.38);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1002,14 +946,13 @@
   position: relative;
   overflow: hidden;
   border-radius: 24px;
-  background: linear-gradient(135deg, #010919 0%, #011840 45%, #040d1f 100%);
   padding: 60px 40px;
 }
 
 .ctaDotGrid {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(2, 87, 173, 0.18) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(155, 109, 74, 0.18) 1px, transparent 1px);
   background-size: 28px 28px;
   pointer-events: none;
 }
@@ -1025,7 +968,7 @@
 }
 
 .ctaHeadline {
-  color: #fff;
+  color: #39200d;
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 800;
   margin: 0;
@@ -1033,7 +976,7 @@
 }
 
 .ctaSub {
-  color: rgba(255, 255, 255, 0.58);
+  color: #39200d;
   font-size: 1rem;
   margin: 0;
   max-width: 400px;
@@ -1076,11 +1019,6 @@
   .content {
     padding: 48px 0 56px;
     gap: 52px;
-  }
-
-  /* Collapse spine to single-column on mobile */
-  .spine::before {
-    left: 24px;
   }
 
   .milestone {
