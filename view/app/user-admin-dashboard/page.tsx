@@ -39,7 +39,7 @@
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaBan, FaCheck, FaChevronDown, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUserPlus, FaUsers } from 'react-icons/fa';
+import { FaChevronDown, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUsers } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
 import { createUserAccount, getRoleDescriptions, getUsers, suspendUser, updateRoleDescription, updateUser } from '../utils/adminApi';
 import { clearStoredUser, getStoredUser, isSessionExpiredError, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
@@ -490,30 +490,27 @@ export default function UserAdminDashboardPage() {
       <td className={styles.actions}>
         <button
           type="button"
-          className={styles.btnSmall}
-          title="View"
+          className={`${styles.actionBtn} ${styles.actionView}`}
           aria-label={`View ${user.fullName}`}
           onClick={() => setViewingUser(user)}
         >
-          <FaEye />
+          View
         </button>
         <button
           type="button"
-          className={styles.btnSmall}
-          title="Edit"
+          className={`${styles.actionBtn} ${styles.actionEdit}`}
           aria-label={`Edit ${user.fullName}`}
           onClick={() => openEditModal(user)}
         >
-          <FaPen />
+          Edit
         </button>
         <button
           type="button"
-          className={styles.btnSmall}
+          className={`${styles.actionBtn} ${isActive ? styles.actionSuspend : styles.actionActivate}`}
           onClick={() => void toggleUserStatus(user)}
-          title={isActive ? 'Suspend' : 'Activate'}
           aria-label={`${isActive ? 'Suspend' : 'Activate'} ${user.fullName}`}
         >
-          {isActive ? <FaBan /> : <FaCheck />}
+          {isActive ? 'Suspend' : 'Activate'}
         </button>
       </td>
     );
@@ -614,6 +611,13 @@ export default function UserAdminDashboardPage() {
 
             <div className={styles.tableContainer}>
               <table className={styles.table}>
+                <colgroup>
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '29%' }} />
+                  <col style={{ width: '13%' }} />
+                  <col style={{ width: '14%' }} />
+                  <col style={{ width: '32%' }} />
+                </colgroup>
                 <thead>
                   <tr>
                     <th>Profile</th>
@@ -652,26 +656,23 @@ export default function UserAdminDashboardPage() {
                       <td className={styles.actions}>
                         <button
                           type="button"
-                          className={styles.btnSmall}
-                          title="View"
+                          className={`${styles.actionBtn} ${styles.actionView}`}
                           aria-label={`View ${profile.label}`}
                           onClick={() => setViewingRole(profile)}
                         >
-                          <FaEye />
+                          View
                         </button>
                         <button
                           type="button"
-                          className={styles.btnSmall}
-                          title="Edit description"
+                          className={`${styles.actionBtn} ${styles.actionEdit}`}
                           aria-label={`Edit description for ${profile.label}`}
                           onClick={() => openDescriptionModal(profile)}
                         >
-                          <FaPen />
+                          Edit
                         </button>
                         <button
                           type="button"
-                          className={styles.btnSmall}
-                          title={`Add ${profile.label} user`}
+                          className={`${styles.actionBtn} ${styles.actionAdd}`}
                           aria-label={`Add ${profile.label} user`}
                           onClick={() => {
                             setFormData({ ...emptyForm(), role: profile.value });
@@ -680,23 +681,17 @@ export default function UserAdminDashboardPage() {
                             setFormMode('create');
                           }}
                         >
-                          <FaUserPlus />
+                          Add User
                         </button>
                         <button
                           type="button"
-                          className={styles.btnSmall}
+                          className={`${styles.actionBtn} ${isRoleSuspended ? styles.actionActivate : styles.actionSuspend}`}
                           disabled={roleUsers.length === 0}
-                          title={
-                            roleUsers.length === 0
-                              ? `No ${profile.label} accounts yet`
-                              : isRoleSuspended
-                                ? `Activate all ${profile.label} accounts`
-                                : `Suspend all ${profile.label} accounts`
-                          }
+                          title={roleUsers.length === 0 ? `No ${profile.label} accounts yet` : undefined}
                           aria-label={isRoleSuspended ? `Activate all ${profile.label} accounts` : `Suspend all ${profile.label} accounts`}
                           onClick={() => void toggleRoleStatus(profile)}
                         >
-                          {isRoleSuspended ? <FaCheck /> : <FaBan />}
+                          {isRoleSuspended ? 'Activate All' : 'Suspend All'}
                         </button>
                       </td>
                     </tr>
@@ -716,6 +711,14 @@ export default function UserAdminDashboardPage() {
 
             <div className={styles.tableContainer}>
               <table className={styles.table}>
+                <colgroup>
+                  <col style={{ width: '16%' }} />
+                  <col style={{ width: '26%' }} />
+                  <col style={{ width: '13%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '14%' }} />
+                  <col style={{ width: '16%' }} />
+                </colgroup>
                 <thead>
                   <tr>
                     <th>Username</th>
