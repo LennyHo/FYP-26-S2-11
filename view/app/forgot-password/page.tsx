@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { checkEmailExists, resetPassword } from '../utils/customerApi';
+import { PASSWORD_HINT, validatePassword, validateResetEmail } from '../utils/validation';
 import styles from './ForgotPassword.module.css';
 
 type Step = 'email' | 'reset' | 'done';
@@ -26,6 +27,15 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     if (!email.trim()) return;
+
+    // Stops @driptea.com (and non-customer domains) before the account is even
+    // looked up, so staff never reach the new-password step.
+    const emailError = validateResetEmail(email);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
+
     setIsLoading(true);
     try {
       await checkEmailExists(email.trim());
@@ -40,6 +50,14 @@ export default function ForgotPasswordPage() {
   async function handleReset(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    // Same password rule as register, so a reset cannot set a weaker password
+    // than the one the account was created with.
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
 
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match.');
@@ -146,9 +164,8 @@ export default function ForgotPasswordPage() {
                   type={showNew ? 'text' : 'password'}
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  placeholder="At least 6 characters"
+                  placeholder="Create a new password"
                   required
-                  minLength={6}
                   autoComplete="new-password"
                   autoFocus
                 />
@@ -156,6 +173,7 @@ export default function ForgotPasswordPage() {
                   <EyeIcon open={showNew} />
                 </button>
               </div>
+              <p className={styles.fieldHint}>{PASSWORD_HINT}</p>
             </div>
             <div className={styles.fieldGroup}>
               <label className={styles.label} htmlFor="confirmPassword">Confirm New Password</label>
@@ -168,7 +186,6 @@ export default function ForgotPasswordPage() {
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="Repeat new password"
                   required
-                  minLength={6}
                   autoComplete="new-password"
                 />
                 <button type="button" className={styles.eyeBtn} onClick={() => setShowConfirm(v => !v)} aria-label={showConfirm ? 'Hide' : 'Show'}>

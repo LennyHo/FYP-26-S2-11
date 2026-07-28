@@ -16,6 +16,7 @@ import { useRef, useState } from 'react';
 import styles from './login.module.css';
 import { useRouter } from 'next/navigation';
 import { syncStoredCartFromBackend, migrateLocalCartToBackend, loginCustomer } from '../utils/customerApi';
+import { LOGIN_EMAIL_DOMAINS, validateEmail } from '../utils/validation';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,18 +45,14 @@ export default function LoginPage() {
     const email = emailRef.current?.value.trim() || '';
     const password = passwordRef.current?.value || '';
     const newErrors = { email: '', password: '' };
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!email) {
-      newErrors.email = 'Email is required.';
-    } else if (!emailRegex.test(email)) {
-      newErrors.email = 'Please enter a valid email address.';
-    }
+    // Accepts the customer domains plus @driptea.com, which staff and admins use.
+    // No password-format rule here: existing accounts predate the current policy,
+    // and enforcing it at login would leak the policy to anyone guessing.
+    newErrors.email = validateEmail(email, LOGIN_EMAIL_DOMAINS);
 
     if (!password) {
       newErrors.password = 'Password is required.';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters.';
     }
 
     setErrors(newErrors);

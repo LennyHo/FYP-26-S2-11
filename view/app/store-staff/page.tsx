@@ -83,6 +83,8 @@ export default function StoreStaffPage() {
   const [addForm, setAddForm] = useState({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
   const [addError, setAddError] = useState('');
   const [nameError, setNameError] = useState('');
+  // Per-field validation messages for the add/edit drink modal.
+  const [drinkErrors, setDrinkErrors] = useState({ category: '', price: '', calories: '', sugar: '' });
   const [adding, setAdding] = useState(false);
   const [editingMenuItem, setEditingMenuItem] = useState<DripTeaMenuItem | null>(null);
 
@@ -104,10 +106,21 @@ export default function StoreStaffPage() {
     setNameError(duplicate ? `A drink named "${value.trim()}" already exists.` : '');
   }
 
+  const EMPTY_DRINK_ERRORS = { category: '', price: '', calories: '', sugar: '' };
+
+  // Updates one field of the add/edit drink form and clears that field's error.
+  function updateDrinkField(field: keyof typeof addForm, value: string) {
+    setAddForm(f => ({ ...f, [field]: value }));
+    setDrinkErrors(current => (field in current && current[field as keyof typeof current]
+      ? { ...current, [field]: '' }
+      : current));
+  }
+
   function closeAddModal() {
     setShowAddModal(false);
     setAddError('');
     setNameError('');
+    setDrinkErrors(EMPTY_DRINK_ERRORS);
     setEditingMenuItem(null);
   }
 
@@ -128,6 +141,7 @@ export default function StoreStaffPage() {
     });
     setAddError('');
     setNameError('');
+    setDrinkErrors(EMPTY_DRINK_ERRORS);
     setShowAddModal(true);
   }
 
@@ -255,12 +269,39 @@ export default function StoreStaffPage() {
   async function handleAddDrink(e: React.SyntheticEvent) {
     e.preventDefault();
     setAddError('');
-    if (nameError) return;
+
     const price = parseFloat(addForm.price);
-    if (!addForm.name.trim() || !addForm.category.trim() || isNaN(price) || price < 0) {
-      setAddError('Name, category, and a valid price are required.');
-      return;
+    const calories = addForm.calories.trim() ? Number(addForm.calories) : null;
+    const sugar = addForm.sugar.trim() ? Number(addForm.sugar) : null;
+    const errors = { ...EMPTY_DRINK_ERRORS };
+
+    if (!addForm.name.trim()) setNameError('Drink name is required.');
+
+    if (!addForm.category.trim()) {
+      errors.category = 'Category is required.';
     }
+
+    if (!addForm.price.trim()) {
+      errors.price = 'Price is required.';
+    } else if (!Number.isFinite(price)) {
+      errors.price = 'Price must be a number.';
+    } else if (price <= 0) {
+      errors.price = 'Price must be greater than 0.';
+    } else if (!/^\d+(\.\d{1,2})?$/.test(addForm.price.trim())) {
+      errors.price = 'Price can have at most 2 decimal places.';
+    }
+
+    if (calories !== null && (!Number.isFinite(calories) || calories < 0)) {
+      errors.calories = 'Calories must be 0 or more.';
+    }
+
+    if (sugar !== null && (!Number.isFinite(sugar) || sugar < 0)) {
+      errors.sugar = 'Sugar must be 0 or more.';
+    }
+
+    setDrinkErrors(errors);
+    if (nameError || !addForm.name.trim() || Object.values(errors).some(Boolean)) return;
+
     setAdding(true);
     try {
       const payload = {
@@ -285,6 +326,7 @@ export default function StoreStaffPage() {
       }
       setShowAddModal(false);
       setNameError('');
+      setDrinkErrors(EMPTY_DRINK_ERRORS);
       setEditingMenuItem(null);
       setAddForm({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
     } catch (err) {
@@ -373,6 +415,7 @@ export default function StoreStaffPage() {
               setAddForm({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
               setAddError('');
               setNameError('');
+              setDrinkErrors(EMPTY_DRINK_ERRORS);
               setShowAddModal(true);
             }}
           >
@@ -616,7 +659,9 @@ export default function StoreStaffPage() {
               </button>
             </div>
 
-            <form onSubmit={handleAddDrink}>
+            {/* noValidate: the native constraint bubbles fire before handleAddDrink and
+                would pre-empt the styled per-field messages below. */}
+            <form onSubmit={handleAddDrink} noValidate>
               <div className={styles.modalBody}>
 
                 {/* Image upload */}
@@ -662,14 +707,30 @@ export default function StoreStaffPage() {
                 <div className={styles.formRow}>
                   <div className={styles.formField}>
                     <label className={styles.formLabel}>Category <span className={styles.required}>*</span></label>
-                    <input className={styles.formInput} value={addForm.category} onChange={e => setAddForm(f => ({ ...f, category: e.target.value }))} placeholder="e.g. Milk Tea" list="cat-list" />
+                    <input
+                      className={`${styles.formInput} ${drinkErrors.category ? styles.formInputError : ''}`}
+                      value={addForm.category}
+                      onChange={e => updateDrinkField('category', e.target.value)}
+                      placeholder="e.g. Milk Tea"
+                      list="cat-list"
+                    />
                     <datalist id="cat-list">
                       {Array.from(new Set(items.map(i => i.category))).sort().map(c => <option key={c} value={c} />)}
                     </datalist>
+                    {drinkErrors.category && <p className={styles.fieldError}>{drinkErrors.category}</p>}
                   </div>
                   <div className={styles.formField}>
                     <label className={styles.formLabel}>Price (S$) <span className={styles.required}>*</span></label>
-                    <input className={styles.formInput} type="number" min="0" step="0.01" value={addForm.price} onChange={e => setAddForm(f => ({ ...f, price: e.target.value }))} placeholder="5.90" />
+                    <input
+                      className={`${styles.formInput} ${drinkErrors.price ? styles.formInputError : ''}`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={addForm.price}
+                      onChange={e => updateDrinkField('price', e.target.value)}
+                      placeholder="5.90"
+                    />
+                    {drinkErrors.price && <p className={styles.fieldError}>{drinkErrors.price}</p>}
                   </div>
                 </div>
 
@@ -687,11 +748,29 @@ export default function StoreStaffPage() {
                 <div className={styles.formRow3}>
                   <div className={styles.formField}>
                     <label className={styles.formLabel}>Calories (kcal)</label>
-                    <input className={styles.formInput} type="number" min="0" step="1" value={addForm.calories} onChange={e => setAddForm(f => ({ ...f, calories: e.target.value }))} placeholder="180" />
+                    <input
+                      className={`${styles.formInput} ${drinkErrors.calories ? styles.formInputError : ''}`}
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={addForm.calories}
+                      onChange={e => updateDrinkField('calories', e.target.value)}
+                      placeholder="180"
+                    />
+                    {drinkErrors.calories && <p className={styles.fieldError}>{drinkErrors.calories}</p>}
                   </div>
                   <div className={styles.formField}>
                     <label className={styles.formLabel}>Sugar (g)</label>
-                    <input className={styles.formInput} type="number" min="0" step="0.1" value={addForm.sugar} onChange={e => setAddForm(f => ({ ...f, sugar: e.target.value }))} placeholder="24" />
+                    <input
+                      className={`${styles.formInput} ${drinkErrors.sugar ? styles.formInputError : ''}`}
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={addForm.sugar}
+                      onChange={e => updateDrinkField('sugar', e.target.value)}
+                      placeholder="24"
+                    />
+                    {drinkErrors.sugar && <p className={styles.fieldError}>{drinkErrors.sugar}</p>}
                   </div>
                   <div className={styles.formField}>
                     <label className={styles.formLabel}>Nutri-Grade</label>

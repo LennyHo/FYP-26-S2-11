@@ -292,6 +292,29 @@
   color: #a22d00;
 }
 
+/* Inline per-field validation message, shown under the offending input. */
+.fieldError {
+  display: block;
+  margin-top: 6px;
+  color: #a22d00;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.inputError,
+.inputError:focus {
+  border-color: #a22d00;
+}
+
+.fieldHint {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
 .register {
   margin-top: 14px;
   color: var(--muted);

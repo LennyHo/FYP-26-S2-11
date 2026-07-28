@@ -39,6 +39,20 @@ function normalizeImagePath(image, itemId) {
   return "/img/bubble_teas/b001.jpg";
 }
 
+// Returns a field-specific error message for a drink payload, or "" when valid.
+// Mirrors the per-field checks the store-staff form shows, so a direct API call
+// gets the same rules the browser enforces.
+function validateDrinkFields({ name, category, price, calories, sugar }) {
+  if (!name) return "Drink name is required.";
+  if (!category) return "Category is required.";
+  if (!Number.isFinite(price)) return "Price must be a number.";
+  if (price <= 0) return "Price must be greater than 0.";
+  if (Math.round(price * 100) !== price * 100) return "Price can have at most 2 decimal places.";
+  if (calories < 0) return "Calories must be 0 or more.";
+  if (sugar < 0) return "Sugar must be 0 or more.";
+  return "";
+}
+
 function publicMenuItem(item) {
   const nutrition = item.nutritionInfo || {};
   return {
@@ -126,11 +140,9 @@ async function createMenuItem(req, res) {
       ? String(req.body.nutriGrade).toUpperCase()
       : "B";
 
-    if (!name || !category || !Number.isFinite(price) || price < 0) {
-      return res.status(400).json({
-        ok: false,
-        message: "Name, category, and valid price are required.",
-      });
+    const validationError = validateDrinkFields({ name, category, price, calories, sugar });
+    if (validationError) {
+      return res.status(400).json({ ok: false, message: validationError });
     }
 
     const existingItem = await MenuItem.findOne({
@@ -205,11 +217,9 @@ async function updateMenuItem(req, res) {
       ? String(req.body.nutriGrade).toUpperCase()
       : "B";
 
-    if (!name || !category || !Number.isFinite(price) || price < 0) {
-      return res.status(400).json({
-        ok: false,
-        message: "Name, category, and valid price are required.",
-      });
+    const validationError = validateDrinkFields({ name, category, price, calories, sugar });
+    if (validationError) {
+      return res.status(400).json({ ok: false, message: validationError });
     }
 
     const current = await MenuItem.findOne(query).lean();

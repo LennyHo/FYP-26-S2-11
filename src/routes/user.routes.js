@@ -40,6 +40,11 @@ const User = require("../models/user.model");
 const Store = require("../models/store.model");
 const RoleDescription = require("../models/roleDescription.model");
 const { requireAuth, requireRole } = require("../middleware/auth.middleware");
+const {
+  ADMIN_EMAIL_DOMAINS,
+  validateEmail,
+  validatePassword,
+} = require("../utils/validation.util");
 
 const router = express.Router();
 
@@ -127,11 +132,23 @@ router.post("/users", requireAuth, requireRole("user_admin"), async (req, res) =
     const allowedRoles = ["customer", "store_staff", "user_admin"];
     const allowedStatuses = ["active", "suspended", "inactive"];
 
-    if (!fullName || !email || password.length < 6 || !allowedRoles.includes(role) || !allowedStatuses.includes(status)) {
+    if (!fullName || !allowedRoles.includes(role) || !allowedStatuses.includes(status)) {
       return res.status(400).json({
         ok: false,
         message: "Name, email, password, role and status are required.",
       });
+    }
+
+    // Same rules as the public register form, plus @driptea.com so the admin can
+    // create staff and admin accounts.
+    const emailError = validateEmail(email, ADMIN_EMAIL_DOMAINS);
+    if (emailError) {
+      return res.status(400).json({ ok: false, message: emailError });
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return res.status(400).json({ ok: false, message: passwordError });
     }
 
     let store = null;
@@ -200,7 +217,11 @@ router.patch("/users/:id", async (req, res) => {
 
     if (req.body.email !== undefined) {
       update.email = String(req.body.email || "").trim().toLowerCase();
-      if (!update.email) return res.status(400).json({ ok: false, message: "Email is required." });
+
+      // The admin edit form shares its email field with the create form, so it
+      // is held to the same domain rules.
+      const emailError = validateEmail(update.email, ADMIN_EMAIL_DOMAINS);
+      if (emailError) return res.status(400).json({ ok: false, message: emailError });
 
       const duplicate = await User.findOne({ email: update.email, _id: { $ne: req.params.id } }).lean();
       if (duplicate) return res.status(409).json({ ok: false, message: "An account with this email already exists." });

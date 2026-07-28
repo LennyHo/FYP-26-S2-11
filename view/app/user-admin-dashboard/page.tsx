@@ -44,6 +44,7 @@ import AdminHeader from '../components/layout/AdminHeader';
 import { createUserAccount, getRoleDescriptions, getUsers, suspendUser, updateRoleDescription, updateUser } from '../utils/adminApi';
 import { clearStoredUser, getStoredUser, isSessionExpiredError, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
 import { useOutlets } from '../utils/outlets';
+import { ADMIN_EMAIL_DOMAINS, PASSWORD_HINT, validateEmail, validatePassword } from '../utils/validation';
 import styles from './page.module.css';
 
 type ActiveTab = 'profiles' | 'accounts';
@@ -225,6 +226,7 @@ export default function UserAdminDashboardPage() {
   const [message, setMessage] = useState('');
   const [formError, setFormError] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [viewingUser, setViewingUser] = useState<DripTeaUser | null>(null);
   const [formMode, setFormMode] = useState<FormMode | null>(null);
   const [roleFieldLocked, setRoleFieldLocked] = useState(false);
@@ -296,6 +298,7 @@ export default function UserAdminDashboardPage() {
     setMessage('');
     setFormError('');
     setEmailError('');
+    setPasswordError('');
     setEditingUser(null);
     setFormData(emptyForm());
     setRoleFieldLocked(false);
@@ -306,6 +309,7 @@ export default function UserAdminDashboardPage() {
     setMessage('');
     setFormError('');
     setEmailError('');
+    setPasswordError('');
     setEditingUser(user);
     setFormData(formFromUser(user));
     setFormMode('edit');
@@ -314,6 +318,7 @@ export default function UserAdminDashboardPage() {
   function closeFormModal() {
     setFormError('');
     setEmailError('');
+    setPasswordError('');
     setFormMode(null);
     setEditingUser(null);
     setFormData(emptyForm());
@@ -323,8 +328,18 @@ export default function UserAdminDashboardPage() {
     updateFormField('email', value);
     const normalized = value.trim().toLowerCase();
     if (!normalized) { setEmailError(''); return; }
+
+    // Same domain rule as the register form, plus @driptea.com for staff/admin accounts.
+    const formatError = validateEmail(normalized, ADMIN_EMAIL_DOMAINS);
+    if (formatError) { setEmailError(formatError); return; }
+
     const duplicate = users.some(u => u.email.toLowerCase() === normalized && u.id !== editingUser?.id);
     setEmailError(duplicate ? 'An account with this email already exists.' : '');
+  }
+
+  function handlePasswordChange(value: string) {
+    updateFormField('password', value);
+    setPasswordError(value ? validatePassword(value) : '');
   }
 
   function updateFormField(field: Exclude<keyof UserFormState, 'addresses'>, value: string) {
@@ -370,7 +385,15 @@ export default function UserAdminDashboardPage() {
   async function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError('');
-    if (emailError) return;
+
+    const nextEmailError = validateEmail(formData.email, ADMIN_EMAIL_DOMAINS);
+    // A new account sets a password here; editing leaves the existing one untouched.
+    const nextPasswordError = formMode === 'create' ? validatePassword(formData.password) : '';
+
+    if (nextEmailError) setEmailError(nextEmailError);
+    setPasswordError(nextPasswordError);
+
+    if (nextEmailError || nextPasswordError || emailError) return;
 
     if (formData.role === 'store_staff' && !formData.storeCode) {
       setFormError('A store is required for store staff accounts.');
@@ -681,10 +704,9 @@ export default function UserAdminDashboardPage() {
                           title={`Add ${profile.label} user`}
                           aria-label={`Add ${profile.label} user`}
                           onClick={() => {
+                            openCreateModal();
                             setFormData({ ...emptyForm(), role: profile.value });
-                            setEditingUser(null);
                             setRoleFieldLocked(true);
-                            setFormMode('create');
                           }}
                         >
                           <FaUserPlus />
@@ -949,11 +971,13 @@ export default function UserAdminDashboardPage() {
                       type="email"
                       value={formData.email}
                       onChange={(event) => handleEmailChange(event.target.value)}
-                      placeholder="email@example.com"
+                      placeholder="email@gmail.com or name@driptea.com"
                       className={emailError ? styles.inputError : undefined}
                       required
                     />
-                    {emailError && <span className={styles.fieldError}>{emailError}</span>}
+                    {emailError
+                      ? <span className={styles.fieldError}>{emailError}</span>
+                      : <span className={styles.fieldHint}>Accepted: {ADMIN_EMAIL_DOMAINS.map(d => `@${d}`).join(', ')}</span>}
                   </label>
                   {formMode === 'create' && (
                     <label className={styles.formGridFull}>
@@ -961,11 +985,14 @@ export default function UserAdminDashboardPage() {
                       <input
                         type="password"
                         value={formData.password}
-                        onChange={(event) => updateFormField('password', event.target.value)}
-                        placeholder="Minimum 6 characters"
-                        minLength={6}
+                        onChange={(event) => handlePasswordChange(event.target.value)}
+                        placeholder="Create a password"
+                        className={passwordError ? styles.inputError : undefined}
                         required
                       />
+                      {passwordError
+                        ? <span className={styles.fieldError}>{passwordError}</span>
+                        : <span className={styles.fieldHint}>{PASSWORD_HINT}</span>}
                     </label>
                   )}
                   <div className={styles.fieldGroup}>
@@ -1063,7 +1090,7 @@ export default function UserAdminDashboardPage() {
                 <button type="button" className={styles.secondaryButton} onClick={closeFormModal}>
                   Cancel
                 </button>
-                <button type="submit" className={styles.primaryButton} disabled={isSaving || Boolean(emailError)}>
+                <button type="submit" className={styles.primaryButton} disabled={isSaving || Boolean(emailError) || Boolean(passwordError)}>
                   {isSaving ? 'Saving...' : 'Save User'}
                 </button>
               </div>

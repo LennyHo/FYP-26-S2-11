@@ -20,6 +20,14 @@
 
 const mongoose = require("mongoose");
 const crypto = require("crypto");
+const {
+  CUSTOMER_EMAIL_DOMAINS,
+  LOGIN_EMAIL_DOMAINS,
+  STAFF_RESET_BLOCKED_MESSAGE,
+  validateEmail,
+  validatePassword,
+  validateResetEmail,
+} = require("../utils/validation.util");
 
 const SESSION_TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 
@@ -146,10 +154,24 @@ userSchema.statics.register = async function register({ fullName, email, passwor
   email = normalizeEmail(email);
   password = String(password || "");
 
-  if (!fullName || !email || password.length < 6) {
-    const error = new Error(
-      "Full name, valid email, and password of at least 6 characters are required."
-    );
+  if (!fullName) {
+    const error = new Error("Full name is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Customers self-register with a consumer mailbox only — @driptea.com accounts
+  // are staff/admin and are created from the user-admin dashboard instead.
+  const emailError = validateEmail(email, CUSTOMER_EMAIL_DOMAINS);
+  if (emailError) {
+    const error = new Error(emailError);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    const error = new Error(passwordError);
     error.statusCode = 400;
     throw error;
   }
@@ -184,6 +206,15 @@ userSchema.statics.register = async function register({ fullName, email, passwor
 userSchema.statics.login = async function login({ email, password }) {
   email = normalizeEmail(email);
   password = String(password || "");
+
+  // Reject domains the platform never issues accounts for, before touching the DB.
+  // Deliberately reuses the generic credential error so this cannot be used to
+  // probe which domains hold accounts.
+  if (validateEmail(email, LOGIN_EMAIL_DOMAINS)) {
+    const error = new Error("Invalid email or password.");
+    error.statusCode = 401;
+    throw error;
+  }
 
   const user = await this.findOne({ email }).lean();
 
@@ -220,25 +251,50 @@ userSchema.statics.resetPassword = async function resetPassword({
   email = normalizeEmail(email);
   const password = String(newPassword || "");
 
-  if (!email || password.length < 6) {
-    const error = new Error(
-      "Email and a new password of at least 6 characters are required."
-    );
+  // Blocks @driptea.com before any lookup — staff and admin accounts are reset
+  // by DripTea administration, never through the public self-service form.
+  const emailError = validateResetEmail(email);
+  if (emailError) {
+    const error = new Error(emailError);
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    const error = new Error(passwordError);
     error.statusCode = 400;
+    throw error;
+  }
+
+  const existingUser = await this.findOne({ email }).lean();
+
+  if (!existingUser) {
+    const error = new Error("No account was found for that email address.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Second gate on the stored role, in case a privileged account was ever created
+  // on a non-driptea address — the domain check alone would miss it.
+  if (existingUser.role !== "customer") {
+    const error = new Error(STAFF_RESET_BLOCKED_MESSAGE);
+    error.statusCode = 403;
     throw error;
   }
 
   const updatedUser = await this.findOneAndUpdate(
     { email },
-    { $set: createPasswordRecord(password) },
+    {
+      $set: {
+        ...createPasswordRecord(password),
+        // A reset must end any session already open on the account.
+        sessionToken: null,
+        sessionTokenExpiresAt: null,
+      },
+    },
     { returnDocument: "after" }
   ).lean();
-
-  if (!updatedUser) {
-    const error = new Error("No account was found for that email address.");
-    error.statusCode = 404;
-    throw error;
-  }
 
   return publicUser(updatedUser);
 };

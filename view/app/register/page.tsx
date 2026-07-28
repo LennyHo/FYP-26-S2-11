@@ -9,6 +9,12 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import styles from './register.module.css';
 import { registerCustomer } from '../utils/customerApi';
+import {
+  CUSTOMER_EMAIL_DOMAINS,
+  PASSWORD_HINT,
+  validateEmail,
+  validatePassword,
+} from '../utils/validation';
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -45,9 +51,17 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<keyof FormData, string>>({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
 
   function updateField(field: keyof FormData, value: string) {
     setFormData(current => ({ ...current, [field]: value }));
+    // Clear the field's error as soon as the user starts correcting it.
+    setFieldErrors(current => (current[field] ? { ...current, [field]: '' } : current));
   }
 
   async function handleRegister(event: React.FormEvent<HTMLFormElement>) {
@@ -55,11 +69,21 @@ export default function RegisterPage() {
     setStatusMessage('');
     setIsError(false);
 
-    if (formData.password !== formData.confirmPassword) {
-      setIsError(true);
-      setStatusMessage('Passwords do not match.');
-      return;
+    const errors: Record<keyof FormData, string> = {
+      fullName: formData.fullName.trim() ? '' : 'Full name is required.',
+      email: validateEmail(formData.email, CUSTOMER_EMAIL_DOMAINS),
+      password: validatePassword(formData.password),
+      confirmPassword: '',
+    };
+
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password.';
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match.';
     }
+
+    setFieldErrors(errors);
+    if (Object.values(errors).some(Boolean)) return;
 
     setIsSubmitting(true);
 
@@ -74,8 +98,15 @@ export default function RegisterPage() {
         router.push('/login');
       }, 700);
     } catch (error) {
-      setIsError(true);
-      setStatusMessage(error instanceof Error ? error.message : 'Unable to create account.');
+      const message = error instanceof Error ? error.message : 'Unable to create account.';
+      // The backend owns the duplicate-email check (it is the only source that can
+      // see the users collection) — surface it on the email field, not as a banner.
+      if (/already exists/i.test(message)) {
+        setFieldErrors(current => ({ ...current, email: message }));
+      } else {
+        setIsError(true);
+        setStatusMessage(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -90,19 +121,20 @@ export default function RegisterPage() {
             <p className={styles.subtitle}>Create your customer account, then sign in to start ordering.</p>
           </div>
 
-          <form className={styles.form} autoComplete="off" onSubmit={handleRegister}>
+          <form className={styles.form} autoComplete="off" noValidate onSubmit={handleRegister}>
             <div>
               <label htmlFor="fullName" className={styles.label}>Full name</label>
               <input
                 type="text"
                 id="fullName"
                 name="fullName"
-                required
-                className={styles.input}
+                className={`${styles.input} ${fieldErrors.fullName ? styles.inputError : ''}`}
                 placeholder="Your full name"
                 value={formData.fullName}
                 onChange={(event) => updateField('fullName', event.target.value)}
+                aria-invalid={Boolean(fieldErrors.fullName)}
               />
+              {fieldErrors.fullName && <span className={styles.fieldError}>{fieldErrors.fullName}</span>}
             </div>
             <div>
               <label htmlFor="email" className={styles.label}>Email</label>
@@ -110,12 +142,15 @@ export default function RegisterPage() {
                 type="email"
                 id="email"
                 name="email"
-                required
-                className={styles.input}
+                className={`${styles.input} ${fieldErrors.email ? styles.inputError : ''}`}
                 placeholder="username@gmail.com"
                 value={formData.email}
                 onChange={(event) => updateField('email', event.target.value)}
+                aria-invalid={Boolean(fieldErrors.email)}
               />
+              {fieldErrors.email
+                ? <span className={styles.fieldError}>{fieldErrors.email}</span>
+                : <span className={styles.fieldHint}>Accepted: {CUSTOMER_EMAIL_DOMAINS.map(d => `@${d}`).join(', ')}</span>}
             </div>
             <div>
               <label htmlFor="password" className={styles.label}>Password</label>
@@ -124,13 +159,12 @@ export default function RegisterPage() {
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
-                  required
-                  minLength={6}
-                  className={styles.input}
-                  placeholder="Create password (min. 6 characters)"
+                  className={`${styles.input} ${fieldErrors.password ? styles.inputError : ''}`}
+                  placeholder="Create a password"
                   value={formData.password}
                   onChange={(event) => updateField('password', event.target.value)}
                   autoComplete="new-password"
+                  aria-invalid={Boolean(fieldErrors.password)}
                 />
                 <button
                   type="button"
@@ -141,6 +175,9 @@ export default function RegisterPage() {
                   <EyeIcon open={showPassword} />
                 </button>
               </div>
+              {fieldErrors.password
+                ? <span className={styles.fieldError}>{fieldErrors.password}</span>
+                : <span className={styles.fieldHint}>{PASSWORD_HINT}</span>}
             </div>
             <div>
               <label htmlFor="confirmPassword" className={styles.label}>Confirm password</label>
@@ -149,13 +186,12 @@ export default function RegisterPage() {
                   type={showConfirm ? 'text' : 'password'}
                   id="confirmPassword"
                   name="confirmPassword"
-                  required
-                  minLength={6}
-                  className={styles.input}
+                  className={`${styles.input} ${fieldErrors.confirmPassword ? styles.inputError : ''}`}
                   placeholder="Repeat your password"
                   value={formData.confirmPassword}
                   onChange={(event) => updateField('confirmPassword', event.target.value)}
                   autoComplete="new-password"
+                  aria-invalid={Boolean(fieldErrors.confirmPassword)}
                 />
                 <button
                   type="button"
@@ -166,6 +202,7 @@ export default function RegisterPage() {
                   <EyeIcon open={showConfirm} />
                 </button>
               </div>
+              {fieldErrors.confirmPassword && <span className={styles.fieldError}>{fieldErrors.confirmPassword}</span>}
             </div>
             <button type="submit" className={styles.button} disabled={isSubmitting}>
               {isSubmitting ? 'creating account...' : 'get started with DRIPTEA'}
