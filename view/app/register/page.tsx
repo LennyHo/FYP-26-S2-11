@@ -60,7 +60,7 @@ export default function RegisterPage() {
 
   function updateField(field: keyof FormData, value: string) {
     setFormData(current => ({ ...current, [field]: value }));
-    // Clear the field's error as soon as the user starts correcting it.
+    // Clears the error once the user starts typing again.
     setFieldErrors(current => (current[field] ? { ...current, [field]: '' } : current));
   }
 
@@ -99,8 +99,7 @@ export default function RegisterPage() {
       }, 700);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to create account.';
-      // The backend owns the duplicate-email check (it is the only source that can
-      // see the users collection) — surface it on the email field, not as a banner.
+      // Duplicate email is checked in the backend, so show it on the email field.
       if (/already exists/i.test(message)) {
         setFieldErrors(current => ({ ...current, email: message }));
       } else {

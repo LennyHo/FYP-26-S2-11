@@ -48,6 +48,7 @@ import {
   createInventoryItem,
   updateInventoryQty,
   deleteInventoryItem,
+  getInventoryItem,
   type DripTeaInventoryItem,
 } from '../utils/staffApi';
 import { isSessionExpiredError, clearStoredUser } from '../utils/api.base';
@@ -83,7 +84,7 @@ export default function StoreStaffPage() {
   const [addForm, setAddForm] = useState({ name: '', category: '', price: '', description: '', ingredients: '', calories: '', sugar: '', nutriGrade: 'B', tags: '', status: 'active', image: '' });
   const [addError, setAddError] = useState('');
   const [nameError, setNameError] = useState('');
-  // Per-field validation messages for the add/edit drink modal.
+  // Error message for each field in the add drink form.
   const [drinkErrors, setDrinkErrors] = useState({ category: '', price: '', calories: '', sugar: '' });
   const [adding, setAdding] = useState(false);
   const [editingMenuItem, setEditingMenuItem] = useState<DripTeaMenuItem | null>(null);
@@ -97,6 +98,7 @@ export default function StoreStaffPage() {
   const [createForm, setCreateForm] = useState<CreateInventoryForm>(EMPTY_INVENTORY_FORM);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewingInventoryItem, setViewingInventoryItem] = useState<DripTeaInventoryItem | null>(null);
 
   function handleNameChange(value: string) {
     setAddForm(f => ({ ...f, name: value }));
@@ -108,7 +110,7 @@ export default function StoreStaffPage() {
 
   const EMPTY_DRINK_ERRORS = { category: '', price: '', calories: '', sugar: '' };
 
-  // Updates one field of the add/edit drink form and clears that field's error.
+  // Updates one field and clears its error message.
   function updateDrinkField(field: keyof typeof addForm, value: string) {
     setAddForm(f => ({ ...f, [field]: value }));
     setDrinkErrors(current => (field in current && current[field as keyof typeof current]
@@ -195,6 +197,20 @@ export default function StoreStaffPage() {
       if (isSessionExpiredError(err)) return handleSessionExpired();
       console.error('[Store staff inventory adjust]', err);
       setInventory(prev => prev.map(i => i._id === item._id ? { ...i, quantity: item.quantity } : i));
+    }
+  };
+
+  // Opens the details modal for one inventory item.
+  const openInventoryItem = async (item: DripTeaInventoryItem) => {
+    setInventoryError('');
+    // Shows the row data first, then replaces it with the full record from the backend.
+    setViewingInventoryItem(item);
+    try {
+      const res = await getInventoryItem(item._id);
+      setViewingInventoryItem(res.data);
+    } catch (err) {
+      if (isSessionExpiredError(err)) return handleSessionExpired();
+      console.error('[Store staff inventory view]', err);
     }
   };
 
@@ -612,7 +628,14 @@ export default function StoreStaffPage() {
                   <tr key={item._id} className={item.quantity <= item.lowStockThreshold ? styles.rowLowStock : ''}>
                     <td>
                       <div className={styles.itemNameCell}>
-                        <span className={styles.itemNameLink}>{item.name}</span>
+                        <button
+                          type="button"
+                          className={styles.itemNameLink}
+                          onClick={() => void openInventoryItem(item)}
+                          title={`View ${item.name}`}
+                        >
+                          {item.name}
+                        </button>
                         {item.quantity <= item.lowStockThreshold && <span className={styles.lowBadge}>Low stock</span>}
                       </div>
                     </td>
@@ -659,8 +682,7 @@ export default function StoreStaffPage() {
               </button>
             </div>
 
-            {/* noValidate: the native constraint bubbles fire before handleAddDrink and
-                would pre-empt the styled per-field messages below. */}
+            {/* noValidate so the browser popup does not replace our error messages */}
             <form onSubmit={handleAddDrink} noValidate>
               <div className={styles.modalBody}>
 
@@ -814,6 +836,46 @@ export default function StoreStaffPage() {
               </div>
             </form>
 
+          </div>
+        </div>
+      )}
+
+      {viewingInventoryItem && (
+        <div className={styles.modalOverlay} onClick={() => setViewingInventoryItem(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>{viewingInventoryItem.name}</h2>
+              <button type="button" className={styles.modalClose} onClick={() => setViewingInventoryItem(null)} aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <dl className={styles.detailList}>
+                <div className={styles.detailRow}>
+                  <dt>Stock</dt>
+                  <dd>
+                    {viewingInventoryItem.quantity} {viewingInventoryItem.unit}
+                    {viewingInventoryItem.quantity <= viewingInventoryItem.lowStockThreshold && (
+                      <span className={styles.lowBadge}>Low stock</span>
+                    )}
+                  </dd>
+                </div>
+                <div className={styles.detailRow}>
+                  <dt>Low Stock Threshold</dt>
+                  <dd>{viewingInventoryItem.lowStockThreshold}</dd>
+                </div>
+                <div className={styles.detailRow}>
+                  <dt>Description</dt>
+                  <dd>{viewingInventoryItem.description || '—'}</dd>
+                </div>
+                {viewingInventoryItem.updatedAt && (
+                  <div className={styles.detailRow}>
+                    <dt>Last Updated</dt>
+                    <dd>{new Date(viewingInventoryItem.updatedAt).toLocaleString('en-SG')}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
           </div>
         </div>
       )}

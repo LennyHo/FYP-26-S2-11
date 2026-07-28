@@ -329,7 +329,7 @@ export default function UserAdminDashboardPage() {
     const normalized = value.trim().toLowerCase();
     if (!normalized) { setEmailError(''); return; }
 
-    // Same domain rule as the register form, plus @driptea.com for staff/admin accounts.
+    // Allows @driptea.com as well, for staff and admin accounts.
     const formatError = validateEmail(normalized, ADMIN_EMAIL_DOMAINS);
     if (formatError) { setEmailError(formatError); return; }
 
@@ -387,7 +387,7 @@ export default function UserAdminDashboardPage() {
     setFormError('');
 
     const nextEmailError = validateEmail(formData.email, ADMIN_EMAIL_DOMAINS);
-    // A new account sets a password here; editing leaves the existing one untouched.
+    // Only the create form sets a password, editing does not change it.
     const nextPasswordError = formMode === 'create' ? validatePassword(formData.password) : '';
 
     if (nextEmailError) setEmailError(nextEmailError);

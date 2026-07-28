@@ -422,8 +422,8 @@
   max-width: 500px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 24px 48px rgba(37, 99, 235, 0.24);
-  border: 1px solid rgba(147, 197, 253, 0.6);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   animation: modalIn 0.2s ease-out;
 }
 
@@ -728,6 +728,56 @@
   font-weight: 600;
   color: #1e293b;
   font-size: 0.9rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.itemNameLink:hover {
+  color: #ea580c;
+  text-decoration: underline;
+}
+
+/* Label and value rows in the inventory details modal */
+.detailList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.detailRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.detailRow dt {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.detailRow dd {
+  margin: 0;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .unitCell { color: #475569; font-size: 0.88rem; }

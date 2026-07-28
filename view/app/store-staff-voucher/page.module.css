@@ -241,7 +241,11 @@
   transition: color 0.15s;
 }
 
-.itemNameLink:hover { color: #c2410c; }
+
+.itemNameLink:hover {
+  color: #c2410c;
+  text-decoration: underline;
+}
 
 .codeCell {
   font-weight: 700;

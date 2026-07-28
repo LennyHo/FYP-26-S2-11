@@ -46,9 +46,8 @@ export default function LoginPage() {
     const password = passwordRef.current?.value || '';
     const newErrors = { email: '', password: '' };
 
-    // Accepts the customer domains plus @driptea.com, which staff and admins use.
-    // No password-format rule here: existing accounts predate the current policy,
-    // and enforcing it at login would leak the policy to anyone guessing.
+    // Allows @driptea.com here because staff and admin log in on this page.
+    // No password rule on login, older accounts may not match the new rule.
     newErrors.email = validateEmail(email, LOGIN_EMAIL_DOMAINS);
 
     if (!password) {

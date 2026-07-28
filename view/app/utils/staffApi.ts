@@ -110,6 +110,13 @@ export function getInventory() {
   return requestJson<{ ok: boolean; data: DripTeaInventoryItem[] }>('/api/inventory');
 }
 
+// Fetches one inventory item. GET /api/inventory/:id
+export function getInventoryItem(id: string) {
+  return requestJson<{ ok: boolean; data: DripTeaInventoryItem }>(
+    `/api/inventory/${encodeURIComponent(id)}`
+  );
+}
+
 // Creates a new inventory item. POST /api/inventory
 export function createInventoryItem(payload: {
   name: string;

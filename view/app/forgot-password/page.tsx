@@ -28,8 +28,7 @@ export default function ForgotPasswordPage() {
     setError('');
     if (!email.trim()) return;
 
-    // Stops @driptea.com (and non-customer domains) before the account is even
-    // looked up, so staff never reach the new-password step.
+    // Stops staff and admin emails at step 1, before the new password step.
     const emailError = validateResetEmail(email);
     if (emailError) {
       setError(emailError);
@@ -51,8 +50,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
 
-    // Same password rule as register, so a reset cannot set a weaker password
-    // than the one the account was created with.
+    // Uses the same password rule as the register page.
     const passwordError = validatePassword(newPassword);
     if (passwordError) {
       setError(passwordError);

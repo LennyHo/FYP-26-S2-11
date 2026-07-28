@@ -39,9 +39,8 @@ function normalizeImagePath(image, itemId) {
   return "/img/bubble_teas/b001.jpg";
 }
 
-// Returns a field-specific error message for a drink payload, or "" when valid.
-// Mirrors the per-field checks the store-staff form shows, so a direct API call
-// gets the same rules the browser enforces.
+// Checks the drink fields from the store staff form.
+// Returns an error message for the first bad field, or "" when all are valid.
 function validateDrinkFields({ name, category, price, calories, sugar }) {
   if (!name) return "Drink name is required.";
   if (!category) return "Category is required.";

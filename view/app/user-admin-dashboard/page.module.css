@@ -387,8 +387,7 @@
   font-weight: 700;
 }
 
-/* font-variant is reset because .formGrid label sets small-caps, which these
-   full-sentence validation messages inherit and which hurts legibility. */
+/* font-variant is reset here because the label sets small-caps */
 .fieldError {
   color: #b91c1c;
   text-transform: none;
@@ -399,7 +398,7 @@
   line-height: 1.4;
 }
 
-/* Neutral helper text under a field, replaced by .fieldError when validation fails. */
+/* Hint text, replaced by .fieldError when validation fails */
 .fieldHint {
   color: #64748b;
   text-transform: none;

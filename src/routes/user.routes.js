@@ -139,8 +139,7 @@ router.post("/users", requireAuth, requireRole("user_admin"), async (req, res) =
       });
     }
 
-    // Same rules as the public register form, plus @driptea.com so the admin can
-    // create staff and admin accounts.
+    // Allows @driptea.com as well, so the admin can create staff accounts.
     const emailError = validateEmail(email, ADMIN_EMAIL_DOMAINS);
     if (emailError) {
       return res.status(400).json({ ok: false, message: emailError });
@@ -218,8 +217,7 @@ router.patch("/users/:id", async (req, res) => {
     if (req.body.email !== undefined) {
       update.email = String(req.body.email || "").trim().toLowerCase();
 
-      // The admin edit form shares its email field with the create form, so it
-      // is held to the same domain rules.
+      // Edit form uses the same email rule as the create form.
       const emailError = validateEmail(update.email, ADMIN_EMAIL_DOMAINS);
       if (emailError) return res.status(400).json({ ok: false, message: emailError });
 

@@ -127,8 +127,7 @@ userSchema.statics.register = async function register({ fullName, email, passwor
     throw error;
   }
 
-  // Customers self-register with a consumer mailbox only — @driptea.com accounts
-  // are staff/admin and are created from the user-admin dashboard instead.
+  // Customers can only register with gmail, outlook or hotmail.
   const emailError = validateEmail(email, CUSTOMER_EMAIL_DOMAINS);
   if (emailError) {
     const error = new Error(emailError);
@@ -174,9 +173,8 @@ userSchema.statics.login = async function login({ email, password }) {
   email = normalizeEmail(email);
   password = String(password || "");
 
-  // Reject domains the platform never issues accounts for, before touching the DB.
-  // Deliberately reuses the generic credential error so this cannot be used to
-  // probe which domains hold accounts.
+  // Uses the same "Invalid email or password" message so the login page
+  // does not reveal which emails exist.
   if (validateEmail(email, LOGIN_EMAIL_DOMAINS)) {
     const error = new Error("Invalid email or password.");
     error.statusCode = 401;
@@ -218,8 +216,7 @@ userSchema.statics.resetPassword = async function resetPassword({
   email = normalizeEmail(email);
   const password = String(newPassword || "");
 
-  // Blocks @driptea.com before any lookup — staff and admin accounts are reset
-  // by DripTea administration, never through the public self-service form.
+  // Staff and admin accounts cannot reset their own password.
   const emailError = validateResetEmail(email);
   if (emailError) {
     const error = new Error(emailError);
@@ -242,8 +239,7 @@ userSchema.statics.resetPassword = async function resetPassword({
     throw error;
   }
 
-  // Second gate on the stored role, in case a privileged account was ever created
-  // on a non-driptea address — the domain check alone would miss it.
+  // Also checks the role, in case a staff account was made on a gmail address.
   if (existingUser.role !== "customer") {
     const error = new Error(STAFF_RESET_BLOCKED_MESSAGE);
     error.statusCode = 403;
@@ -255,7 +251,7 @@ userSchema.statics.resetPassword = async function resetPassword({
     {
       $set: {
         ...createPasswordRecord(password),
-        // A reset must end any session already open on the account.
+        // Logs out any session that is already open.
         sessionToken: null,
         sessionTokenExpiresAt: null,
       },

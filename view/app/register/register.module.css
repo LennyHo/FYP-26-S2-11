@@ -292,7 +292,7 @@
   color: #a22d00;
 }
 
-/* Inline per-field validation message, shown under the offending input. */
+/* Field error and hint text */
 .fieldError {
   display: block;
   margin-top: 6px;

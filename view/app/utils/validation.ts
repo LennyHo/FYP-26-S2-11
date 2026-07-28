@@ -1,31 +1,24 @@
-// Shared credential validation rules for the register, login and user-admin forms.
-// Mirrors src/utils/validation.util.js, which enforces the same rules server-side —
-// keep the two in sync. The browser copy exists only to show friendly, per-field
-// messages; the server is what actually enforces them.
+// Email and password rules for the register, login, user admin and reset password forms.
+// These are only for showing error messages. The backend checks the same rules
+// in src/utils/validation.util.js, and both files must match.
 
-// Consumer mailbox providers a customer may self-register with.
+// Domains a customer can register with.
 export const CUSTOMER_EMAIL_DOMAINS = ['gmail.com', 'outlook.com', 'outlook.sg', 'hotmail.com'];
 
-// Internal staff/admin domain — never allowed on the public register form,
-// only on login and on admin-created accounts.
+// Staff and admin domain. Not allowed on the register page.
 export const STAFF_EMAIL_DOMAIN = 'driptea.com';
 
 export const LOGIN_EMAIL_DOMAINS = [...CUSTOMER_EMAIL_DOMAINS, STAFF_EMAIL_DOMAIN];
 
-// The user admin creates both customers and staff, so it accepts the full set.
+// User admin creates both customers and staff, so it allows every domain.
 export const ADMIN_EMAIL_DOMAINS = LOGIN_EMAIL_DOMAINS;
 
-// No separate length rule: 4 letters + 1 digit + 1 symbol already implies a
-// 6-character minimum, and a second length check only produced a message that
-// contradicted the composition rules.
 export const PASSWORD_MIN_LETTERS = 4;
 export const PASSWORD_SYMBOLS = '$%#@&';
 
 export const PASSWORD_HINT = `At least ${PASSWORD_MIN_LETTERS} letters, 1 number, and 1 symbol (${PASSWORD_SYMBOLS})`;
 
-// The local part (before the @) may not contain a full stop at all — this is a
-// DripTea house rule, not an RFC one, and applies to staff and customers alike.
-// Note it rejects addresses real providers do issue, e.g. first.last@gmail.com.
+// No full stop allowed before the @.
 const EMAIL_SHAPE = /^[A-Za-z0-9_+-]+@[^\s@]+\.[^\s@]+$/;
 
 function formatDomainList(domains: string[]) {
@@ -34,7 +27,7 @@ function formatDomainList(domains: string[]) {
   return `${listed.slice(0, -1).join(', ')} or ${listed[listed.length - 1]}`;
 }
 
-// Returns an error message, or '' when the email is acceptable.
+// Returns an error message, or '' when the email is valid.
 export function validateEmail(email: string, allowedDomains: string[]): string {
   const value = String(email || '').trim().toLowerCase();
 
@@ -50,9 +43,7 @@ export function validateEmail(email: string, allowedDomains: string[]): string {
   return '';
 }
 
-// Self-service password reset is for customers only. Staff and admin accounts
-// (@driptea.com) must go through DripTea administration instead, so that a
-// privileged account can never be taken over by whoever knows its email address.
+// Only customers can reset their own password.
 export const STAFF_RESET_BLOCKED_MESSAGE =
   'Staff and administrator accounts cannot be reset here. Please liaise with DripTea administration to reset your password.';
 
@@ -60,14 +51,14 @@ export function isStaffEmail(email: string): boolean {
   return String(email || '').trim().toLowerCase().endsWith(`@${STAFF_EMAIL_DOMAIN}`);
 }
 
-// Returns an error message, or '' when the email may use self-service reset.
+// Returns an error message, or '' when the email is allowed to reset its password.
 export function validateResetEmail(email: string): string {
   if (isStaffEmail(email)) return STAFF_RESET_BLOCKED_MESSAGE;
   return validateEmail(email, CUSTOMER_EMAIL_DOMAINS);
 }
 
-// Returns an error message, or '' when the password meets every rule.
-// Rules: at least 4 letters, at least 1 digit, and at least 1 symbol from $%#@&.
+// Password needs at least 4 letters, 1 number and 1 symbol.
+// Returns an error message, or '' when the password is valid.
 export function validatePassword(password: string): string {
   const value = String(password || '');
 
