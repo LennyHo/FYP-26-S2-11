@@ -39,7 +39,7 @@
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaChevronDown, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUsers } from 'react-icons/fa';
+import { FaBan, FaCheck, FaChevronDown, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUserPlus, FaUsers } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
 import { createUserAccount, getRoleDescriptions, getUsers, suspendUser, updateRoleDescription, updateUser } from '../utils/adminApi';
 import { clearStoredUser, getStoredUser, isSessionExpiredError, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
@@ -490,27 +490,30 @@ export default function UserAdminDashboardPage() {
       <td className={styles.actions}>
         <button
           type="button"
-          className={`${styles.actionBtn} ${styles.actionView}`}
+          className={styles.actionIconBtn}
+          title={`View ${user.fullName}`}
           aria-label={`View ${user.fullName}`}
           onClick={() => setViewingUser(user)}
         >
-          View
+          <FaEye />
         </button>
         <button
           type="button"
-          className={`${styles.actionBtn} ${styles.actionEdit}`}
+          className={styles.actionIconBtn}
+          title={`Edit ${user.fullName}`}
           aria-label={`Edit ${user.fullName}`}
           onClick={() => openEditModal(user)}
         >
-          Edit
+          <FaPen />
         </button>
         <button
           type="button"
-          className={`${styles.actionBtn} ${isActive ? styles.actionSuspend : styles.actionActivate}`}
+          className={styles.actionIconBtn}
           onClick={() => void toggleUserStatus(user)}
+          title={`${isActive ? 'Suspend' : 'Activate'} ${user.fullName}`}
           aria-label={`${isActive ? 'Suspend' : 'Activate'} ${user.fullName}`}
         >
-          {isActive ? 'Suspend' : 'Activate'}
+          {isActive ? <FaBan /> : <FaCheck />}
         </button>
       </td>
     );
@@ -656,23 +659,26 @@ export default function UserAdminDashboardPage() {
                       <td className={styles.actions}>
                         <button
                           type="button"
-                          className={`${styles.actionBtn} ${styles.actionView}`}
+                          className={styles.actionIconBtn}
+                          title={`View ${profile.label}`}
                           aria-label={`View ${profile.label}`}
                           onClick={() => setViewingRole(profile)}
                         >
-                          View
+                          <FaEye />
                         </button>
                         <button
                           type="button"
-                          className={`${styles.actionBtn} ${styles.actionEdit}`}
+                          className={styles.actionIconBtn}
+                          title={`Edit description for ${profile.label}`}
                           aria-label={`Edit description for ${profile.label}`}
                           onClick={() => openDescriptionModal(profile)}
                         >
-                          Edit
+                          <FaPen />
                         </button>
                         <button
                           type="button"
-                          className={`${styles.actionBtn} ${styles.actionAdd}`}
+                          className={styles.actionIconBtn}
+                          title={`Add ${profile.label} user`}
                           aria-label={`Add ${profile.label} user`}
                           onClick={() => {
                             setFormData({ ...emptyForm(), role: profile.value });
@@ -681,17 +687,17 @@ export default function UserAdminDashboardPage() {
                             setFormMode('create');
                           }}
                         >
-                          Add User
+                          <FaUserPlus />
                         </button>
                         <button
                           type="button"
-                          className={`${styles.actionBtn} ${isRoleSuspended ? styles.actionActivate : styles.actionSuspend}`}
+                          className={styles.actionIconBtn}
                           disabled={roleUsers.length === 0}
-                          title={roleUsers.length === 0 ? `No ${profile.label} accounts yet` : undefined}
+                          title={roleUsers.length === 0 ? `No ${profile.label} accounts yet` : (isRoleSuspended ? `Activate all ${profile.label} accounts` : `Suspend all ${profile.label} accounts`)}
                           aria-label={isRoleSuspended ? `Activate all ${profile.label} accounts` : `Suspend all ${profile.label} accounts`}
                           onClick={() => void toggleRoleStatus(profile)}
                         >
-                          {isRoleSuspended ? 'Activate All' : 'Suspend All'}
+                          {isRoleSuspended ? <FaCheck /> : <FaBan />}
                         </button>
                       </td>
                     </tr>

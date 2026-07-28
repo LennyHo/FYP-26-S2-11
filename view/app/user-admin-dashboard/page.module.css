@@ -323,48 +323,26 @@
   gap: 8px;
 }
 
-.actionBtn {
-  padding: 6px 14px;
+.actionIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
   border: none;
   border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  background: rgba(120, 113, 108, 0.1);
+  color: #57534e;
+  font-size: 0.9rem;
   cursor: pointer;
-  white-space: nowrap;
   transition: background 0.15s, color 0.15s;
 }
 
-.actionBtn:disabled { opacity: 0.38; cursor: not-allowed; }
-
-.actionView,
-.actionEdit,
-.actionAdd {
-  background: rgba(120, 113, 108, 0.1);
-  color: #57534e;
-}
-
-.actionView:hover,
-.actionEdit:hover,
-.actionAdd:hover {
+.actionIconBtn:hover {
   background: rgba(120, 113, 108, 0.2);
 }
 
-.actionSuspend {
-  background: rgba(192, 50, 29, 0.12);
-  color: #c0321d;
-}
-
-.actionSuspend:hover {
-  background: rgba(192, 50, 29, 0.2);
-}
-
-.actionActivate {
-  background: #059669;
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.35);
-}
-
-.actionActivate:hover { background: #047857; }
+.actionIconBtn:disabled { opacity: 0.38; cursor: not-allowed; }
 
 .descriptionCell {
   display: block;
@@ -1077,9 +1055,10 @@
     gap: 4px;
   }
 
-  .actionBtn {
-    padding: 5px 10px;
-    font-size: 0.72rem;
+  .actionIconBtn {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
   }
 
   .actionButton {
