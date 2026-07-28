@@ -117,6 +117,8 @@ export interface Message {
     phase: 1 | 2 | 3;
     message: string;
     stepLabels: [string, string, string];
+    orderType?: 'pickup' | 'delivery';
+    deliveryAddress?: string | null;
   } | null;
   voucherCard?: {
     title: string;

@@ -1001,9 +1001,20 @@ function isTrackOrderRequest(message) {
         msg.includes("other orders") ||
         msg.includes("how many orders") ||
         msg.includes("do i have any orders") ||
+        // Delivery-specific phrasing — customers often say "delivery" instead of "order".
+        msg.includes("where is my delivery") ||
+        msg.includes("track my delivery") ||
+        msg.includes("delivery status") ||
+        msg.includes("status of my delivery") ||
+        msg.includes("when will my delivery") ||
+        msg.includes("has my delivery") ||
+        msg.includes("is my delivery on the way") ||
+        msg.includes("check my delivery") ||
         /\border\b.*\bready\b/i.test(msg) ||
         /\border\b.*\bstatus\b/i.test(msg) ||
-        
+        /\bdelivery\b.*\bstatus\b/i.test(msg) ||
+        /\bdelivery\b.*\barriv/i.test(msg) ||
+
         ORDER_NUMBER_RE.test(msg)
     );
 }
@@ -2147,7 +2158,9 @@ const PAGE_DIRECTORY = [
         labels: { en: "Contact Us", ms: "Hubungi Kami", zh: "联系我们", ta: "எங்களை தொடர்பு கொள்ளுங்கள்" } },
     { key: "global-stores", route: "/global-stores", aliases: ["store locator", "stores page", "store locations", "outlets page", "nearby stores", "find a store"],
         labels: { en: "Store Locator", ms: "Lokasi Kedai", zh: "门店位置", ta: "கடை இருப்பிடங்கள்" } },
-    { key: "delivery", route: "/delivery", aliases: ["delivery page", "delivery"],
+    // No standalone /delivery route exists — choosing "Delivery" happens on /order-type,
+    // which then drops the customer straight into /buy-driptea with delivery mode active.
+    { key: "delivery", route: "/order-type", aliases: ["delivery page", "delivery", "order delivery", "get delivery"],
         labels: { en: "Delivery", ms: "Penghantaran", zh: "外送", ta: "டெலிவரி" } },
     { key: "login", route: "/login", aliases: ["login page", "log in page", "sign in page", "log in", "login"],
         labels: { en: "Login", ms: "Log Masuk", zh: "登录", ta: "உள்நுழைவு" } },
@@ -2274,10 +2287,10 @@ const PAGE_MANUAL_STEPS = {
         ta: "1. எந்தப் பக்கத்தின் வலது மேல் மூலையில் உள்ள \"Cart\" ஐக் கிளிக் செய்யவும்.",
     },
     checkout: {
-        en: "1. Go to your Cart.\n2. Click \"Proceed to Checkout\" (pickup orders only).",
-        ms: "1. Pergi ke Troli anda.\n2. Klik \"Proceed to Checkout\" (untuk pesanan ambil sendiri sahaja).",
-        zh: "1. 前往您的购物车。\n2. 点击“Proceed to Checkout”（仅限自取订单）。",
-        ta: "1. உங்கள் கார்ட்டிற்குச் செல்லவும்.\n2. \"Proceed to Checkout\" ஐக் கிளிக் செய்யவும் (Pickup ஆர்டர்களுக்கு மட்டும்).",
+        en: "1. Go to your Cart.\n2. Click \"Proceed to Checkout\" — works for both Pickup and Delivery orders.",
+        ms: "1. Pergi ke Troli anda.\n2. Klik \"Proceed to Checkout\" — untuk pesanan Pickup dan Delivery.",
+        zh: "1. 前往您的购物车。\n2. 点击“Proceed to Checkout”——自取和外送订单皆适用。",
+        ta: "1. உங்கள் கார்ட்டிற்குச் செல்லவும்.\n2. \"Proceed to Checkout\" ஐக் கிளிக் செய்யவும் — Pickup மற்றும் Delivery ஆர்டர்கள் இரண்டிற்கும் பொருந்தும்.",
     },
     "purchase-history": {
         en: "1. At the main page, click your profile photo.\n2. Click Purchase History.",
@@ -2316,10 +2329,10 @@ const PAGE_MANUAL_STEPS = {
         ta: "1. மேல் மெனுவில் \"STORES\" என்பதைக் கிளிக் செய்யவும்.",
     },
     delivery: {
-        en: "1. Click \"BUY DRIPTEA\" in the top menu.\n2. Choose Delivery.\n3. Add items to your cart, then click \"Proceed to Checkout\".",
-        ms: "1. Klik \"BUY DRIPTEA\" pada menu atas.\n2. Pilih Delivery.\n3. Tambah barang ke troli anda, kemudian klik \"Proceed to Checkout\".",
-        zh: "1. 点击顶部菜单中的“BUY DRIPTEA”。\n2. 选择外送 (Delivery)。\n3. 将商品加入购物车，然后点击“Proceed to Checkout”。",
-        ta: "1. மேல் மெனுவில் \"BUY DRIPTEA\" என்பதைக் கிளிக் செய்யவும்.\n2. Delivery-ஐத் தேர்ந்தெடுக்கவும்.\n3. பொருட்களை கார்ட்டில் சேர்த்து, \"Proceed to Checkout\" ஐக் கிளிக் செய்யவும்.",
+        en: "1. Click \"BUY DRIPTEA\" in the top menu.\n2. Choose Delivery.\n3. Add items to your cart, then click \"Proceed to Checkout\" and enter your delivery address there.",
+        ms: "1. Klik \"BUY DRIPTEA\" pada menu atas.\n2. Pilih Delivery.\n3. Tambah barang ke troli anda, kemudian klik \"Proceed to Checkout\" dan masukkan alamat penghantaran anda di situ.",
+        zh: "1. 点击顶部菜单中的“BUY DRIPTEA”。\n2. 选择外送 (Delivery)。\n3. 将商品加入购物车，然后点击“Proceed to Checkout”，在结账页面填写配送地址。",
+        ta: "1. மேல் மெனுவில் \"BUY DRIPTEA\" என்பதைக் கிளிக் செய்யவும்.\n2. Delivery-ஐத் தேர்ந்தெடுக்கவும்.\n3. பொருட்களை கார்ட்டில் சேர்த்து, \"Proceed to Checkout\" ஐக் கிளிக் செய்து, அங்கு உங்கள் டெலிவரி முகவரியை உள்ளிடவும்.",
     },
     login: {
         en: "1. Click \"Log in\" at the top right of any page.",
@@ -2506,6 +2519,43 @@ const REPLY_STRINGS = {
         zh: "您的饮品已准备好，请前往取餐柜台领取！",
         ms: "Minuman anda sudah sedia untuk diambil! Sila ke kaunter pengambilan.",
         ta: "உங்கள் பானம் தயார்! பிக்கப் கவுன்டருக்குச் செல்லவும்.",
+    },
+    // #203 (delivery) — same 3-phase widget, worded for delivery orders instead of pickup.
+    orderStatusStepDelivery1: {
+        en: "Order Placed",
+        zh: "订单已确认",
+        ms: "Pesanan Diterima",
+        ta: "ஆர்டர் செய்யப்பட்டது",
+    },
+    orderStatusStepDelivery2: {
+        en: "Preparing",
+        zh: "制作中",
+        ms: "Sedang Disediakan",
+        ta: "தயாராகிறது",
+    },
+    orderStatusStepDelivery3: {
+        en: "Out for Delivery",
+        zh: "配送中",
+        ms: "Dalam Penghantaran",
+        ta: "டெலிவரிக்குச் சென்றது",
+    },
+    orderStatusPhaseDelivery1Msg: {
+        en: "Please wait while we confirm and start preparing your delivery order.",
+        zh: "请稍候，我们正在确认并准备您的配送订单。",
+        ms: "Sila tunggu, kami sedang mengesahkan dan menyediakan pesanan penghantaran anda.",
+        ta: "உங்கள் டெலிவரி ஆர்டரை உறுதிசெய்து தயார் செய்கிறோம், சற்று காத்திருக்கவும்.",
+    },
+    orderStatusPhaseDelivery2Msg: {
+        en: "Your drink is being prepared! It'll be handed to the rider soon.",
+        zh: "您的饮品正在制作中！很快将交给配送员。",
+        ms: "Minuman anda sedang disediakan! Ia akan diserahkan kepada penghantar tidak lama lagi.",
+        ta: "உங்கள் பானம் தயாராகி வருகிறது! விரைவில் டெலிவரி நபரிடம் ஒப்படைக்கப்படும்.",
+    },
+    orderStatusPhaseDelivery3Msg: {
+        en: "Your drink is out for delivery! The rider is on the way to you.",
+        zh: "您的饮品正在配送途中！配送员正在赶来。",
+        ms: "Minuman anda dalam penghantaran! Penghantar sedang dalam perjalanan.",
+        ta: "உங்கள் பானம் டெலிவரிக்குச் சென்றுள்ளது! நபர் உங்களை நோக்கி வருகிறார்.",
     },
     voucherCardTitle: {
         en: "Here are the vouchers you can use right now:",
@@ -3172,9 +3222,18 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             completed: "completed",
             cancelled: "cancelled",
         };
+        const DELIVERY_STATUS_PHRASES = {
+            pending: "awaiting confirmation",
+            paid: "queued for preparation",
+            preparing: "being prepared by our baristas",
+            ready: "out for delivery",
+            completed: "delivered",
+            cancelled: "cancelled",
+        };
 
+        const activePhrases = activeOrder?.orderType === "delivery" ? DELIVERY_STATUS_PHRASES : STATUS_PHRASES;
         const statusSentence = activeOrder
-            ? `Your order <strong>#${activeOrder.orderNo}</strong> is currently ${STATUS_PHRASES[activeOrder.status] || activeOrder.status}.`
+            ? `Your order <strong>#${activeOrder.orderNo}</strong> is currently ${activePhrases[activeOrder.status] || activeOrder.status}.`
             : "You don't have any order in progress right now.";
 
         const recentOrders = allOrders.slice(0, 5);
@@ -3223,6 +3282,14 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             completed:  "Completed — order has been collected.",
             cancelled:  "Cancelled.",
         };
+        const DELIVERY_STATUS_LABELS = {
+            pending:    "Pending — your delivery order has been placed and is waiting to be confirmed.",
+            paid:       "Paid — payment received, waiting to be prepared.",
+            preparing:  "Preparing — our baristas are making your order right now.",
+            ready:      "Out for delivery — your order has left the store and is on its way to you!",
+            completed:  "Delivered — your order has been delivered to your address.",
+            cancelled:  "Cancelled.",
+        };
 
         // "Current" means still in progress — not yet collected or cancelled.
         const ACTIVE_STATUSES = new Set(["pending", "paid", "preparing", "ready"]);
@@ -3236,14 +3303,20 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
         if (activeOrder) {
             const phase = PHASE_BY_STATUS[activeOrder.status];
-            const phaseMessageKey =
-                phase === 1 ? 'orderStatusPhase1Msg' : phase === 2 ? 'orderStatusPhase2Msg' : 'orderStatusPhase3Msg';
+            const isDelivery = activeOrder.orderType === "delivery";
+            const phaseMessageKey = isDelivery
+                ? (phase === 1 ? 'orderStatusPhaseDelivery1Msg' : phase === 2 ? 'orderStatusPhaseDelivery2Msg' : 'orderStatusPhaseDelivery3Msg')
+                : (phase === 1 ? 'orderStatusPhase1Msg' : phase === 2 ? 'orderStatusPhase2Msg' : 'orderStatusPhase3Msg');
 
             const orderStatusCard = {
                 orderNo: activeOrder.orderNo,
                 phase,
                 message: t(phaseMessageKey),
-                stepLabels: [t('orderStatusStep1'), t('orderStatusStep2'), t('orderStatusStep3')],
+                stepLabels: isDelivery
+                    ? [t('orderStatusStepDelivery1'), t('orderStatusStepDelivery2'), t('orderStatusStepDelivery3')]
+                    : [t('orderStatusStep1'), t('orderStatusStep2'), t('orderStatusStep3')],
+                orderType: isDelivery ? "delivery" : "pickup",
+                deliveryAddress: isDelivery ? (activeOrder.deliveryDetails?.customerAddress || null) : null,
             };
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
@@ -3267,7 +3340,12 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             : `[LIVE ORDER DATA — use this as the authoritative current status. Ignore any order status mentioned earlier in the conversation.]\n\nCustomer's ${requestedOrderNo ? "requested order" : "recent orders (most recent first)"}:\n` +
             orders.map((o, i) => {
                 const itemList = (o.items || []).map(it => `  • ${it.name} x${it.quantity}`).join("\n") || "  (no item details)";
-                return `Order ${i + 1}: #${o.orderNo} — ${STATUS_LABELS[o.status] || o.status} — Total: S$${Number(o.totalAmount || 0).toFixed(2)}\nItems:\n${itemList}`;
+                const isDelivery = o.orderType === "delivery";
+                const label = (isDelivery ? DELIVERY_STATUS_LABELS : STATUS_LABELS)[o.status] || o.status;
+                const deliveryLine = isDelivery && o.deliveryDetails?.customerAddress
+                    ? `\nDelivering to: ${o.deliveryDetails.customerAddress}`
+                    : "";
+                return `Order ${i + 1}: #${o.orderNo} (${isDelivery ? "delivery" : "pickup"}) — ${label} — Total: S$${Number(o.totalAmount || 0).toFixed(2)}${deliveryLine}\nItems:\n${itemList}`;
             }).join("\n\n") + noCurrentOrderNote;
 
         const systemPrompt = await buildSystemPrompt(safeMessage, orderContext);

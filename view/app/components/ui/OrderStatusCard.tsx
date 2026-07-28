@@ -7,6 +7,8 @@ interface OrderStatusData {
   phase: 1 | 2 | 3;
   message: string;
   stepLabels: [string, string, string];
+  orderType?: 'pickup' | 'delivery';
+  deliveryAddress?: string | null;
 }
 
 interface Props {
@@ -18,7 +20,7 @@ const STEP_COLUMNS = [1, 3, 5];
 const LINE_COLUMNS = [2, 4];
 
 export default function OrderStatusCard({ orderStatus }: Props) {
-  const { phase, message, stepLabels } = orderStatus;
+  const { phase, message, stepLabels, orderType, deliveryAddress } = orderStatus;
 
   return (
     <div className={styles.root}>
@@ -59,6 +61,10 @@ export default function OrderStatusCard({ orderStatus }: Props) {
       </div>
 
       <p className={styles.messagePanel}>{message}</p>
+
+      {orderType === 'delivery' && deliveryAddress && (
+        <p className={styles.addressLine}>Delivering to: {deliveryAddress}</p>
+      )}
     </div>
   );
 }

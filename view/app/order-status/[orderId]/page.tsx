@@ -244,17 +244,27 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function getPhaseFromElapsed(elapsedMs: number, isDeliveryOrder: boolean): 1 | 2 | 3 | 4 {
-  if (isDeliveryOrder && elapsedMs >= DELIVERED_MS) return 4;
-  if (elapsedMs >= OUT_FOR_DELIVERY_MS) return 3;
-  if (elapsedMs >= PREPARING_MS) return 2;
-  return 1;
-}
+// Maps the *real* backend order status directly to a display phase — the visual
+// tracker (and any "delivered" claim) always reflects what the store/rider has
+// actually confirmed, never a guess based on how long ago the order was created.
+const STATUS_PHASE: Record<string, 1 | 2 | 3 | 4> = {
+  pending: 1,
+  paid: 1,
+  preparing: 2,
+  ready: 3,
+  completed: 4,
+};
 
-function getCountdownSeconds(phase: 1 | 2 | 3 | 4, elapsedMs: number, isDeliveryOrder: boolean) {
-  if (phase === 1) return Math.max(0, Math.ceil((PREPARING_MS - elapsedMs) / 1000));
-  if (phase === 2) return Math.max(0, Math.ceil((OUT_FOR_DELIVERY_MS - elapsedMs) / 1000));
-  if (phase === 3 && isDeliveryOrder) return Math.max(0, Math.ceil((DELIVERED_MS - elapsedMs) / 1000));
+// How long the simulated auto-progression waits *within* a given status before
+// nudging it to the next one, for orders staff never manually touch. Measured
+// from when that status was first observed here, not from order creation —
+// otherwise a slow checkout (or reopening the tracking link later) could make
+// elapsed-since-creation blow past every threshold at once and mark a delivery
+// "delivered" before it had even started preparing.
+function phaseDurationMs(status: string, isDeliveryOrder: boolean) {
+  if (status === "pending" || status === "paid") return PREPARING_MS;
+  if (status === "preparing") return OUT_FOR_DELIVERY_MS - PREPARING_MS;
+  if (status === "ready" && isDeliveryOrder) return DELIVERED_MS - OUT_FOR_DELIVERY_MS;
   return 0;
 }
 
@@ -264,6 +274,7 @@ export default function OrderStatusPage() {
   const orderId = typeof params?.orderId === "string" ? params.orderId : "";
   const sentStatusRef = useRef(new Set<string>());
   const feedbackPromptSentRef = useRef(false);
+  const phaseAnchorRef = useRef<{ status: string; sinceMs: number } | null>(null);
 
   const [order, setOrder] = useState<DripTeaOrder | null>(null);
   const [snapshot, setSnapshot] = useState<TrackingSnapshot | null>(null);
@@ -348,20 +359,33 @@ export default function OrderStatusPage() {
   const pickupDirections = order?.deliveryDetails?.storeCode
     ? PICKUP_DIRECTIONS[order.deliveryDetails.storeCode]
     : undefined;
-  const createdAt = order?.createdAt ? new Date(order.createdAt) : new Date(nowMs);
-  const elapsedMs = order?.createdAt ? Math.max(0, nowMs - createdAt.getTime()) : 0;
-  const nextPhase = getPhaseFromElapsed(elapsedMs, isDeliveryOrder);
-  const routeProgress = isDeliveryOrder
-    ? clamp((elapsedMs - OUT_FOR_DELIVERY_MS) / (DELIVERED_MS - OUT_FOR_DELIVERY_MS), 0, 1)
+  // Elapsed time *within the current real status*, not since order creation — see
+  // phaseDurationMs above for why that distinction matters.
+  const anchor = phaseAnchorRef.current;
+  const realStatus = order?.status?.toLowerCase() || "pending";
+  const elapsedInPhaseMs = Math.max(0, nowMs - (anchor?.status === realStatus ? anchor.sinceMs : nowMs));
+  const routeProgress = isDeliveryOrder && (realStatus === "ready" || realStatus === "completed")
+    ? realStatus === "completed"
+      ? 1
+      : clamp(elapsedInPhaseMs / Math.max(1, DELIVERED_MS - OUT_FOR_DELIVERY_MS), 0, 1)
     : 0;
 
   useEffect(() => {
     if (!order || !orderId) return;
 
     const status = order.status.toLowerCase();
-    const computedPhase = status === "completed" ? 4 : nextPhase;
+
+    // Reset the anchor whenever the backend-confirmed status actually changes —
+    // this is what stops a stale page load (or a slow checkout before this page
+    // even mounted) from reporting "delivered" while the drink is still pending.
+    if (phaseAnchorRef.current?.status !== status) {
+      phaseAnchorRef.current = { status, sinceMs: Date.now() };
+    }
+    const elapsedInPhase = Date.now() - phaseAnchorRef.current.sinceMs;
+
+    const computedPhase = STATUS_PHASE[status] ?? 1;
     setPhase(computedPhase);
-    setCountdown(getCountdownSeconds(computedPhase, elapsedMs, isDeliveryOrder));
+    setCountdown(Math.max(0, Math.ceil((phaseDurationMs(status, isDeliveryOrder) - elapsedInPhase) / 1000)));
 
     if (status === "completed") {
       setCollected(true);
@@ -369,24 +393,27 @@ export default function OrderStatusPage() {
       return;
     }
 
-    if (computedPhase >= 2 && status === "pending" && !sentStatusRef.current.has("preparing")) {
+    if (status === "pending" && elapsedInPhase >= PREPARING_MS && !sentStatusRef.current.has("preparing")) {
       sentStatusRef.current.add("preparing");
       void updateOrderStatus(orderId, "preparing").catch(console.error);
     }
 
-    if (computedPhase >= 3 && (status === "pending" || status === "preparing") && !sentStatusRef.current.has("ready")) {
+    if (status === "preparing" && elapsedInPhase >= (OUT_FOR_DELIVERY_MS - PREPARING_MS) && !sentStatusRef.current.has("ready")) {
       sentStatusRef.current.add("ready");
       void updateOrderStatus(orderId, "ready").catch(console.error);
     }
 
-    if (isDeliveryOrder && computedPhase >= 4 && status !== "completed" && !sentStatusRef.current.has("completed")) {
+    // Delivery orders only auto-complete once they've genuinely reached "ready" —
+    // never as a side effect of pure elapsed time, which is what previously let
+    // "delivered" show up while the drink hadn't finished preparing.
+    if (isDeliveryOrder && status === "ready" && elapsedInPhase >= (DELIVERED_MS - OUT_FOR_DELIVERY_MS) && !sentStatusRef.current.has("completed")) {
       sentStatusRef.current.add("completed");
       setCollected(true);
       markCollectedLocally(orderId);
       dispatchFeedbackPrompt(order);
       void updateOrderStatus(orderId, "completed").catch(console.error);
     }
-  }, [elapsedMs, isDeliveryOrder, nextPhase, order, orderId]);
+  }, [nowMs, isDeliveryOrder, order, orderId]);
 
   function dispatchFeedbackPrompt(sourceOrder: DripTeaOrder | null) {
     if (!sourceOrder || feedbackPromptSentRef.current) return;
@@ -467,7 +494,10 @@ export default function OrderStatusPage() {
       }
     : null;
 
-  const etaEnd = addSeconds(createdAt, isDeliveryOrder ? 20 : 20);
+  // Based on the remaining countdown in the *current* phase, not order-creation time —
+  // otherwise this could show a "By HH:MM" that's already in the past once real prep
+  // takes longer than the simulated thresholds.
+  const etaEnd = addSeconds(new Date(nowMs), countdown);
   const progressStep = collected ? 4 : phase;
   const visualProgressStep = collected ? 5 : progressStep;
   const mobileStep: 1 | 2 | 3 | 4 = collected ? 4 : phase;
@@ -569,7 +599,6 @@ export default function OrderStatusPage() {
                         ? "Your order is ready for collection."
                         : "Your order will be ready for collection soon."}
                   </p>
-                  <button type="button" onClick={() => setNowMs(Date.now())}>Live Updates</button>
                 </div>
 
                 {isDeliveryOrder && delivery ? (
