@@ -756,6 +756,13 @@ async function getDrinksByItemIds(itemIds) {
 function isPurchaseHistory(message) {
     const msg = String(message || "").toLowerCase();
 
+    // "order status" (in its usual phrasings) is a live-tracking question, not a
+    // history one — even though it contains "my order" / "what...order". Without
+    // this guard, natural phrasing like "what is my order status" was swallowed by
+    // the broad "my order" / "what...my...order" checks below and got answered with
+    // the purchase-history card instead of the live orderStatusCard.
+    const isStatusPhrasing = /\border\s+status\b|\bstatus\s+of\s+(my\s+)?order\b|\bis\s+my\s+order\s+ready\b/i.test(msg);
+
     return (
         msg.includes("purchase history") ||
         msg.includes("order history") ||
@@ -764,12 +771,12 @@ function isPurchaseHistory(message) {
         msg.includes("recent order") ||
         msg.includes("my purchases") ||
         msg.includes("my orders") ||
-        msg.includes("my order") ||
+        (msg.includes("my order") && !isStatusPhrasing) ||
         msg.includes("past order") ||
         msg.includes("previous order") ||
         msg.includes("other order") ||
-        /what.*my.*order/i.test(msg) ||
-        /what.*i.*order/i.test(msg) ||
+        (/what.*my.*order/i.test(msg) && !isStatusPhrasing) ||
+        (/what.*i.*order/i.test(msg) && !isStatusPhrasing) ||
         /did.*i.*order/i.test(msg) ||
         /what.*i.*buy/i.test(msg) ||
         /what.*i.*bought/i.test(msg) ||
@@ -2520,12 +2527,14 @@ const REPLY_STRINGS = {
         ms: "Minuman anda sudah sedia untuk diambil! Sila ke kaunter pengambilan.",
         ta: "உங்கள் பானம் தயார்! பிக்கப் கவுன்டருக்குச் செல்லவும்.",
     },
-    // #203 (delivery) — same 3-phase widget, worded for delivery orders instead of pickup.
+    // #203 (delivery) — 4-phase widget matching the order-status tracking page
+    // (Order Confirmed / Preparing / Out for Delivery / Delivered), worded for
+    // delivery orders instead of pickup's 3-phase one.
     orderStatusStepDelivery1: {
-        en: "Order Placed",
+        en: "Order Confirmed",
         zh: "订单已确认",
-        ms: "Pesanan Diterima",
-        ta: "ஆர்டர் செய்யப்பட்டது",
+        ms: "Pesanan Disahkan",
+        ta: "ஆர்டர் உறுதி செய்யப்பட்டது",
     },
     orderStatusStepDelivery2: {
         en: "Preparing",
@@ -2538,6 +2547,12 @@ const REPLY_STRINGS = {
         zh: "配送中",
         ms: "Dalam Penghantaran",
         ta: "டெலிவரிக்குச் சென்றது",
+    },
+    orderStatusStepDelivery4: {
+        en: "Delivered",
+        zh: "已送达",
+        ms: "Telah Dihantar",
+        ta: "டெலிவரி செய்யப்பட்டது",
     },
     orderStatusPhaseDelivery1Msg: {
         en: "Please wait while we confirm and start preparing your delivery order.",
@@ -3313,7 +3328,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 phase,
                 message: t(phaseMessageKey),
                 stepLabels: isDelivery
-                    ? [t('orderStatusStepDelivery1'), t('orderStatusStepDelivery2'), t('orderStatusStepDelivery3')]
+                    ? [t('orderStatusStepDelivery1'), t('orderStatusStepDelivery2'), t('orderStatusStepDelivery3'), t('orderStatusStepDelivery4')]
                     : [t('orderStatusStep1'), t('orderStatusStep2'), t('orderStatusStep3')],
                 orderType: isDelivery ? "delivery" : "pickup",
                 deliveryAddress: isDelivery ? (activeOrder.deliveryDetails?.customerAddress || null) : null,
