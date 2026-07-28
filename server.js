@@ -3,10 +3,6 @@ const cors = require("cors");
 require("dotenv").config();
 
 const { connectMongo } = require("./src/config/mongo");
-const User = require("./src/models/user.model");
-const Inventory = require("./src/models/inventory.model");
-const Voucher = require("./src/models/voucher.model");
-const Store = require("./src/models/store.model");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -78,10 +74,6 @@ app.post("/api/chat-test", (req, res) => {
 async function startServer() {
   try {
     await connectMongo();
-    await Store.initializeSeedStores();
-    await User.initializeSeedUsers();
-    await Inventory.initializeSeedInventory();
-    await Voucher.initializeSeedVouchers();
 
     app.get("/", (req, res) => {
       res.send("DripTea backend is running");

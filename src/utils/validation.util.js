@@ -21,7 +21,10 @@ const ADMIN_EMAIL_DOMAINS = LOGIN_EMAIL_DOMAINS;
 const PASSWORD_MIN_LETTERS = 4;
 const PASSWORD_SYMBOLS = "$%#@&";
 
-const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// The local part (before the @) may not contain a full stop at all — this is a
+// DripTea house rule, not an RFC one, and applies to staff and customers alike.
+// Note it rejects addresses real providers do issue, e.g. first.last@gmail.com.
+const EMAIL_SHAPE = /^[A-Za-z0-9_+-]+@[^\s@]+\.[^\s@]+$/;
 
 function formatDomainList(domains) {
   const listed = domains.map((domain) => `@${domain}`);

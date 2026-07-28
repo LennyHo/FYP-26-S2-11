@@ -31,39 +31,6 @@ const {
 
 const SESSION_TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 
-const SEED_USERS = [
-  {
-    fullName: "Admin User",
-    email: "yiyuanzhuan@driptea.com",
-    password: "Admin@123",
-    role: "user_admin",
-  },
-  {
-    fullName: "Staff User",
-    email: "williamsbilly@driptea.com",
-    password: "Staff@123",
-    role: "store_staff",
-    storeCode: "DT-001",
-  },
-  {
-    fullName: "Jurong East Staff",
-    email: "staff.jurong@driptea.com",
-    password: "Staff@123",
-    role: "store_staff",
-    storeCode: "DT-002",
-  },
-  {
-    fullName: "Customer User",
-    email: "customer@gmail.com",
-    password: "Customer@123",
-    role: "customer",
-    addresses: [
-      { label: "Home", address: "130 Cantonment Road, The Beacon, #17-05, Singapore 089775", isDefault: true },
-      { label: "Work", address: "1 Raffles Place, One Raffles Place, Singapore 048616", isDefault: false },
-    ],
-  },
-];
-
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
@@ -335,59 +302,6 @@ userSchema.statics.changePassword = async function changePassword({
   await user.save();
 
   return publicUser(user);
-};
-
-userSchema.statics.initializeSeedUsers = async function initializeSeedUsers() {
-  const Store = require("./store.model");
-
-  try {
-    for (const seedUser of SEED_USERS) {
-      const email = normalizeEmail(seedUser.email);
-      const existingUser = await this.findOne({ email }).lean();
-
-      if (existingUser) {
-        // Backfills storeId/storeCode on a seed account created before store-scoping
-        // existed, so canonical seed staff (e.g. williamsbilly@driptea.com) keep working.
-        if (seedUser.role === "store_staff" && seedUser.storeCode && !existingUser.storeId) {
-          const store = await Store.findOne({ storeCode: seedUser.storeCode }).lean();
-          if (store) {
-            await this.updateOne(
-              { _id: existingUser._id },
-              { $set: { storeId: store._id, storeCode: store.storeCode } }
-            );
-            console.log(`[Auth] Backfilled storeId for seed user: ${email}`);
-          }
-        }
-        continue;
-      }
-
-      let storeId = null;
-      let storeCode = null;
-
-      if (seedUser.role === "store_staff" && seedUser.storeCode) {
-        const store = await Store.findOne({ storeCode: seedUser.storeCode }).lean();
-        if (store) {
-          storeId = store._id;
-          storeCode = store.storeCode;
-        }
-      }
-
-      await this.create({
-        fullName: seedUser.fullName,
-        email,
-        role: seedUser.role,
-        status: "active",
-        addresses: seedUser.addresses || [],
-        storeId,
-        storeCode,
-        ...createPasswordRecord(seedUser.password),
-      });
-
-      console.log(`[Auth] Seeded user: ${email}`);
-    }
-  } catch (error) {
-    console.error("[Auth] Failed to initialize seed users:", error.message);
-  }
 };
 
 userSchema.statics.suspendUser = async function suspendUser(userId) {
