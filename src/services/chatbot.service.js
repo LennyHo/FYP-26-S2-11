@@ -61,6 +61,7 @@ const aiClient = require("../ai/aiClient");
 const ChatbotSession = require("../models/chatbotSession.model");
 
 const { buildSystemPrompt } = require("./prompt.service");
+const { buildIntentVocabulary, correctTypos } = require("./textNormalizer");
 const CartItem = require("../models/cartItem.model");
 const MenuItem = require("../models/menuItem.model");
 const Payment = require("../models/payment.model");
@@ -69,6 +70,26 @@ const OrderItem = require("../models/orderItem.model");
 const Feedback = require("../models/feedback.model");
 const Voucher = require("../models/voucher.model");
 const Store = require("../models/store.model");
+
+// Live drink names join the typo vocabulary, so new menu items get spelling
+// tolerance without touching this file. Refreshed a minute at a time.
+const VOCABULARY_TTL_MS = 60_000;
+let cachedVocabulary = null;
+let vocabularyExpiry = 0;
+
+async function getIntentVocabulary() {
+    if (cachedVocabulary && Date.now() < vocabularyExpiry) return cachedVocabulary;
+
+    let menuWords = [];
+    try {
+        const drinks = await MenuItem.find({ status: "active" }).lean();
+        menuWords = drinks.flatMap((d) => String(d.name || "").toLowerCase().split(/\s+/));
+    } catch (_) {}
+
+    cachedVocabulary = buildIntentVocabulary(menuWords);
+    vocabularyExpiry = Date.now() + VOCABULARY_TTL_MS;
+    return cachedVocabulary;
+}
 
 // Show outlet image in chatbot when customer ask about it
 const STORE_OUTLET_IMAGES = {
@@ -2629,9 +2650,13 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // translated internally before intent detection. The original safeMessage is kept for
     // Gemini (which replies in the user's language via the system prompt instruction).
     const detectedLang = detectMessageLanguage(safeMessage);
-    const intentMessage = detectedLang !== 'en'
+    const translatedMessage = detectedLang !== 'en'
         ? await aiClient.translateToEnglish(safeMessage).catch(() => safeMessage)
         : safeMessage;
+
+    // Typos are repaired for routing only ("what voocher I have" → "what voucher I have").
+    // safeMessage stays untouched, so Gemini and the stored history keep the original wording.
+    const intentMessage = correctTypos(translatedMessage, await getIntentVocabulary());
 
     // Shorthand for localised short replies on non-Gemini paths.
     const t = (key) => REPLY_STRINGS[key]?.[detectedLang] ?? REPLY_STRINGS[key]?.en ?? key;
@@ -2654,7 +2679,8 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
 
     // Escape hatch: after 2 consecutive unintelligible messages, proactively offer a human handoff
     // instead of letting the customer keep hitting a wall (category-E "missing escape hatch").
-    if (looksUnintelligible(safeMessage)) {
+    // Runs on the corrected text so a fixable typo never counts toward the handoff streak.
+    if (looksUnintelligible(intentMessage)) {
         const streak = (gibberishStreak.get(activeConversationId) || 0) + 1;
         if (streak >= 2) {
             gibberishStreak.set(activeConversationId, 0);

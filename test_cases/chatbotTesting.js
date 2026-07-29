@@ -6,6 +6,7 @@ const { expect } = require("chai");
 const chatbotService = require("../src/services/chatbot.service");
 const chatbotController = require("../src/controllers/chatbot.controller");
 const chatbotRoutes = require("../src/routes/chatbot.routes");
+const { buildIntentVocabulary, correctTypos, editDistance } = require("../src/services/textNormalizer");
 
 // This helper creates a fake Express response object for chatbot controller tests.
 function createMockResponse() {
@@ -98,5 +99,81 @@ describe("chatbot testing", function () {
     const serviceText = chatbotService.handleChatMessage.toString();
 
     expect(serviceText).to.include("Please log in first before I add this to your cart.");
+  });
+});
+
+// Typo tolerance for intent matching. These run on pure functions, so no AI calls
+// and no MongoDB connection are needed.
+describe("chatbot typo tolerance", function () {
+  // Menu words are supplied here the same way the service passes live drink names.
+  const vocabulary = buildIntentVocabulary([
+    "osmanthus", "milk", "tea", "matcha", "latte", "oolong", "lychee", "green",
+    "strawberry", "classic", "jasmine", "mango", "fruit",
+  ]);
+
+  const fix = (message) => correctTypos(message, vocabulary);
+
+  // Test 6: Misspelled keywords should be repaired so intent matching still fires.
+  it("repairs misspelled keywords", function () {
+    const cases = [
+      ["What voocher I have?", "What voucher I have?"],
+      ["Ehat vouchers I haev", "What vouchers I have"],
+      ["track my oder", "track my order"],
+      ["show my purchse histroy", "show my purchase history"],
+      ["I want a osmanthos milk tea", "I want a osmanthus milk tea"],
+      ["make it lrage with peral", "make it large with pearl"],
+    ];
+
+    cases.forEach(([input, expected]) => {
+      expect(fix(input)).to.equal(expected);
+    });
+  });
+
+  // Test 7: Correctly spelled messages must pass through untouched.
+  it("leaves correctly spelled messages alone", function () {
+    const messages = [
+      "What vouchers do I have?",
+      "I want a large osmanthus milk tea with less sugar",
+      "track my order",
+    ];
+
+    messages.forEach((message) => {
+      expect(fix(message)).to.equal(message);
+    });
+  });
+
+  // Test 8: Codes, order numbers and prices carry real data and must never be rewritten.
+  it("never rewrites codes, numbers or prices", function () {
+    const messages = [
+      "Apply HALF50 to my order",
+      "Where is order #0187",
+      "BOGO2026 please",
+      "I spent S$ 12.00 today",
+    ];
+
+    messages.forEach((message) => {
+      expect(fix(message)).to.equal(message);
+    });
+  });
+
+  // Test 9: Ordinary words that are not keywords should survive unchanged.
+  it("leaves ordinary words that are not keywords", function () {
+    const messages = [
+      "that drink was delicious",
+      "my friend liked it",
+      "I spent S$ 12.00 today",
+      "deliver to my house",
+      "that was cool",
+    ];
+
+    messages.forEach((message) => {
+      expect(fix(message)).to.equal(message);
+    });
+  });
+
+  // Test 10: Transposed letters count as a single edit.
+  it("treats a swapped pair of letters as one edit", function () {
+    expect(editDistance("histroy", "history", 2)).to.equal(1);
+    expect(editDistance("haev", "have", 2)).to.equal(1);
   });
 });
