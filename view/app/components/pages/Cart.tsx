@@ -439,19 +439,7 @@ export default function Cart() {
   }
 
   function goToCheckout() {
-    const orderType = localStorage.getItem("driptea_order_type");
-
-    if (orderType === "pickup") {
-      router.push("/checkout");
-      return;
-    }
-
-    if (orderType === "delivery") {
-      router.push("/checkout");
-      return;
-    }
-
-    router.push("/order-type");
+    router.push("/checkout");
   }
 
   useEffect(() => {

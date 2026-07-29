@@ -51,7 +51,7 @@ export default function MeetTheCrew() {
         <div className={styles.overlay}>
           <p className={styles.eyebrow}>Purhcase your First Drink</p>
           <h2 className={styles.headline}>Your next favourite<br />drip is one tap away.</h2>
-          <Link href="/order-type" className={styles.ctaButton}>
+          <Link href="/buy-driptea" className={styles.ctaButton}>
             VIEW ALL DRIPS
           </Link>
         </div>
@@ -138,7 +138,7 @@ export default function MeetTheCrew() {
             <span className={styles.voucherDesc}>Sign up for a free account and a welcome voucher drops into your account automatically. Redeem it on your first order at any location.</span>
           </div>
 
-          <Link href="/order-type" className={styles.ctaBannerBtn}>
+          <Link href="/buy-driptea" className={styles.ctaBannerBtn}>
             ORDER NOW
           </Link>
         </div>

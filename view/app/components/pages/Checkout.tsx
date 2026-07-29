@@ -435,6 +435,17 @@ export default function Checkout() {
         setRightStep(1);
     }
 
+    // First-time order method pick — happens here (post-checkout) rather than
+    // before the customer even sees the menu, so cart contents drive the decision.
+    function chooseOrderType(nextOrderType: string) {
+        setOrderType(nextOrderType);
+        window.localStorage.setItem("driptea_order_type", nextOrderType);
+        if (nextOrderType === "pickup") {
+            window.localStorage.removeItem("driptea_delivery");
+        }
+        setRightStep(1);
+    }
+
     function handleDeliveryPreviewChange(previewData: DeliveryData | null) {
         setDeliveryPreview(previewData);
 
@@ -827,6 +838,29 @@ export default function Checkout() {
                                 Back to Menu
                             </button>
                         )}
+                    </section>
+                ) : !orderType ? (
+                    <section className="checkout-card">
+                        <div className="order-type-card">
+                            <h1>Choose Your Order Method</h1>
+                            <p>Select how you'd like to receive this order.</p>
+
+                            <div className="order-type-options">
+                                <button type="button" className="order-type-option" onClick={() => chooseOrderType("pickup")}>
+                                    <div className="order-type-icon">🏪</div>
+                                    <h2>Pickup</h2>
+                                    <p>Skip the line. Grab your order at your nearest outlet.</p>
+                                    <strong>No delivery fee</strong>
+                                </button>
+
+                                <button type="button" className="order-type-option" onClick={() => chooseOrderType("delivery")}>
+                                    <div className="order-type-icon">🛵</div>
+                                    <h2>Delivery</h2>
+                                    <p>Sit back and get it brought straight to your doorstep.</p>
+                                    <strong>Delivery fee applies</strong>
+                                </button>
+                            </div>
+                        </div>
                     </section>
                 ) : (
                     <section className="checkout-card">

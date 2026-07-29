@@ -14,7 +14,7 @@ import { useState, useEffect, useRef } from "react";
 import Header from '../layout/Header';
 import styles from './BuyDriptea.module.css';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { getMenuItems } from '../../utils/customerApi';
 
 const categories = [
@@ -39,21 +39,12 @@ type MenuSearchItem = {
 };
 
 export default function BuyDripTeaPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [allItems, setAllItems] = useState<MenuSearchItem[]>([]);
   const [searchError, setSearchError] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categories[0].slug);
   const menuSectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const orderType = window.localStorage.getItem("driptea_order_type");
-
-    if (orderType !== "pickup" && orderType !== "delivery") {
-      router.replace("/order-type");
-    }
-  }, [router]);
 
   // Deep-link support: /buy-driptea?category=matcha-teas selects that Tea Series tab on load
   useEffect(() => {

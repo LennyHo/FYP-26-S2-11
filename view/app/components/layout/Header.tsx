@@ -213,7 +213,7 @@ export default function Header() {
         aria-label="Primary"
         onAnimationEnd={handleNavAnimEnd}
       >
-          <Link href="/order-type" className={styles.navLink} onClick={closeMenu} prefetch={false}>BUY DRIPTEA</Link>
+          <Link href="/buy-driptea" className={styles.navLink} onClick={closeMenu} prefetch={false}>BUY DRIPTEA</Link>
           <Link href="/our-story" className={styles.navLink} onClick={closeMenu} prefetch={false}>OUR STORY</Link>
           <Link href="/global-stores" className={styles.navLink} onClick={closeMenu} prefetch={false}>STORES</Link>
       </nav>

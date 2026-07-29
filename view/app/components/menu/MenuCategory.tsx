@@ -30,14 +30,6 @@ export default function MenuCategory() {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    const orderType = window.localStorage.getItem("driptea_order_type");
-
-    if (orderType !== "pickup" && orderType !== "delivery") {
-      router.replace("/order-type");
-    }
-  }, [router]);
-
-  useEffect(() => {
     async function fetchMenu() {
       try {
         const result = await getMenuItems('active');

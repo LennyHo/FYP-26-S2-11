@@ -80,7 +80,7 @@ export default function Voucher() {
 
   const handleUseNow = (code: string) => {
     window.localStorage.setItem(PENDING_VOUCHER_KEY, code);
-    router.push("/order-type");
+    router.push("/buy-driptea");
   };
 
   return (

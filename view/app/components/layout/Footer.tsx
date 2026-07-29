@@ -31,7 +31,7 @@ export default function Footer() {
           <div className={styles.section}>
             <h4 className={styles.subtitle}>Quick Links</h4>
             <ul className={styles.links}>
-              <li><Link href="/order-type" className={styles.link}>Buy DripTea</Link></li>
+              <li><Link href="/buy-driptea" className={styles.link}>Buy DripTea</Link></li>
               <li><Link href="/our-story" className={styles.link}>Our Story</Link></li>
               <li><Link href="/global-stores" className={styles.link}>Stores</Link></li>
             </ul>

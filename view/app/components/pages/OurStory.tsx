@@ -221,7 +221,7 @@ export default function OurStory() {
           <div className={styles.ctaInner}>
             <h2 className={styles.ctaHeadline}>Ready to order your next favourite?</h2>
             <p className={styles.ctaSub}>Explore our drinks that speaks to you.</p>
-            <button type="button" className={styles.ctaBtn} onClick={() => router.push('/order-type')}>
+            <button type="button" className={styles.ctaBtn} onClick={() => router.push('/buy-driptea')}>
               Explore Our Menu
             </button>
           </div>

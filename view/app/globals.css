@@ -476,17 +476,6 @@ button { touch-action: manipulation; }
   }
 }
 
-.order-type-page {
-  position: relative;
-  overflow: hidden;
-  min-height: 80vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 0;
-  background: var(--background);
-}
-
 .order-type-card {
   position: relative;
   z-index: 1;
