@@ -71,24 +71,11 @@ export default function ChangePasswordPage() {
       <div className={styles.card}>
         <div className={styles.header}>
           <button type="button" className={styles.backBtn} onClick={() => router.back()} aria-label="Go back">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5" />
-              <path d="M12 19l-7-7 7-7" />
-            </svg>
+            <span className={styles.backBtnArrow}>‹</span>
             Back
           </button>
           <h1 className={styles.heading}>Change Password</h1>
           <div className={styles.headerSpacer} />
-        </div>
-
-        <div className={styles.iconBanner}>
-          <div className={styles.lockIcon}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <p className={styles.bannerText}>Keep your account secure by using a strong, unique password.</p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>

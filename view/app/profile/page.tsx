@@ -257,8 +257,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <button className={styles.saveBtn} type="submit">Save Changes</button>
-
           {status && (
             <div className={styles.successMsg}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -267,6 +265,8 @@ export default function ProfilePage() {
               {status}
             </div>
           )}
+
+          <button className={styles.saveBtn} type="submit">Save Changes</button>
           </div>
 
           <section className={styles.addressSection}>
@@ -283,7 +283,7 @@ export default function ProfilePage() {
                 disabled={addresses.length >= MAX_ADDRESSES}
                 title={addresses.length >= MAX_ADDRESSES ? `You can save up to ${MAX_ADDRESSES} addresses.` : undefined}
               >
-                {addresses.length >= MAX_ADDRESSES ? "Address limit reached" : `Add Address (${addresses.length}/${MAX_ADDRESSES})`}
+                {addresses.length >= MAX_ADDRESSES ? `${addresses.length}/${MAX_ADDRESSES}` : `Add Address (${addresses.length}/${MAX_ADDRESSES})`}
               </button>
             </div>
 
