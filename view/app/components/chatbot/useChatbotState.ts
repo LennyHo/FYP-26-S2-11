@@ -44,6 +44,10 @@
 //
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Hook: useChatbotState.ts (this file) → Hook: useChatApi.ts → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: order.model.js
+//
+// #304 Track Delivery Order Status via Chatbot
+//      View: ChatbotSidebar.tsx → Hook: useChatbotState.ts (this file) → Hook: useChatApi.ts → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: order.model.js
+
 "use client";
 
 import { useRef, useState, useEffect } from 'react';

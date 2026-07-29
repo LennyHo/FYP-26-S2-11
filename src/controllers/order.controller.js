@@ -15,6 +15,8 @@
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Ctrl: order.controller.js (this file) → Model: order.model.js
 //
+// #304 Track Delivery Order Status via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Ctrl: order.controller.js (this file) → Model: order.model.js
 
 const crypto = require("crypto");
 const mongoose = require("mongoose");
@@ -591,6 +593,7 @@ async function createTestQueueOrders(req, res) {
 
 // #28  - As a customer, I want to track my order status so that I know when my drink will be ready.
 // #203 - As a customer, I want to track my order status through the chatbot so that I know when my drink will be ready.
+// #304 - As a customer, I want to view my delivery and order status via the chatbot so that I can get quick, automated updates.
 // Updates the status field (pending → preparing → ready → completed) in the orders collection.
 async function updateOrderStatus(req, res) {
     try {

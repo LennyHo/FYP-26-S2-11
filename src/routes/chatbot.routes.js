@@ -44,6 +44,9 @@
 //
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Route: chatbot.routes.js (this file) → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: order.model.js
+//
+// #304 Track Delivery Order Status via Chatbot
+//      View: ChatbotSidebar.tsx → Route: chatbot.routes.js (this file) → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: order.model.js
 
 const express = require("express");
 const chatbotController = require("../controllers/chatbot.controller");

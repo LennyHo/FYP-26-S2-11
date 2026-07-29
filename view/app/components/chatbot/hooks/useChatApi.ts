@@ -6,7 +6,7 @@
 // #26  Navigate Website via Chatbot
 //      View: ChatbotSidebar.tsx → Hook: useChatApi.ts (this file) → POST /api/chat → Ctrl: chatbot.controller.js → Svc: chatbot.service.js
 //
-// #27–#32, #196–#203 (all chatbot user stories)
+// #27–#32, #196–#304 (all chatbot user stories)
 //      View: ChatbotSidebar.tsx → Hook: useChatApi.ts (this file) → POST /api/chat → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: [varies per story]
 "use client";
 

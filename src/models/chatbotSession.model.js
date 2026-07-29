@@ -44,6 +44,9 @@
 //
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
+//
+// #304 Track Delivery Order Status via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: chatbotSession.model.js (this file)
 
 const mongoose = require("mongoose");
 

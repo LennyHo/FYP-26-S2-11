@@ -48,6 +48,9 @@
 // #203 Track Order Status via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: order.model.js
 //
+// #304 Track Delivery Order Status via Chatbot
+//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: order.model.js
+//
 // #308 Provide Feedback via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js (this file) → Model: order.model.js, feedback.model.js, payment.js
 const {
@@ -983,6 +986,7 @@ function findOrdersByDateQuery(allOrders, dateQuery) {
 
 
 // #203 - As a customer, I want to track my order status through the chatbot.
+// #304 - As a customer, I want to view my delivery and order status via the chatbot so that I can get quick, automated updates.
 const ORDER_NUMBER_RE = /(?:\border\b\s*(?:number|no\.?|#)?\s*|#\s*)(\d{3,6})\b/i;
 
 function isTrackOrderRequest(message) {
@@ -2527,7 +2531,7 @@ const REPLY_STRINGS = {
         ms: "Minuman anda sudah sedia untuk diambil! Sila ke kaunter pengambilan.",
         ta: "உங்கள் பானம் தயார்! பிக்கப் கவுன்டருக்குச் செல்லவும்.",
     },
-    // #203 (delivery) — 4-phase widget matching the order-status tracking page
+    // #304 Track Delivery Order Status via Chatbot — 4-phase widget matching the order-status tracking page
     // (Order Confirmed / Preparing / Out for Delivery / Delivered), worded for
     // delivery orders instead of pickup's 3-phase one.
     orderStatusStepDelivery1: {
