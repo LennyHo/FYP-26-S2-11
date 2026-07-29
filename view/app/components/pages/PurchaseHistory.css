@@ -467,3 +467,56 @@
   cursor: not-allowed;
   background: #9b8a7d;
 }
+
+/* Order card on phones — declared last to beat the duplicate rules above. */
+@media (max-width: 600px) {
+  .purchase-order-meta {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    gap: 10px;
+  }
+
+  .purchase-order-badges {
+    justify-content: flex-start;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .purchase-order-amount {
+    flex-shrink: 0;
+    margin-left: auto;
+    font-size: 15px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .purchase-order-foot {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .purchase-payment-label {
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .purchase-order-actions {
+    margin-left: auto;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .purchase-track-btn,
+  .purchase-collect-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}

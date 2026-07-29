@@ -386,12 +386,15 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  /* Bottom-aligned so a two-line label doesn't offset its neighbour's input. */
+  align-items: end;
 }
 
 .formField {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  min-width: 0;
 }
 
 .formLabel {
@@ -412,6 +415,10 @@
 
 .formInput {
   padding: 9px 12px;
+  min-height: 40px;
+  /* Reset so Safari/iOS date inputs match the other fields' height. */
+  -webkit-appearance: none;
+  appearance: none;
   border: 1px solid rgba(234, 88, 12, 0.25);
   border-radius: 9px;
   font-size: 0.9rem;
@@ -449,6 +456,7 @@
 
 .selectTrigger {
   width: 100%;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -588,15 +596,29 @@
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
   .statsRow { grid-template-columns: repeat(2, 1fr); }
-  .tabsBarTop { align-items: flex-start; }
-  .toolbarRight { width: 100%; }
+  /* Title, then both buttons on one row, then a full-width search below. */
+  .tabsBarTop { flex-direction: column; align-items: stretch; gap: 12px; }
+  .toolbarRight { width: 100%; min-width: 0; flex-wrap: wrap; justify-content: stretch; }
   .toolbarRight .btnCreate,
-  .toolbarRight .refreshBtn { flex: 1; }
+  .toolbarRight .refreshBtn { flex: 1 1 0; }
+  .searchWrap { flex: 1 0 100%; order: 3; max-width: 100%; }
 }
 
 @media (max-width: 480px) {
   .statsRow { grid-template-columns: 1fr 1fr; gap: 10px; }
   .statCard { padding: 14px; }
   .statValue { font-size: 1.5rem; }
+
+  /* Smaller field titles so they stay on one line. */
+  .modalOverlay { padding: 12px; }
+  .modalHeader  { padding: 16px 16px 12px; }
+  .modalTitle   { font-size: 0.98rem; }
+  .modalBody    { padding: 16px; gap: 12px; }
+  .modalFooter  { padding: 12px 16px 16px; }
+  .formRow      { gap: 10px; }
+  .formLabel    { font-size: 0.68rem; letter-spacing: 0.02em; }
+  .formInput,
+  .selectTrigger { min-height: 38px; padding: 8px 10px; font-size: 0.85rem; }
+  .selectOption  { font-size: 0.85rem; padding: 8px 10px; }
 }
 

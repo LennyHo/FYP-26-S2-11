@@ -126,6 +126,22 @@
   line-height: 1;
 }
 
+/* Half star: dimmed star with a solid left half overlaid */
+.starHalf {
+  position: relative;
+  display: inline-block;
+  color: rgba(232, 160, 32, 0.32);
+}
+
+.starHalf::before {
+  content: "★";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 50%;
+  overflow: hidden;
+  color: #e8a020;
+}
+
 .ratingValue {
   font-size: 0.72rem;
   font-weight: 700;
@@ -220,6 +236,16 @@
 .backList {
   margin: 0;
   padding-left: 16px;
+}
+
+.backDisclaimer {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 6px;
 }
 
 /* ── Customize link (below card) ── */

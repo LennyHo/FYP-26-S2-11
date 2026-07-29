@@ -481,9 +481,13 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                         <div className={styles.healthCardDrinkName}>For your {msg.healthCard.drinkName}</div>
                       )}
                       <div className={styles.healthCardLabelRow}>
-                        <span className={styles.healthCardLabel}>Current</span>
+                        <span className={styles.healthCardLabel}>
+                          Current{msg.healthCard.currentSugarLevel ? ` ${msg.healthCard.currentSugarLevel} sugar` : ''}
+                        </span>
                         <span />
-                        <span className={styles.healthCardLabel}>Reduce to {msg.healthCard.recommendedSugar}g sugar</span>
+                        <span className={styles.healthCardLabel}>
+                          Reduce to {msg.healthCard.recommendedSugarLevel || '25%'} sugar
+                        </span>
                       </div>
                       <div className={styles.healthCardImagesRow}>
                         <Image
@@ -575,8 +579,14 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                           <div className={styles.storeCardBody}>
                             <p className={styles.storeCardName}>{store.name}</p>
                             <p className={styles.storeCardLine}>{store.address}</p>
-                            {store.phone && <p className={styles.storeCardLine}>{store.phone}</p>}
-                            <p className={styles.storeCardLine}>Mon–Fri: {store.weekdayHours} | Sat–Sun: {store.weekendHours}</p>
+                            {store.phone && (
+                              <p className={styles.storeCardLine}>
+                                <span className={styles.storeCardLabel}>Contact:</span> {store.phone}
+                              </p>
+                            )}
+                            <p className={styles.storeCardLine}>
+                              <span className={styles.storeCardLabel}>Opening Hours:</span> Mon–Fri: {store.weekdayHours} | Sat–Sun: {store.weekendHours}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -908,14 +918,18 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       <div className={styles.healthCard}>
                         <div className={styles.healthCardTitle}>Reduce to less sugar!</div>
                         <div className={styles.healthCardSugars}>
-                          <span className={styles.healthCardCurrentSugar}>{msg.healthCard.currentSugar}g</span>
+                          <span className={styles.healthCardCurrentSugar}>
+                            {msg.healthCard.currentSugarLevel ? `${msg.healthCard.currentSugarLevel} · ` : ''}{msg.healthCard.currentSugar}g
+                          </span>
                           <span className={styles.healthCardArrow}>
                           <svg width="36" height="16" viewBox="0 0 36 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <line x1="0" y1="8" x2="28" y2="8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
                             <polyline points="22,2 30,8 22,14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                           </svg>
                         </span>
-                          <span className={styles.healthCardRecommendedSugar}>{msg.healthCard.recommendedSugar}g</span>
+                          <span className={styles.healthCardRecommendedSugar}>
+                            {msg.healthCard.recommendedSugarLevel ? `${msg.healthCard.recommendedSugarLevel} · ` : ''}{msg.healthCard.recommendedSugar}g
+                          </span>
                         </div>
                         <Image
                           src={`/grade_nutri_${msg.healthCard.recommendedGrade.toLowerCase()}.png`}
@@ -971,8 +985,14 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                             <div className={styles.storeCardBody}>
                               <p className={styles.storeCardName}>{store.name}</p>
                               <p className={styles.storeCardLine}>{store.address}</p>
-                              {store.phone && <p className={styles.storeCardLine}>{store.phone}</p>}
-                              <p className={styles.storeCardLine}>Mon–Fri: {store.weekdayHours} | Sat–Sun: {store.weekendHours}</p>
+                              {store.phone && (
+                                <p className={styles.storeCardLine}>
+                                  <span className={styles.storeCardLabel}>Contact:</span> {store.phone}
+                                </p>
+                              )}
+                              <p className={styles.storeCardLine}>
+                                <span className={styles.storeCardLabel}>Opening Hours:</span> Mon–Fri: {store.weekdayHours} | Sat–Sun: {store.weekendHours}
+                              </p>
                             </div>
                           </div>
                         ))}

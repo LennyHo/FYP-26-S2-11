@@ -10,8 +10,8 @@ function StarRating({ rating }: { rating: number }) {
     const filled = rating >= i + 1;
     const half = !filled && rating >= i + 0.5;
     return (
-      <span key={i} className={styles.drinkStar}>
-        {filled ? '★' : half ? '⯨' : '☆'}
+      <span key={i} className={half ? `${styles.drinkStar} ${styles.drinkStarHalf}` : styles.drinkStar}>
+        {filled || half ? '★' : '☆'}
       </span>
     );
   });

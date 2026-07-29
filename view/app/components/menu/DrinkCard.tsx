@@ -32,7 +32,7 @@ function StarRating({ rating }: { rating: number }) {
       <span className={styles.stars}>
         {Array.from({ length: 5 }, (_, i) => {
           if (rating >= i + 1) return <span key={i} className={styles.star}>★</span>;
-          if (rating >= i + 0.5) return <span key={i} className={styles.star}>⯨</span>;
+          if (rating >= i + 0.5) return <span key={i} className={`${styles.star} ${styles.starHalf}`}>★</span>;
           return <span key={i} className={styles.star}>☆</span>;
         })}
       </span>
@@ -131,6 +131,9 @@ export default function DrinkCard({
                 <div className={styles.backSection}>
                   <div className={styles.backTitle}>Insulin Impact:</div>
                   <div className={styles.backText}>{info.insulinImpact}</div>
+                </div>
+                <div className={styles.backDisclaimer}>
+                  For informational purposes only. Consult a healthcare professional. Consume at your own risk.
                 </div>
               </>
             ) : (

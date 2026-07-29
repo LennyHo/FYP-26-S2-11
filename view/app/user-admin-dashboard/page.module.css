@@ -453,12 +453,6 @@
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.modalAccent {
-  flex-shrink: 0;
-  height: 3px;
-  background: #2563eb;
-}
-
 .modalBody {
   flex: 1;
   min-height: 0;
@@ -1083,4 +1077,98 @@
 
 @media (max-width: 480px) {
   .sectionHeader h2 { font-size: 1.2rem; }
+}
+
+/* Compact modals on phones, matching the store-staff modal sizing. */
+@media (max-width: 620px) {
+  .modalOverlay {
+    padding: 12px;
+  }
+
+  .modal {
+    max-height: 92vh;
+  }
+
+  .modalBody {
+    padding: 14px 16px 12px;
+  }
+
+  .modalHeader {
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .modalAvatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  .modalHeaderText h2 {
+    font-size: 1.05rem;
+  }
+
+  .modalHeaderText p {
+    font-size: 0.72rem;
+  }
+
+  .iconButton {
+    width: 30px;
+    height: 30px;
+  }
+
+  .detailList > div {
+    grid-template-columns: 88px 1fr;
+    gap: 10px;
+    padding: 10px 12px;
+    align-items: start;
+  }
+
+  .detailList dt {
+    font-size: 0.68rem;
+    line-height: 1.35;
+    align-items: flex-start;
+  }
+
+  .detailList dd {
+    font-size: 0.85rem;
+    align-items: flex-start;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .formGrid label,
+  .formGrid .fieldGroup {
+    font-size: 0.72rem;
+  }
+
+  .formGrid input,
+  .formGrid select,
+  .formGrid textarea,
+  .selectTrigger {
+    min-height: 38px;
+    font-size: 0.85rem;
+    padding: 7px 10px;
+  }
+
+  .fieldHint,
+  .fieldError {
+    font-size: 0.68rem;
+  }
+
+  .modalActions {
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    min-height: 40px;
+    padding: 9px 16px;
+    font-size: 0.85rem;
+  }
 }

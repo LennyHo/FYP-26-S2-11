@@ -793,7 +793,6 @@ export default function UserAdminDashboardPage() {
       {viewingUser && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="view-user-title">
           <div className={styles.modal}>
-            <div className={styles.modalAccent} />
             <div className={styles.modalBody}>
               <div className={styles.modalHeader}>
                 <div className={styles.modalAvatar}><FaUser /></div>
@@ -852,7 +851,6 @@ export default function UserAdminDashboardPage() {
       {viewingRole && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="view-role-title">
           <div className={styles.modal}>
-            <div className={styles.modalAccent} />
             <div className={styles.modalBody}>
               <div className={styles.modalHeader}>
                 <div className={styles.modalAvatar}><FaUsers /></div>
@@ -894,7 +892,6 @@ export default function UserAdminDashboardPage() {
       {editingDescriptionRole && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="edit-description-title">
           <form className={styles.modal} onSubmit={saveDescription}>
-            <div className={styles.modalAccent} />
             <div className={styles.modalBody}>
               <div className={styles.modalHeader}>
                 <div className={styles.modalAvatar}><FaPen /></div>
@@ -935,7 +932,6 @@ export default function UserAdminDashboardPage() {
       {formMode && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="edit-user-title">
           <form className={styles.modal} onSubmit={handleFormSubmit}>
-            <div className={styles.modalAccent} />
             <div className={styles.modalBody}>
               <div className={styles.modalHeader}>
                 {formMode === 'edit' && (

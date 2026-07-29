@@ -88,6 +88,7 @@ export interface Message {
     drinkName?: string;
     currentSugar: number;
     currentGrade: string;
+    currentSugarLevel?: string | null;
     recommendedSugar: number;
     recommendedGrade: string;
     recommendedSugarLevel: string;

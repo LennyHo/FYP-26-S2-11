@@ -446,6 +446,19 @@ function parseSugarLevel(text) {
     return null;
 }
 
+// "change the sugar from 50 to 25" — restores the % sign customers drop.
+function normalizeSugarPercents(message) {
+    const msg = String(message || "");
+    if (!/\b(sugar|sweet|sweetness)\b/i.test(msg)) return msg;
+    return msg.replace(/\b(0|25|50|70|100)\b(?!\s*%)/g, "$1%");
+}
+
+// "50% Sugar" → "50%", for display on the health card.
+function formatSugarLevel(sugar) {
+    const level = String(sugar || "").trim().replace(/\s*sugar$/i, "");
+    return /^\d+%$/.test(level) ? level : null;
+}
+
 function hasCustomizationWords(msg) {
     return ORDER_CUSTOMIZATION_WORDS.some((w) => msg.includes(w));
 }
@@ -1585,7 +1598,7 @@ function isClearCartRequest(message) {
 }
 
 function isCartUpdateRequest(message) {
-    const msg = String(message || "").toLowerCase();
+    const msg = normalizeSugarPercents(String(message || "").toLowerCase());
 
     // Ordering-flow step responses — no drink name, no ordinal = Gemini ordering option, not a cart edit
     if (/^(change to \d+%\s*sugar|remain at \d+%\s*sugar)$/i.test(msg.trim())) return false;
@@ -1641,7 +1654,7 @@ function isCartUpdateRequest(message) {
 }
 
 function getCartUpdateIntent(message) {
-    const msg = String(message || "").toLowerCase();
+    const msg = normalizeSugarPercents(String(message || "").toLowerCase());
 
     const intent = {
         action: "updateCustomization",
@@ -4360,6 +4373,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                     drinkName: drink.name,
                     currentSugar: nutrition.sugar,
                     currentGrade: nutrition.grade,
+                    currentSugarLevel: formatSugarLevel(orderDetails.sugar),
                     recommendedSugar: recommended.sugar,
                     recommendedGrade: recommended.grade,
                     recommendedSugarLevel,
@@ -4407,6 +4421,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                         drinkName: drink.name,
                         currentSugar: nutrition.sugar,
                         currentGrade: nutrition.grade,
+                        currentSugarLevel: formatSugarLevel(lastSugar),
                         recommendedSugar: recommended.sugar,
                         recommendedGrade: recommended.grade,
                         recommendedSugarLevel: "25%",

@@ -170,7 +170,7 @@
 .itemsTableWrap {
   border: 1px solid rgba(155, 109, 74, 0.15);
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
   margin-bottom: 4px;
 }
 
@@ -315,6 +315,9 @@
     page-break-inside: avoid;
     break-inside: avoid;
   }
+  /* Don't let the on-screen scroller clip the table on paper. */
+  .itemsTableWrap { overflow: visible; }
+  .itemsTable { min-width: 0; }
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
@@ -323,4 +326,6 @@
   .topRow, .midRow { flex-direction: column; }
   .receiptTitle { text-align: left; }
   .totalsBlock { width: 100%; }
+  /* Scroll the table sideways instead of squashing the price columns. */
+  .itemsTable { min-width: 440px; }
 }

@@ -333,6 +333,15 @@
 }
 
 @media (max-width: 920px) {
+  /* Scrolls with the document — fixed + overflow:hidden cut off the top here. */
+  .page {
+    position: relative;
+    inset: auto;
+    overflow: visible;
+    min-height: 100dvh;
+    align-items: flex-start;
+  }
+
   .shell {
     grid-template-columns: 1fr;
   }
@@ -341,6 +350,11 @@
     min-height: 160px;
     max-height: 200px;
   }
+
+  /* Panel keeps just the logo and lead line on phones. */
+  .featureList {
+    display: none;
+  }
 }
 
 @media (max-width: 600px) {
@@ -348,8 +362,57 @@
     padding: 14px 10px;
   }
 
-  .containerInner,
+  .container,
   .brandPanel {
     padding: 18px 16px;
+  }
+
+  /* Tighter, uniform field sizing so the whole form fits on a phone screen. */
+  .heading {
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+  }
+
+  .form {
+    gap: 8px;
+  }
+
+  .label {
+    margin-bottom: 3px;
+    font-size: 0.78rem;
+  }
+
+  .input {
+    padding: 9px 12px;
+    font-size: 0.88rem;
+  }
+
+  .fieldHint,
+  .fieldError {
+    margin-top: 4px;
+    font-size: 0.7rem;
+  }
+
+  .button {
+    min-height: 42px;
+    font-size: 0.9rem;
+  }
+
+  .register {
+    margin-top: 10px;
+    font-size: 0.82rem;
+  }
+
+  .kicker {
+    min-height: 26px;
+    font-size: 0.7rem;
   }
 }
