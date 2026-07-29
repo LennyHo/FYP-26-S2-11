@@ -829,7 +829,6 @@ export default function StoreStaffPage() {
               </div>
 
               <div className={styles.modalFooter}>
-                <button type="button" className={styles.cancelBtn} onClick={closeAddModal}>Cancel</button>
                 <button type="submit" className={styles.saveBtn} disabled={adding || Boolean(nameError)}>
                   {adding ? (editingMenuItem ? 'Saving…' : 'Adding…') : (editingMenuItem ? 'Save Changes' : 'Add Drink')}
                 </button>
@@ -944,7 +943,6 @@ export default function StoreStaffPage() {
               {createFormError && <p className={styles.formError}>{createFormError}</p>}
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setShowCreateModal(false)}>Cancel</button>
               <button type="button" className={styles.saveBtn} onClick={() => void handleCreateInventorySubmit()} disabled={isCreating}>
                 {isCreating ? 'Creating…' : 'Create'}
               </button>

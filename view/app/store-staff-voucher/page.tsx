@@ -453,9 +453,6 @@ export default function StoreStaffVoucherPage() {
                 )}
               </div>
             </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnCancel} onClick={() => setSelectedVoucher(null)}>Close</button>
-            </div>
           </div>
         </div>
       )}
@@ -586,7 +583,6 @@ export default function StoreStaffVoucherPage() {
               {createError && <p className={styles.formError}>{createError}</p>}
             </div>
             <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnCancel} onClick={closeCreateModal}>Cancel</button>
               <button type="button" className={styles.btnSubmit} onClick={() => void handleCreateSubmit()} disabled={isCreating || Boolean(codeError)}>
                 {isCreating ? 'Creating…' : 'Create Voucher'}
               </button>

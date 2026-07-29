@@ -378,9 +378,6 @@ export default function StoreStaffDashboardPage() {
                 </div>
               )}
             </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnCancel} onClick={() => setFeedbackModalOrder(null)}>Close</button>
-            </div>
           </div>
         </div>
       )}

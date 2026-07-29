@@ -829,9 +829,6 @@ export default function UserAdminDashboardPage() {
                 </dl>
               </div>
               <div className={styles.modalActions}>
-                <button type="button" className={styles.secondaryButton} onClick={() => setViewingUser(null)}>
-                  Close
-                </button>
                 <button
                   type="button"
                   className={styles.primaryButton}
@@ -879,11 +876,6 @@ export default function UserAdminDashboardPage() {
                   )}
                 </div>
               </div>
-              <div className={styles.modalActions}>
-                <button type="button" className={styles.secondaryButton} onClick={() => setViewingRole(null)}>
-                  Close
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -917,9 +909,6 @@ export default function UserAdminDashboardPage() {
                 </div>
               </div>
               <div className={styles.modalActions}>
-                <button type="button" className={styles.secondaryButton} onClick={() => setEditingDescriptionRole(null)}>
-                  Cancel
-                </button>
                 <button type="submit" className={styles.primaryButton} disabled={isSavingDescription}>
                   {isSavingDescription ? 'Saving...' : 'Save Description'}
                 </button>
@@ -1083,9 +1072,6 @@ export default function UserAdminDashboardPage() {
               </div>
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.secondaryButton} onClick={closeFormModal}>
-                  Cancel
-                </button>
                 <button type="submit" className={styles.primaryButton} disabled={isSaving || Boolean(emailError) || Boolean(passwordError)}>
                   {isSaving ? 'Saving...' : 'Save User'}
                 </button>

@@ -127,7 +127,6 @@ export default function FeedbackModal({ order, onClose, onSubmitted }: Props) {
         </div>
 
         <div className={styles.footer}>
-          <button type="button" className={styles.cancelBtn} onClick={onClose}>Cancel</button>
           <button type="button" className={styles.submitBtn} onClick={() => void handleSubmit()} disabled={submitting}>
             {submitting ? "Submitting…" : "Submit Feedback"}
           </button>
