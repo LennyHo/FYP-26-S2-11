@@ -35,8 +35,9 @@ describe("GUI testing", function () {
   });
 
   // Test 4: The login page should have email, password, and sign in UI.
+  // The route file (page.tsx) just re-exports LoginPage.tsx, which holds the form.
   it("has login form fields and a sign in button", function () {
-    const source = readFrontendFile("view/app/login/page.tsx");
+    const source = readFrontendFile("view/app/login/LoginPage.tsx");
 
     expect(source).to.include('name="email"');
     expect(source).to.include('name="password"');

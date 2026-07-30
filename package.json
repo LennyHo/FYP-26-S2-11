@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "mocha \"test/guiTesting.js\" \"test/functionalTesting.js\" \"test/chatbotTesting.js\" \"test/apiIntegrationTesting.js\" \"test/databaseTesting.js\""
+    "test": "mocha --reporter ./test_cases/reporters/pytestStyleReporter.js \"test_cases/guiTesting.js\" \"test_cases/functionalTesting.js\" \"test_cases/chatbotTesting.js\" \"test_cases/apiIntegrationTesting.js\" \"test_cases/databaseTesting.js\" \"test_cases/orderStatusTesting.js\""
   },
   "keywords": [
     "express",

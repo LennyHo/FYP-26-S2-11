@@ -78,7 +78,9 @@ describe("chatbot testing", function () {
     await chatbotController.handleChat(req, res);
 
     expect(res.statusCode).to.equal(500);
-    expect(res.body.reply).to.equal("Kitchen is busy, please try again.");
+    expect(res.body.reply).to.equal(
+      "Apologies, I'm unable to process your request at the moment. Please try again shortly or take a look in our website for more information."
+    );
   });
 
   // Test 4: The chatbot route should use POST /chat.

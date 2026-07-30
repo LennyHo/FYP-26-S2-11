@@ -58,7 +58,7 @@ describe("functional testing", function () {
     await menuController.createMenuItem(req, res);
 
     expect(res.statusCode).to.equal(400);
-    expect(res.body.message).to.equal("Name, category, and valid price are required.");
+    expect(res.body.message).to.equal("Price must be greater than 0.");
   });
 
   // Test 2: Menu status should only be active or inactive.
@@ -75,16 +75,18 @@ describe("functional testing", function () {
     expect(res.body.message).to.equal("Status must be active or inactive.");
   });
 
-  // Test 3: Register should reject a password shorter than 6 characters.
-  it("rejects register when password is shorter than 6 characters", async function () {
+  // Test 3: Register should reject a password that doesn't meet the letter-count rule.
+  // Email must use an allowed domain (gmail/outlook/hotmail) so this actually
+  // exercises password validation rather than failing on the email check first.
+  it("rejects register when password has too few letters", async function () {
     await expectRejectsWith(
       () =>
         User.register({
           fullName: "Test User",
-          email: "test@example.com",
+          email: "test@gmail.com",
           password: "123",
         }),
-      "Full name, valid email, and password of at least 6 characters are required.",
+      "Password must contain at least 4 letters.",
       400
     );
   });

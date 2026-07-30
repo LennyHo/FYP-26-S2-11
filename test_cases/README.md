@@ -85,3 +85,23 @@ These tests check Mongoose model rules without connecting to MongoDB.
 | Menu price required | Menu item requires `price` | Prevents incomplete drink records |
 | Cart user id required | Cart item requires `userId` | Prevents cart item without owner |
 | Payment status | Payment status must use allowed values | Prevents invalid payment state |
+
+## 6. Order Status Testing
+
+File: `orderStatusTesting.js`
+
+These tests check how the chatbot classifies order-related messages (live status vs. purchase history vs. general delivery FAQ) and the delivery status card's step count. They call the real exported functions directly and do not connect to MongoDB or call the real AI.
+
+| Test | What It Checks | Why |
+| --- | --- | --- |
+| Direct status phrasing | `isTrackOrderRequest` recognizes "order status", "where is my order/delivery" | Customer's plain tracking question reaches the status card |
+| Colloquial "drink" phrasing | `isTrackOrderRequest` recognizes "wheres my drink" | Casual phrasing still gets tracked |
+| Typo tolerance | `isTrackOrderRequest` recognizes "wheres my oder", "delivery satus" | Common typos don't fall through to a dead end |
+| Status not mistaken for history | `isPurchaseHistory` returns false for "what is my order status" | Live tracking card shows instead of the order list |
+| Genuine history still works | `isPurchaseHistory` returns true for "what did I order last time" | History questions aren't broken by the fix above |
+| FAQ handler doesn't intercept tracking | `isDeliveryOrPaymentQuestion` returns false for "where is my delivery" | Personal tracking questions aren't swallowed by the general delivery FAQ |
+| General FAQ still works | `isDeliveryOrPaymentQuestion` returns true for "do you deliver to Tampines" | Delivery-service FAQ questions aren't broken by the fix above |
+| Typo normalization | `normalizeForOrderIntent` corrects "oder"/"satus" | Confirms the normalization helper itself is correct |
+| 4th delivery step exists | `chatbot.service.js` defines `orderStatusStepDelivery4` | Delivery card matches the tracking page's 4 stages |
+| Dynamic step rendering | `OrderStatusCard.tsx` has no hardcoded 3-step layout | Card supports both pickup (3 steps) and delivery (4 steps) |
+| No fabricated order details | `prompt.service.js` instructs the AI not to invent order data | Prevents the AI from hallucinating a fake order status |

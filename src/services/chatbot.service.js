@@ -745,17 +745,36 @@ async function getDrinksByItemIds(itemIds) {
 }
 // End of User Story #32
 
+// Light, targeted normalization for order/delivery-tracking intent matching only —
+// NOT applied to the message shown to the user or sent to Gemini. Fixes the small
+// set of contractions and single-letter-drop typos ("wheres", "oder", "staus")
+// that were otherwise slipping past the keyword classifiers below and falling
+// through to Gemini's general chat path with zero real order data (risking a
+// fabricated/hallucinated reply instead of the live status card).
+function normalizeForOrderIntent(msg) {
+    return msg
+        .replace(/\bwheres\b/g, "where is")
+        .replace(/\bhows\b/g, "how is")
+        .replace(/\bwhats\b/g, "what is")
+        .replace(/\boder\b/g, "order")
+        .replace(/\bordr\b/g, "order")
+        .replace(/\bstaus\b/g, "status")
+        .replace(/\bsatus\b/g, "status")
+        .replace(/\bdeliverry\b/g, "delivery")
+        .replace(/\bdelivry\b/g, "delivery");
+}
+
 // #198 - As a customer, I want to browse my purchase history through the chatbot so that I can review my previous orders conveniently.
 // Detects history-related keywords -> calls Payment.getPurchaseHistory() -> joins orders and order_items.
 function isPurchaseHistory(message) {
-    const msg = String(message || "").toLowerCase();
+    const msg = normalizeForOrderIntent(String(message || "").toLowerCase());
 
-    // "order status" (in its usual phrasings) is a live-tracking question, not a
-    // history one — even though it contains "my order" / "what...order". Without
-    // this guard, natural phrasing like "what is my order status" was swallowed by
-    // the broad "my order" / "what...my...order" checks below and got answered with
-    // the purchase-history card instead of the live orderStatusCard.
-    const isStatusPhrasing = /\border\s+status\b|\bstatus\s+of\s+(my\s+)?order\b|\bis\s+my\s+order\s+ready\b/i.test(msg);
+    // Live-tracking phrasings are not history requests, even though they contain
+    // "my order" / "what...order". Without this guard, natural phrasing like "what
+    // is my order status", "where is my order", or "how's my order going" got
+    // swallowed by the broad "my order" / "what...my...order" checks below and
+    // answered with the purchase-history card instead of the live orderStatusCard.
+    const isStatusPhrasing = /\border\s+status\b|\bstatus\s+of\s+(my\s+)?order\b|\bis\s+my\s+order\s+ready\b|\bwhere\s+is\s+my\s+(order|delivery)\b|\btrack\s+my\s+(order|delivery)\b|\bwhen\s+will\s+my\s+order\b|\bhas\s+my\s+order\b|\bcheck\s+my\s+order\b|\bwhat\s+happened\s+to\s+my\s+order\b|\bhow'?s\s+my\s+order\b|\bupdate\s+on\s+my\s+order\b/i.test(msg);
 
     return (
         msg.includes("purchase history") ||
@@ -987,7 +1006,7 @@ const ORDER_NUMBER_RE = /(?:\border\b\s*(?:number|no\.?|#)?\s*|#\s*)(\d{3,6})\b/
 
 // True if the message asks about the status/whereabouts of a live order or delivery.
 function isTrackOrderRequest(message) {
-    const msg = String(message || "").toLowerCase();
+    const msg = normalizeForOrderIntent(String(message || "").toLowerCase());
 
     // Make sure customer is not asking other questions
     if (isTaxQuestion(msg) || isDiscountNegotiation(msg) || isVoucherRequest(msg)) return false;
@@ -1018,6 +1037,15 @@ function isTrackOrderRequest(message) {
         msg.includes("has my delivery") ||
         msg.includes("is my delivery on the way") ||
         msg.includes("check my delivery") ||
+        // Colloquial phrasing — customers often say "drink" instead of "order"/"delivery".
+        msg.includes("where is my drink") ||
+        msg.includes("track my drink") ||
+        msg.includes("is my drink ready") ||
+        msg.includes("has my drink") ||
+        msg.includes("when will my drink") ||
+        /\bdrink\b.*\bready\b/i.test(msg) ||
+        /\bdrink\b.*\bstatus\b/i.test(msg) ||
+        /\bdrink\b.*\bdeliver/i.test(msg) ||
         /\border\b.*\bready\b/i.test(msg) ||
         /\border\b.*\bstatus\b/i.test(msg) ||
         /\bdelivery\b.*\bstatus\b/i.test(msg) ||
@@ -1085,6 +1113,19 @@ function isOrderCancellationRequest(message) {
 // Delivery coverage/fee/time and accepted payment methods.
 function isDeliveryOrPaymentQuestion(message) {
     const msg = String(message || "").toLowerCase();
+
+    // "where is my delivery", "check my delivery status" etc. are asking to track a
+    // specific order, not asking general delivery-service FAQ info (coverage areas,
+    // fees, how long delivery normally takes) — this check runs before
+    // isTrackOrderRequest, and without this guard "delivery" + "where"/"can you"
+    // alone was enough to win, so personal tracking questions never reached it.
+    const isPersonalOrderTracking =
+        /\bmy\s+(order|delivery|drink)\b[^.!?]*\b(status|ready|track)\b/i.test(msg) ||
+        /\b(status|ready|track)\b[^.!?]*\bmy\s+(order|delivery|drink)\b/i.test(msg) ||
+        /\bwhere\s+is\s+my\s+(order|delivery|drink)\b/i.test(msg) ||
+        /\bcheck\s+my\s+(order|delivery)\s+status\b/i.test(msg);
+    if (isPersonalOrderTracking) return false;
+
     const asksDelivery = /\b(deliver|delivery|delivered|send it|ship)\b/.test(msg) &&
         /\b(to|area|areas|where|fee|cost|charge|how long|time|available|do you|can you)\b/.test(msg);
     const asksPayment = /\b(payment|pay|paying|card|credit card|debit|paynow|cash|wallet)\b/.test(msg) &&
@@ -4964,6 +5005,9 @@ module.exports = {
     handleImageMessage,
     generateNavigationResponse,
     isTrackOrderRequest,
+    isPurchaseHistory,
+    isDeliveryOrPaymentQuestion,
+    normalizeForOrderIntent,
     extractOrderNoFromMessage,
     isSymptomRequest,
     hasExplicitOrderIntent,
