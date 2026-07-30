@@ -84,6 +84,20 @@ export interface Message {
     base_calories?: number | null;
     rating?: number;
   }[];
+  // True when the reply answers more than one request, so the UI stacks the cards.
+  multiIntent?: boolean;
+  // One entry per request answered, each carrying its own cards so they render together.
+  segments?: {
+    reply: string;
+    voucherCard?: Message['voucherCard'];
+    storeCards?: Message['storeCards'];
+    purchaseHistory?: Message['purchaseHistory'];
+    orderStatusCard?: Message['orderStatusCard'];
+    cartUpdate?: Message['cartUpdate'];
+    orderReceipt?: Message['orderReceipt'];
+    recommendedDrinks?: Message['recommendedDrinks'];
+    healthCard?: Message['healthCard'];
+  }[];
   healthCard?: {
     drinkName?: string;
     currentSugar: number;

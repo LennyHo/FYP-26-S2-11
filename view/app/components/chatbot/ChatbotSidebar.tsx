@@ -73,7 +73,7 @@ import CartSummaryCard from '../ui/CartSummaryCard';
 import PurchaseHistoryCard from '../ui/PurchaseHistoryCard';
 import ChatImageGallery from '../ui/ChatImageGallery';
 import DrinkCard from '../menu/DrinkCard';
-import { useChatbotState, type ChatbotSidebarProps } from './useChatbotState';
+import { useChatbotState, type ChatbotSidebarProps, type Message } from './useChatbotState';
 
 const avyLogo = '/img/Group 2.svg';
 
@@ -241,6 +241,89 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
     const el = speakMsgAreaRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [overlayMessages]);
+
+  // Shared by the single-intent layout and by each block of a multi-intent reply,
+  // so a "details just below" sentence is always followed by its own cards.
+  function renderDrinkCards(drinks: NonNullable<Message['recommendedDrinks']>) {
+    return (
+      <div className={styles.drinkCardList}>
+        {drinks.map((drink) => (
+          <div key={drink.id}>
+            {drink.description && (
+              <p className={styles.drinkDescLine}>
+                <strong>{drink.name}</strong> — {drink.description}
+              </p>
+            )}
+            <DrinkCard
+              id={drink.id}
+              name={drink.name}
+              price={`S$ ${Number(drink.price).toFixed(2)}`}
+              image={drink.image || (/^b\d{3}$/.test(drink.id) ? `/img/bubble_teas/${drink.id}.jpg` : "/img/bubble_teas/b001.jpg")}
+              categorySlug={drink.category.toLowerCase().replace(/\s+/g, "-")}
+              nutriGrade={drink.nutri_grade ?? undefined}
+              sugar={drink.base_sugar_g ?? undefined}
+              calories={drink.base_calories ?? undefined}
+              rating={drink.rating ?? menuById[drink.id]?.rating}
+              drinkInfo={menuById[drink.id]?.drinkInfo}
+              wrapClassName={styles.chatbotCard}
+              accent={
+                drink.category?.toLowerCase().includes("matcha")
+                  ? "green"
+                  : drink.category?.toLowerCase().includes("ice")
+                  ? "red"
+                  : "brown"
+              }
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function renderStoreCards(stores: NonNullable<Message['storeCards']>) {
+    return (
+      <div className={styles.storeCardList}>
+        {stores.map((store) => (
+          <div key={store.name} className={styles.storeCard}>
+            {store.image && (
+              <img src={store.image} alt={store.name} className={styles.storeCardImage} />
+            )}
+            <div className={styles.storeCardBody}>
+              <p className={styles.storeCardName}>{store.name}</p>
+              <p className={styles.storeCardLine}>{store.address}</p>
+              {store.phone && (
+                <p className={styles.storeCardLine}>
+                  <span className={styles.storeCardLabel}>Contact:</span> {store.phone}
+                </p>
+              )}
+              <p className={styles.storeCardLine}>
+                <span className={styles.storeCardLabel}>Opening Hours:</span> Mon–Fri: {store.weekdayHours} | Sat–Sun: {store.weekendHours}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // One answer of a multi-intent reply: its text, then the cards that belong to it.
+  function renderIntentSegment(segment: NonNullable<Message['segments']>[number], key: number, stripOptionLine: boolean) {
+    const text = stripOptionLine ? (extractOrderingOptions(segment.reply).cleanHtml || segment.reply) : segment.reply;
+    return (
+      <div key={key} className={styles.intentSegment}>
+        {text && (
+          <div dangerouslySetInnerHTML={{ __html: convertMarkdownBold(sanitizeExcessiveBreaks(text)) }} />
+        )}
+        {segment.orderStatusCard && <OrderStatusCard orderStatus={segment.orderStatusCard} />}
+        {segment.voucherCard && <VoucherCard voucherCard={segment.voucherCard} />}
+        {segment.orderReceipt && <OrderReceiptCard orderReceipt={segment.orderReceipt} />}
+        {segment.cartUpdate && <CartSummaryCard cartUpdate={segment.cartUpdate} />}
+        {segment.purchaseHistory && <PurchaseHistoryCard purchaseHistory={segment.purchaseHistory} />}
+        {segment.recommendedDrinks && segment.recommendedDrinks.length > 0 && renderDrinkCards(segment.recommendedDrinks)}
+        {segment.storeCards && segment.storeCards.length > 0 && renderStoreCards(segment.storeCards)}
+      </div>
+    );
+  }
 
   return (
     <aside className={`${styles.chatbotSidebar} ${styles.chatBg}${!hasUserMessage && !input ? ` ${styles.chatBgMotionActive}` : ''}`}>
@@ -429,15 +512,24 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                   {msg.isUser && msg.images && msg.images.length > 0 && (
                     <ChatImageGallery images={msg.images} />
                   )}
-                  {!msg.isUser && msg.orderStatusCard ? (
+                  {/* Multi-intent: each answer renders as its own block — text first, then
+                      the cards belonging to that answer — so nothing unrelated comes between. */}
+                  {!msg.isUser && msg.multiIntent && msg.segments && msg.segments.length > 0 && (
+                    <div className={styles.intentSegments}>
+                      {msg.segments.map((segment, i) => renderIntentSegment(segment, i, isLatestBot))}
+                    </div>
+                  )}
+                  {!(!msg.isUser && msg.multiIntent && msg.segments && msg.segments.length > 0) && (
+                  <>
+                  {!msg.isUser && !(msg.multiIntent && msg.segments?.length) && msg.orderStatusCard ? (
                     <OrderStatusCard orderStatus={msg.orderStatusCard} />
-                  ) : !msg.isUser && msg.voucherCard ? (
+                  ) : !msg.isUser && !(msg.multiIntent && msg.segments?.length) && msg.voucherCard ? (
                     <VoucherCard voucherCard={msg.voucherCard} />
-                  ) : !msg.isUser && msg.orderReceipt ? (
+                  ) : !msg.isUser && !(msg.multiIntent && msg.segments?.length) && msg.orderReceipt ? (
                     <OrderReceiptCard orderReceipt={msg.orderReceipt} />
-                  ) : !msg.isUser && msg.cartUpdate ? (
+                  ) : !msg.isUser && !(msg.multiIntent && msg.segments?.length) && msg.cartUpdate ? (
                     <CartSummaryCard cartUpdate={msg.cartUpdate} />
-                  ) : !msg.isUser && msg.purchaseHistory ? (
+                  ) : !msg.isUser && !(msg.multiIntent && msg.segments?.length) && msg.purchaseHistory ? (
                     <PurchaseHistoryCard purchaseHistory={msg.purchaseHistory} />
                   ) : !msg.isUser && msg.text.includes("startOrder") ? (
                     <DrinkRecCards
@@ -473,8 +565,10 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       }}
                     />
                   )}
+                  </>
+                  )}
 
-                  {!msg.isUser && msg.healthCard && (
+                  {!msg.isUser && !(msg.multiIntent && msg.segments?.length) && msg.healthCard && (
                     <div className={styles.healthCard}>
                       <div className={styles.healthCardTitle}>Want to reduce your sugar intake?</div>
                       {msg.healthCard.drinkName && (
@@ -535,7 +629,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                             />
                   )}
 
-                  {!msg.isUser && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && !msg.text.includes("startOrder") && (
+                  {!msg.isUser && !(msg.multiIntent && msg.segments?.length) && msg.recommendedDrinks && msg.recommendedDrinks.length > 0 && !msg.text.includes("startOrder") && (
                     <div className={styles.drinkCardList}>
                       {msg.recommendedDrinks.map((drink) => (
                         <div key={drink.id}>
@@ -569,7 +663,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                     </div>
                   )}
 
-                  {!msg.isUser && msg.storeCards && msg.storeCards.length > 0 && (
+                  {!msg.isUser && !(msg.multiIntent && msg.segments?.length) && msg.storeCards && msg.storeCards.length > 0 && (
                     <div className={styles.storeCardList}>
                       {msg.storeCards.map((store) => (
                         <div key={store.name} className={styles.storeCard}>

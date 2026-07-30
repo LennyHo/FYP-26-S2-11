@@ -658,6 +658,27 @@
   margin-bottom: 6px;
 }
 
+/* Separates the answers to two different requests inside one reply. Global because
+   the reply arrives as an HTML string, outside CSS-module class hashing. */
+:global(.chatIntentDivider) {
+  height: 1px;
+  margin: 14px 0;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 1px;
+}
+
+/* One block per request answered: its text, then its own cards. */
+.intentSegments {
+  display: flex;
+  flex-direction: column;
+}
+
+.intentSegment + .intentSegment {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+}
+
 .sourceSection {
   margin-top: 10px;
   display: flex;

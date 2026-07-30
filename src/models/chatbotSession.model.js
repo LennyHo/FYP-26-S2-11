@@ -82,6 +82,21 @@ const chatbotSessionSchema = new mongoose.Schema(
         type: [messageSchema],
         default: [],
     },
+    // Drinks named in a multi-drink message that are still waiting for their turn
+    pendingDrinks: {
+        type: [String],
+        default: [],
+    },
+    pendingDrinksAt: {
+        type: Date,
+        default: null,
+    },
+    // The queued drink the flow is currently asking questions about. Pinned so a
+    // reply that drifts back to the previous drink can't add it to the cart twice.
+    activeQueuedDrink: {
+        type: String,
+        default: null,
+    },
     },
     { timestamps: true, collection: "chatbot_sessions" }
 );
@@ -105,6 +120,63 @@ chatbotSessionSchema.statics.appendToConversation = async function appendToConve
     },
     { upsert: true, returnDocument: "after" }
     );
+};
+
+const PENDING_DRINKS_TTL_MS = 30 * 60 * 1000;
+
+chatbotSessionSchema.statics.setPendingDrinks = async function setPendingDrinks(conversationId, userId, drinks) {
+    await this.findOneAndUpdate(
+        { conversationId },
+        {
+            $setOnInsert: { conversationId, userId: userId || null },
+            $set: {
+                pendingDrinks: drinks,
+                pendingDrinksAt: drinks.length ? new Date() : null,
+                activeQueuedDrink: null,
+            },
+        },
+        { upsert: true }
+    );
+};
+
+// Removes and returns the next queued drink, or null when the queue is empty or stale.
+chatbotSessionSchema.statics.shiftPendingDrink = async function shiftPendingDrink(conversationId) {
+    const session = await this.findOne({ conversationId }).lean();
+    const queue = session?.pendingDrinks || [];
+    if (queue.length === 0) return null;
+
+    const age = Date.now() - new Date(session.pendingDrinksAt || 0).getTime();
+    if (age > PENDING_DRINKS_TTL_MS) {
+        await this.updateOne({ conversationId }, { $set: { pendingDrinks: [], pendingDrinksAt: null, activeQueuedDrink: null } });
+        return null;
+    }
+
+    const [next, ...rest] = queue;
+    await this.updateOne(
+        { conversationId },
+        {
+            $set: {
+                pendingDrinks: rest,
+                pendingDrinksAt: rest.length ? session.pendingDrinksAt : null,
+                activeQueuedDrink: next,
+            },
+        }
+    );
+    return next;
+};
+
+chatbotSessionSchema.statics.clearPendingDrinks = async function clearPendingDrinks(conversationId) {
+    await this.updateOne({ conversationId }, { $set: { pendingDrinks: [], pendingDrinksAt: null, activeQueuedDrink: null } });
+};
+
+// The queued drink currently being customised, if any.
+chatbotSessionSchema.statics.getActiveQueuedDrink = async function getActiveQueuedDrink(conversationId) {
+    const session = await this.findOne({ conversationId }).select("activeQueuedDrink").lean();
+    return session?.activeQueuedDrink || null;
+};
+
+chatbotSessionSchema.statics.clearActiveQueuedDrink = async function clearActiveQueuedDrink(conversationId) {
+    await this.updateOne({ conversationId }, { $set: { activeQueuedDrink: null } });
 };
 
 module.exports = mongoose.model("ChatbotSession", chatbotSessionSchema);
