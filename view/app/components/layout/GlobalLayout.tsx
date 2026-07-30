@@ -25,6 +25,7 @@ function AvyQueryListener({ onOpen }: { onOpen: () => void }) {
 
 export default function GlobalLayout({ children }: { children: React.ReactNode }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isAvyForceHidden, setIsAvyForceHidden] = useState(false);
   const pathname = usePathname();
   const router = useRouter(); // 2. INITIALIZE ROUTER
 
@@ -32,6 +33,14 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     const handler = () => setIsChatOpen(true);
     window.addEventListener('openAvyChat', handler);
     return () => window.removeEventListener('openAvyChat', handler);
+  }, []);
+
+  // Pages can ask Avy to get out of the way while they show their own full-screen
+  // overlay (e.g. the order receipt) so it doesn't float on top of the modal.
+  useEffect(() => {
+    const handler = (e: Event) => setIsAvyForceHidden(!!(e as CustomEvent<boolean>).detail);
+    window.addEventListener('avyForceHidden', handler);
+    return () => window.removeEventListener('avyForceHidden', handler);
   }, []);
 
   useEffect(() => {
@@ -93,7 +102,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
       </div>
 
       {/* RIGHT SIDE: CHATBOT */}
-      {!hideChatbot && (
+      {!hideChatbot && !isAvyForceHidden && (
         <>
           {/* Backdrop — fades in on mobile when chat opens */}
           <div
@@ -113,7 +122,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
       )}
 
       {/* FLOATING CHAT TOGGLE BUTTON */}
-      {!hideChatbot && !isChatOpen && (
+      {!hideChatbot && !isAvyForceHidden && !isChatOpen && (
         <button
           className={styles.chatToggleBtn}
           onClick={() => setIsChatOpen(true)}

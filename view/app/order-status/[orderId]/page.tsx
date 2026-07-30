@@ -36,7 +36,7 @@ const PICKUP_DIRECTIONS: Record<string, { image: string; steps: string[] }> = {
     steps: [
       "Go to Somerset MRT Station.",
       "Take the escalator on the right when you exit the station.",
-      "Head to Basement 2 — the store is at the end of the level.",
+      "Head to Basement 2 where the store is located at the end of the level.",
       "Show your order number at the counter.",
     ],
   },
@@ -45,7 +45,7 @@ const PICKUP_DIRECTIONS: Record<string, { image: string; steps: string[] }> = {
     steps: [
       "Go to Jurong East MRT Station.",
       "Take the escalator at the back when you exit the station.",
-      "Head up to Level 3 — the store is on the right side.",
+      "Head up to Level 3 where the store is located on the right side.",
       "Show your order number at the counter.",
     ],
   },
@@ -291,6 +291,13 @@ export default function OrderStatusPage() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [queueStatus, setQueueStatus] = useState<DripTeaOrderQueueStatus | null>(null);
   const { outlets } = useOutlets();
+
+  // Tells GlobalLayout to hide the Avy launcher/panel while the receipt overlay is on top of it —
+  // applies to both delivery and pickup orders since they share this same showReceipt state.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("avyForceHidden", { detail: showReceipt }));
+    return () => window.dispatchEvent(new CustomEvent("avyForceHidden", { detail: false }));
+  }, [showReceipt]);
 
   useEffect(() => {
     if (orderId) setSnapshot(getTrackingSnapshot(orderId));
@@ -704,6 +711,24 @@ export default function OrderStatusPage() {
                     </div>
                   )}
                 </div>
+
+                {isDeliveryOrder && collected && (
+                  <div className="tracking-doorstep-card">
+                    <span className="tracking-doorstep-icon" aria-hidden="true">!</span>
+                    <div>
+                      <strong>Didn&apos;t receive your delivery?</strong>
+                      <p>
+                        If the driver wasn&apos;t able to leave your order at the doorstep, please make a report to our team right away so we can look into it and make it right.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => window.dispatchEvent(new CustomEvent("openAvyChat"))}
+                    >
+                      Report Missing Delivery
+                    </button>
+                  </div>
+                )}
               </section>
 
               <aside className="tracking-sidebar">
@@ -764,15 +789,10 @@ export default function OrderStatusPage() {
                       <strong>{queueStatus?.cupsBefore ?? 0}</strong>
                     </div>
                   </div>
-                  <p className="tracking-queue-note">
-                    {queueStatus?.isQueueActive
-                      ? `You are #${queueStatus.position} in this store queue. Ready orders leave after collection.`
-                      : isDeliveryOrder
-                        ? (collected ? "Delivered to your address." : "Your drink has left the store queue.")
-                        : (collected ? "Collected at the counter." : "Your drink is ready for collection.")}
-                  </p>
-                  {isDeliveryOrder && (
-                    <p><span>Delivery Status</span><strong>{collected ? "Delivered" : phase >= 3 ? "Out for delivery" : "Preparing"}</strong></p>
+                  {queueStatus?.isQueueActive && (
+                    <p className="tracking-queue-note">
+                      {`You are #${queueStatus.position} in this store queue. Ready orders leave after collection.`}
+                    </p>
                   )}
                 </section>
 
