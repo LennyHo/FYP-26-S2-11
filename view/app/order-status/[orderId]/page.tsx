@@ -296,7 +296,9 @@ export default function OrderStatusPage() {
   // applies to both delivery and pickup orders since they share this same showReceipt state.
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("avyForceHidden", { detail: showReceipt }));
-    return () => window.dispatchEvent(new CustomEvent("avyForceHidden", { detail: false }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("avyForceHidden", { detail: false }));
+    };
   }, [showReceipt]);
 
   useEffect(() => {
