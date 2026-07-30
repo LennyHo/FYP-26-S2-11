@@ -62,7 +62,10 @@ async function callGeminiTextWithRotation(userMessage, history, systemPrompt) {
         systemInstruction: systemPrompt,
       });
 
-      const geminiHistory = history.map((msg) => ({
+      const firstUserIdx = history.findIndex((msg) => msg.role !== "assistant");
+      const alignedHistory = firstUserIdx === -1 ? [] : history.slice(firstUserIdx);
+
+      const geminiHistory = alignedHistory.map((msg) => ({
         role: msg.role === "assistant" ? "model" : "user",
         parts: [{ text: msg.content }],
       }));

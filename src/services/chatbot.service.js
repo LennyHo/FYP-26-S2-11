@@ -785,7 +785,11 @@ function isPurchaseHistory(message) {
         msg.includes("latest order") ||
         msg.includes("last order") ||
         msg.includes("recent order") ||
+        msg.includes("last purchase") ||
+        msg.includes("latest purchase") ||
+        msg.includes("recent purchase") ||
         msg.includes("my purchases") ||
+        msg.includes("my purchase") ||
         msg.includes("my orders") ||
         (msg.includes("my order") && !isStatusPhrasing) ||
         msg.includes("past order") ||
@@ -2817,7 +2821,7 @@ function mergeIntentResults(results) {
 
 // Main chatbot entry point: detects intent (or multiple intents) in one message and
 // routes it to the matching handler above, falling back to the Gemini AI reply.
-async function handleChatMessage({ message, conversationId, userId, isQuickPrompt = false, skipMultiIntent = false }) {
+async function handleChatMessage({ message, conversationId, userId, isQuickPrompt = false, skipMultiIntent = false, historyOverride = null }) {
     const safeMessage = String(message || "").trim();
 
     if (!safeMessage) {
@@ -2828,7 +2832,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     }
 
     const activeConversationId = conversationId || `guest-${Date.now()}`;
-    const history = await ChatbotSession.getConversationHistory(activeConversationId);
+    const history = historyOverride || await ChatbotSession.getConversationHistory(activeConversationId);
     const recentHistory = history.slice(-6);
 
     // Detect language and translate to English for intent matching.
@@ -2904,6 +2908,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                         conversationId: activeConversationId,
                         userId,
                         skipMultiIntent: true,
+                        historyOverride: history,
                     }));
                 }
                 return mergeIntentResults(results);

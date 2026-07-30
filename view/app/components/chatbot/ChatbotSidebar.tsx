@@ -965,6 +965,15 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                 )}
                 <div className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}>
                   <div className={styles.bubbleText}>
+                  {/* Multi-intent: same per-segment rendering as the main chat, so a compound
+                      voice request (e.g. "what's my last order and what's in X") shows every
+                      card it's supposed to instead of only the last segment's plain text. */}
+                  {!msg.isUser && msg.multiIntent && msg.segments && msg.segments.length > 0 ? (
+                    <div className={styles.intentSegments}>
+                      {msg.segments.map((segment, i) => renderIntentSegment(segment, i, false))}
+                    </div>
+                  ) : (
+                  <>
                     {!msg.isUser && msg.orderStatusCard ? (
                       <OrderStatusCard orderStatus={msg.orderStatusCard} />
                     ) : !msg.isUser && msg.voucherCard ? (
@@ -973,6 +982,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       <OrderReceiptCard orderReceipt={msg.orderReceipt} />
                     ) : !msg.isUser && msg.cartUpdate ? (
                       <CartSummaryCard cartUpdate={msg.cartUpdate} />
+                    ) : !msg.isUser && msg.purchaseHistory ? (
+                      <PurchaseHistoryCard purchaseHistory={msg.purchaseHistory} />
                     ) : !msg.isUser && msg.text.includes("startOrder") ? (
                       <DrinkRecCards
                         msgText={sanitizeExcessiveBreaks(msg.text).replace(/^(<br\s*\/?>|\s)+/gi, "")}
@@ -987,7 +998,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                       const after = parts.slice(1).join('<br>').replace(/^(\s*<br\s*\/?>)*\s*/gi, '').replace(/(<br\s*\/?>\s*){2,}/gi, '<br>');
                       return (
                         <>
-                          <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(before) }} />
+                          <div dangerouslySetInnerHTML={{ __html: convertMarkdownBold(sanitizeExcessiveBreaks(before)) }} />
                           <Image
                             src={`/grade_nutri_${grade.toLowerCase()}.png`}
                             alt={`Nutri-Grade ${grade}`}
@@ -995,7 +1006,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                             height={72}
                             className={styles.nutriGradeImg}
                           />
-                          {after && <div dangerouslySetInnerHTML={{ __html: sanitizeExcessiveBreaks(after) }} />}
+                          {after && <div dangerouslySetInnerHTML={{ __html: convertMarkdownBold(sanitizeExcessiveBreaks(after)) }} />}
                         </>
                       );
                     })() : (
@@ -1003,7 +1014,7 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                         dangerouslySetInnerHTML={{
                           __html: msg.isUser
                             ? convertDrinkNamesToLinks(msg.text, menuLookup)
-                            : sanitizeExcessiveBreaks(msg.text),
+                            : convertMarkdownBold(sanitizeExcessiveBreaks(msg.text)),
                         }}
                       />
                     )}
@@ -1092,6 +1103,8 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                         ))}
                       </div>
                     )}
+                  </>
+                  )}
                   </div>
                 </div>
                 {!msg.isUser && renderMessageActions(msg.id, msg.text)}
