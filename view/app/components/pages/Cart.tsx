@@ -51,6 +51,7 @@ const CART_LABELS: Record<string, Record<string, string>> = {
     "Tapioca Pearls": "Mutiara",
     "Brown Sugar": "Gula Perang",
     "Cheese Foam": "Busa Keju",
+    "No toppings": "Tanpa topping",
   },
   zh: {
     Qty: "数量",
@@ -68,6 +69,7 @@ const CART_LABELS: Record<string, Record<string, string>> = {
     "Tapioca Pearls": "珍珠",
     "Brown Sugar": "黑糖",
     "Cheese Foam": "芝士泡沫",
+    "No toppings": "不加配料",
   },
   ta: {
     Qty: "எண்ணிக்கை",
@@ -85,6 +87,7 @@ const CART_LABELS: Record<string, Record<string, string>> = {
     "Tapioca Pearls": "மரவள்ளி முத்துக்கள்",
     "Brown Sugar": "பழுப்பு சர்க்கரை",
     "Cheese Foam": "சீஸ் நுரை",
+    "No toppings": "மேலோடு இல்லை",
   },
 };
 
@@ -200,9 +203,12 @@ export default function Cart() {
           ? item.customization.toppings as string[]
           : [];
 
-        const toppings = rawToppings
-          .map((tp) => tLabel(tp.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim(), lang))
-          .join(", ");
+        // Always show something here — an omitted segment reads the same as "toppings were
+        // never asked about", but staff need to see the explicit choice (including "none") to
+        // know how to actually make the drink.
+        const toppings = rawToppings.length > 0
+          ? rawToppings.map((tp) => tLabel(tp.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim(), lang)).join(", ")
+          : tLabel("No toppings", lang);
 
         const details = [
           `${tLabel("Qty", lang)} ${quantity}`,

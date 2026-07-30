@@ -66,7 +66,6 @@ function calculateNutrition(drink, sugarLevel, toppings = []) {
         "0% Sugar": 0,
         "25% Sugar": 0.25,
         "50% Sugar": 0.5,
-        "70% Sugar": 0.7,
         "100% Sugar": 1,
         "Normal Sweet": 1,
     };
@@ -358,12 +357,6 @@ const BODY_HEALTH_NOUNS = [
     "cholesterol", "nerves", "bones", "teeth", "skin", "brain",
 ];
 
-// "is caffeine bad for my heart?" / "is sugar safe for my kidneys?" / "does this affect my
-// blood pressure?" — a question about whether an ingredient is medically safe, without naming
-// one of the fixed HEALTH_CONDITION_KEYWORDS conditions. Answering these with real health
-// information (what a plain AI fallback would do) is the same "not a medical professional"
-// problem as answering "what should I drink as a diabetic" — it just wasn't caught because
-// the exact keyword list didn't include "heart", "caffeine", etc. individually.
 function isMedicalSafetyQuestion(message) {
     const msg = String(message || "").toLowerCase();
     const hasSafetyPhrase = /\b(bad for|safe for|safe to (?:drink|have|take)|harmful (?:to|for)|good for|ok(?:ay)? for|dangerous for|risky for|affects? my|worsens? my|triggers? my)\b/.test(msg);
@@ -394,7 +387,8 @@ function isSymptomRequest(message) {
 const ORDER_CUSTOMIZATION_WORDS = [
     "regular", "large", "small",
     "no ice", "less ice", "normal ice", "more ice", "extra ice",
-    "0%", "25%", "50%", "70%", "100%", "no sugar", "less sweet", "less sugar", "full sweet",
+    "0%", "25%", "50%", "100%", "no sugar", "less sweet", "less sugar", "full sweet",
+    "0 percent", "25 percent", "50 percent", "100 percent",
     "zero percent", "twenty five percent", "twenty-five percent", "fifty percent", "hundred percent",
     "brown sugar", "pearl", "boba", "cheese foam", "tapioca", "no topping",
 ];
@@ -408,12 +402,24 @@ function parseSugarLevel(text) {
     if (/\bfifty\s+percent\b|\bhalf\s+(sweet|sugar|percent)\b/.test(m)) return "50% Sugar";
     if (/\btwenty[- ]?five\s+percent\b|\bless\s+sweet\b|\bless\s+sugar\b/.test(m)) return "25% Sugar";
     if (/\bzero\s+percent\b|\bno\s+sugar\b|\bunsweetened\b/.test(m)) return "0% Sugar";
-    // Numeric % — \b prevents "50%" from matching the "0%" branch
-    if (/\b100\s*%/.test(m)) return "100% Sugar";
+    if (/\b100\s*(?:%|percent\b)/.test(m)) return "100% Sugar";
     if (/\b70\s*%/.test(m)) return "70% Sugar";
-    if (/\b50\s*%/.test(m)) return "50% Sugar";
-    if (/\b25\s*%/.test(m)) return "25% Sugar";
-    if (/\b0\s*%/.test(m)) return "0% Sugar";
+    if (/\b50\s*(?:%|percent\b)/.test(m)) return "50% Sugar";
+    if (/\b25\s*(?:%|percent\b)/.test(m)) return "25% Sugar";
+    if (/\b0\s*(?:%|percent\b)/.test(m)) return "0% Sugar";
+    return null;
+}
+
+const VALID_SUGAR_PERCENTS = new Set([0, 25, 50, 100]);
+
+function findInvalidSugarPercent(message) {
+    const msg = String(message || "").toLowerCase();
+    // Scans every number+%/percent in the message, not just the first — a cart-edit message
+    // like "why is it 50%? change to 33% please" names a valid level before the invalid one.
+    for (const match of msg.matchAll(/\b(\d{1,3})\s*(?:%|percent\b)/g)) {
+        const value = Number(match[1]);
+        if (!VALID_SUGAR_PERCENTS.has(value)) return value;
+    }
     return null;
 }
 
@@ -421,7 +427,7 @@ function parseSugarLevel(text) {
 function normalizeSugarPercents(message) {
     const msg = String(message || "");
     if (!/\b(sugar|sweet|sweetness)\b/i.test(msg)) return msg;
-    return msg.replace(/\b(0|25|50|70|100)\b(?!\s*%)/g, "$1%");
+    return msg.replace(/\b(0|25|50|100)\b(?!\s*%)/g, "$1%");
 }
 
 // "50% Sugar" → "50%", for display on the health card.
@@ -535,6 +541,36 @@ function parseCustomizationFromMessage(message) {
     }
 
     return { size, ice, sugar, toppings };
+}
+
+// True if toppings were actually addressed (named, or explicitly "no toppings") — distinct from
+// not mentioning them, which parseCustomizationFromMessage can't tell apart on its own.
+function mentionsToppings(message) {
+    const msg = String(message || "").toLowerCase();
+    return (
+        msg.includes("no topping") ||
+        msg.includes("brown sugar") ||
+        msg.includes("pearl") || msg.includes("boba") || msg.includes("tapioca") ||
+        msg.includes("cheese")
+    );
+}
+
+// Null when size isn't mentioned, unlike parseCustomizationFromMessage's "Regular" default.
+function parseSizeMention(message) {
+    const msg = String(message || "").toLowerCase();
+    if (/\b(large|big)\b/.test(msg)) return "Large";
+    if (/\b(regular|medium)\b/.test(msg)) return "Regular";
+    return null;
+}
+
+// Same idea as parseSizeMention, for ice level.
+function parseIceMention(message) {
+    const msg = String(message || "").toLowerCase();
+    if (/\bno\s*ice\b|\bwithout\s*ice\b/.test(msg)) return "No Ice";
+    if (/\bless\s*ice\b|\blittle\s*ice\b/.test(msg)) return "Less Ice";
+    if (/\bhot\b|\bwarm\b/.test(msg)) return "Hot";
+    if (/\bnormal\s*ice\b|\bregular\s*ice\b/.test(msg)) return "Normal Ice";
+    return null;
 }
 // End of health advice QNA
 
@@ -2223,9 +2259,6 @@ function extractBothCustomization(message) {
 }
 
 // #26 - As a customer, I want the chatbot to navigate me to a page on the website so that I can find what I need quickly.
-// Directory of destinations the chatbot can jump the customer to. `aliases` are matched against
-// intentMessage, which is already translated to English (see detectMessageLanguage/translateToEnglish
-// in handleChatMessage), so this list only needs English phrasing to support EN/MS/ZH/TA input.
 const PAGE_DIRECTORY = [
     { key: "home", route: "/", aliases: ["home page", "homepage", "main page", "landing page", "home"],
         labels: { en: "Home", ms: "Laman Utama", zh: "首页", ta: "முகப்பு" } },
@@ -2261,23 +2294,11 @@ const PAGE_DIRECTORY = [
         labels: { en: "Register", ms: "Daftar", zh: "注册", ta: "பதிவு" } },
 ];
 
-// Strong verbs are unambiguous navigation intent on their own ("lead me to the cart").
-// Weak verbs ("go to", "open") only count as navigation when paired with the word "page".
-// Soft-show verbs ("show me", "give me") are the weakest signal — they only count as navigation
-// when paired with an actual page-directory alias (see NAV_SOFT_SHOW_EXCLUDED_KEYS below for the
-// pages where a richer in-chat handler must keep winning instead).
 const NAV_STRONG_TRIGGER_RE = /\b(lead me to|guide me to|take me to|bring me to|navigate to|direct me to|redirect me to|switch to the)\b/i;
 const NAV_WEAK_TRIGGER_RE = /\b(go to|open|jump to|where is|where's|where are)\b/i;
 const NAV_SOFT_SHOW_TRIGGER_RE = /\b(show me|give me|bring up|pull up|display|let me see|can i see|can you show me|could you show me|i want to see|i'd like to see)\b/i;
 const NAV_PAGE_WORD_RE = /\bpage\b/i;
 
-// Pages with their own richer in-chat handler, where "show me X" should keep showing the real data
-// inline in the chat instead of redirecting away from it: cart (isViewCartRequest — actual cart
-// items), vouchers (isVoucherRequest — real per-account voucher list), purchase-history
-// (isPurchaseHistory — real order history), order-status (isTrackOrderRequest — live order status
-// card). All other pages have no such in-chat equivalent, so navigating there is the only useful
-// response. No store-staff or user-admin routes are in PAGE_DIRECTORY — keep it that way; this
-// customer-facing chatbot should never navigate a customer into a staff/admin page.
 const NAV_SOFT_SHOW_EXCLUDED_KEYS = new Set(["cart", "vouchers", "purchase-history", "order-status"]);
 
 // True if the message asks to be taken to a page (strong verb, weak verb + "page", or soft-show + alias).
@@ -2728,6 +2749,12 @@ function splitIntentSegments(message) {
     const msg = String(message || "").trim();
     if (isMultiItemOrder(msg)) return [msg];
 
+    // A single one-shot order ("give me X, regular, normal ice, 50 percent sugar") uses commas to
+    // enumerate customization details, not to chain separate requests. Splitting it would strand
+    // "regular"/"50 percent sugar" in their own weakly-classified fragments, so the drink-name
+    // fragment reaches the ordering logic stripped of the customization the customer just gave.
+    if (isAddToCartRequest(msg)) return [msg];
+
     return msg
         .split(INTENT_SEGMENT_SPLIT_RE)
         .map((part) => String(part || "").trim())
@@ -2860,6 +2887,127 @@ function mergeIntentResults(results) {
     return merged;
 }
 
+// ── One-shot order slot-filling ────────────────────────────────────────────
+// A one-shot order needs drink, size, ice, sugar, and an explicit toppings answer before adding to the cart.
+const ORDER_FIELD_QUESTIONS = {
+    size: "What size would you like?<br>Regular / Large",
+    ice: "What ice level would you like?<br>No Ice / Less Ice / Normal Ice / Hot",
+    sugar: "What sugar level would you like?<br>0% / 25% / 50% / 100%",
+    toppings: "What toppings would you like?<br>Tapioca Pearls (+S$1.20) / Brown Sugar (+S$1.00) / Cheese Foam (+S$1.50) / No Toppings",
+};
+
+// First missing field, in the same order the guided step-by-step flow asks; null once complete.
+function nextMissingOrderField(draft) {
+    if (!draft.beverageId) {
+        return { field: "drink", question: "Which drink would you like me to add? You can say something like 'add Classic Milk Tea to my cart'." };
+    }
+    if (!draft.size) return { field: "size", question: ORDER_FIELD_QUESTIONS.size };
+    if (!draft.ice) return { field: "ice", question: ORDER_FIELD_QUESTIONS.ice };
+    if (!draft.sugar) return { field: "sugar", question: ORDER_FIELD_QUESTIONS.sugar };
+    // == null, not falsy — [] means "no toppings" was answered, not that it's missing.
+    if (draft.toppings == null) return { field: "toppings", question: ORDER_FIELD_QUESTIONS.toppings };
+    return null;
+}
+
+async function askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage }) {
+    await ChatbotSession.setPendingOrderDraft(activeConversationId, userId, { ...draft, awaitingField: missing.field });
+    await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+    await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: missing.question });
+    return { reply: missing.question, system_action: { ui_navigation: "none" } };
+}
+
+// Commits a fully-answered draft to the cart; shared by the one-shot and resumed-draft paths.
+async function finalizeOrderDraft(draft, { activeConversationId, userId, safeMessage }) {
+    const customization = {
+        size: draft.size,
+        ice: draft.ice,
+        sugar: draft.sugar,
+        toppings: draft.toppings || [],
+    };
+    const quantity = draft.quantity || 1;
+
+    const cartItem = await CartItem.addToCart(userId, draft.beverageId, { quantity, customization });
+
+    const allCartItems = await CartItem.getCart(userId);
+    const cartTotal = allCartItems.reduce((sum, i) => sum + Number(i.lineTotal || 0), 0);
+
+    const menuItem = await MenuItem.findOne({ itemId: draft.beverageId }).lean();
+    const nutrition = menuItem ? calculateNutrition(menuItem, customization.sugar, customization.toppings) : null;
+
+    const qtyLabel = quantity > 1 ? ` ×${quantity}` : "";
+    const reply = `${cartItem.name}${qtyLabel} added to your cart.`;
+
+    await ChatbotSession.clearPendingOrderDraft(activeConversationId);
+    await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+    await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+    return {
+        reply,
+        system_action: { ui_navigation: "none" },
+        showViewCart: true,
+        orderReceipt: {
+            drink: {
+                name: cartItem.name,
+                price: cartItem.unitPrice,
+                image: cartItem.image || (/^b\d{3}$/.test(draft.beverageId) ? `/img/bubble_teas/${draft.beverageId}.jpg` : "/img/bubble_teas/b001.jpg"),
+            },
+            customization,
+            nutrition,
+            recommendedNutrition: (nutrition && (nutrition.grade === "C" || nutrition.grade === "D"))
+                ? calculateNutrition(menuItem, "25% Sugar", customization.toppings || [])
+                : null,
+            cartItems: allCartItems.map((i) => ({ name: i.name, quantity: i.quantity, lineTotal: i.lineTotal })),
+            total: cartTotal,
+            lang: detectMessageLanguage(safeMessage),
+        },
+    };
+}
+
+// Reads a reply as the answer to draft.awaitingField; null if it doesn't look like one.
+async function continueOrderDraft(draft, replyMessage, { activeConversationId, userId, safeMessage, history }) {
+    const field = draft.awaitingField;
+
+    if (field === "drink") {
+        let beverageId = await resolveBeverageId(replyMessage);
+        if (!beverageId) {
+            // Only fall back to history if the reply itself names a drink — else "yes"/"sure" would latch onto an unrelated one.
+            const lastDrinkName = resolveDrinkNameFromMessage(replyMessage) ? resolveLastDrinkFromHistory(history) : null;
+            if (lastDrinkName) beverageId = await resolveBeverageId(lastDrinkName);
+        }
+        if (!beverageId) return null;
+        draft.beverageId = beverageId;
+    } else if (field === "size") {
+        const size = parseSizeMention(replyMessage);
+        if (!size) return null;
+        draft.size = size;
+    } else if (field === "ice") {
+        const ice = parseIceMention(replyMessage);
+        if (!ice) return null;
+        draft.ice = ice;
+    } else if (field === "sugar") {
+        const invalidSugar = findInvalidSugarPercent(replyMessage);
+        if (invalidSugar !== null) {
+            const reply = `Sorry, ${invalidSugar}% sugar isn't one of our sugar level options. We offer 0%, 25%, 50%, or 100% sugar — which would you like?`;
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+            return { reply, system_action: { ui_navigation: "none" } };
+        }
+        const sugar = parseSugarLevel(replyMessage);
+        if (!sugar) return null;
+        draft.sugar = sugar;
+    } else if (field === "toppings") {
+        if (!mentionsToppings(replyMessage)) return null;
+        draft.toppings = parseCustomizationFromMessage(replyMessage).toppings;
+    } else {
+        return null;
+    }
+
+    const missing = nextMissingOrderField(draft);
+    if (missing) return await askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage });
+    return await finalizeOrderDraft(draft, { activeConversationId, userId, safeMessage });
+}
+// ── End one-shot order slot-filling ────────────────────────────────────────
+
 // Main chatbot entry point: detects intent (or multiple intents) in one message and
 // routes it to the matching handler above, falling back to the Gemini AI reply.
 async function handleChatMessage({ message, conversationId, userId, isQuickPrompt = false, skipMultiIntent = false, historyOverride = null }) {
@@ -2902,6 +3050,16 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // can write a natural response, while the frontend still receives the cards to render.
     if (isQuickPrompt) {
         return await handleQuickPromptWithGemini({ safeMessage, activeConversationId, userId, history: recentHistory });
+    }
+
+    // Try this reply against a pending one-shot-order draft before the full intent chain below.
+    if (userId) {
+        const pendingOrderDraft = await ChatbotSession.getPendingOrderDraft(activeConversationId);
+        if (pendingOrderDraft) {
+            const resumed = await continueOrderDraft(pendingOrderDraft, intentMessage, { activeConversationId, userId, safeMessage, history: recentHistory });
+            if (resumed) return resumed;
+            await ChatbotSession.clearPendingOrderDraft(activeConversationId); // not an answer — drop the stale draft
+        }
     }
 
     // Escape hatch: after 2 consecutive unintelligible messages, proactively offer a human handoff
@@ -4198,6 +4356,15 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             // falls through to the Gemini handler below
         } else {
 
+        // Reject, don't default — 0/25/50/100 are the only real sugar levels.
+        const invalidSugar = findInvalidSugarPercent(intentMessage);
+        if (invalidSugar !== null) {
+            const reply = `Sorry, ${invalidSugar}% sugar isn't one of our sugar level options. We offer 0%, 25%, 50%, or 100% sugar — which would you like?`;
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+            return { reply, system_action: { ui_navigation: "none" } };
+        }
+
         let beverageId = await resolveBeverageId(intentMessage);
 
         if (!beverageId) {
@@ -4217,67 +4384,21 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             }
         }
 
-        if (!beverageId) {
-            return {
-                reply:
-                    "Which drink would you like me to add? You can say something like 'add Classic Milk Tea to my cart'.",
-                system_action: { ui_navigation: "none" },
-            };
+        const draft = {
+            beverageId: beverageId || null,
+            size: parseSizeMention(intentMessage),
+            ice: parseIceMention(intentMessage),
+            sugar: parseSugarLevel(intentMessage),
+            toppings: mentionsToppings(intentMessage) ? parseCustomizationFromMessage(intentMessage).toppings : null,
+            quantity: parseQuantityFromMessage(intentMessage),
+        };
+
+        const missing = nextMissingOrderField(draft);
+        if (missing) {
+            return await askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage });
         }
 
-        const customization = parseCustomizationFromMessage(intentMessage);
-        const quantity = parseQuantityFromMessage(intentMessage);
-
-        const cartItem = await CartItem.addToCart(userId, beverageId, { quantity, customization });
-
-        const allCartItems = await CartItem.getCart(userId);
-        const cartTotal = allCartItems.reduce((sum, i) => sum + Number(i.lineTotal || 0), 0);
-
-        const menuItem = await MenuItem.findOne({ itemId: beverageId }).lean();
-        const nutrition = menuItem ? calculateNutrition(menuItem, customization.sugar, customization.toppings) : null;
-
-        const qtyLabel = quantity > 1 ? ` ×${quantity}` : "";
-        // The direct-add path defaults size to Regular when the customer didn't state one. Make that
-        // assumption explicit so behaviour is consistent with the step-by-step flow (which asks for
-        // size first) rather than silently committing a size.
-        const sizeSpecified = /\b(large|small|regular)\b/i.test(intentMessage);
-        const sizeNote = sizeSpecified ? "" : ` (added as ${customization.size} size — say "make it Large" if you'd prefer)`;
-        const reply = `${cartItem.name}${qtyLabel} added to your cart.${sizeNote}`;
-
-        await ChatbotSession.appendToConversation(activeConversationId, userId, {
-            role: "user",
-            content: safeMessage,
-        });
-
-        await ChatbotSession.appendToConversation(activeConversationId, userId, {
-            role: "assistant",
-            content: reply,
-        });
-
-        return {
-            reply,
-            system_action: { ui_navigation: "none" },
-            showViewCart: true,
-            orderReceipt: {
-                drink: {
-                    name: cartItem.name,
-                    price: cartItem.unitPrice,
-                    image: cartItem.image || (/^b\d{3}$/.test(beverageId) ? `/img/bubble_teas/${beverageId}.jpg` : "/img/bubble_teas/b001.jpg"),
-                },
-                customization,
-                nutrition,
-                recommendedNutrition: (nutrition && (nutrition.grade === "C" || nutrition.grade === "D"))
-                    ? calculateNutrition(menuItem, "25% Sugar", customization.toppings || [])
-                    : null,
-                cartItems: allCartItems.map((i) => ({
-                    name: i.name,
-                    quantity: i.quantity,
-                    lineTotal: i.lineTotal,
-                })),
-                total: cartTotal,
-                lang: detectMessageLanguage(safeMessage),
-            },
-        };
+        return await finalizeOrderDraft(draft, { activeConversationId, userId, safeMessage });
 
         } // end else (has customization)
     }
@@ -4349,6 +4470,17 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         }
 
         const intent = getCartUpdateIntent(intentMessage);
+
+        // Same guard as the add-to-cart path — "change to 33% sugar" must be rejected, not
+        // silently ignored (leaving newCustomization.sugar empty and falling through to the
+        // generic "what would you like to do?" reply as if nothing was said).
+        const invalidSugar = findInvalidSugarPercent(intentMessage);
+        if (invalidSugar !== null) {
+            const reply = `Sorry, ${invalidSugar}% sugar isn't one of our sugar level options. We offer 0%, 25%, 50%, or 100% sugar — which would you like?`;
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+            return { reply, system_action: { ui_navigation: "none" } };
+        }
 
         const ordinalForDisambig = extractOrdinalIndex(intentMessage);
         const hasExplicitEditVerb = /\b(remove|delete|increase|decrease|add one more|add another|plus one|minus one|change|switch|update|edit|modify)\b/i.test(intentMessage);

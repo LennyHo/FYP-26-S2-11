@@ -54,7 +54,10 @@ function formatDate(value?: string) {
 
 function formatCustomization(customization?: Record<string, unknown>) {
   if (!customization) return "No customization";
-  const toppings = Array.isArray(customization.toppings) ? customization.toppings.join(", ") : "";
+  // Always shown explicitly — an omitted segment here would look identical to toppings never
+  // having been asked about, when it may have been a deliberate "no toppings" choice.
+  const toppingsList = Array.isArray(customization.toppings) ? customization.toppings : [];
+  const toppings = toppingsList.length > 0 ? toppingsList.join(", ") : "No toppings";
   const text = [customization.size, customization.ice, customization.sugar, toppings]
     .filter(Boolean)
     .join(" · ");

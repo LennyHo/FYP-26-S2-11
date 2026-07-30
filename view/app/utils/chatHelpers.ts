@@ -101,6 +101,9 @@ export function getOrderStep(options: string[]): number {
   const text = options.join(' ').toLowerCase();
   if (text.includes('regular') || text.includes('large')) return 1;
   if (text.includes('ice') || text.includes('hot')) return 2;
+  // Checked before the sugar-percent step below — "Brown Sugar" is a topping option, so
+  // checking for "sugar" first would misclassify the toppings step as the sugar step.
+  if (text.includes('tapioca') || text.includes('pearl') || text.includes('cheese') || text.includes('topping')) return 4;
   if (options.some(o => /^\d+%$/.test(o.trim()))) return 3;
   if (text.includes('sugar') || text.includes('sweet') || text.includes('remain at')) return 3;
   return 4;

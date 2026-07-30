@@ -438,9 +438,12 @@ export function formatLocalCartLine(item: DripTeaLocalCartItem) {
 export function cartItemsToLocalCartData(items: DripTeaCartItem[]) {
   return items
     .map((item) => {
-      const toppings = Array.isArray(item.customization?.toppings)
-        ? (item.customization.toppings as string[]).join(', ')
-        : '';
+      // Always shown explicitly — an omitted segment here would look identical to toppings
+      // never having been asked about, when it may have been a deliberate "no toppings" choice.
+      const toppingsList = Array.isArray(item.customization?.toppings)
+        ? (item.customization.toppings as string[])
+        : [];
+      const toppings = toppingsList.length > 0 ? toppingsList.join(', ') : 'No toppings';
       const details = [
         item.quantity ? `Qty ${item.quantity}` : '',
         typeof item.customization?.size === 'string' ? item.customization.size : '',
