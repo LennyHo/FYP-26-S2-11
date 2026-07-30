@@ -167,40 +167,7 @@ export function deleteCartItem(cartItemId: string) {
   );
 }
 
-// Pushes guest localStorage cart items into the backend on login.
-export async function migrateLocalCartToBackend(userId: string): Promise<void> {
-  const localData = window.localStorage.getItem('dripTeaCartData');
-  if (!localData) return;
-
-  const lines = localData.split('\n').filter((l) => l.trim());
-  if (!lines.length) return;
-
-  const { parseLocalCartLine } = await import('./api.base');
-
-  const migrations = lines.map(async (line) => {
-    const parsed = parseLocalCartLine(line);
-    if (!parsed) return;
-
-    const codeMatch = (parsed.imageSrc || '').match(/\/([a-z]\d{2,4})\.(?:png|jpe?g|webp)/i);
-    const menuItemCode = codeMatch ? codeMatch[1].toLowerCase() : null;
-    if (!menuItemCode) return;
-
-    const parts = (parsed.details || '').split('|').map((p) => p.trim());
-    const qtyMatch = parts[0]?.match(/Qty\s+(\d+)/i);
-    const quantity = qtyMatch ? Number(qtyMatch[1]) : 1;
-    const size = parts[1] || 'Regular';
-    const ice = parts[2] || 'Normal Ice';
-    const sugar = parts[3] || '100% Sugar';
-    const toppingRaw = (parts[4] || '').trim();
-    const toppings = toppingRaw ? [toppingRaw] : [];
-
-    await addCartItem({ userId, menuItemId: menuItemCode, quantity, customization: { size, ice, sugar, toppings } });
-  });
-
-  await Promise.allSettled(migrations);
-}
-
-// Syncs the backend cart to localStorage. Must be called after migrateLocalCartToBackend.
+// Syncs the backend cart (source of truth) into the localStorage badge mirror.
 export async function syncStoredCartFromBackend(userId: string): Promise<DripTeaCartItem[]> {
   const response = await getCartItems(userId);
   const cartData = cartItemsToLocalCartData(response.data || []);
@@ -222,7 +189,7 @@ export function getVouchers() {
 }
 
 // Validates a voucher against the cart and previews the discount. POST /api/cart/apply-voucher
-export function applyVoucher(payload: { userId?: string; voucherCode: string; subtotal?: number }) {
+export function applyVoucher(payload: { userId?: string; voucherCode: string }) {
   return requestJson<{
     ok: boolean;
     message?: string;

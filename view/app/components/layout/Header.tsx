@@ -131,13 +131,9 @@ export default function Header() {
       }
     }
 
-    if (user) {
-      setCartCount(0);
-      setCartTotal(0);
-      return;
-    }
-
-    updateCartDisplayFromLocalStorage();
+    // No account (or a non-customer account) means no cart — cart requires login now.
+    setCartCount(0);
+    setCartTotal(0);
   };
 
   // Listen for the custom "cartUpdated" event triggered by the AI

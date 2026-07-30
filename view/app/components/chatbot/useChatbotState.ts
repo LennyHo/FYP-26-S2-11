@@ -247,22 +247,19 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
     (window as any).handleCart = () => { router.push('/cart'); };
     (window as any).handleCheckout = async () => {
       const user = getStoredUser();
-      if (user?.id) {
-        try {
-          const res = await getCartItems(user.id);
-          if (!res.data || res.data.length === 0) {
-            alert('Your cart is empty. Please add items before checking out.');
-            return;
-          }
-        } catch {
-          // If the check fails, let the checkout page handle validation
-        }
-      } else {
-        const localData = localStorage.getItem('dripTeaCartData');
-        if (!localData || !localData.trim()) {
+      if (!user?.id) {
+        router.push('/login');
+        return;
+      }
+
+      try {
+        const res = await getCartItems(user.id);
+        if (!res.data || res.data.length === 0) {
           alert('Your cart is empty. Please add items before checking out.');
           return;
         }
+      } catch {
+        // If the check fails, let the checkout page handle validation
       }
       router.push('/checkout');
     };

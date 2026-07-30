@@ -191,11 +191,10 @@ async function getActiveVouchers(req, res) {
 }
 
 // #18 - As a customer, I want to apply vouchers during checkout so that I can enjoy discounts.
-// Validates the voucher against the customer's cart subtotal (or a client-supplied subtotal
-// for guest checkout, where there is no backend cart to look up) and returns the discount preview.
+// Validates the voucher against the customer's real cart subtotal and returns the discount preview.
 async function applyVoucher(req, res) {
   try {
-    const { customerId, userId, voucherCode, subtotal: providedSubtotal } = req.body;
+    const { customerId, userId, voucherCode } = req.body;
     const finalCustomerId = customerId || userId;
 
     if (!voucherCode) {
@@ -205,12 +204,15 @@ async function applyVoucher(req, res) {
       });
     }
 
-    let subtotal = Number(providedSubtotal || 0);
-
-    if (finalCustomerId) {
-      const cartItems = await CartItem.getCart(finalCustomerId);
-      subtotal = cartItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
+    if (!finalCustomerId) {
+      return res.status(401).json({
+        ok: false,
+        message: "You must be logged in to apply a voucher.",
+      });
     }
+
+    const cartItems = await CartItem.getCart(finalCustomerId);
+    const subtotal = cartItems.reduce((sum, item) => sum + Number(item.lineTotal || 0), 0);
 
     const voucher = await Voucher.findValidByCode(voucherCode);
 

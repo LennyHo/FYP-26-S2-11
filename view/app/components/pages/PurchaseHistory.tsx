@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Header from "../layout/Header";
 import { getPurchaseHistory } from "../../utils/customerApi";
 import { updateOrderStatus } from "../../utils/staffApi";
@@ -90,6 +91,7 @@ function resolveIsDeliveryOrder(
 }
 
 export default function PurchaseHistory() {
+  const router = useRouter();
   const [orders, setOrders] = useState<DripTeaPurchaseHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -114,15 +116,15 @@ export default function PurchaseHistory() {
 
   useEffect(() => {
     const user = getStoredUser();
-    if (user?.fullName) setCustomerName(user.fullName);
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    setCustomerName(user.fullName || "");
 
     async function loadPurchaseHistory() {
       try {
-        if (!user) {
-          setMessage("Please log in to view your purchase history.");
-          setOrders([]);
-          return;
-        }
         const response = await getPurchaseHistory(user.id);
         setOrders(response.data || []);
       } catch (error) {
@@ -133,10 +135,9 @@ export default function PurchaseHistory() {
     }
 
     void loadPurchaseHistory();
-    if (!user) return;
     const timer = window.setInterval(() => void loadPurchaseHistory(), 5000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const now = Date.now();

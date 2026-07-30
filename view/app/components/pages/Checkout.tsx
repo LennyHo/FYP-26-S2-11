@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import Header from "../layout/Header";
 import { checkoutCart, getCartItems, getVouchers, applyVoucher, getStoreCrowdStats } from "../../utils/customerApi";
 import type { DripTeaVoucher, DripTeaStoreCrowdStat } from "../../utils/api.base";
-import { getOrder, updateOrderStatus } from "../../utils/staffApi";
-import { getStoredUser, parseLocalCartLine, PENDING_VOUCHER_KEY, type DripTeaCartItem } from "../../utils/api.base";
+import { getStoredUser, PENDING_VOUCHER_KEY, type DripTeaCartItem } from "../../utils/api.base";
 import { useOutlets, type DripTeaOutlet } from "../../utils/outlets";
 import OrderTypeSelect from "./OrderTypeSelect";
 import VoucherSelect from "./VoucherSelect";
@@ -34,15 +33,6 @@ type CheckoutItem = {
     fields?: Array<{ label: string; value: string }>;
 };
 
-type Confirmation = {
-    orderId: string;
-    orderNo: string;
-    paymentStatus: string;
-    status: string;
-    total: number;
-    details: string;
-};
-
 export type DeliveryData = {
     type: string;
     storeCode: string;
@@ -59,41 +49,6 @@ export type DeliveryData = {
 };
 
 const ORDER_TRACKING_KEY = "driptea_order_tracking";
-
-function parseLocalCart(): CheckoutItem[] {
-    if (typeof window === "undefined") return [];
-
-    const savedData = window.localStorage.getItem("dripTeaCartData");
-    if (!savedData) return [];
-
-    return savedData
-        .split("\n")
-        .map((line) => {
-            const parsedCartLine = parseLocalCartLine(line);
-
-            if (parsedCartLine) {
-                return {
-                    name: parsedCartLine.name,
-                    details: parsedCartLine.details,
-                    price: parsedCartLine.price,
-                    image: parsedCartLine.imageSrc,
-                };
-            }
-
-            const parts = line.split("|");
-            if (parts.length < 3) return null;
-
-            const price = Number(parts[2].replace(/[^0-9.]/g, ""));
-            if (Number.isNaN(price)) return null;
-
-            return {
-                name: parts[0].replace(/\s*\([^)]*\)\s*$/, "").trim(),
-                details: parts[1].trim(),
-                price,
-            };
-        })
-        .filter((item): item is CheckoutItem => Boolean(item));
-}
 
 function fromBackendCart(items: DripTeaCartItem[]): CheckoutItem[] {
     return items.map((item) => {
@@ -128,20 +83,6 @@ function fromBackendCart(items: DripTeaCartItem[]): CheckoutItem[] {
     });
 }
 
-function buildOrderDetails(items: CheckoutItem[], delivery: DeliveryData | null) {
-    const itemDetails = items.length
-        ? items.map((item) => `${item.name}: ${item.details}`).join(" | ")
-        : "No customization recorded";
-
-    if (!delivery) return itemDetails;
-
-    return `${itemDetails} | Delivery to ${delivery.customerLat.toFixed(5)}, ${delivery.customerLng.toFixed(5)} | Distance ${delivery.distanceKm.toFixed(2)} km`;
-}
-
-function makeGuestOrderNo() {
-    return String(Math.floor(Math.random() * 9000) + 1000).padStart(4, "0");
-}
-
 function saveOrderTrackingSnapshot(
     orderId: string,
     orderNo: string,
@@ -172,29 +113,6 @@ function saveOrderTrackingSnapshot(
     }
 }
 
-function getProgressStep(status: string) {
-    const normalized = status.toLowerCase();
-    if (normalized === "completed" || normalized === "ready") return 3;
-    if (normalized === "preparing") return 2;
-    if (normalized === "cancelled") return 0;
-    return 1;
-}
-
-function getCustomerStatusLabel(status: string) {
-    switch (status.toLowerCase()) {
-        case "preparing":
-            return "Drinks in progress";
-        case "ready":
-            return "Ready";
-        case "completed":
-            return "Completed";
-        case "cancelled":
-            return "Cancelled";
-        default:
-            return "Order received";
-    }
-}
-
 export default function Checkout() {
     const router = useRouter();
 
@@ -218,15 +136,21 @@ export default function Checkout() {
     }>({});
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
-    const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
-    const [phase, setPhase] = useState<1 | 2 | 3>(1);
-    const [countdown, setCountdown] = useState(8);
-    const [collected, setCollected] = useState(false);
     const [orderType, setOrderType] = useState("");
     const [deliveryPreview, setDeliveryPreview] = useState<DeliveryData | null>(null);
     const [rightStep, setRightStep] = useState<1 | 2>(1);
     const [pickupOutlet, setPickupOutlet] = useState<DripTeaOutlet | null>(null);
+    const [isAuthChecked, setIsAuthChecked] = useState(false);
     const cartColRef = useRef<HTMLDivElement>(null);
+
+    // Cart/checkout requires a logged-in customer — no guest checkout.
+    useEffect(() => {
+        if (!getStoredUser()) {
+            router.replace("/login");
+            return;
+        }
+        setIsAuthChecked(true);
+    }, [router]);
 
     // Confirming the address/outlet collapses a tall form (map, search, etc.) into
     // the much shorter order summary, but the page keeps its old scroll offset — so
@@ -274,7 +198,6 @@ export default function Checkout() {
     const displayedDelivery = deliveryPreview || delivery;
     const deliveryFee = displayedDelivery?.deliveryFee ?? 0;
     const total = Math.max(subtotal - discountAmount, 0) + deliveryFee;
-    const isDeliveryOrder = Boolean(displayedDelivery);
     const needsDeliveryAddress = orderType === "delivery" && !delivery;
     const isDelivery = orderType === "delivery";
 
@@ -328,7 +251,6 @@ export default function Checkout() {
             const response = await applyVoucher({
                 userId: currentUser?.id,
                 voucherCode: code,
-                subtotal,
             });
 
             setDiscountAmount(response.data.discountAmount);
@@ -343,24 +265,22 @@ export default function Checkout() {
     }
 
     useEffect(() => {
+        if (!isAuthChecked) return;
+
         async function loadCheckoutCart() {
             const currentUser = getStoredUser();
+            if (!currentUser) return;
 
-            if (currentUser) {
-                try {
-                    const response = await getCartItems(currentUser.id);
-                    setItems(fromBackendCart(response.data || []));
-                    return;
-                } catch (error) {
-                    console.error("[DripTea checkout cart]", error);
-                }
+            try {
+                const response = await getCartItems(currentUser.id);
+                setItems(fromBackendCart(response.data || []));
+            } catch (error) {
+                console.error("[DripTea checkout cart]", error);
             }
-
-            setItems(parseLocalCart());
         }
 
         void loadCheckoutCart();
-    }, []);
+    }, [isAuthChecked]);
 
     useEffect(() => {
         const currentOrderType = window.localStorage.getItem("driptea_order_type");
@@ -473,90 +393,6 @@ export default function Checkout() {
         });
     }
 
-    useEffect(() => {
-        if (!confirmation || confirmation.orderId.startsWith("GUEST-")) return;
-
-        let isActive = true;
-        const orderId = confirmation.orderId;
-
-        async function refreshOrderStatus() {
-            try {
-                const response = await getOrder(orderId);
-                if (!isActive) return;
-
-                setConfirmation(current => {
-                    if (!current) return current;
-
-                    return {
-                        ...current,
-                        orderNo: response.data.orderNo || current.orderNo,
-                        status: response.data.status || current.status,
-                        total: Number(response.data.totalAmount || current.total),
-                    };
-                });
-            } catch (error) {
-                console.error("[DripTea order status]", error);
-            }
-        }
-
-        void refreshOrderStatus();
-        const timer = window.setInterval(() => void refreshOrderStatus(), 3000);
-
-        return () => {
-            isActive = false;
-            window.clearInterval(timer);
-        };
-    }, [confirmation?.orderId]);
-
-    useEffect(() => {
-        if (!confirmation) return;
-
-        setPhase(1);
-        let count = 8;
-        setCountdown(count);
-        let running = true;
-        let activeTimer: number;
-
-        const startPhase2 = () => {
-            setPhase(2);
-            count = 20;
-            setCountdown(count);
-
-            activeTimer = window.setInterval(() => {
-                if (!running) return;
-
-                count--;
-                setCountdown(count);
-
-                if (count <= 0) {
-                    window.clearInterval(activeTimer);
-                    setPhase(3);
-
-                    if (!confirmation.orderId.startsWith("GUEST-")) {
-                        void updateOrderStatus(confirmation.orderId, "ready").catch(console.error);
-                    }
-                }
-            }, 1000);
-        };
-
-        activeTimer = window.setInterval(() => {
-            if (!running) return;
-
-            count--;
-            setCountdown(count);
-
-            if (count <= 0) {
-                window.clearInterval(activeTimer);
-                startPhase2();
-            }
-        }, 1000);
-
-        return () => {
-            running = false;
-            window.clearInterval(activeTimer);
-        };
-    }, [confirmation?.orderId]);
-
     function validateCardDetails() {
         const errors: typeof cardFieldErrors = {};
         if (!cardNumber.trim()) errors.cardNumber = true;
@@ -579,55 +415,38 @@ export default function Checkout() {
 
         try {
             const currentUser = getStoredUser();
-            const orderDetails = buildOrderDetails(items, delivery);
-
-            if (currentUser) {
-                const result = await checkoutCart(
-                    currentUser.id,
-                    paymentMethod,
-                    voucherCode ? voucherCode.trim() : undefined,
-                    orderType === "delivery" ? "delivery" : "pickup",
-                    delivery,
-                    orderType === "delivery" ? null : pickupOutlet
-                );
-                const orderNo = result.order.orderNo || result.order.displayOrderNo || result.order.id;
-                const finalTotal = Number(result.order.totalAmount || total);
-
-                saveOrderTrackingSnapshot(
-                    result.order.id,
-                    orderNo,
-                    items,
-                    delivery,
-                    subtotal,
-                    deliveryFee,
-                    discountAmount,
-                    finalTotal
-                );
-
-                window.localStorage.removeItem("dripTeaCartData");
-                window.localStorage.removeItem("driptea_delivery");
-                window.dispatchEvent(new Event("cartUpdated"));
-                setItems([]);
-                router.push(`/order-status/${result.order.id}`);
-
+            if (!currentUser) {
+                router.replace("/login");
                 return;
             }
 
-            const fakeOrderId = `GUEST-${Date.now().toString(36).toUpperCase()}`;
+            const result = await checkoutCart(
+                currentUser.id,
+                paymentMethod,
+                voucherCode ? voucherCode.trim() : undefined,
+                orderType === "delivery" ? "delivery" : "pickup",
+                delivery,
+                orderType === "delivery" ? null : pickupOutlet
+            );
+            const orderNo = result.order.orderNo || result.order.displayOrderNo || result.order.id;
+            const finalTotal = Number(result.order.totalAmount || total);
+
+            saveOrderTrackingSnapshot(
+                result.order.id,
+                orderNo,
+                items,
+                delivery,
+                subtotal,
+                deliveryFee,
+                discountAmount,
+                finalTotal
+            );
 
             window.localStorage.removeItem("dripTeaCartData");
             window.localStorage.removeItem("driptea_delivery");
             window.dispatchEvent(new Event("cartUpdated"));
             setItems([]);
-
-            setConfirmation({
-                orderId: fakeOrderId,
-                orderNo: `GUEST-${makeGuestOrderNo()}`,
-                paymentStatus: "paid",
-                status: "pending",
-                total,
-                details: orderDetails,
-            });
+            router.push(`/order-status/${result.order.id}`);
         } catch (error) {
             setStatusMessage(error instanceof Error ? error.message : "Payment failed.");
         } finally {
@@ -635,211 +454,31 @@ export default function Checkout() {
         }
     }
 
+    if (!isAuthChecked) {
+        return (
+            <div className="checkout-page">
+                <Header />
+                <main className="checkout-main">
+                    <p>Loading checkout...</p>
+                </main>
+            </div>
+        );
+    }
+
     return (
         <div className="checkout-page">
             <Header />
 
             <main className="checkout-main">
-                {!confirmation && (
-                    <button
-                        type="button"
-                        className="checkout-back-btn"
-                        onClick={() => router.push("/cart")}
-                    >
-                        Back to Cart
-                    </button>
-                )}
+                <button
+                    type="button"
+                    className="checkout-back-btn"
+                    onClick={() => router.push("/cart")}
+                >
+                    Back to Cart
+                </button>
 
-                {confirmation ? (
-                    <section className="order-status-page">
-                        <div className="order-progress">
-                            <div className={`progress-step ${phase >= 1 ? "active" : ""}`}>
-                                <span>1</span>
-                                <strong>Order sent!</strong>
-                            </div>
-
-                            <div className={`progress-line ${phase >= 2 ? "active" : ""}`} />
-
-                            <div className={`progress-step ${phase >= 2 ? "active" : ""}`}>
-                                <span>2</span>
-                                <strong>Drinks in<br />progress..</strong>
-                            </div>
-
-                            <div className={`progress-line ${phase >= 3 ? "active" : ""}`} />
-
-                            <div className={`progress-step ${phase >= 3 ? "active" : ""}`}>
-                                <span>3</span>
-                                <strong>
-                                    {isDeliveryOrder ? (
-                                        <>
-                                            Out for<br />delivery!
-                                        </>
-                                    ) : (
-                                        <>
-                                            Ready for<br />collection!
-                                        </>
-                                    )}
-                                </strong>
-                            </div>
-                        </div>
-
-                        {phase === 1 && (
-                            <div className="order-status-content">
-                                <img
-                                    src="/buy_dripTea_cover.png"
-                                    alt="Order sent"
-                                    className="order-sent-img"
-                                />
-
-                                <div className="order-info">
-                                    <h1>Order #{confirmation.orderNo}</h1>
-                                    <p>Your order has been sent to our baristas!</p>
-                                    <p><strong>Total Price:</strong> S$ {confirmation.total.toFixed(2)}</p>
-
-                                    {delivery && (
-                                        <p>
-                                            <strong>Delivery Fee:</strong> S$ {delivery.deliveryFee.toFixed(2)}
-                                        </p>
-                                    )}
-
-                                    <p className="order-phase1-hint">Preparing in {countdown}s...</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {phase === 2 && (
-                            <div className="order-status-content">
-                                <div className="clock-visual">
-                                    {countdown > 0
-                                        ? `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, "0")}`
-                                        : "Done!"}
-                                </div>
-
-                                <div className="order-info">
-                                    <h1>Order #{confirmation.orderNo}</h1>
-                                    <p><strong>Customization:</strong> {confirmation.details}</p>
-                                    <p><strong>Total Price:</strong> S$ {confirmation.total.toFixed(2)}</p>
-                                    <p><strong>Estimated Time:</strong> 20 sec</p>
-                                    <p><strong>Status:</strong> Drinks in progress...</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {phase === 3 && !collected && (
-                            <div className="order-status-content">
-                                <div className="clock-visual-ready">
-                                    {isDeliveryOrder ? (
-                                        <>
-                                            Out for<br />delivery!
-                                        </>
-                                    ) : (
-                                        <>
-                                            Ready for<br />collection!
-                                        </>
-                                    )}
-                                </div>
-
-                                <div className="order-info">
-                                    <h1>Order #{confirmation.orderNo}</h1>
-
-                                    {isDeliveryOrder ? (
-                                        <>
-                                            <p>Your drink is on the way.</p>
-                                            {delivery && (
-                                                <>
-                                                    <p><strong>Outlet:</strong> {delivery.outletName}</p>
-                                                    <p><strong>Deliver to:</strong> {delivery.customerAddress || `${delivery.customerLat.toFixed(5)}, ${delivery.customerLng.toFixed(5)}`}</p>
-                                                    <p><strong>Distance:</strong> {delivery.distanceKm.toFixed(2)} km</p>
-                                                </>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <p>Your drink is ready! Please collect at the counter.</p>
-                                    )}
-
-                                    <p><strong>Total Price:</strong> S$ {confirmation.total.toFixed(2)}</p>
-
-                                    <button
-                                        type="button"
-                                        className="collect-btn"
-                                        onClick={async () => {
-                                            setCollected(true);
-
-                                            if (confirmation.orderId.startsWith("GUEST-")) return;
-
-                                            try {
-                                                await updateOrderStatus(confirmation.orderId, "completed");
-                                                const orderRes = await getOrder(confirmation.orderId);
-
-                                                window.dispatchEvent(
-                                                    new CustomEvent("chatbotSystemMessage", {
-                                                        detail: {
-                                                            text:
-                                                                "We hope you enjoyed your order. We'd love to hear your thoughts — your feedback helps us deliver a better experience every time.",
-                                                            feedbackOrderId: confirmation.orderId,
-                                                            feedbackItems: (orderRes.data.items || []).map((item) => ({
-                                                                name: item.name,
-                                                                image: item.image,
-                                                                quantity: item.quantity,
-                                                                customization: item.customization,
-                                                                menuItemId: item.menuItemId,
-                                                                menuItemCode: item.menuItemCode,
-                                                            })),
-                                                        },
-                                                    })
-                                                );
-                                            } catch (error) {
-                                                console.error("[DripTea collect]", error);
-                                            }
-                                        }}
-                                    >
-                                        {isDeliveryOrder ? "Mark as Received" : "Click to Collect"}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {collected && (
-                            <div className="order-collected">
-                                <div className="order-collected-icon">✓</div>
-                                <h2>
-                                    {isDeliveryOrder
-                                        ? "Delivered! Enjoy your drink!"
-                                        : "Collected! Enjoy your drink!"}
-                                </h2>
-                                <p>Thank you for your order. We hope to see you again!</p>
-                            </div>
-                        )}
-
-                        {collected ? (
-                            <div className="order-collected-actions">
-                                <button
-                                    type="button"
-                                    className="order-more-btn"
-                                    onClick={() => router.push("/buy-driptea")}
-                                >
-                                    Order More
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="back-menu-wide-btn"
-                                    onClick={() => router.push("/purchase-history")}
-                                >
-                                    Back to Purchase History
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                type="button"
-                                className="back-menu-wide-btn"
-                                onClick={() => router.push("/buy-driptea")}
-                            >
-                                Back to Menu
-                            </button>
-                        )}
-                    </section>
-                ) : !orderType ? (
+                {!orderType ? (
                     <section className="checkout-card">
                         <div className="order-type-card">
                             <h1>Choose Your Order Method</h1>

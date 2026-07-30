@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '../layout/Header';
 import styles from './MenuCategory.module.css';
 import { getMenuItems } from '../../utils/customerApi';
+import { getStoredUser } from '../../utils/api.base';
 
 type Beverage = {
   id: string;
@@ -28,6 +29,13 @@ export default function MenuCategory() {
   const [beverages, setBeverages] = useState<Beverage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Browsing the menu now requires a logged-in customer.
+  useEffect(() => {
+    if (!getStoredUser()) {
+      router.replace("/login");
+    }
+  }, [router]);
 
   useEffect(() => {
     async function fetchMenu() {
