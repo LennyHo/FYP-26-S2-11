@@ -25,6 +25,8 @@ router.post("/checkout", orderController.processPayment);
 router.get("/orders", requireAuth, requireRole("store_staff"), orderController.getOrders);
 router.post("/orders/test-queue", orderController.createTestQueueOrders);
 router.get("/orders/:id/queue", orderController.getOrderQueueStatus);
+// Lets the chatbot's order-status card poll for live updates without re-asking Avy.
+router.get("/orders/:id/status-card", orderController.getOrderStatusCard);
 router.get("/orders/:id", orderController.getOrder);
 
 // #28 As a customer, I want to track my order status so that I know when my drink will be ready. 

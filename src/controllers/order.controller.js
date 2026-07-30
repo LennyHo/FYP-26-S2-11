@@ -385,6 +385,58 @@ async function getOrder(req, res) {
     }
 }
 
+// #304 - Lets the chatbot's order-status card poll for live updates in place,
+// instead of staying frozen at whatever phase it was in when first asked.
+// Scoped to the requesting customer's own userId so an order id alone (visible
+// in the chat's own network requests) can't be used to poll a stranger's order.
+async function getOrderStatusCard(req, res) {
+    try {
+        const orderId = toObjectId(req.params.id);
+        const userId = String(req.query.userId || "");
+        const lang = String(req.query.lang || "en");
+
+        if (!orderId || !userId) {
+            return res.status(400).json({
+                ok: false,
+                message: "A valid order id and userId are required.",
+            });
+        }
+
+        let order = await Order.findById(orderId).lean();
+
+        if (!order || String(order.userId) !== userId) {
+            return res.status(404).json({
+                ok: false,
+                message: "Order not found.",
+            });
+        }
+
+        order = await withLiveStatus(order);
+
+        if (!ACTIVE_ORDER_STATUSES.includes(order.status)) {
+            // No longer active (completed/cancelled) — nothing to poll anymore,
+            // the frontend stops refreshing once it sees data: null.
+            return res.json({ ok: true, data: null });
+        }
+
+        // Required here (not top-level) — chatbot.service.js doesn't import this
+        // controller, so there's no circular require, but keeping it local makes
+        // that non-obvious safety clear at the one place that actually needs it.
+        const { buildOrderStatusCard } = require("../services/chatbot.service");
+
+        return res.json({
+            ok: true,
+            data: buildOrderStatusCard(order, lang),
+        });
+    } catch (error) {
+        console.error("[OrderController] Failed to load order status card:", error);
+        return res.status(500).json({
+            ok: false,
+            message: "Failed to load order status card.",
+        });
+    }
+}
+
 // #301 - Customer queue/crowd status for a specific pickup or delivery order.
 async function getOrderQueueStatus(req, res) {
     try {
@@ -659,6 +711,7 @@ module.exports = {
     processPayment,
     getOrders,
     getOrder,
+    getOrderStatusCard,
     getOrderQueueStatus,
     createTestQueueOrders,
     updateOrderStatus,

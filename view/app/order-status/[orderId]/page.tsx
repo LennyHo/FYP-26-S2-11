@@ -323,8 +323,17 @@ export default function OrderStatusPage() {
 
         setOrder(res.data);
         if (res.data.status.toLowerCase() === "completed") {
+          // The backend now auto-advances status on its own (via any read, not
+          // just this page's own timer), so a poll can reveal "completed"
+          // before the local elapsed-time effect below ever gets a chance to
+          // fire — which is the only other place that calls
+          // dispatchFeedbackPrompt. Without this, feedback simply never got
+          // asked for whenever the backend "won" that race. dispatchFeedbackPrompt
+          // itself is guarded (feedbackPromptSentRef) so calling it from both
+          // places is safe — it only ever actually fires once.
           setCollected(true);
           markCollectedLocally(orderId);
+          dispatchFeedbackPrompt(res.data);
         }
         setError("");
       } catch {

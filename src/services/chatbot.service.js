@@ -2679,6 +2679,35 @@ const REPLY_STRINGS = {
     },
 };
 
+const PHASE_BY_STATUS = { pending: 1, paid: 1, preparing: 2, ready: 3 };
+
+// Builds the chatbot's order-status card from a live order (already run through
+// deriveCurrentStatus by the caller). Pulled out of handleChatMessage so the
+// live-refresh endpoint (GET /orders/:id/status-card) can build the exact same
+// card shape the chat message originally showed, without duplicating the
+// phase/label/translation logic.
+function buildOrderStatusCard(activeOrder, detectedLang) {
+    const t = (key) => REPLY_STRINGS[key]?.[detectedLang] ?? REPLY_STRINGS[key]?.en ?? key;
+    const phase = PHASE_BY_STATUS[activeOrder.status];
+    const isDelivery = activeOrder.orderType === "delivery";
+    const phaseMessageKey = isDelivery
+        ? (phase === 1 ? 'orderStatusPhaseDelivery1Msg' : phase === 2 ? 'orderStatusPhaseDelivery2Msg' : 'orderStatusPhaseDelivery3Msg')
+        : (phase === 1 ? 'orderStatusPhase1Msg' : phase === 2 ? 'orderStatusPhase2Msg' : 'orderStatusPhase3Msg');
+
+    return {
+        orderId: String(activeOrder._id),
+        orderNo: activeOrder.orderNo,
+        phase,
+        message: t(phaseMessageKey),
+        stepLabels: isDelivery
+            ? [t('orderStatusStepDelivery1'), t('orderStatusStepDelivery2'), t('orderStatusStepDelivery3'), t('orderStatusStepDelivery4')]
+            : [t('orderStatusStep1'), t('orderStatusStep2'), t('orderStatusStep3')],
+        orderType: isDelivery ? "delivery" : "pickup",
+        deliveryAddress: isDelivery ? (activeOrder.deliveryDetails?.customerAddress || null) : null,
+        lang: detectedLang,
+    };
+}
+
 // Main chatbot message handler
 // ── Multi-intent ────────────────────────────────────────────────────────────
 const INTENT_SEGMENT_SPLIT_RE = new RegExp(
@@ -3647,26 +3676,10 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
         // If there's a current (active) order, show ONLY that order as a structured status
         // card (matching the 3-step "Order sent / Drinks in Progress / Collection!" widget) —
         // no need to also list other past orders alongside it.
-        const PHASE_BY_STATUS = { pending: 1, paid: 1, preparing: 2, ready: 3 };
         const activeOrder = orders.find((o) => ACTIVE_STATUSES.has(o.status));
 
         if (activeOrder) {
-            const phase = PHASE_BY_STATUS[activeOrder.status];
-            const isDelivery = activeOrder.orderType === "delivery";
-            const phaseMessageKey = isDelivery
-                ? (phase === 1 ? 'orderStatusPhaseDelivery1Msg' : phase === 2 ? 'orderStatusPhaseDelivery2Msg' : 'orderStatusPhaseDelivery3Msg')
-                : (phase === 1 ? 'orderStatusPhase1Msg' : phase === 2 ? 'orderStatusPhase2Msg' : 'orderStatusPhase3Msg');
-
-            const orderStatusCard = {
-                orderNo: activeOrder.orderNo,
-                phase,
-                message: t(phaseMessageKey),
-                stepLabels: isDelivery
-                    ? [t('orderStatusStepDelivery1'), t('orderStatusStepDelivery2'), t('orderStatusStepDelivery3'), t('orderStatusStepDelivery4')]
-                    : [t('orderStatusStep1'), t('orderStatusStep2'), t('orderStatusStep3')],
-                orderType: isDelivery ? "delivery" : "pickup",
-                deliveryAddress: isDelivery ? (activeOrder.deliveryDetails?.customerAddress || null) : null,
-            };
+            const orderStatusCard = buildOrderStatusCard(activeOrder, detectedLang);
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: orderStatusCard.message });
@@ -5029,4 +5042,5 @@ module.exports = {
     isSymptomRequest,
     hasExplicitOrderIntent,
     looksUnintelligible,
+    buildOrderStatusCard,
 };

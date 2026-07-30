@@ -132,12 +132,14 @@ export interface Message {
     }[];
   } | null;
   orderStatusCard?: {
+    orderId?: string;
     orderNo: string;
-    phase: 1 | 2 | 3;
+    phase: number;
     message: string;
-    stepLabels: [string, string, string];
+    stepLabels: string[];
     orderType?: 'pickup' | 'delivery';
     deliveryAddress?: string | null;
+    lang?: string;
   } | null;
   voucherCard?: {
     title: string;
@@ -372,6 +374,10 @@ export function useChatbotState({ isOpen, onClose, onOpenCart, onCheckout }: Cha
           feedbackItems: customEvent.detail.feedbackItems || [],
         };
 
+        // Snapping any earlier order-status card to "fully complete" is handled
+        // by OrderStatusCard.tsx itself (it listens for this same event) —
+        // it owns its own live-polled display state, so pushing an update
+        // through this message's props wouldn't be picked up after mount.
         conversation.setMessages((prev) => [...prev, botMessage]);
     }
 

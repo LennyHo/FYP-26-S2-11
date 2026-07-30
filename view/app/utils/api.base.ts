@@ -196,6 +196,17 @@ export type DripTeaOrderQueueStatus = {
   updatedAt?: string;
 };
 
+export type DripTeaOrderStatusCard = {
+  orderId: string;
+  orderNo: string;
+  phase: number;
+  message: string;
+  stepLabels: string[];
+  orderType?: 'pickup' | 'delivery';
+  deliveryAddress?: string | null;
+  lang?: string;
+};
+
 export type DripTeaInventoryItem = {
   _id: string;
   name: string;

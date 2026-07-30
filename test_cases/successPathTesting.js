@@ -251,6 +251,76 @@ describe("success path & role-boundary testing", function () {
     expect(persistedOrder.status).to.equal("ready");
   });
 
+  // Test 4c: The chatbot's order-status card is a self-refreshing widget, not a
+  // frozen snapshot — GET /orders/:id/status-card is what it polls in the
+  // background. This proves the endpoint itself advances with real elapsed
+  // time, is scoped to the requesting customer, and goes quiet once the order
+  // is no longer active (the widget's cue to stop polling).
+  describe("GET /api/orders/:id/status-card (the widget's live-refresh endpoint)", function () {
+    let userId, otherUserId, orderId;
+
+    before(async function () {
+      const app = createTestApp();
+      const registerResponse = await request(app)
+        .post("/api/auth/register")
+        .send({ fullName: "Widget Endpoint Test", email: `widgetendpoint_${Date.now()}@gmail.com`, password: "GoodPass1@" });
+      userId = registerResponse.body.user.id;
+
+      const otherRegisterResponse = await request(app)
+        .post("/api/auth/register")
+        .send({ fullName: "Other Customer", email: `widgetendpoint_other_${Date.now()}@gmail.com`, password: "GoodPass1@" });
+      otherUserId = otherRegisterResponse.body.user.id;
+
+      const store = await Store.create({
+        storeCode: `TEST-WIDGET-${Date.now()}`, name: "Widget Test Outlet", address: "4 Test Street", lat: 1.3, lng: 103.8,
+      });
+      const menuItem = await MenuItem.create({
+        itemId: `test_widget_${Date.now()}`, name: "Test Watermelon Tea", category: "Fruit Tea", price: 5, status: "active",
+      });
+      await request(app).post("/api/cart-items").send({ userId, menuItemId: String(menuItem._id), quantity: 1 });
+      const checkoutResponse = await request(app)
+        .post("/api/checkout")
+        .send({ userId, paymentMethod: "fake_card", orderType: "pickup", storeCode: store.storeCode });
+      orderId = checkoutResponse.body.order.id;
+    });
+
+    it("returns the current card for the order's own customer", async function () {
+      const response = await request(createTestApp()).get(`/api/orders/${orderId}/status-card?userId=${userId}`);
+
+      expect(response.status).to.equal(200);
+      expect(response.body.data.orderId).to.equal(orderId);
+      expect(response.body.data.phase).to.equal(1);
+    });
+
+    it("advances the phase as real time passes, without any new chat message", async function () {
+      await Order.updateOne(
+        { _id: orderId },
+        { $set: { updatedAt: new Date(Date.now() - 6_000) } },
+        { timestamps: false }
+      );
+
+      const response = await request(createTestApp()).get(`/api/orders/${orderId}/status-card?userId=${userId}`);
+
+      expect(response.status).to.equal(200);
+      expect(response.body.data.phase).to.equal(2);
+    });
+
+    it("hides the card from a different customer even with a correct order id", async function () {
+      const response = await request(createTestApp()).get(`/api/orders/${orderId}/status-card?userId=${otherUserId}`);
+
+      expect(response.status).to.equal(404);
+    });
+
+    it("returns null once the order is no longer active, so the widget knows to stop polling", async function () {
+      await Order.updateOne({ _id: orderId }, { $set: { status: "completed" } });
+
+      const response = await request(createTestApp()).get(`/api/orders/${orderId}/status-card?userId=${userId}`);
+
+      expect(response.status).to.equal(200);
+      expect(response.body.data).to.equal(null);
+    });
+  });
+
   // Test 5 & 6: Inventory is scoped to the requesting staff member's own store.
   describe("inventory is scoped to the requester's own store", function () {
     let storeA, storeB, itemInStoreA, staffA, staffB;

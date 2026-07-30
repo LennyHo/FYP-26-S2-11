@@ -29,6 +29,7 @@ import type {
   DripTeaStore,
   DripTeaStoreCrowdStat,
   DripTeaOrderQueueStatus,
+  DripTeaOrderStatusCard,
 } from './api.base';
 
 
@@ -116,6 +117,16 @@ export function getStoreCrowdStats() {
 export function getOrderQueueStatus(orderId: string) {
   return requestJson<{ ok: boolean; data: DripTeaOrderQueueStatus }>(
     `/api/orders/${encodeURIComponent(orderId)}/queue`
+  );
+}
+
+// #304 - Lets the chatbot's order-status card poll for its own live update
+// instead of staying frozen at whatever phase it was in when first asked.
+// `data` comes back null once the order is no longer active (completed/cancelled) —
+// callers should stop polling at that point. GET /api/orders/:id/status-card
+export function getOrderStatusCard(orderId: string, userId: string, lang: string) {
+  return requestJson<{ ok: boolean; data: DripTeaOrderStatusCard | null }>(
+    `/api/orders/${encodeURIComponent(orderId)}/status-card?userId=${encodeURIComponent(userId)}&lang=${encodeURIComponent(lang)}`
   );
 }
 

@@ -340,6 +340,13 @@ describe("API integration testing", function () {
     expect(response.body.message).to.equal("A valid order id is required.");
   });
 
+  it("GET /api/orders/:id/status-card rejects a missing userId", async function () {
+    const response = await request(createTestApp()).get(`/api/orders/${FAKE_ID}/status-card`);
+
+    expect(response.status).to.equal(400);
+    expect(response.body.message).to.equal("A valid order id and userId are required.");
+  });
+
   it("PATCH /api/orders/:id/status rejects an invalid status", async function () {
     const response = await request(createTestApp())
       .patch(`/api/orders/${FAKE_ID}/status`)
