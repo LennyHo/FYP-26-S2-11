@@ -62,15 +62,22 @@ These tests check simple chatbot behaviour without calling the real AI service.
 
 File: `apiIntegrationTesting.js`
 
-These tests send simple HTTP requests through Express route files using Supertest.
+These tests send real HTTP requests into the actual Express route files using Supertest — every one of the project's **46 API endpoints** has at least one test. Endpoints with a fast input-validation failure (missing field, bad id, invalid enum value) are tested on that failure path, which runs before any database call. Endpoints with no such failure path (plain listings like `GET /api/stores`) have their Mongoose model method stubbed with a small fake "chainable query" (supports `.find().sort().lean()` etc.) so the real route and controller still run, just against fake data — none of these tests need a live MongoDB connection or the real AI service.
 
-| Test | What It Checks | Why |
+| Route file | Endpoints covered | Example checks |
 | --- | --- | --- |
-| `POST /api/menu-items` | Rejects negative price | Checks route and controller together |
-| `PATCH /api/menu-items/:id/status` | Rejects invalid menu status | Checks route and controller together |
-| `POST /api/auth/register` | Rejects short password | Checks route, controller, and service together |
-| `POST /api/cart-items` | Rejects invalid customer id | Checks route, controller, and service together |
-| `POST /api/chat` | Handles empty message | Checks chatbot route and controller together |
+| `chatbot.routes.js` | `POST /chat` (2 scenarios) | Empty message; guest asking about order status is told to log in (exercises this session's intent-routing fix) |
+| `auth.routes.js` | `GET /auth/test`, `POST /auth/register`, `POST /auth/login`, `POST /auth/reset-password`, `PATCH /auth/change-password` | Register rejects short password; login rejects a disallowed email domain; reset/change-password reject weak or missing passwords |
+| `cart.routes.js` | `POST/GET /cart-items`, `GET/PATCH/DELETE /cart-items/:id`, `GET /vouchers`, `POST /cart/apply-voucher`, `GET /vouchers/used` | Invalid customer/cart-item ids rejected; missing voucher code rejected; voucher list returns via a stubbed query |
+| `checkout.routes.js` | `POST /checkout`, `GET /orders`, `POST /orders/test-queue`, `GET /orders/:id`, `GET /orders/:id/queue`, `PATCH /orders/:id/status` | Missing userId/store rejected; invalid order id/status rejected; staff-only `GET /orders` rejects an unauthenticated request |
+| `inventory.routes.js` | All 5 endpoints (store-staff-only) | Every endpoint rejects a request with no auth token |
+| `menu.routes.js` | All 6 endpoints | Negative price, missing name, and invalid status all rejected; listing/search return via stubbed queries |
+| `feedback.routes.js` | `POST /feedback`, `GET /feedback/orders`, `GET /feedback/rating/:menuItemId` | Missing order/menu item rejected; empty `ids` list returns `{}` without a DB call; malformed id rejected |
+| `store.routes.js` | `GET /stores`, `GET /stores/crowd` | Both return via a stubbed store list |
+| `user.routes.js` | `GET/POST /users`, `PATCH /users/:id`, `GET /role-descriptions`, `PATCH /role-descriptions/:role` | Admin-only writes reject an unauthenticated request; malformed user id rejected; listings return via stubbed queries |
+| `voucher.routes.js` | `POST/GET /staff/vouchers`, `DELETE /staff/vouchers/:id` | Missing code/title and invalid id rejected; listing returns via a stubbed query |
+| `purchaseHistory.routes.js` | `GET /purchase-history` | Missing userId rejected |
+| `transcribe.routes.js` | `POST /transcribe` | Missing audio file rejected |
 
 ## 5. Database Testing
 
