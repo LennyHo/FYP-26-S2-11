@@ -54,13 +54,6 @@ async function findDrinkByName(message) {
     return null;
 }
 
-// #25 - As a customer, I want to chat with the AI chatbot so that I can get help with ordering and menu questions
-// Reads chatbot_sessions by conversationId to retrieve prior messages for context
-async function getConversationHistory(conversationId) {
-    return ChatbotSession.getConversationHistory(conversationId);
-}
-// End of User Story #25
-
 // #29 - As a customer, I want the chatbot to inform me when my chosen drink has a high sugar level so that I can reconsider my selection.
 // #31 - As a customer, I want the chatbot to show me the nutritional grading of each beverage so that I can choose the suitable option.
 // Reads baseSugarG and baseCalories from menu_items -> applies sugar/topping adjustments -> calculates Nutri-Grade
@@ -1848,46 +1841,6 @@ function resolveLastCartItemIdFromHistory(history) {
 
     return null;
 }
-
-// Builds the post-edit/view cart reply HTML with line items, total, and action buttons.
-function buildCartSummaryReply(cartItems, { updated = true } = {}) {
-    if (!cartItems.length) {
-        return `Your cart is now empty.<br><br><button class="chat-nav-btn-compact" onclick="handleMenu()">Browse Menu</button>`;
-    }
-
-    const lines = cartItems.map((item, index) => {
-        const c = item.customization || {};
-        const toppings =
-            Array.isArray(c.toppings) && c.toppings.length > 0
-                ? c.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
-                : "No toppings";
-
-        const details = [
-            c.size || "Regular",
-            c.ice || "Normal Ice",
-            c.sugar || "Normal Sweet",
-            toppings,
-        ].join(" · ");
-
-        return `${index + 1}. <strong>${item.name}</strong> × ${item.quantity}<br><span style="color:#ffffff">${details}</span><br>S$ ${Number(item.lineTotal || 0).toFixed(2)}`;
-    });
-
-    const total = cartItems.reduce(
-        (sum, item) => sum + Number(item.lineTotal || 0),
-        0
-    );
-
-    const header = updated ? `Done! Your cart has been updated.<br><br>` : `Here's your current cart:<br><br>`;
-
-    return (
-        header +
-        lines.join("<br><br>") +
-        `<br><br><strong>Total: S$ ${total.toFixed(2)}</strong><br><br>` +
-        `<button class="chat-nav-btn-compact" onclick="handleCart()">View Cart</button>&nbsp;` +
-        `<button class="chat-nav-btn-compact" onclick="handleCheckout()">Checkout</button>`
-    );
-}
-// End of User Story #201
 
 // #308 - As a customer, I want to provide feedback via the chatbot so that I can share my experience conveniently.
 function isFeedbackRequest(message) {
@@ -4835,53 +4788,6 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             reply = cleanAiReply(reply);
 
             if (addedItems.length > 0) {
-                const { cartSummaryHtml, cartTotal } = await buildCartSummary(userId);
-
-                const ADDED_SUGAR_G = {
-                    "0% Sugar": 0,
-                    "25% Sugar": 10,
-                    "50% Sugar": 20,
-                    "100% Sugar": 40,
-                };
-
-                const orderLines = addedItems.map((item) => {
-                    const c = item.customization || {};
-                    const drink = item.drinkInfo || {};
-                    const nutrition = drink.nutritionInfo || {};
-
-                    const toppings =
-                        Array.isArray(c.toppings) && c.toppings.length > 0
-                            ? c.toppings.map((t) => t.replace(/\s*\(\+S\$[\d.]+\)/g, "").trim()).join(", ")
-                            : "No toppings";
-
-                    const details = [c.size, c.ice, c.sugar, toppings]
-                        .filter(Boolean)
-                        .join(" · ");
-
-                    const sugarKey = String(c.sugar || "")
-                        .replace(/ sugar/i, "")
-                        .trim();
-
-                    const baseSugar = Number(nutrition.baseSugarG ?? 0);
-                    const addedSugar = ADDED_SUGAR_G[sugarKey] ?? 0;
-                    const totalSugar = baseSugar + addedSugar;
-
-                    const calories = Number(nutrition.baseCalories ?? 0);
-
-                    const nutriGrade = nutrition.nutriGrade ?? "N/A";
-
-                    return [
-                        `${item.name} - S$ ${Number(item.lineTotal || item.unitPrice || 0).toFixed(2)}`,
-                        details,
-                        `Sugar: ${totalSugar}g | Calories: ${calories} kcal | Nutri-Grade: ${nutriGrade}`,
-                    ].join("<br>");
-                });
-
-                const orderTotal = addedItems.reduce(
-                    (sum, item) => sum + Number(item.lineTotal || 0),
-                    0
-                );
-
                 reply = `${addedItems[0]?.name || "Your drink"} added to your cart.`;
             }
         }
