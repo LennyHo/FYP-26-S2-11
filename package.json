@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "mocha --reporter ./test_cases/reporters/pytestStyleReporter.js \"test_cases/guiTesting.js\" \"test_cases/functionalTesting.js\" \"test_cases/chatbotTesting.js\" \"test_cases/apiIntegrationTesting.js\" \"test_cases/databaseTesting.js\" \"test_cases/orderStatusTesting.js\""
+    "test": "mocha --reporter ./test_cases/reporters/pytestStyleReporter.js \"test_cases/dbSetup.js\" \"test_cases/guiTesting.js\" \"test_cases/functionalTesting.js\" \"test_cases/chatbotTesting.js\" \"test_cases/apiIntegrationTesting.js\" \"test_cases/databaseTesting.js\" \"test_cases/orderStatusTesting.js\" \"test_cases/successPathTesting.js\""
   },
   "keywords": [
     "express",
@@ -29,6 +29,7 @@
   "devDependencies": {
     "chai": "^4.5.0",
     "mocha": "^11.7.6",
+    "mongodb-memory-server": "^11.2.0",
     "supertest": "^7.2.2"
   }
 }

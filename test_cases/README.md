@@ -7,6 +7,7 @@ The tests use:
 - Mocha for `describe()` and `it()`
 - Chai for `expect()` assertions
 - Supertest for simple API request tests
+- `mongodb-memory-server` for `successPathTesting.js` only (see section 7) — a real, temporary, in-memory MongoDB, not the live Atlas database
 
 Run all tests with:
 
@@ -15,6 +16,8 @@ npm test
 ```
 
 Do not run the files with plain `node`, because `describe()` and `it()` are provided by Mocha.
+
+`dbSetup.js` isn't a test file — it starts the in-memory MongoDB once before the whole suite and shuts it down after. It has to run before every other file, which is why it's listed first in the `test` script in `package.json`.
 
 ## 1. GUI Testing
 
@@ -112,3 +115,19 @@ These tests check how the chatbot classifies order-related messages (live status
 | 4th delivery step exists | `chatbot.service.js` defines `orderStatusStepDelivery4` | Delivery card matches the tracking page's 4 stages |
 | Dynamic step rendering | `OrderStatusCard.tsx` has no hardcoded 3-step layout | Card supports both pickup (3 steps) and delivery (4 steps) |
 | No fabricated order details | `prompt.service.js` instructs the AI not to invent order data | Prevents the AI from hallucinating a fake order status |
+
+## 7. Success Path & Role-Boundary Testing
+
+File: `successPathTesting.js` (needs `dbSetup.js`'s in-memory MongoDB — see above)
+
+Every other file above only tests the *failure* path of an endpoint (bad input, missing auth). These tests run the real *success* path end-to-end against a real (temporary, in-memory) database — a real payment going through, a real order being found — plus the role-permission boundaries a real auth token is supposed to enforce.
+
+| Test | What It Checks | Why |
+| --- | --- | --- |
+| Register then login | A newly registered account can log in with the same password and gets a session token back | The two most basic account flows actually work together, not just in isolation |
+| Add to cart, read it back | A real menu item added to a real cart shows up with the correct quantity and price | Cart math (unit price × quantity) is correct, not just "didn't error" |
+| Full pickup checkout | Checkout creates a real order, and `GET /orders/:id` returns it with the correct items and status | Confirms the entire buy flow — cart, order, order items — writes and reads back consistently |
+| Chatbot tracks a real order | After a real checkout, asking the chatbot for order status returns the live status card for that exact order | End-to-end proof the intent-routing fix (this session's main work) reaches real data, not just stubs |
+| Staff sees their own store's inventory | A store A staff token can read a store A inventory item | Legitimate access still works once real auth is enforced |
+| Staff can't see another store's inventory | A store B staff token gets 404 on a store A inventory item | Store-scoping (`storeId` check in the controller) actually isolates data between stores |
+| Customer token rejected from staff endpoint | A real, valid customer session token still gets 403 on `GET /inventory` | Role checking, not just "is logged in," is enforced on staff-only routes |
