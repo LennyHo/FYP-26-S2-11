@@ -18,6 +18,7 @@ const User = require("../src/models/user.model");
 const Store = require("../src/models/store.model");
 const MenuItem = require("../src/models/menuItem.model");
 const Inventory = require("../src/models/inventory.model");
+const Order = require("../src/models/order.model");
 
 function createTestApp() {
   const app = express();
@@ -198,6 +199,56 @@ describe("success path & role-boundary testing", function () {
     expect(chatResponse.body.orderStatusCard).to.exist;
     expect(chatResponse.body.orderStatusCard.orderType).to.equal("pickup");
     expect(chatResponse.body.orderStatusCard.phase).to.equal(1);
+  });
+
+  // Test 4b: The chatbot must show real progress even if the customer never
+  // opened the tracking page — that page is the only thing that normally
+  // advances an order's status, via a client-side timer. This backdates a real
+  // order the same amount that timer would have waited, then confirms the
+  // chatbot derives (and persists) the correct advanced status on its own.
+  it("advances a real order's status through the chatbot without the tracking page ever being open", async function () {
+    const app = createTestApp();
+    const registerResponse = await request(app)
+      .post("/api/auth/register")
+      .send({ fullName: "Live Status Test", email: `livestatus_${Date.now()}@gmail.com`, password: "GoodPass1@" });
+    const userId = registerResponse.body.user.id;
+
+    const store = await Store.create({
+      storeCode: `TEST-${Date.now()}-3`, name: "Test Outlet 3", address: "3 Test Street", lat: 1.3, lng: 103.8,
+    });
+    const menuItem = await MenuItem.create({
+      itemId: `test_${Date.now()}_4`, name: "Test Lychee Tea", category: "Fruit Tea", price: 5, status: "active",
+    });
+    await request(app).post("/api/cart-items").send({ userId, menuItemId: String(menuItem._id), quantity: 1 });
+    const checkoutResponse = await request(app)
+      .post("/api/checkout")
+      .send({ userId, paymentMethod: "fake_card", orderType: "delivery", deliveryDetails: { storeCode: store.storeCode, deliveryFee: 3 } });
+    const orderId = checkoutResponse.body.order.id;
+
+    // Simulate 12 real seconds having passed since checkout, with the tracking
+    // page never opened — long enough (per the 5s/5s/10s demo timers) that a
+    // delivery order should have finished preparing and gone out for delivery,
+    // but not yet long enough to have arrived (stays "active", so the chatbot
+    // answers deterministically instead of falling back to a real AI call).
+    // { timestamps: false } stops Mongoose's own timestamps plugin from
+    // immediately overwriting this explicit updatedAt back to "now".
+    await Order.updateOne(
+      { _id: orderId },
+      { $set: { updatedAt: new Date(Date.now() - 12_000) } },
+      { timestamps: false }
+    );
+
+    const chatResponse = await request(app).post("/api/chat").send({ userId, message: "track order status" });
+
+    // Phase 3 ("Out for Delivery") proves the chatbot picked up the real
+    // elapsed time rather than just echoing the still-"pending" value from
+    // checkout — and the persisted DB status now agrees too.
+    expect(chatResponse.status).to.equal(200);
+    expect(chatResponse.body.orderStatusCard).to.exist;
+    expect(chatResponse.body.orderStatusCard.phase).to.equal(3);
+
+    const persistedOrder = await Order.findById(orderId).lean();
+    expect(persistedOrder.status).to.equal("ready");
   });
 
   // Test 5 & 6: Inventory is scoped to the requesting staff member's own store.

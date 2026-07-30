@@ -8,6 +8,7 @@ const fs = require("fs");
 const path = require("path");
 
 const chatbotService = require("../src/services/chatbot.service");
+const { deriveCurrentStatus } = require("../src/utils/orderProgress.util");
 
 // This helper reads a source file as text so a test can check that specific code exists.
 function readSourceFile(relativePath) {
@@ -87,5 +88,47 @@ describe("order status testing", function () {
     const source = readSourceFile("src/services/prompt.service.js");
 
     expect(source).to.include("never fabricate order details");
+  });
+
+  describe("deriveCurrentStatus", function () {
+    function makeOrder(status, secondsAgo, orderType) {
+      return { status, orderType, updatedAt: new Date(Date.now() - secondsAgo * 1000) };
+    }
+
+    // Test 12: A freshly placed order hasn't had time to advance yet.
+    it("keeps a brand-new order at its starting status", function () {
+      expect(deriveCurrentStatus(makeOrder("pending", 0, "pickup"))).to.equal("pending");
+    });
+
+    // Test 13: Enough elapsed time bumps the status forward, matching the tracking
+    // page's own timers — this is what lets the chatbot show progress even if
+    // that page was never opened to advance the status itself.
+    it("advances a stale order's status based on elapsed time", function () {
+      expect(deriveCurrentStatus(makeOrder("pending", 6, "pickup"))).to.equal("preparing");
+      expect(deriveCurrentStatus(makeOrder("preparing", 6, "pickup"))).to.equal("ready");
+    });
+
+    // Test 14: A pickup order waits at "ready" for a manual collection — it must
+    // never auto-complete itself the way a delivery order does.
+    it("does not auto-complete a pickup order once it's ready", function () {
+      expect(deriveCurrentStatus(makeOrder("ready", 1000, "pickup"))).to.equal("ready");
+    });
+
+    // Test 15: A delivery order does auto-complete once "out for delivery" has had enough time.
+    it("auto-completes a delivery order once enough time has passed", function () {
+      expect(deriveCurrentStatus(makeOrder("ready", 1000, "delivery"))).to.equal("completed");
+    });
+
+    // Test 16: Multiple thresholds crossed at once (e.g. the chatbot wasn't asked
+    // for a while) should jump straight to the correct final status, not just one step.
+    it("jumps straight to the correct status after a long gap", function () {
+      expect(deriveCurrentStatus(makeOrder("pending", 25, "delivery"))).to.equal("completed");
+    });
+
+    // Test 17: Terminal statuses never get touched, no matter how much time passed.
+    it("never advances a completed or cancelled order", function () {
+      expect(deriveCurrentStatus(makeOrder("completed", 10_000, "delivery"))).to.equal("completed");
+      expect(deriveCurrentStatus(makeOrder("cancelled", 10_000, "delivery"))).to.equal("cancelled");
+    });
   });
 });

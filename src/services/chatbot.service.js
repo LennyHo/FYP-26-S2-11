@@ -14,6 +14,7 @@ const OrderItem = require("../models/orderItem.model");
 const Feedback = require("../models/feedback.model");
 const Voucher = require("../models/voucher.model");
 const Store = require("../models/store.model");
+const { deriveCurrentStatus } = require("../utils/orderProgress.util");
 
 // Show outlet image in chatbot when customer ask about it
 const STORE_OUTLET_IMAGES = {
@@ -1073,6 +1074,17 @@ async function getOrderStatus(userId, orderId) {
         : await Order.find({ userId }, null, { sort: { createdAt: -1 }, limit: 3 }).lean();
 
     return Promise.all(orders.map(async (order) => {
+        // The tracking page advances status client-side on a timer, which only
+        // runs while that page is open. A customer who checks the chatbot
+        // instead would otherwise see a stuck "pending" order forever, even
+        // though the drink has actually finished preparing — so derive (and
+        // persist) the up-to-date status here too, from the same timers.
+        const liveStatus = deriveCurrentStatus(order);
+        if (liveStatus !== order.status) {
+            await Order.updateOne({ _id: order._id }, { $set: { status: liveStatus } });
+            order = { ...order, status: liveStatus };
+        }
+
         const items = await OrderItem.find({ orderId: order._id }).lean();
         return { ...order, items };
     }));

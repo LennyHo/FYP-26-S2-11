@@ -28,12 +28,26 @@ const MenuItem = require("../models/menuItem.model");
 const User = require("../models/user.model");
 const Voucher = require("../models/voucher.model");
 const Store = require("../models/store.model");
+const { deriveCurrentStatus } = require("../utils/orderProgress.util");
 
 const QUEUE_STATUSES = ["pending", "paid", "preparing"];
 const ACTIVE_ORDER_STATUSES = ["pending", "paid", "preparing", "ready"];
 
 function toObjectId(id) {
     return mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
+}
+
+// The order-status tracking page advances status client-side on a timer, which
+// only runs while that page is open — so a customer checking via the chatbot,
+// or reopening this page later, could otherwise see a stale status. This
+// derives (and persists) the up-to-date status from the same timers on every
+// read, so the tracking page, staff dashboard, and chatbot never disagree.
+async function withLiveStatus(order) {
+    const liveStatus = deriveCurrentStatus(order);
+    if (liveStatus === order.status) return order;
+
+    await Order.updateOne({ _id: order._id }, { $set: { status: liveStatus } });
+    return { ...order, status: liveStatus };
 }
 
 function formatOrderNo(sequence) {
@@ -341,7 +355,7 @@ async function getOrder(req, res) {
             });
         }
 
-        const order = await Order.findById(orderId).lean();
+        let order = await Order.findById(orderId).lean();
 
         if (!order) {
             return res.status(404).json({
@@ -349,6 +363,8 @@ async function getOrder(req, res) {
                 message: "Order not found.",
             });
         }
+
+        order = await withLiveStatus(order);
 
         const [user, items, payment] = await Promise.all([
             User.findById(order.userId).lean(),
@@ -381,7 +397,7 @@ async function getOrderQueueStatus(req, res) {
             });
         }
 
-        const order = await Order.findById(orderId).lean();
+        let order = await Order.findById(orderId).lean();
 
         if (!order) {
             return res.status(404).json({
@@ -389,6 +405,8 @@ async function getOrderQueueStatus(req, res) {
                 message: "Order not found.",
             });
         }
+
+        order = await withLiveStatus(order);
 
         const status = String(order.status || "").toLowerCase();
         const orderIsQueued = QUEUE_STATUSES.includes(status);
