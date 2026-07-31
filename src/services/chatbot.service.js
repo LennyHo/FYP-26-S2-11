@@ -1042,11 +1042,14 @@ function isReorderPurchaseHistoryRequest(message) {
         msg.includes("add items from order history");
 
     const hasHistoryRef =
-        msg.includes("purchase history") ||
+        // "purchase" alone (not just "purchased") so translated phrasings like "last purchase"/
+        // "recent purchase" are recognised — isPurchaseHistory already treats these as history
+        // refs, and without this a segment like "add the drink from my last purchase to the
+        // cart" fell through to the isPurchaseHistory branch below instead of actually reordering.
+        msg.includes("purchase") ||
         msg.includes("order history") ||
         msg.includes("previous order") ||
         msg.includes("past order") ||
-        msg.includes("purchased") ||
         msg.includes("bought") ||
         msg.includes("order");
 
@@ -2470,10 +2473,10 @@ const PAGE_MANUAL_STEPS = {
         ta: "1. எந்தப் பக்கத்தின் மேற்பகுதியிலும் உள்ள DripTea லோகோவைக் கிளிக் செய்யவும்.",
     },
     menu: {
-        en: "1. Click \"BUY DRIPTEA\" in the top menu.\n2. Choose Pickup or Delivery.",
-        ms: "1. Klik \"BUY DRIPTEA\" pada menu atas.\n2. Pilih Pickup atau Delivery.",
-        zh: "1. 点击顶部菜单中的“BUY DRIPTEA”。\n2. 选择自取或外送。",
-        ta: "1. மேல் மெனுவில் \"BUY DRIPTEA\" என்பதைக் கிளிக் செய்யவும்.\n2. Pickup அல்லது Delivery-ஐத் தேர்ந்தெடுக்கவும்.",
+        en: "1. Click \"BUY DRIPTEA\" in the top menu.\n",
+        ms: "1. Klik \"BUY DRIPTEA\" pada menu atas.\n",
+        zh: "1. 点击顶部菜单中的“BUY DRIPTEA”。\n",
+        ta: "1. மேல் மெனுவில் \"BUY DRIPTEA\" என்பதைக் கிளிக் செய்யவும்.\n",
     },
     cart: {
         en: "1. Click \"Cart\" at the top right of any page.",
@@ -2524,10 +2527,10 @@ const PAGE_MANUAL_STEPS = {
         ta: "1. மேல் மெனுவில் \"STORES\" என்பதைக் கிளிக் செய்யவும்.",
     },
     delivery: {
-        en: "1. Click \"BUY DRIPTEA\" in the top menu.\n2. Choose Delivery.\n3. Add items to your cart, then click \"Proceed to Checkout\" and enter your delivery address there.",
-        ms: "1. Klik \"BUY DRIPTEA\" pada menu atas.\n2. Pilih Delivery.\n3. Tambah barang ke troli anda, kemudian klik \"Proceed to Checkout\" dan masukkan alamat penghantaran anda di situ.",
-        zh: "1. 点击顶部菜单中的“BUY DRIPTEA”。\n2. 选择外送 (Delivery)。\n3. 将商品加入购物车，然后点击“Proceed to Checkout”，在结账页面填写配送地址。",
-        ta: "1. மேல் மெனுவில் \"BUY DRIPTEA\" என்பதைக் கிளிக் செய்யவும்.\n2. Delivery-ஐத் தேர்ந்தெடுக்கவும்.\n3. பொருட்களை கார்ட்டில் சேர்த்து, \"Proceed to Checkout\" ஐக் கிளிக் செய்து, அங்கு உங்கள் டெலிவரி முகவரியை உள்ளிடவும்.",
+        en: "1. Click \"CHECKOUT\" in the cart page.\n2. Choose Delivery.\n3. Add items to your cart, then click \"Proceed to Checkout\" and enter your delivery address there.",
+        ms: "1. Klik \"CHECKOUT\" pada halaman troli anda.\n2. Pilih Delivery.\n3. Tambah barang ke troli anda, kemudian klik \"Proceed to Checkout\" dan masukkan alamat penghantaran anda di situ.",
+        zh: "1. 点击购物车界面中的“CHECKOUT”。\n2. 选择外送 (Delivery)。\n3. 将商品加入购物车，然后点击“Proceed to Checkout”，在结账页面填写配送地址。",
+        ta: "1. மேல் மெனுவில் \"CHECKOUT\" என்பதைக் கிளிக் செய்யவும்.\n2. Delivery-ஐத் தேர்ந்தெடுக்கவும்.\n3. பொருட்களை கார்ட்டில் சேர்த்து, \"Proceed to Checkout\" ஐக் கிளிக் செய்து, அங்கு உங்கள் டெலிவரி முகவரியை உள்ளிடவும்.",
     },
     login: {
         en: "1. Click \"Log in\" at the top right of any page.",
@@ -3111,7 +3114,7 @@ async function continueOrderDraft(draft, replyMessage, { activeConversationId, u
 // Renamed to *Core because the exported handleChatMessage (below, near module.exports) wraps this
 // with a final language safety gate — kept separate so the multi-intent recursion below (which
 // calls itself per-segment) isn't gated on every sub-segment, only once on the merged result.
-async function handleChatMessageCore({ message, conversationId, userId, isQuickPrompt = false, skipMultiIntent = false, historyOverride = null }) {
+async function handleChatMessageCore({ message, conversationId, userId, isQuickPrompt = false, skipMultiIntent = false, historyOverride = null, langOverride = null }) {
     const safeMessage = String(message || "").trim();
 
     if (!safeMessage) {
@@ -3129,8 +3132,12 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     // All keyword-matching functions only understand English, so non-English messages are
     // translated internally before intent detection. The original safeMessage is kept for
     // Gemini (which replies in the user's language via the system prompt instruction).
-    const detectedLang = detectMessageLanguage(safeMessage);
-    const intentMessage = detectedLang !== 'en'
+    // langOverride is set on the per-segment recursive calls below: the segment text is already
+    // the English translation of the parent message, so it must not be re-detected (it would
+    // read as "en") or re-translated — the parent's real detected language is carried through
+    // so each segment answers in the customer's actual language instead of English.
+    const detectedLang = langOverride || detectMessageLanguage(safeMessage);
+    const intentMessage = (!langOverride && detectedLang !== 'en')
         ? await aiClient.translateToEnglish(safeMessage).catch(() => safeMessage)
         : safeMessage;
 
@@ -3180,9 +3187,10 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
 
     // Two or three requests in one message: run each through this same chain and merge the
     // results, so an action never gets dropped because an informational branch matched first.
-    // English only for now — segments are split from the translated text, and feeding an
-    // English fragment back in would answer a Malay/Chinese customer in the wrong language.
-    if (!skipMultiIntent && detectedLang === 'en') {
+    // Segments are always split from intentMessage (the English translation for non-English
+    // input), but each segment is answered in the customer's real language via langOverride
+    // below — not the segment's own (English) text — so this isn't limited to English input.
+    if (!skipMultiIntent) {
         const segments = splitIntentSegments(intentMessage);
         if (segments.length >= 2) {
             const classified = segments
@@ -3209,6 +3217,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
                         userId,
                         skipMultiIntent: true,
                         historyOverride: history,
+                        langOverride: detectedLang,
                     }));
                 }
                 return mergeIntentResults(results);
