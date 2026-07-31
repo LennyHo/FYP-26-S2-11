@@ -557,4 +557,5 @@ ${langInstruction}
 module.exports = {
   buildSystemPrompt,
   isMenuRequest,
+  USE_MATCHED_LANGUAGE,
 };

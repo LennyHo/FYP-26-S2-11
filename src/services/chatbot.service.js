@@ -5,7 +5,7 @@
 const aiClient = require("../ai/aiClient");
 const ChatbotSession = require("../models/chatbotSession.model");
 
-const { buildSystemPrompt } = require("./prompt.service");
+const { buildSystemPrompt, USE_MATCHED_LANGUAGE } = require("./prompt.service");
 const CartItem = require("../models/cartItem.model");
 const MenuItem = require("../models/menuItem.model");
 const Payment = require("../models/payment.model");
@@ -204,11 +204,80 @@ function isHealthRankingQuery(message) {
     );
 }
 
+// Localised strings for buildHealthRankingReply — this path is fully rule-based (no Gemini call),
+// so unlike the AI-generated replies elsewhere, it has to translate itself explicitly.
+const HEALTH_RANKING_STRINGS = {
+    noData: {
+        en: "I don't have nutritional data for our drinks right now. Please ask our staff for details!",
+        zh: "抱歉，目前没有饮品的营养数据，请咨询我们的店员了解详情！",
+        ms: "Maaf, kami tiada data pemakanan untuk minuman kami sekarang. Sila tanya kakitangan kami untuk maklumat lanjut!",
+        ta: "தற்போது எங்கள் பானங்களுக்கான ஊட்டச்சத்து தரவு இல்லை. விவரங்களுக்கு எங்கள் ஊழியர்களிடம் கேளுங்கள்!",
+    },
+    rankIntro: {
+        en: (wantHigh, rankByCalorie) => `Here are our drinks with the ${wantHigh ? "highest" : "lowest"} base ${rankByCalorie ? "calories" : "sugar"}:`,
+        zh: (wantHigh, rankByCalorie) => `以下是${rankByCalorie ? "卡路里" : "糖分"}${wantHigh ? "最高" : "最少"}的饮品：`,
+        ms: (wantHigh, rankByCalorie) => `Berikut adalah minuman kami dengan ${rankByCalorie ? "kalori" : "gula"} asas ${wantHigh ? "tertinggi" : "terendah"}:`,
+        ta: (wantHigh, rankByCalorie) => `எங்கள் பானங்களில் அடிப்படை ${rankByCalorie ? "கலோரி" : "சர்க்கரை"} ${wantHigh ? "அதிகமாக" : "குறைவாக"} உள்ளவை:`,
+    },
+    same: {
+        en: (a, b, rankByCalorie, val, unit) => `${a} and ${b} both have about the same ${rankByCalorie ? "calories" : "sugar"} — ${val}${unit} each.`,
+        zh: (a, b, rankByCalorie, val, unit) => `${a}和${b}的${rankByCalorie ? "卡路里" : "糖分"}差不多，都是${val}${unit}。`,
+        ms: (a, b, rankByCalorie, val, unit) => `${a} dan ${b} mempunyai ${rankByCalorie ? "kalori" : "gula"} yang hampir sama — ${val}${unit} setiap satu.`,
+        ta: (a, b, rankByCalorie, val, unit) => `${a} மற்றும் ${b} இரண்டிற்கும் ஏறக்குறைய ஒரே அளவு ${rankByCalorie ? "கலோரி" : "சர்க்கரை"} உள்ளது — ஒவ்வொன்றும் ${val}${unit}.`,
+    },
+    compare: {
+        en: (winner, loser, wantHigh, rankByCalorie, winnerValue, loserValue, unit) =>
+            `${winner} has ${wantHigh ? "more" : "less"} ${rankByCalorie ? "calories" : "sugar"} than ${loser} — ${winner} has ${winnerValue}${unit}, while ${loser} has ${loserValue}${unit}.`,
+        zh: (winner, loser, wantHigh, rankByCalorie, winnerValue, loserValue, unit) =>
+            `${winner}的${rankByCalorie ? "卡路里" : "糖分"}比${loser}${wantHigh ? "多" : "少"}——${winner}为${winnerValue}${unit}，${loser}为${loserValue}${unit}。`,
+        ms: (winner, loser, wantHigh, rankByCalorie, winnerValue, loserValue, unit) =>
+            `${winner} mempunyai ${rankByCalorie ? "kalori" : "gula"} yang ${wantHigh ? "lebih tinggi" : "lebih rendah"} daripada ${loser} — ${winner} ialah ${winnerValue}${unit}, manakala ${loser} ialah ${loserValue}${unit}.`,
+        ta: (winner, loser, wantHigh, rankByCalorie, winnerValue, loserValue, unit) =>
+            `${winner}க்கு ${loser}ஐ விட ${wantHigh ? "அதிக" : "குறைவான"} ${rankByCalorie ? "கலோரி" : "சர்க்கரை"} உள்ளது — ${winner}: ${winnerValue}${unit}, ${loser}: ${loserValue}${unit}.`,
+    },
+};
+
+// Reuses the same negation vocabulary as MenuItem.recommendByMessage ("without milk", "no dairy",
+// "non-dairy", "excluding pearls") so a ranking query can exclude drinks matching the negated
+// attribute — e.g. "lowest sugar drink without milk" should rank only among non-milk drinks
+// instead of the whole menu.
+const HEALTH_RANKING_NEGATION_TRIGGERS = ["without", "no", "non", "excluding", "except"];
+const HEALTH_RANKING_NEGATION_SYNONYMS = { fruity: "fruit", fruits: "fruit", creamy: "milk", milky: "milk", dairy: "milk", chocolatey: "chocolate", nutty: "taro" };
+
+function extractNegatedAttributes(message) {
+    const rawWords = String(message || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    const negated = [];
+    for (let i = 0; i < rawWords.length; i++) {
+        if (HEALTH_RANKING_NEGATION_TRIGGERS.includes(rawWords[i]) && rawWords[i + 1]) {
+            negated.push(HEALTH_RANKING_NEGATION_SYNONYMS[rawWords[i + 1]] || rawWords[i + 1]);
+            i++; // consume the negated word too, so it isn't also treated as unrelated text
+        }
+    }
+    return negated;
+}
+
+// True if any negated attribute word appears in the drink's name, category, description, tags,
+// or ingredients — the same fields MenuItem.recommendByMessage checks for its own $nor exclusion.
+function drinkMatchesNegatedAttribute(drink, negatedWords) {
+    return negatedWords.some((word) => {
+        const re = new RegExp(word, "i");
+        return (
+            re.test(drink.name || "") ||
+            re.test(drink.category || "") ||
+            re.test(drink.description || "") ||
+            (Array.isArray(drink.tags) && drink.tags.some((t) => re.test(t))) ||
+            (Array.isArray(drink.drinkInfo?.ingredients) && drink.drinkInfo.ingredients.some((ing) => re.test(ing)))
+        );
+    });
+}
+
 // Builds the reply + drink cards for a health-ranking query ("lowest sugar drink", "healthiest
 // option", "A vs B — which has less sugar"). Extracted out of the inline handler branch so the
 // same logic can be reused by the "recommend + navigate" compound-intent branch below without
-// duplicating the sort/comparison logic.
-async function buildHealthRankingReply(intentMessage, recentHistory) {
+// duplicating the sort/comparison logic. detectedLang localises this path's own reply text since
+// it never goes through Gemini (no system-prompt language instruction applies here).
+async function buildHealthRankingReply(intentMessage, recentHistory, detectedLang = 'en') {
+    const tr = (key) => HEALTH_RANKING_STRINGS[key]?.[detectedLang] || HEALTH_RANKING_STRINGS[key].en;
     // Same hyphen normalisation as isHealthRankingQuery, so "low-sugar" is recognised consistently
     // between the detector and the reply builder.
     const msg = intentMessage.toLowerCase().replace(/-/g, " ");
@@ -231,7 +300,6 @@ async function buildHealthRankingReply(intentMessage, recentHistory) {
 
     if (mentionedDrinks.length >= 2) {
         const [first, second] = mentionedDrinks;
-        const label = rankByCalorie ? "calories" : "sugar";
         const unit = rankByCalorie ? "kcal" : "g";
         const getValue = (d) => Number((d.nutritionInfo || {})[rankByCalorie ? "baseCalories" : "baseSugarG"] ?? 0);
         const firstValue = getValue(first);
@@ -239,14 +307,13 @@ async function buildHealthRankingReply(intentMessage, recentHistory) {
 
         let reply;
         if (firstValue === secondValue) {
-            reply = `${first.name} and ${second.name} both have about the same ${label} — ${firstValue}${unit} each.`;
+            reply = tr("same")(first.name, second.name, rankByCalorie, firstValue, unit);
         } else {
             const winner = wantHigh === (firstValue > secondValue) ? first : second;
             const loser = winner === first ? second : first;
             const winnerValue = winner === first ? firstValue : secondValue;
             const loserValue = loser === first ? firstValue : secondValue;
-            const comparisonWord = wantHigh ? "more" : "less";
-            reply = `${winner.name} has ${comparisonWord} ${label} than ${loser.name} — ${winner.name} has ${winnerValue}${unit}, while ${loser.name} has ${loserValue}${unit}.`;
+            reply = tr("compare")(winner.name, loser.name, wantHigh, rankByCalorie, winnerValue, loserValue, unit);
         }
 
         return { reply, recommendedDrinks: formatDrinkCards(mentionedDrinks.slice(0, 2)) };
@@ -259,12 +326,21 @@ async function buildHealthRankingReply(intentMessage, recentHistory) {
 
     if (withNutrition.length === 0) {
         return {
-            reply: "I don't have nutritional data for our drinks right now. Please ask our staff for details!",
+            reply: tr("noData"),
             recommendedDrinks: [],
         };
     }
 
-    const sorted = [...withNutrition].sort((a, b) => {
+    // "…lowest sugar and without milk" / "…least calories, no dairy" — narrow the ranking pool to
+    // drinks that don't match the negated attribute. Falls back to the unfiltered pool if nothing
+    // survives the filter, rather than dead-ending on a strict but empty result.
+    const negatedAttributes = extractNegatedAttributes(msg);
+    const filteredPool = negatedAttributes.length
+        ? withNutrition.filter((d) => !drinkMatchesNegatedAttribute(d, negatedAttributes))
+        : withNutrition;
+    const rankingPool = filteredPool.length > 0 ? filteredPool : withNutrition;
+
+    const sorted = [...rankingPool].sort((a, b) => {
         const nA = a.nutritionInfo || {};
         const nB = b.nutritionInfo || {};
         const valA = rankByCalorie ? Number(nA.baseCalories ?? 9999) : Number(nA.baseSugarG ?? 9999);
@@ -273,9 +349,7 @@ async function buildHealthRankingReply(intentMessage, recentHistory) {
     });
 
     const top = sorted.slice(0, 5);
-    const label = rankByCalorie ? "calories" : "sugar";
-    const direction = wantHigh ? "highest" : "lowest";
-    const reply = `Here are our drinks with the ${direction} base ${label}:`;
+    const reply = tr("rankIntro")(wantHigh, rankByCalorie);
 
     return { reply, recommendedDrinks: formatDrinkCards(top) };
 }
@@ -2744,6 +2818,11 @@ const INTENT_SEGMENT_SPLIT_RE = new RegExp(
     "i"
 );
 
+// Splits off a trailing "...to my cart, then guide me to my cart" navigation clause from an
+// otherwise single-order add-to-cart message. Only fires right before an actual nav-trigger
+// phrase, so ordinary customization commas/"and"s ("no sugar and no ice") are left untouched.
+const TRAILING_NAV_SPLIT_RE = /,?\s*(?:and\s+then|then|and)\s+(?=\b(?:lead me to|guide me to|take me to|bring me to|navigate to|direct me to|redirect me to|switch to the|go to)\b)/i;
+
 // Splits a compound message into per-intent segments on ?/!/./and/also/etc.
 function splitIntentSegments(message) {
     const msg = String(message || "").trim();
@@ -2753,7 +2832,19 @@ function splitIntentSegments(message) {
     // enumerate customization details, not to chain separate requests. Splitting it would strand
     // "regular"/"50 percent sugar" in their own weakly-classified fragments, so the drink-name
     // fragment reaches the ordering logic stripped of the customization the customer just gave.
-    if (isAddToCartRequest(msg)) return [msg];
+    if (isAddToCartRequest(msg)) {
+        // Still split off a trailing navigation request — "add X to my cart, then guide me to my
+        // cart" is an add-to-cart intent AND a navigation intent, not one order with extra commas.
+        const navParts = msg.split(TRAILING_NAV_SPLIT_RE).map((p) => p.trim()).filter(Boolean);
+        if (navParts.length === 2) return navParts;
+        return [msg];
+    }
+
+    // "which drink has the lowest sugar and without milk" — the "and without milk" clause narrows
+    // the ranking query itself (buildHealthRankingReply filters it out), it isn't a second request.
+    // Splitting on "and" here would strand "without milk" as its own unclassifiable fragment and
+    // rank the whole menu instead of just the non-milk drinks.
+    if (isHealthRankingQuery(msg) && extractNegatedAttributes(msg).length > 0) return [msg];
 
     return msg
         .split(INTENT_SEGMENT_SPLIT_RE)
@@ -3010,7 +3101,10 @@ async function continueOrderDraft(draft, replyMessage, { activeConversationId, u
 
 // Main chatbot entry point: detects intent (or multiple intents) in one message and
 // routes it to the matching handler above, falling back to the Gemini AI reply.
-async function handleChatMessage({ message, conversationId, userId, isQuickPrompt = false, skipMultiIntent = false, historyOverride = null }) {
+// Renamed to *Core because the exported handleChatMessage (below, near module.exports) wraps this
+// with a final language safety gate — kept separate so the multi-intent recursion below (which
+// calls itself per-segment) isn't gated on every sub-segment, only once on the merged result.
+async function handleChatMessageCore({ message, conversationId, userId, isQuickPrompt = false, skipMultiIntent = false, historyOverride = null }) {
     const safeMessage = String(message || "").trim();
 
     if (!safeMessage) {
@@ -3102,7 +3196,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 console.log("[ChatbotService] Multi-intent:", families.join(" + "));
                 const results = [];
                 for (const entry of chosen) {
-                    results.push(await handleChatMessage({
+                    results.push(await handleChatMessageCore({
                         message: entry.segment,
                         conversationId: activeConversationId,
                         userId,
@@ -3123,7 +3217,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     if (isNavigationRequest(intentMessage) && isHealthRankingQuery(intentMessage) && !midOrderModifier) {
         const [page, healthResult] = await Promise.all([
             generateNavigationResponse(intentMessage),
-            buildHealthRankingReply(intentMessage, recentHistory),
+            buildHealthRankingReply(intentMessage, recentHistory, detectedLang),
         ]);
 
         const replyParts = [healthResult.reply];
@@ -3383,7 +3477,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     // it less sugar") — that's a customization applied by the order flow below, not a request to
     // rank the whole menu by sugar.
     if (isHealthRankingQuery(intentMessage) && !midOrderModifier) {
-        const { reply, recommendedDrinks } = await buildHealthRankingReply(intentMessage, recentHistory);
+        const { reply, recommendedDrinks } = await buildHealthRankingReply(intentMessage, recentHistory, detectedLang);
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
@@ -5116,7 +5210,63 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     };
 }
 
+// ── Final language safety gate ─────────────────────────────────────────────
+// Every reply path above already tries to answer in the customer's language (Gemini via the
+// buildSystemPrompt language instruction, or REPLY_STRINGS/HEALTH_RANKING_STRINGS lookups for the
+// hardcoded paths). This is the last-resort check: if a reply still comes out in English for a
+// non-English customer, translate it through Gemini before it goes out, instead of shipping the
+// wrong language.
+const CJK_RE = /[一-鿿]/;
+const TAMIL_RE = /[஀-௿]/;
+// Malay is Latin-script — indistinguishable from English by character set — so BM instead checks
+// for common English function words that essentially never appear in Malay sentences. Requires 2+
+// distinct hits so a single stray English proper noun (a drink name) doesn't false-positive.
+const ENGLISH_TELL_RE = /\b(the|is|are|have|has|please|your|you|this|that|with|and)\b/gi;
 
+function replyLooksWrongLanguage(text, targetLang) {
+    const plain = String(text || "").replace(/<[^>]*>/g, " ").trim();
+    if (!plain) return false;
+    if (targetLang === "zh") return !CJK_RE.test(plain);
+    if (targetLang === "ta") return !TAMIL_RE.test(plain);
+    if (targetLang === "ms") {
+        const hits = new Set((plain.match(ENGLISH_TELL_RE) || []).map((w) => w.toLowerCase()));
+        return hits.size >= 2;
+    }
+    return false;
+}
+
+// Structural HTML replies (ordering flow, hidden-cart-data, buttons) already carry their own
+// explicit per-language instruction into Gemini and are too fragile to safely re-translate as a
+// block — the gate only touches plain-text replies and per-segment text of a multi-intent reply.
+function isSafeToTranslate(text) {
+    return Boolean(text) && !/hidden-cart-data|<button/i.test(text);
+}
+
+async function ensureReplyLanguage(result, targetLang) {
+    if (!result || !USE_MATCHED_LANGUAGE || targetLang === "en") return result;
+
+    if (isSafeToTranslate(result.reply) && replyLooksWrongLanguage(result.reply, targetLang)) {
+        result.reply = await aiClient.translateFromEnglish(result.reply, targetLang).catch(() => result.reply);
+    }
+
+    if (Array.isArray(result.segments)) {
+        for (const segment of result.segments) {
+            if (isSafeToTranslate(segment.reply) && replyLooksWrongLanguage(segment.reply, targetLang)) {
+                segment.reply = await aiClient.translateFromEnglish(segment.reply, targetLang).catch(() => segment.reply);
+            }
+        }
+    }
+
+    return result;
+}
+
+// Exported entry point: runs the real handler, then gates the result through
+// ensureReplyLanguage as a final check before it reaches the customer.
+async function handleChatMessage(params) {
+    const result = await handleChatMessageCore(params);
+    const detectedLang = detectMessageLanguage(String(params?.message || "").trim());
+    return ensureReplyLanguage(result, detectedLang);
+}
 
 // Handles an image upload: sends the image + menu summary to Gemini for a vision-based reply.
 async function handleImageMessage({ images, message, conversationId }) {

@@ -129,6 +129,33 @@ async function translateToEnglish(text) {
   }
 }
 
+const TRANSLATE_TARGET_LANGUAGE_NAMES = {
+  zh: "Mandarin Chinese",
+  ta: "Tamil",
+  ms: "Bahasa Melayu (Malay)",
+};
+
+// Safety-net translation used when a reply was built in English but the customer's detected
+// language is zh/ta/ms (e.g. a hardcoded string that was missed, or Gemini not following the
+// language instruction). Falls back to the original English text on any failure.
+async function translateFromEnglish(text, targetLang) {
+  const langName = TRANSLATE_TARGET_LANGUAGE_NAMES[targetLang];
+  if (!langName || !String(text || "").trim()) return text;
+
+  try {
+    const result = await callGeminiTextWithRotation(
+      text,
+      [],
+      `Translate the following bubble-tea shop chat reply into ${langName}. ` +
+        `Keep any HTML tags, drink names, prices (e.g. S$4.80), and percentages exactly as they are — ` +
+        `translate only the surrounding natural-language text. Output ONLY the translated message, nothing else.`
+    );
+    return result.trim() || text;
+  } catch {
+    return text;
+  }
+}
+
 async function generateImageAnalysis(images, textPrompt, systemPrompt = "") {
   const geminiKeys = getGeminiKeys();
   if (geminiKeys.length === 0) throw new Error("No Gemini keys available.");
@@ -166,4 +193,5 @@ module.exports = {
   generateText,
   generateImageAnalysis,
   translateToEnglish,
+  translateFromEnglish,
 };
