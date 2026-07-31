@@ -491,14 +491,18 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
             <div className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}${(!msg.isUser && msg.recommendedDrinks?.length) ? ` ${styles.botMessageWithCards}` : ""}`}>
               {!msg.isUser && (
                 <div className={styles.botMeta}>
-                  <Image
-                    src={avyLogo}
-                    alt="Avy"
-                    width={18}
-                    height={18}
-                    className={styles.messageAvatar}
-                  />
-                  <span className={styles.assistantLabel}>Avy</span>
+                  {msg.agentName ? (
+                    <span className={styles.agentAvatarBadge}>{msg.agentName.charAt(0).toUpperCase()}</span>
+                  ) : (
+                    <Image
+                      src={avyLogo}
+                      alt="Avy"
+                      width={18}
+                      height={18}
+                      className={styles.messageAvatar}
+                    />
+                  )}
+                  <span className={styles.assistantLabel}>{msg.agentName ? `${msg.agentName} • Support` : 'Avy'}</span>
                   <span className={styles.metaDivider}>•</span>
                   <time className={styles.messageTime}>{formatMessageTime(msg.id)}</time>
                 </div>
@@ -959,8 +963,12 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
               <div key={msg.id} className={`${styles.message} ${msg.isUser ? styles.userMessage : styles.botMessage}`}>
                 {!msg.isUser && (
                   <div className={styles.botMeta}>
-                    <Image src={avyLogo} alt="Avy" width={18} height={18} className={styles.messageAvatar} />
-                    <span className={styles.assistantLabel}>Avy</span>
+                    {msg.agentName ? (
+                      <span className={styles.agentAvatarBadge}>{msg.agentName.charAt(0).toUpperCase()}</span>
+                    ) : (
+                      <Image src={avyLogo} alt="Avy" width={18} height={18} className={styles.messageAvatar} />
+                    )}
+                    <span className={styles.assistantLabel}>{msg.agentName ? `${msg.agentName} • Support` : 'Avy'}</span>
                   </div>
                 )}
                 <div className={`${styles.compactContent} ${msg.isUser ? styles.userBubble : styles.botBubble}`}>

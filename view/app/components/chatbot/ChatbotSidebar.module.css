@@ -624,6 +624,23 @@
   border-radius: 50%;
 }
 
+/* Simulated human-agent handoff message — visually distinct from Avy's logo/gradient so the
+   handoff reads as someone else joining the chat, not just different wording from the same bot. */
+.agentAvatarBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #f6a04d, #f9d976);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .assistantLabel {
   color: var(--foreground);
   font-weight: 700;

@@ -69,6 +69,9 @@ export interface Message {
   text: string;
   isUser: boolean;
   images?: string[];
+  // Set only on a simulated human-agent handoff message — renders with that name/a distinct
+  // avatar instead of Avy's, so the handoff actually looks like someone else joined the chat.
+  agentName?: string;
   feedbackOrderId?: string;
   feedbackItems?: any[];
   feedbackSubmitted?: boolean;

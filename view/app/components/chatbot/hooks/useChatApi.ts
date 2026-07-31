@@ -94,9 +94,11 @@ export function useChatApi({
       ? (payload.system_action as { ui_navigation?: string }) : null;
     const multiIntent = payload.multiIntent === true;
     const segments = Array.isArray(payload.segments) ? (payload.segments as Message['segments']) : undefined;
+    const agentHandoff = payload.agentHandoff && typeof payload.agentHandoff === 'object'
+      ? (payload.agentHandoff as { delayMs?: number; name?: string; reply?: string }) : null;
     const strippedReply = rawReply.replace(/<div[^>]*class="[^"]*hidden-cart-data[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
     const sanitizedReply = strippedReply.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
-    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, storeCards, multiIntent, segments, showViewCart: payload.showViewCart, systemAction };
+    return { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, storeCards, multiIntent, segments, agentHandoff, showViewCart: payload.showViewCart, systemAction };
   }
 
   async function sendMessage(messageText: string, shouldSpeak: boolean = false, isQuickPrompt: boolean = false) {
@@ -165,9 +167,10 @@ export function useChatApi({
 
     try {
       const response = await sendChatMessage({ message: messageText, conversationId: convId, userId: getCurrentUserId(), isQuickPrompt });
-      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, storeCards, multiIntent, segments, showViewCart, systemAction } = parsePayload(await response.json());
+      const { sanitizedReply, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, storeCards, multiIntent, segments, agentHandoff, showViewCart, systemAction } = parsePayload(await response.json());
       const botMsg: Message = { id: (Date.now() + 1).toString(), text: sanitizedReply, isUser: false, recommendedDrinks, healthCard, orderReceipt, cartUpdate, purchaseHistory, orderStatusCard, voucherCard, storeCards, multiIntent, segments };
       setMessages(prev => [...prev, botMsg]);
+      scheduleAgentHandoff(agentHandoff, (msg) => setMessages(prev => [...prev, msg]), shouldSpeak);
 
       // #26 - Navigate Website via Chatbot: backend resolved a destination page, jump there now.
       if (systemAction?.ui_navigation && systemAction.ui_navigation !== 'none') {
@@ -222,6 +225,9 @@ export function useChatApi({
         storeCards: Array.isArray(payload.storeCards) ? (payload.storeCards as Message['storeCards']) : [],
       };
       setOverlayMessages(prev => [...prev, botMsg]);
+      const overlayAgentHandoff = payload.agentHandoff && typeof payload.agentHandoff === 'object'
+        ? (payload.agentHandoff as { delayMs?: number; name?: string; reply?: string }) : null;
+      scheduleAgentHandoff(overlayAgentHandoff, (msg) => setOverlayMessages(prev => [...prev, msg]), shouldSpeak);
 
       // #26 - Navigate Website via Chatbot: also honour navigation intents spoken in speak mode.
       const overlaySystemAction = payload.system_action && typeof payload.system_action === 'object'
@@ -252,6 +258,29 @@ export function useChatApi({
   }
 
   return { isLoading, sendMessage, sendOverlayMessage };
+}
+
+// ── Simulated human-agent handoff ───────────────────────────────────────────
+// Pushes the agent's message after a delay (like a real transfer taking a moment) with a
+// distinct `agentName` so ChatbotSidebar renders it with a different name/avatar than Avy.
+function scheduleAgentHandoff(
+  agentHandoff: { delayMs?: number; name?: string; reply?: string } | null | undefined,
+  pushMessage: (msg: Message) => void,
+  shouldSpeak: boolean,
+) {
+  if (!agentHandoff?.reply) return;
+  const replyText = agentHandoff.reply;
+  setTimeout(() => {
+    pushMessage({
+      id: (Date.now() + 2).toString(),
+      text: replyText,
+      isUser: false,
+      agentName: agentHandoff.name,
+    });
+    if (shouldSpeak) {
+      speakText(replyText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim());
+    }
+  }, agentHandoff.delayMs ?? 1500);
 }
 
 // ── Thumbnail helper ────────────────────────────────────────────────────────

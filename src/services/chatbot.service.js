@@ -1227,6 +1227,12 @@ function isHumanAgentRequest(message) {
         /\b(customer service|customer support|human support|live agent)\b/.test(msg);
 }
 
+// Picked randomly per handoff so it isn't always the same name.
+const SUPPORT_AGENT_NAMES = ["Mike", "Sarah", "Alex", "Priya"];
+function pickSupportAgentName() {
+    return SUPPORT_AGENT_NAMES[Math.floor(Math.random() * SUPPORT_AGENT_NAMES.length)];
+}
+
 // Cancelling an order that has already been placed. The cart-clearing phrases
 // ("cancel my order" with items still in the cart) are handled by isClearCartRequest.
 function isOrderCancellationRequest(message) {
@@ -2964,6 +2970,7 @@ function mergeIntentResults(results) {
     for (const key of [
         "voucherCard", "storeCards", "purchaseHistory", "orderStatusCard",
         "cartUpdate", "orderReceipt", "recommendedDrinks", "healthCard", "showViewCart",
+        "agentHandoff",
     ]) {
         const value = lastDefined(results, key);
         if (value !== null) merged[key] = value;
@@ -3788,14 +3795,25 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     // sentence calling out the current in-progress order, rather than trying to render two cards.
     // An explicit request for a person. HANDOFF_OFFER is not reused here — its wording
     // ("I'm having trouble understanding you") belongs to the gibberish escape hatch.
+    // Simulates a real handoff (per supervisor's requirement): an immediate acknowledgment, then
+    // a second message — shown with a different name/avatar on the frontend, see agentHandoff —
+    // that reads as if a named support agent has actually joined, instead of an instant canned
+    // paragraph that makes it obvious no real handoff happened.
     if (isHumanAgentRequest(intentMessage)) {
-        const reply =
-            "Of course — our team can take it from here. " +
-            "Email **yiyuanzhuan@driptea.com** or WhatsApp **+6123 4567** and someone will get back to you. " +
-            "If it's about a specific order, include the order number and they'll find it faster.";
+        const agentName = pickSupportAgentName();
+        const ackReply = "One moment, let me get someone from our team for you...";
+        const agentReply =
+            `Hi, I'm ${agentName} from the DripTea support team! ` +
+            "I'll take it from here. " +
+            "Please include your order number if it's about a specific order.";
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
-        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
-        return { reply, system_action: { ui_navigation: "none" } };
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: ackReply });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: agentReply });
+        return {
+            reply: ackReply,
+            agentHandoff: { delayMs: 1600, name: agentName, reply: agentReply },
+            system_action: { ui_navigation: "none" },
+        };
     }
 
     // Cancelling a placed order. There is no customer-facing cancel API — staff change the
