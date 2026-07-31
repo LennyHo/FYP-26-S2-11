@@ -2175,7 +2175,7 @@ ${drinkLines}
 
 Write a warm, natural 1–2 sentence intro for these recommendations. Reference the selection briefly but do not enumerate every drink — the cards handle the details. Speak as Avy, the friendly DripTea assistant.`;
 
-    const systemPrompt = await buildSystemPrompt(safeMessage, drinkContext);
+    const systemPrompt = await buildSystemPrompt(safeMessage, drinkContext, detectMessageLanguage(safeMessage));
     let reply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt)
     reply = fixMissingLineBreaks(reply);
 
@@ -3664,7 +3664,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             ).join("\n");
 
             const contextPrompt = `The customer asked: "${safeMessage}"\n\nTop-rated drinks available:\n${drinkContext}\n\nRecommend 2-3 of these drinks naturally in 1-2 sentences. Do not list prices or item IDs.`;
-            const systemPrompt = await buildSystemPrompt(safeMessage, "");
+            const systemPrompt = await buildSystemPrompt(safeMessage, "", detectedLang);
             const reply = await aiClient.generateText(contextPrompt, recentHistory, systemPrompt);
 
             await ChatbotSession.appendToConversation(activeConversationId, userId, {
@@ -3868,7 +3868,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
                 return `Order ${i + 1}: #${o.orderNo} (${isDelivery ? "delivery" : "pickup"}) — ${label} — Total: S$${Number(o.totalAmount || 0).toFixed(2)}${deliveryLine}\nItems:\n${itemList}`;
             }).join("\n\n") + noCurrentOrderNote;
 
-        const systemPrompt = await buildSystemPrompt(safeMessage, orderContext);
+        const systemPrompt = await buildSystemPrompt(safeMessage, orderContext, detectedLang);
         const reply = await aiClient.generateText(safeMessage, recentHistory, systemPrompt)
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
@@ -3982,7 +3982,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
             `Write a short, friendly 1-2 sentence reply acknowledging their question. ` +
             `Do NOT list out the address, phone number, or opening hours in your reply — that information is already shown to the customer in visual cards right below your message, so repeating it would be redundant. ` +
             `You may mention the store name(s) by name, but nothing more specific than that.`;
-        const systemPrompt = await buildSystemPrompt(safeMessage, "");
+        const systemPrompt = await buildSystemPrompt(safeMessage, "", detectedLang);
         const reply = await aiClient.generateText(contextPrompt, recentHistory, systemPrompt);
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
@@ -4924,7 +4924,7 @@ async function handleChatMessage({ message, conversationId, userId, isQuickPromp
     }
 
     // Use intentMessage (English) here — buildSystemPrompt's own isMenuRequest()/filterMenu()
-    const systemPrompt = await buildSystemPrompt(intentMessage, nutritionContext + cartContext);
+    const systemPrompt = await buildSystemPrompt(intentMessage, nutritionContext + cartContext, detectedLang);
 
     // When the user's message is a bare topping selection (e.g. "Brown Sugar (+S$1.00)", "珍珠",
     // "Mutiara", "No toppings"), Gemini tends to shortcut to "added to your cart" without

@@ -219,15 +219,32 @@ function filterMenu(beverages, message) {
 }
 // End of #27 / #13 menu intent detection
 
-async function buildSystemPrompt(userMessage, extraContext = "") {
+const LANGUAGE_NAMES = {
+  zh: "Mandarin Chinese",
+  ta: "Tamil",
+  ms: "Bahasa Melayu (Malay)",
+  en: "English",
+};
+
+async function buildSystemPrompt(userMessage, extraContext = "", detectedLang = null) {
+  // When the caller already knows the customer's language (detected from their raw message),
+  // state it directly instead of asking Gemini to re-detect it. Re-detection is unreliable when
+  // the actual text handed to the model is a mostly-English scaffolding prompt (e.g. "The customer
+  // asked: '<original message>' ... Recommend 2-3 of these drinks...") — the English scaffolding
+  // outweighs the quoted customer message and the model defaults to English.
+  const knownLangName = detectedLang && LANGUAGE_NAMES[detectedLang];
+
   const langInstruction = USE_MATCHED_LANGUAGE
     ? `LANGUAGE DETECTION — CRITICAL:
-Detect the language from the user's LATEST message alone, never from previous turns. Rules:
+${knownLangName
+    ? `The customer's message has already been detected as ${knownLangName}. You MUST write your ENTIRE reply in ${knownLangName}, no matter what language the rest of your input (including any scaffolding text like "The customer asked...") is written in.`
+    : `Detect the language from the user's LATEST message alone, never from previous turns. Rules:
 - Malay (BM): user wrote Latin script with ANY Malay word — including nak, satu, dua, tiga, empat, lima, mahu, boleh, saya, aku, kita, dengan, yang, dan, tak, ada, nak, tolong, minta, bagi, beli, letak, tambah, kurang, tanpa, besar, biasa, ais, gula, minuman, teh, susu — reply ENTIRELY in Malay (Bahasa Melayu), even if the message also contains English words like drink names ("matcha latte", "taro") or prices.
 - Chinese: user wrote using Chinese characters (汉字) → reply ENTIRELY in Mandarin Chinese. This applies to ALL parts of your response — ordering steps, size/ice/sugar/topping options, confirmation text, health warnings, and button labels. Use the Chinese reference translations below for all option labels.
 - Tamil: user wrote using Tamil script (தமிழ் எழுத்துகள்) → reply ENTIRELY in Tamil.
 - English: user wrote in English → reply in English.
-If the latest message is a short Malay phrase like "Tanpa topping" or "Kurang ais", that IS Malay — do NOT fall back to the previous conversation language. Never mix languages in the same reply.
+If the latest message is a short Malay phrase like "Tanpa topping" or "Kurang ais", that IS Malay — do NOT fall back to the previous conversation language.`}
+Never mix languages in the same reply.
 
 LANGUAGE APPLIES TO VISIBLE TEXT ONLY: When replying in a non-English language, translate ALL visible option labels — size names, ice levels, topping names, sugar-warning choices. Keep prices (S$1.20 etc.), percentages (0%, 25%, 50%, 100%), and all HTML tags exactly as-is.
 Malay reference translations (use these exactly in visible text):
