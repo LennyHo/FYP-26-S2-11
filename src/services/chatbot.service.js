@@ -1338,6 +1338,14 @@ function isAddToCartRequest(message) {
     // "add one more X" / "add another X" = quantity increase on existing cart item
     if (msg.includes("add one more") || msg.includes("add another")) return false;
 
+    // "add pearls to my matcha latte in the cart" — a topping added to a drink already sitting
+    // IN the cart is an edit to that line, not a new order. Must be excluded before the
+    // /add.*cart/ check below, or resolveBeverageId ends up "ordering" a duplicate drink instead
+    // of updating the existing one. Fresh-order phrasing ("I want", "give me", a leading quantity)
+    // still wins even if it happens to mention "cart".
+    const looksLikeFreshOrder = /\b(i want|i'd like|i would like|give me|can i (get|have|order)|order (a|the)|\d+\s*(x|pcs?|cups?)?\s*\w)\b/i.test(msg);
+    if (msg.includes("cart") && mentionsToppings(msg) && !looksLikeFreshOrder) return false;
+
     if (
         /add.*cart/.test(msg) ||
         /put.*cart/.test(msg) ||
@@ -1708,8 +1716,15 @@ async function addHiddenCartItemsToDatabase(hiddenCartItems, userId) {
 function isViewCartRequest(message) {
     const msg = String(message || "").toLowerCase().replace(/['']/g, "'");
 
-    // A mutation intent (add / remove / clear / update a cart item) must never be swallowed
-    if (/\b(add|remove|delete|clear|empty|update|edit)\b/.test(msg)) return false;
+    // A mutation intent (add / remove / clear / update a cart item) must never be swallowed.
+    // Must mirror isCartUpdateRequest's hasEditVerb list below — stems, not full words, so
+    // "removed"/"changing"/"updated" (whatever tense the AI translation of 换成/加上/etc lands on)
+    // still match instead of silently falling through to this view-only branch.
+    if (
+        /\b(add|remov|delet|clear|empty|updat|edit|chang|switch|increas|decreas|reduc)/i.test(msg) ||
+        msg.includes("make it") ||
+        msg.includes("minus one")
+    ) return false;
 
     return (
         msg.includes("view cart") ||
@@ -1811,18 +1826,21 @@ function isCartUpdateRequest(message) {
     // "add one more X but with [different customization]" = new item, not a quantity bump
     if ((msg.includes("add one more") || msg.includes("add another")) && hasCustomizationWords(msg)) return false;
 
+    // Stems, not full words — "removed"/"reducing"/"updated" etc (past/continuous tense the AI
+    // translation step may choose for 换成/加上/etc, since Chinese doesn't inflect verbs the way
+    // English does) must still match. A plain-word list silently misses these and lets the message
+    // fall through to the view-cart/Gemini paths, discarding the edit.
     const hasEditVerb = (
-        msg.includes("remove") ||
-        msg.includes("delete") ||
-        msg.includes("increase") ||
-        msg.includes("decrease") ||
-        msg.includes("reduce") ||
-        msg.includes("add one more") ||
-        msg.includes("add another") ||
+        msg.includes("remov") ||
+        msg.includes("delet") ||
+        msg.includes("increas") ||
+        msg.includes("decreas") ||
+        msg.includes("reduc") ||
+        msg.includes("add") ||
         msg.includes("minus one") ||
-        msg.includes("change") ||
+        msg.includes("chang") ||
         msg.includes("edit") ||
-        msg.includes("update") ||
+        msg.includes("updat") ||
         msg.includes("make it") ||
         msg.includes("switch")
     );
@@ -1891,6 +1909,19 @@ function getCartUpdateIntent(message) {
         return intent;
     }
 
+    // "add pearls to my ice lemon tea (in the cart)" — an additive topping edit. Must also be
+    // detected before the changeText split below: that split assumes "[target] to [new value]"
+    // phrasing ("change the size to large"), so on "add X to Y" it reads backwards — the topping
+    // ends up in targetText, not changeText, and would never be applied. Scanning the whole
+    // message for topping words + an add-verb sidesteps that phrasing dependency entirely.
+    const isWholeItemAdd = /\badd\s+(one|another|one more)\b/.test(msg); // handled by the quantity branch below
+    if (!isWholeItemAdd && msg.includes("add") && mentionedToppings.length > 0) {
+        intent.action = "updateCustomization";
+        intent.addToppings = mentionedToppings;
+        intent.targetName = resolveDrinkNameFromMessage(msg);
+        return intent;
+    }
+
     if (msg.includes("remove one") || /remove\s+\d+/.test(msg)) {
         intent.action = "decrease";
         intent.quantityDelta = -1;
@@ -1937,13 +1968,18 @@ function getCartUpdateIntent(message) {
         intent.newCustomization.toppings = ["Cheese Foam"];
     }
 
-    if (changeText.includes("large")) intent.newCustomization.size = "Large";
-    else if (changeText.includes("regular")) intent.newCustomization.size = "Regular";
+    if (/\b(large|besar)\b|大杯/i.test(changeText)) intent.newCustomization.size = "Large";
+    else if (/\b(regular|medium|biasa)\b|中杯/i.test(changeText)) intent.newCustomization.size = "Regular";
 
-    if (changeText.includes("no ice")) intent.newCustomization.ice = "No Ice";
-    else if (changeText.includes("less ice")) intent.newCustomization.ice = "Less Ice";
-    else if (changeText.includes("normal ice")) intent.newCustomization.ice = "Normal Ice";
-    else if (changeText.includes("hot")) intent.newCustomization.ice = "Hot";
+    // Matched against both the (usually English-translated) intentMessage and, via the history
+    // recursion above, raw original-language text — so these also cover the literal Chinese/Malay
+    // keywords, not just whatever English phrasing the translation step happens to land on.
+    // "regular ice" is included here (not just "normal ice") since that's the common translation
+    // of 普通冰/正常冰.
+    if (/\bno ice\b|tanpa ais|去冰/i.test(changeText)) intent.newCustomization.ice = "No Ice";
+    else if (/\bless ice\b|kurang ais|少冰/i.test(changeText)) intent.newCustomization.ice = "Less Ice";
+    else if (/\b(normal|regular) ice\b|ais normal|正常冰|普通冰/i.test(changeText)) intent.newCustomization.ice = "Normal Ice";
+    else if (/\bhot\b|panas|热饮/i.test(changeText)) intent.newCustomization.ice = "Hot";
 
     // "reduce 25% to 0% for oolong milk tea" is a sugar change, not one drink fewer.
     // The quantity verbs ("reduce", "decrease") only mean quantity when the message
@@ -4769,7 +4805,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
                 cartUpdate: buildCartUpdatePayload(cartItems, reply),
                 system_action: { ui_navigation: "none" },
             };
-        } else if (Object.keys(intent.newCustomization).length === 0 && !intent.removeToppings && intent.action === "updateCustomization") {
+        } else if (Object.keys(intent.newCustomization).length === 0 && !intent.removeToppings && !intent.addToppings && intent.action === "updateCustomization") {
             // User said something like "second drink" — they identified a target but didn't say what to change.
             const name = targetItem.name || "that drink";
             const c = targetItem.customization || {};
@@ -4792,6 +4828,16 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
                         const clean = String(t || "").replace(/\s*\(\+S\$[\d.]+\)/i, "").trim();
                         return !intent.removeToppings.includes(clean);
                     });
+            }
+
+            // "add pearls" etc — append to whatever toppings are already on the drink, don't replace them.
+            if (Array.isArray(intent.addToppings) && intent.addToppings.length > 0) {
+                const existing = (Array.isArray(newCustomization.toppings) ? newCustomization.toppings : [])
+                    .map((t) => String(t || "").replace(/\s*\(\+S\$[\d.]+\)/i, "").trim());
+                newCustomization.toppings = [...existing];
+                for (const topping of intent.addToppings) {
+                    if (!newCustomization.toppings.includes(topping)) newCustomization.toppings.push(topping);
+                }
             }
 
             const menuItem = await MenuItem.findById(targetItem.menuItemId).lean();

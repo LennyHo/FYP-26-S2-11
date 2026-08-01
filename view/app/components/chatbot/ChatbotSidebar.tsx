@@ -308,10 +308,17 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
 
   // One answer of a multi-intent reply: its text, then the cards that belong to it.
   function renderIntentSegment(segment: NonNullable<Message['segments']>[number], key: number, stripOptionLine: boolean) {
+    const isDrinkCardSegment = segment.reply.includes('startOrder');
     const text = stripOptionLine ? (extractOrderingOptions(segment.reply).cleanHtml || segment.reply) : segment.reply;
     return (
       <div key={key} className={styles.intentSegment}>
-        {text && (
+        {isDrinkCardSegment ? (
+          <DrinkRecCards
+            msgText={sanitizeExcessiveBreaks(segment.reply).replace(/^(<br\s*\/?>|\s)+/gi, "")}
+            flippedCard={flippedCard}
+            setFlippedCard={setFlippedCard}
+          />
+        ) : text && (
           <div dangerouslySetInnerHTML={{ __html: convertMarkdownBold(sanitizeExcessiveBreaks(text)) }} />
         )}
         {segment.orderStatusCard && <OrderStatusCard orderStatus={segment.orderStatusCard} />}
