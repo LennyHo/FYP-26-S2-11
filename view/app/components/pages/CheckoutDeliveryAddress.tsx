@@ -118,17 +118,34 @@ function getSearchQueries(query: string) {
 function getSavedAddresses(user: DripTeaUser | null = getStoredUser()) {
   const addresses: DripTeaAddress[] = Array.isArray(user?.addresses) ? user.addresses : []
   return addresses
-    .map((entry) => ({
-      label: String(entry?.label || "").trim(),
-      address: String(entry?.address || "").trim(),
-      isDefault: Boolean(entry?.isDefault),
-    }))
+    .map((entry) => {
+      const lat = Number(entry?.lat)
+      const lng = Number(entry?.lng)
+
+      return {
+        label: String(entry?.label || "").trim(),
+        address: String(entry?.address || "").trim(),
+        isDefault: Boolean(entry?.isDefault),
+        lat: Number.isFinite(lat) ? lat : undefined,
+        lng: Number.isFinite(lng) ? lng : undefined,
+      }
+    })
     .filter((entry) => entry.address)
+}
+
+type SavedAddressEntry = ReturnType<typeof getSavedAddresses>[number]
+
+function hasCoords(entry: SavedAddressEntry): entry is SavedAddressEntry & { lat: number; lng: number } {
+  return typeof entry.lat === "number" && typeof entry.lng === "number"
 }
 
 function getDefaultSavedAddress(addresses = getSavedAddresses()) {
   const defaultAddress = addresses.find((item) => item.isDefault) || addresses[0]
   return defaultAddress?.address || ""
+}
+
+function getDefaultSavedAddressEntry(addresses = getSavedAddresses()) {
+  return addresses.find((item) => item.isDefault) || addresses[0] || null
 }
 
 function normalizeAddress(address: string) {
@@ -293,33 +310,43 @@ export default function CheckoutDeliveryAddress({
     setShowSuggestions(keepSuggestionsOpen)
   }
 
-  function chooseSavedAddress() {
+  function applySavedAddressEntry(entry: SavedAddressEntry | null) {
     setMode("saved")
-    setAddressInput(savedAddress)
-    setSelectedSavedAddress(savedAddress)
-    setSelectedLocation(null)
     setSearchResults([])
     setShowSuggestions(false)
 
-    if (savedAddress) {
-      void fetchSearchResults(savedAddress, "saved")
-    } else {
+    const address = String(entry?.address || "").trim()
+
+    if (!address) {
+      setAddressInput("")
+      setSelectedSavedAddress("")
+      setSelectedLocation(null)
       setMessage("No saved address found. Enter a new address instead.")
+      return
     }
+
+    setAddressInput(address)
+    setSelectedSavedAddress(address)
+
+    if (entry && hasCoords(entry)) {
+      setSelectedLocation({ lat: entry.lat, lng: entry.lng, address })
+      setMessage("")
+      return
+    }
+
+    // Legacy saved address with no stored coordinates — geocode it once via OneMap.
+    setSelectedLocation(null)
+    void fetchSearchResults(address, "saved")
   }
 
-  function chooseSavedAddressEntry(addressEntry: { address?: string }) {
-    const nextAddress = String(addressEntry?.address || "").trim()
-    if (!nextAddress) return
+  function chooseSavedAddress() {
+    applySavedAddressEntry(getDefaultSavedAddressEntry(savedAddresses))
+  }
 
-    setMode("saved")
-    setSavedAddress(nextAddress)
-    setAddressInput(nextAddress)
-    setSelectedSavedAddress(nextAddress)
-    setSelectedLocation(null)
-    setSearchResults([])
-    setShowSuggestions(false)
-    void fetchSearchResults(nextAddress, "saved")
+  function chooseSavedAddressEntry(addressEntry: SavedAddressEntry) {
+    if (!addressEntry?.address) return
+    setSavedAddress(addressEntry.address)
+    applySavedAddressEntry(addressEntry)
   }
 
   function chooseNewAddress() {
@@ -348,15 +375,23 @@ export default function CheckoutDeliveryAddress({
     if (alreadySaved) return "already-saved"
 
     const nextAddresses = [
-      ...existingAddresses.map((entry) => ({
-        label: String(entry.label || "").trim(),
-        address: String(entry.address || "").trim(),
-        isDefault: Boolean(entry.isDefault),
-      })),
+      ...existingAddresses.map((entry) => {
+        const lat = Number(entry.lat)
+        const lng = Number(entry.lng)
+
+        return {
+          label: String(entry.label || "").trim(),
+          address: String(entry.address || "").trim(),
+          isDefault: Boolean(entry.isDefault),
+          ...(Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : {}),
+        }
+      }),
       {
         label: saveAddressLabel.trim() || "Delivery",
         address: cleanAddress,
         isDefault: existingAddresses.length === 0,
+        lat: deliveryData.customerLat,
+        lng: deliveryData.customerLng,
       },
     ].filter((entry) => entry.address)
 
@@ -417,12 +452,7 @@ export default function CheckoutDeliveryAddress({
 
   useEffect(() => {
     if (delivery) return
-    if (!savedAddress) {
-      setMessage("No saved address found. Enter a new address instead.")
-      return
-    }
-
-    void fetchSearchResults(savedAddress, "saved")
+    applySavedAddressEntry(getDefaultSavedAddressEntry(savedAddresses))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -430,22 +460,14 @@ export default function CheckoutDeliveryAddress({
     function refreshSavedAddresses() {
       const user = getStoredUser()
       const addresses = getSavedAddresses(user)
-      const defaultSavedAddress = getDefaultSavedAddress(addresses)
+      const defaultEntry = getDefaultSavedAddressEntry(addresses)
 
       setCurrentUser(user)
       setSavedAddresses(addresses)
-      setSavedAddress(defaultSavedAddress)
+      setSavedAddress(defaultEntry?.address || "")
 
       if (mode === "saved" && !delivery) {
-        setAddressInput(defaultSavedAddress)
-        setSelectedSavedAddress(defaultSavedAddress)
-
-        if (defaultSavedAddress) {
-          void fetchSearchResults(defaultSavedAddress, "saved")
-        } else {
-          setSelectedLocation(null)
-          setMessage("No saved address found. Enter a new address instead.")
-        }
+        applySavedAddressEntry(defaultEntry)
       }
     }
 

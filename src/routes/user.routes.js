@@ -77,11 +77,17 @@ function sanitizeAddresses(rawAddresses) {
   if (!Array.isArray(rawAddresses)) return [];
 
   return rawAddresses
-    .map((entry) => ({
-      label: String(entry?.label || "").trim(),
-      address: String(entry?.address || "").trim(),
-      isDefault: Boolean(entry?.isDefault),
-    }))
+    .map((entry) => {
+      const lat = Number(entry?.lat);
+      const lng = Number(entry?.lng);
+
+      return {
+        label: String(entry?.label || "").trim(),
+        address: String(entry?.address || "").trim(),
+        isDefault: Boolean(entry?.isDefault),
+        ...(Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : {}),
+      };
+    })
     .filter((entry) => entry.address.length > 0);
 }
 

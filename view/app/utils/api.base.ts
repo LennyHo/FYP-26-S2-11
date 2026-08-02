@@ -16,6 +16,8 @@ export type DripTeaAddress = {
   label?: string;
   address: string;
   isDefault?: boolean;
+  lat?: number;
+  lng?: number;
 };
 
 export type DripTeaUser = {

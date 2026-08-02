@@ -83,6 +83,8 @@ const addressSchema = new mongoose.Schema(
     label: { type: String, default: "", trim: true },
     address: { type: String, required: true, trim: true },
     isDefault: { type: Boolean, default: false },
+    lat: { type: Number },
+    lng: { type: Number },
   },
   { _id: true }
 );
