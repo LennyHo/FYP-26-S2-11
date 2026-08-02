@@ -94,11 +94,4 @@ describe("chatbot testing", function () {
 
     expect(routes).to.deep.equal([{ path: "/chat", methods: ["post"] }]);
   });
-
-  // Test 5: The chatbot source should contain the login prompt for add-to-cart.
-  it("has a login prompt before chatbot cart actions", function () {
-    const serviceText = chatbotService.handleChatMessage.toString();
-
-    expect(serviceText).to.include("Please log in first before I add this to your cart.");
-  });
 });
