@@ -91,7 +91,14 @@ FYP-26-S2-11/
 │   │   │   └── tts/       ← ElevenLabs text-to-speech route (bot voice)
 │   │   ├── components/    ← Shared UI components (chatbot/, layout/, menu/, pages/, ui/)
 │   │   ├── [route]/       ← One folder per page (home, login, cart, checkout, menu/[category], order-status/[orderId], etc. — see Frontend Pages & Features)
-│   │   └── utils/         ← Frontend utility functions (API clients, validation, chat helpers)
+│   │   └── utils/         ← Frontend utility functions
+│   │       ├── api.base.ts    ← Shared fetch helper (`requestJson`) + shared types — every API client file below builds on this
+│   │       ├── customerApi.ts ← Customer-facing backend calls (auth, menu, cart, vouchers, checkout, orders, profile, feedback)
+│   │       ├── staffApi.ts    ← Store-staff backend calls (orders, menu management, inventory, vouchers)
+│   │       ├── adminApi.ts    ← User-admin backend calls (users, role descriptions)
+│   │       ├── chatbotApi.ts  ← Chatbot message/image send calls
+│   │       ├── outlets.ts     ← Store outlet data hook (used by map/checkout components)
+│   │       └── validation.ts, chatHelpers.ts ← Form validation & chat UI helpers
 │   ├── public/            ← Static assets (img/, marketing/)
 │   └── package.json
 ├── src/
@@ -164,7 +171,7 @@ ONEMAP_PASSWORD=your_onemap_account_password
 
 > - `DRIPTEA_API_BASE` / `NEXT_PUBLIC_DRIPTEA_API_BASE` tell the frontend where the backend is running. Set both to your deployed backend URL in production.
 > - `ELEVENLABS_VOICE_ID` sets which voice Avy uses when speaking replies. Find voice IDs at [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library).
-> - `ONEMAP_EMAIL` / `ONEMAP_PASSWORD` authenticate against the OneMap API to fetch a search token — register a free account at [onemap.gov.sg/apidocs/register](https://www.onemap.gov.sg/apidocs/register).
+> - `ONEMAP_EMAIL` / `ONEMAP_PASSWORD` authenticate against the OneMap API to fetch a search token — register a free account at [onemap.gov.sg/apidocs/register](https://www.onemap.gov.sg/apidocs/register). A saved delivery address caches its `lat`/`lng` on the user document the first time it's geocoded, so re-selecting an already-saved address never calls OneMap again — these credentials are only exercised when searching for a **new** address or geocoding a saved address that predates the coordinate cache.
 
 ---
 
@@ -314,6 +321,27 @@ There is no auto-seeded admin/staff account — `POST /api/auth/register` (used 
 ## Essential API Endpoints
 
 All backend routes (including the chatbot) are prefixed with `/api`. This is not the full list — see `test_cases/README.md` for all 47 endpoints across every route file.
+
+### Where these are called from
+
+Every backend call from the frontend goes through `view/app/utils/api.base.ts`'s `requestJson()` — the single fetch helper every API client function below is built on. It reads `DRIPTEA_API_BASE` / `NEXT_PUBLIC_DRIPTEA_API_BASE` (falling back to the deployed Render URL if unset), and retries the next backend URL on 5xx/network failure but throws immediately on 4xx.
+
+| Client file | Used by | Calls (see tables below) |
+|-------------|---------|----------------------------|
+| `customerApi.ts` | Customer-facing pages — login/register, menu, cart, checkout, vouchers, profile, purchase history, feedback | Auth, Menu, Cart & Vouchers, Checkout & Orders, Purchase History/Feedback/Stores, `PATCH /api/users/:id` (self) |
+| `staffApi.ts` | `/store-staff`, `/store-staff-dashboard`, `/store-staff-voucher` | Orders (staff), Menu (write), Inventory, Vouchers (staff) |
+| `adminApi.ts` | `/user-admin-dashboard` | Users, Role descriptions |
+| `chatbotApi.ts` | Chatbot widget (`components/chatbot/`) | `POST /api/chat` (text/image) via the Next.js `/api/chat` proxy |
+
+Three Next.js API routes (`view/app/api/`) sit in front of the Express backend or third-party APIs:
+
+| Route (Next.js, port 3000) | Talks to | Purpose |
+|------|----------|---------|
+| `api/chat/route.ts` | Express `POST /api/chat` (port 5000) | Proxies the chat request, then enriches the reply with source links before returning it to the browser |
+| `api/tts/route.ts` | ElevenLabs directly | Bot voice (text-to-speech) — does **not** touch the Express backend |
+| `api/onemap/search/route.ts` | OneMap directly | Address search/autocomplete on checkout — does **not** touch the Express backend |
+
+The last two exist purely to keep the ElevenLabs and OneMap API keys server-side, out of the browser bundle.
 
 ### Health
 
