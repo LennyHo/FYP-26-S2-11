@@ -91,15 +91,9 @@ FYP-26-S2-11/
 │   │   │   └── tts/       ← ElevenLabs text-to-speech route (bot voice)
 │   │   ├── components/    ← Shared UI components (chatbot/, layout/, menu/, pages/, ui/)
 │   │   ├── [route]/       ← One folder per page (home, login, cart, checkout, menu/[category], order-status/[orderId], etc. — see Frontend Pages & Features)
-│   │   └── utils/         ← Frontend utility functions
-│   │       ├── api.base.ts    ← Shared fetch helper (`requestJson`) + shared types — every API client file below builds on this
-│   │       ├── customerApi.ts ← Customer-facing backend calls (auth, menu, cart, vouchers, checkout, orders, profile, feedback)
-│   │       ├── staffApi.ts    ← Store-staff backend calls (orders, menu management, inventory, vouchers)
-│   │       ├── adminApi.ts    ← User-admin backend calls (users, role descriptions)
-│   │       ├── chatbotApi.ts  ← Chatbot message/image send calls
-│   │       ├── outlets.ts     ← Store outlet data hook (used by map/checkout components)
-│   │       └── validation.ts, chatHelpers.ts ← Form validation & chat UI helpers
+│   │   └── utils/         ← Frontend utility functions (API clients, validation, chat helpers)
 │   ├── public/            ← Static assets (img/, marketing/)
+│   ├── .env.local         ← Frontend env file (create this yourself — see Environment Variables)
 │   └── package.json
 ├── src/
 │   ├── ai/                ← AI client — Gemini key rotation + Groq fallback
@@ -110,6 +104,7 @@ FYP-26-S2-11/
 │   ├── routes/            ← Express route files
 │   ├── services/          ← Chatbot/prompt business logic (chatbot.service.js, prompt.service.js)
 │   └── utils/             ← Backend utility functions (intent parsing, validation, order progress)
+├── .env                   ← Backend env file (create this yourself — see Environment Variables)
 ├── server.js              ← Backend entry point (port 5000)
 └── package.json
 ```
