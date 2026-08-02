@@ -8,16 +8,12 @@
   padding: 20px 16px;
   box-sizing: border-box;
   background: linear-gradient(135deg, #eff6ff 0%, #fff7ed 100%);
-  animation: pageEnter 0.5s ease-out;
 }
 
 .page::before {
   content: '';
   position: absolute;
-  width: 200%;
-  height: 200%;
-  top: -50%;
-  left: -50%;
+  inset: 0;
   z-index: 0;
   background:
     radial-gradient(ellipse at 30% 40%, rgba(59, 130, 246, 0.14) 0%, transparent 55%),
@@ -26,8 +22,6 @@
     radial-gradient(ellipse at 18% 72%, rgba(234, 88, 12, 0.08) 0%, transparent 52%),
     radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.10) 0%, transparent 50%),
     #eff6ff;
-  animation: bgDrift 20s ease-in-out infinite;
-  will-change: transform;
 }
 
 @keyframes pageEnter {
@@ -39,14 +33,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-@keyframes bgDrift {
-  0%   { transform: translate(0%,   0%); }
-  25%  { transform: translate(-8%,  6%); }
-  50%  { transform: translate(-4%, -8%); }
-  75%  { transform: translate( 6%, -4%); }
-  100% { transform: translate(0%,   0%); }
 }
 
 .shell {

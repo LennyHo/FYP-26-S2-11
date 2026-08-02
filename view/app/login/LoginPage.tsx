@@ -184,33 +184,6 @@ export default function LoginPage() {
               )}
             </form>
 
-            <div className={styles.testButtons}>
-              <p className={styles.testLabel}>Test Credentials:</p>
-              <div className={styles.testButtonsGroup}>
-                <button
-                  type="button"
-                  className={styles.testButton}
-                  onClick={() => fillTestCredentials('admin')}
-                >
-                  Admin
-                </button>
-                <button
-                  type="button"
-                  className={styles.testButton}
-                  onClick={() => fillTestCredentials('staff')}
-                >
-                  Store Staff
-                </button>
-                <button
-                  type="button"
-                  className={styles.testButton}
-                  onClick={() => fillTestCredentials('customer')}
-                >
-                  Customer
-                </button>
-              </div>
-            </div>
-
             <div className={styles.footerRow}>
               <span>Don&apos;t have an account?</span>
               <Link href="/register" className={styles.registerLink}>Register for free</Link>
