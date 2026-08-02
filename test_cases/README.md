@@ -59,7 +59,6 @@ These tests check simple chatbot behaviour without calling the real AI service.
 | Controller success | Controller returns chatbot service output | Confirms controller sends normal chatbot response |
 | Controller failure | Controller returns fallback message on error | Confirms chatbot has error handling |
 | Chat route | Route file has `POST /chat` | Confirms chatbot API route exists |
-| Login prompt | Chatbot service contains login prompt before cart action | Prevents cart add before login |
 
 ## 4. API Integration Testing
 
