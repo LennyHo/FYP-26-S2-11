@@ -1,16 +1,4 @@
 // User Story Architecture Trace — user.controller.js
-//
-// #6   Create User Account (User Admin)
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js -> Ctrl: auth.controller.js (this file) -> Model: user.model.js
-//
-// #14  Reset Password
-//      View: forgot-password/page.tsx -> Route: auth.routes.js -> Ctrl: auth.controller.js (this file) -> Model: user.model.js
-//
-// #191 Create User Account (Customer)
-//      View: register/page.tsx -> Route: auth.routes.js -> Ctrl: auth.controller.js (this file) -> Model: user.model.js
-//
-// #246 Update Account (Customer)
-//      View: profile/page.tsx -> Route: user.routes.js -> Ctrl: auth.controller.js (this file) -> Model: user.model.js
 
 const User = require("../models/user.model");
 

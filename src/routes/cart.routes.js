@@ -1,25 +1,4 @@
 // User Story Architecture Trace — cart.routes.js
-//
-// #15  Add to Cart
-//      View: buy-driptea/page.tsx -> Route: cart.routes.js (this file) -> Ctrl: cart.controller.js -> Model: cartItem.model.js
-//
-// #16  View Cart
-//      View: cart/page.tsx -> Route: cart.routes.js (this file) -> Ctrl: cart.controller.js -> Model: cartItem.model.js
-//
-// #17  Edit Cart
-//      View: cart/edit/[cartItemId]/page.tsx -> Route: cart.routes.js (this file) -> Ctrl: cart.controller.js -> Model: cartItem.model.js
-//
-// #18  Apply Vouchers
-//      View: checkout/page.tsx -> Route: cart.routes.js (this file) -> Ctrl: cart.controller.js -> Model: voucher.model.js, cartItem.model.js
-//
-// #199 Add to Cart via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Route: cart.routes.js (this file) -> Ctrl: cart.controller.js -> Model: menuItem.model.js, cartItem.model.js
-//
-// #200 View Cart via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Route: cart.routes.js (this file) -> Ctrl: cart.controller.js -> Model: cartItem.model.js
-//
-// #201 Edit Cart via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Route: cart.routes.js (this file) -> Ctrl: cart.controller.js -> Model: cartItem.model.js
 
 const express = require("express");
 const cartController = require("../controllers/cart.controller");

@@ -1,37 +1,4 @@
 // User Story Architecture Trace — user.routes.js
-//
-// #1   Create User Profile
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #2   View User Profile
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #3   Update User Profile
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #4   Suspend User Profile
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #5   Search User Profile
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #6   Create User Account
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #7   View User Account
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #8   Update User Account
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #9   Suspend User Account
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #10  Search User Account
-//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
-//
-// #246 Update Account (Customer)
-//      View: profile/page.tsx -> Route: user.routes.js (this file) -> Model: user.model.js
 
 const express = require("express");
 const crypto = require("crypto");

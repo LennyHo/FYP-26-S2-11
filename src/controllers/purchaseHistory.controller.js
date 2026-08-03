@@ -1,10 +1,4 @@
 // User Story Architecture Trace — purchaseHistory.controller.js
-//
-// #19  View Purchase History
-//      View: purchase-history/page.tsx -> Route: purchaseHistory.routes.js -> Ctrl: purchaseHistory.controller.js (this file) -> Model: payment.model.js
-//
-// #198 Purchase History via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: payment.model.js
 
 const Payment = require("../models/payment.model");
 async function getPurchaseHistory(req, res) {

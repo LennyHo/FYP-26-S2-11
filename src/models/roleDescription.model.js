@@ -1,3 +1,5 @@
+// User Story Architecture Trace — roleDescription.model.js
+
 const mongoose = require("mongoose");
 
 const roleDescriptionSchema = new mongoose.Schema(

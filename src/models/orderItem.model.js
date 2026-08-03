@@ -1,3 +1,5 @@
+// User Story Architecture Trace — orderItem.model.js
+
 const mongoose = require("mongoose");
 
 const orderItemSchema = new mongoose.Schema(

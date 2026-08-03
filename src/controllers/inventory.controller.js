@@ -1,16 +1,4 @@
 // User Story Architecture Trace — inventory.controller.js
-//
-// #310 Create Inventory Item (Store Staff)
-//      View: store-staff/page.tsx  -> Route: inventory.routes.js -> Ctrl: inventory.controller.js (this file) -> Model: inventory.model.js 
-//
-// #311  View Inventory (Store Staff)
-//      View: store-staff/page.tsx -> Route: inventory.routes.js -> Ctrl: inventory.controller.js (this file) -> Model: inventory.model.js 
-//
-// #312  Update Inventory (Store Staff)
-//      View: store-staff/page.tsx -> Route: inventory.routes.js -> Ctrl: inventory.controller.js (this file) -> Model: inventory.model.js
-//
-// #313  Delete Inventory Item (Store Staff)
-//     View: store-staff/page.tsx -> Route: inventory.routes.js -> Ctrl: inventory.controller.js (this file) -> Model: inventory.model.js
 
 const Inventory = require("../models/inventory.model");
 const mongoose = require("mongoose");

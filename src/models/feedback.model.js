@@ -1,13 +1,4 @@
 // User Story Architecture Trace — feedback.model.js
-//
-// #307 Provide Feedback
-//      View: FeedbackModal.tsx -> Route: feedback.routes.js  -> Ctrl: feedback.controller.js  -> Model: feedback.model.js (this file)
-//
-// #308 Provide Feedback via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js  -> Model: order.model.js, payment.js, feedback.model.js (this file)
-//
-// #318 Get Customer Feedback (Store Staff)
-//      View: FeedbackPrompt.tsx -> Route: feedback.routes.js  -> Ctrl: feedback.controller.js  -> Model: feedback.model.js (this file)
 
 const mongoose = require("mongoose");
 

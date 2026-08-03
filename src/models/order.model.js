@@ -1,19 +1,4 @@
 // User Story Architecture Trace — order.model.js
-//
-// #18  Apply Vouchers
-//      View: checkout/page.tsx -> Route: checkout.routes.js -> Ctrl: order.controller.js -> Model: order.model.js (this file)
-//
-// #23  Make Payment
-//      View: checkout/page.tsx -> Route: checkout.routes.js -> Ctrl: order.controller.js -> Model: order.model.js (this file)
-//
-// #28  Track Order Status
-//      View: order-status/[orderId]/page.tsx -> Route: checkout.routes.js -> Ctrl: order.controller.js -> Model: order.model.js (this file)
-//
-// #203 Track Order Status via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: order.model.js (this file)
-//
-// #304 Track Delivery Order Status via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: order.model.js (this file)
 
 const mongoose = require("mongoose");
 const orderSchema = new mongoose.Schema(

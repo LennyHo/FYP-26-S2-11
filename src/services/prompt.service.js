@@ -1,19 +1,4 @@
 // User Story Architecture Trace — prompt.service.js
-//
-// #27  Search Beverages via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Svc: prompt.service.js (this file) -> Model: menuItem.model.js
-//
-// #29  High Sugar Warning via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Svc: prompt.service.js (this file) -> Model: menuItem.model.js
-//
-// #31  Nutritional Grading via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Svc: prompt.service.js (this file) -> Model: menuItem.model.js
-//
-// #32  Get Recommendations via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Svc: prompt.service.js (this file) -> Model: menuItem.model.js
-// 
-// #305 Fallback to Human Agent via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: prompt.service.js (this file) -> Model: chatbotSession.model.js
 
 const MenuItem = require("../models/menuItem.model");
 

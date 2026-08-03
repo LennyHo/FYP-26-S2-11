@@ -1,3 +1,5 @@
+// User Story Architecture Trace — chatbot.service.js
+
 const {
     extractBeverageId,
 } = require("../utils/chatIntent.util");

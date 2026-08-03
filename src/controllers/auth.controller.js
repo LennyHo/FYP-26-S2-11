@@ -1,20 +1,4 @@
 // User Story Architecture Trace — auth.controller.js
-//
-// #11  Login (User Admin)
-//      View: login/page.tsx -> Route: auth.routes.js -> Ctrl: auth.controller.js (this file) -> Model: user.model.js
-//
-// #12  Logout (User Admin) — client-side: JWT cleared from localStorage
-//
-// #20  Logout (Customer) — client-side: JWT cleared from localStorage
-//
-// #22  Login (Customer)
-//      View: login/page.tsx -> Route: auth.routes.js -> Ctrl: auth.controller.js (this file) -> Model: user.model.js
-//
-// #37  Login (Store Staff)
-//      View: login/page.tsx -> Route: auth.routes.js -> Ctrl: auth.controller.js (this file) -> Model: user.model.js
-//
-// #38  Logout (Store Staff) — client-side: JWT cleared from localStorage
-//
 
 const User = require("../models/user.model");
 

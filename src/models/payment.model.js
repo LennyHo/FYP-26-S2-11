@@ -1,19 +1,4 @@
 // User Story Architecture Trace — payment.model.js
-//
-// #19  View Purchase History
-//      View: purchase-history/page.tsx -> Route: purchaseHistory.routes.js -> Ctrl: purchaseHistory.controller.js -> Model: payment.model.js (this file)
-//
-// #23  Make Payment
-//      View: checkout/page.tsx -> Route: checkout.routes.js -> Ctrl: order.controller.js -> Model: payment.model.js (this file)
-//
-// #198 Purchase History via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: payment.model.js (this file)
-//
-// #307 Provide Feedback
-//      View: FeedbackModal.tsx -> Ctrl: feedback.controller.js -> Svc: chatbot.service.js -> Model: payment.model.js (this file)
-//
-// #308 Provide Feedback via Chatbot
-//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: order.model.js, feedback.model.js, payment.js (this file)
 
 const mongoose = require("mongoose");
 

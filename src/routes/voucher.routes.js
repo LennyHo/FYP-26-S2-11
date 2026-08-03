@@ -1,16 +1,4 @@
 // User Story Architecture Trace — voucher.routes.js
-//
-// #315 View Vouchers (Store Staff)
-//      View: store-staff-voucher/page.tsx -> Route: voucher.routes.js (this file) -> Ctrl: voucher.controller.js  -> Model: voucher.model.js
-//
-// #316 Delete Vouchers (Store Staff)
-//      View: store-staff-voucher/page.tsx -> Route: voucher.routes.js (this file) -> Ctrl: voucher.controller.js  -> Model: voucher.model.js
-//
-// #317 Search Vouchers (Store Staff)
-//      View: store-staff-voucher/page.tsx -> Route: voucher.routes.js (this file) -> Ctrl: voucher.controller.js  -> Model: voucher.model.js
-//
-// #391 Create Voucher (Store Staff)
-//      View: store-staff-voucher/page.tsx -> Route: voucher.routes.js (this file) -> Ctrl: voucher.controller.js  -> Model: voucher.model.js
 
 const express = require("express");
 const voucherController = require("../controllers/voucher.controller");

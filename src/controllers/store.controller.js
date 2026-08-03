@@ -1,8 +1,4 @@
 // User Story Architecture Trace — store.controller.js
-//
-// #24 - StoreLocator  View Store Locations (Customer)
-//      View: global-stores/page.tsx, StoreMap.tsx, MeetTheCrew.tsx, DeliveryMap.jsx
-//      -> Route: store.routes.js -> Ctrl: store.controller.js (this file) -> Model: store.model.js
 
 const Store = require("../models/store.model");
 const Order = require("../models/order.model");

@@ -1,5 +1,6 @@
-// User Story #197 — Voice Input: ElevenLabs Scribe speech-to-text with auto language detection
+// User Story Architecture Trace — transcribe.controller.js
 
+// User Story #197 — Voice Input: ElevenLabs Scribe speech-to-text with auto language detection
 async function handleTranscribe(req, res) {
   if (!req.file) return res.status(400).json({ error: 'No audio file provided' });
 
