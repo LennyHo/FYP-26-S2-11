@@ -1,16 +1,16 @@
 // User Story Architecture Trace — voucher.controller.js
 //
 // #315 View Vouchers (Store Staff)
-//      View: store-staff-voucher/page.tsx → Route: voucher.routes.js → Ctrl: voucher.controller.js (this file) → Model: voucher.model.js
+//      View: store-staff-voucher/page.tsx -> Route: voucher.routes.js -> Ctrl: voucher.controller.js (this file) -> Model: voucher.model.js
 //
 // #316 Delete Vouchers (Store Staff)
-//      View: store-staff-voucher/page.tsx → Route: voucher.routes.js → Ctrl: voucher.controller.js (this file) → Model: voucher.model.js
+//      View: store-staff-voucher/page.tsx -> Route: voucher.routes.js -> Ctrl: voucher.controller.js (this file) -> Model: voucher.model.js
 //
 // #317 Search Vouchers (Store Staff)
-//      View: store-staff-voucher/page.tsx → Route: voucher.routes.js → Ctrl: voucher.controller.js (this file) → Model: voucher.model.js
+//      View: store-staff-voucher/page.tsx -> Route: voucher.routes.js -> Ctrl: voucher.controller.js (this file) -> Model: voucher.model.js
 //
 // #391 Create Voucher (Store Staff)
-//      View: store-staff-voucher/page.tsx → Route: voucher.routes.js → Ctrl: voucher.controller.js (this file) → Model: voucher.model.js
+//      View: store-staff-voucher/page.tsx -> Route: voucher.routes.js -> Ctrl: voucher.controller.js (this file) -> Model: voucher.model.js
 //      Vouchers are a single global collection (no storeId/outlet field on the model),
 //      so every voucher created here is immediately visible to every store staff account.
 

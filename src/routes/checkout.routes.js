@@ -1,16 +1,16 @@
 // User Story Architecture Trace — checkout.routes.js
 //
 // #18  Apply Vouchers
-//      View: checkout/page.tsx → Route: checkout.routes.js (this file) → Ctrl: order.controller.js → Model: order.model.js
+//      View: checkout/page.tsx -> Route: checkout.routes.js (this file) -> Ctrl: order.controller.js -> Model: order.model.js
 //
 // #23  Make Payment
-//      View: checkout/page.tsx → Route: checkout.routes.js (this file) → Ctrl: order.controller.js → Model: order.model.js, payment.model.js
+//      View: checkout/page.tsx -> Route: checkout.routes.js (this file) -> Ctrl: order.controller.js -> Model: order.model.js, payment.model.js
 //
 // #28  Track Order Status
-//      View: order-status/[orderId]/page.tsx → Route: checkout.routes.js (this file) → Ctrl: order.controller.js → Model: order.model.js
+//      View: order-status/[orderId]/page.tsx -> Route: checkout.routes.js (this file) -> Ctrl: order.controller.js -> Model: order.model.js
 //
 // #304 Track Order Status via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Route: checkout.routes.js (this file) → Ctrl: order.controller.js → Model: order.model.js
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Route: checkout.routes.js (this file) -> Ctrl: order.controller.js -> Model: order.model.js
 
 const express = require("express");
 const orderController = require("../controllers/order.controller");

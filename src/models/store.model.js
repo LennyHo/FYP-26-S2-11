@@ -1,13 +1,13 @@
 // User Story Architecture Trace — store.model.js
 //
 // #30  Check Store Location via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js  → Model: store.model.js (this file)
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js  -> Model: store.model.js (this file)
 //
 // #Pickup        Select Pickup Store at Checkout
-//      View: checkout/page.tsx → Route: checkout.routes.js → Ctrl: order.controller.js → Model: store.model.js (this file)
+//      View: checkout/page.tsx -> Route: checkout.routes.js -> Ctrl: order.controller.js -> Model: store.model.js (this file)
 //
 // #Delivery      Calculate Delivery Route
-//      View: order-status/[orderId]/page.tsx → Route: store.routes.js → Ctrl: store.controller.js → Model: store.model.js (this file)
+//      View: order-status/[orderId]/page.tsx -> Route: store.routes.js -> Ctrl: store.controller.js -> Model: store.model.js (this file)
 
 const mongoose = require("mongoose");
 

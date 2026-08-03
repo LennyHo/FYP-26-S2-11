@@ -1,22 +1,22 @@
 // User Story Architecture Trace — user.model.js
 //
 // #1–#10  User Profile & Account Management (User Admin)
-//      View: user-admin-dashboard/page.tsx → Route: user.routes.js → Model: user.model.js (this file)
+//      View: user-admin-dashboard/page.tsx -> Route: user.routes.js -> Model: user.model.js (this file)
 //
 // #11  Login (User Admin) | #22 Login (Customer) | #37 Login (Store Staff)
-//      View: login/page.tsx → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js (this file)
+//      View: login/page.tsx -> Route: auth.routes.js -> Ctrl: auth.controller.js -> Model: user.model.js (this file)
 //
 // #12  Logout (User Admin) | #20 Logout (Customer) | #38 Logout (Store Staff)
 //      client-side: JWT cleared from localStorage — no model call
 //
 // #14  Reset Password
-//      View: forgot-password/page.tsx → Route: auth.routes.js → Ctrl: user.controller.js → Model: user.model.js (this file)
+//      View: forgot-password/page.tsx -> Route: auth.routes.js -> Ctrl: user.controller.js -> Model: user.model.js (this file)
 //
 // #191 Create User Account (Customer)
-//      View: register/page.tsx → Route: auth.routes.js → Ctrl: user.controller.js → Model: user.model.js (this file)
+//      View: register/page.tsx -> Route: auth.routes.js -> Ctrl: user.controller.js -> Model: user.model.js (this file)
 //
 // #246 Update Account (Customer)
-//      View: profile/page.tsx → Route: user.routes.js → Model: user.model.js (this file)
+//      View: profile/page.tsx -> Route: user.routes.js -> Model: user.model.js (this file)
 
 const mongoose = require("mongoose");
 const crypto = require("crypto");

@@ -2,7 +2,7 @@
 //
 // #24 - StoreLocator  View Store Locations (Customer)
 //      View: global-stores/page.tsx, StoreMap.tsx, MeetTheCrew.tsx, DeliveryMap.jsx
-//      → Route: store.routes.js → Ctrl: store.controller.js (this file) → Model: store.model.js
+//      -> Route: store.routes.js -> Ctrl: store.controller.js (this file) -> Model: store.model.js
 
 const Store = require("../models/store.model");
 const Order = require("../models/order.model");
@@ -30,7 +30,7 @@ function publicStore(store) {
 }
 
 // #24: As a customer, I want to view store locations so that I can find a DripTea near me.
-// Calls Store.getActiveStores() → queries stores collection filtered by status → returns sorted list.
+// Calls Store.getActiveStores() -> queries stores collection filtered by status -> returns sorted list.
 async function getStores(req, res) {
   try {
     const stores = await Store.getActiveStores();

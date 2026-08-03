@@ -1,4 +1,4 @@
-﻿const {
+const {
     extractBeverageId,
 } = require("../utils/chatIntent.util");
 
@@ -44,7 +44,7 @@ async function findDrinkByName(message) {
     if (secondary) return secondary;
 
     // Fallback: resolve through the alias table, so a renamed drink still matches
-    // the name it used to have ("Da Hong Bao Milk Tea" → "Da Hong Pao Milk Tea").
+    // the name it used to have ("Da Hong Bao Milk Tea" -> "Da Hong Pao Milk Tea").
     const aliasName = resolveDrinkNameFromMessage(msg);
     if (aliasName) {
         return drinks.find((drink) =>
@@ -504,7 +504,7 @@ function normalizeSugarPercents(message) {
     return msg.replace(/\b(0|25|50|100)\b(?!\s*%)/g, "$1%");
 }
 
-// "50% Sugar" → "50%", for display on the health card.
+// "50% Sugar" -> "50%", for display on the health card.
 function formatSugarLevel(sugar) {
     const level = String(sugar || "").trim().replace(/\s*sugar$/i, "");
     return /^\d+%$/.test(level) ? level : null;
@@ -727,7 +727,7 @@ function isRecommendationRequest(message) {
         /\b(fruity|fruit|refreshing|sweet|citrus(y)?|floral|creamy|milky|chocolate(y)?|nutty|tangy|sour|light|icy|cold)\b/.test(msg)
     ) return true;
 
-    // Specific order with customization details → not a recommendation
+    // Specific order with customization details -> not a recommendation
     if (hasCustomizationWords(msg)) return false;
 
     // "give me one X" / "give me 2 X" = quantity-based order, not a browse request
@@ -952,7 +952,7 @@ function extractDateFromMessage(message) {
         return { day: d.getDate(), month: d.getMonth(), year: d.getFullYear() };
     }
 
-    // Relative: "last week" → return the week range (use startOf/endOf)
+    // Relative: "last week" -> return the week range (use startOf/endOf)
     if (msg.includes("last week")) {
         const startOfLastWeek = new Date(now);
         startOfLastWeek.setDate(now.getDate() - now.getDay() - 7);
@@ -1331,7 +1331,7 @@ async function getAvailableVouchers(userId) {
 
 
 // #199 - As a customer, I want to add beverages into my cart through the chatbot so that I can prepare my order conveniently.
-// Detects order/add-to-cart intent → resolves drink by name → calls CartItem.addToCart() → writes to cart_items.
+// Detects order/add-to-cart intent -> resolves drink by name -> calls CartItem.addToCart() -> writes to cart_items.
 function isAddToCartRequest(message) {
     const msg = String(message || "").toLowerCase();
 
@@ -1356,7 +1356,7 @@ function isAddToCartRequest(message) {
         msg.includes("help me add")
     ) return true;
 
-    // "i want / i need / i'd like / give me / can i get / i'll have / i like to have" + customization words → specific order
+    // "i want / i need / i'd like / give me / can i get / i'll have / i like to have" + customization words -> specific order
     const hasOrderIntent = (
         msg.includes("i want") ||
         msg.includes("i need") ||
@@ -2158,7 +2158,7 @@ function parseCustomization(details) {
         else                               sugar = "Normal Sweet";
     }
 
-    // --- TOPPINGS --- normalize Malay/Chinese topping names → English
+    // --- TOPPINGS --- normalize Malay/Chinese topping names -> English
     // Sugar filter uses same \b(n)\s*% pattern so "25% Sugar" is excluded from toppings
     const isNotTopping = (p) =>
         /\b(large|besar|大杯|regular|medium|biasa|中杯)\b/i.test(p) ||
@@ -2213,7 +2213,7 @@ function parseOrderDetails(message) {
 function cleanAiReply(reply) {
     return String(reply || "")
     .replace(/<div class=['"]hidden-cart-data['"][^>]*>[\s\S]*?<\/div>/i, "")
-    // Strip leading hyphens used as bullet points (e.g. "- Regular" → "Regular")
+    // Strip leading hyphens used as bullet points (e.g. "- Regular" -> "Regular")
     .replace(/(^|<br\s*\/?>)\s*-\s+/gi, "$1")
     // Replace em dashes (—) with a comma+space for natural reading
     .replace(/\s*—\s*/g, ", ")
@@ -2234,11 +2234,11 @@ function fixMissingLineBreaks(reply) {
         .replace(/(x\s*\d+\s*-\s*S\$\s*[0-9.]+)([A-Z])/g, "$1<br>$2")
         .replace(/(Total:\s*S\$\s*[0-9.]+)/gi, "<br>$1")
         .replace(/(<br\s*\/?>\s*){3,}/gi, "<br><br>")
-        // fix "?Regular" → "?<br><br>Regular"
+        // fix "?Regular" -> "?<br><br>Regular"
         .replace(/\?(Regular|Large)/gi, "?<br><br>$1")
-        // fix "Large (+S$1.50)Please" → "Large (+S$1.50)<br><br>Please"
+        // fix "Large (+S$1.50)Please" -> "Large (+S$1.50)<br><br>Please"
         .replace(/(\+S\$[0-9.]+\))(Please|Let|Kindly)/gi, "$1<br><br>$2")
-        // fix "Updated Nutri-Grade: CJust" → "Updated Nutri-Grade: C<br><br>Just"
+        // fix "Updated Nutri-Grade: CJust" -> "Updated Nutri-Grade: C<br><br>Just"
         .replace(/(Updated Nutri-Grade:\s*[A-D])([A-Za-z])/g, "$1<br><br>$2")
         // fix missing space after sentence-ending punctuation before a capitalised word
         .replace(/([.!?])([A-Z])/g, "$1 $2")
@@ -2351,7 +2351,7 @@ function isMultiItemOrder(message) {
 
 // #199 - Splits a multi-item order message into individual item segments.
 // e.g. "one jasmine matcha tea and one matcha latte, both regular, less ice"
-//   → ["one jasmine matcha tea", "matcha latte, both regular, less ice"]
+//   -> ["one jasmine matcha tea", "matcha latte, both regular, less ice"]
 // The split consumes the connector phrase; a lookahead is used for "and a/an [size/drink]"
 // so the size/drink keyword is preserved in the second segment for customization parsing.
 const MULTI_ORDER_AND_A_SPLIT_RE = new RegExp(
@@ -2369,7 +2369,7 @@ function splitMultiItemOrder(message) {
 }
 
 // #199 - Extracts customization specified after "both" for shared-customization orders.
-// e.g. "...both regular, less ice, less sugar" → { size: "Regular", ice: "Less Ice", sugar: "25% Sugar", toppings: [] }
+// e.g. "...both regular, less ice, less sugar" -> { size: "Regular", ice: "Less Ice", sugar: "25% Sugar", toppings: [] }
 function extractBothCustomization(message) {
     const msg = String(message || "").toLowerCase();
     const bothIdx = msg.indexOf("both ");
@@ -2455,7 +2455,7 @@ function matchPageFromMessage(message) {
     return best;
 }
 
-// Sequence: ChatbotGUI → POST /chat → ChatbotService.generateNavigationResponse(prompt) → Gemini API → systemAction.
+// Sequence: ChatbotGUI -> POST /chat -> ChatbotService.generateNavigationResponse(prompt) -> Gemini API -> systemAction.
 // Keyword matching handles the vast majority of requests instantly and for free; Gemini is only
 // consulted when the customer clearly wants to navigate (isNavigationRequest passed) but phrased
 // the destination in a way no alias covers (e.g. "bring me back to where I can see what I bought").
@@ -3797,7 +3797,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
         }
 
         // Generic recommendation with no specific category matched (e.g. "What should I try today?")
-        // → inject top-rated drinks as context and let Gemini generate a natural reply + return drink cards.
+        // -> inject top-rated drinks as context and let Gemini generate a natural reply + return drink cards.
         const allDrinks = await MenuItem.find({ status: "active" }).lean();
         if (allDrinks.length > 0) {
             const featured = allDrinks
@@ -4693,7 +4693,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
                     !/\bone\b/i.test(intentMessage);
 
                 if (intent.targetName && !isFullCartRef) {
-                    // "the second strawberry matcha" / "the first one" → ordinal within same-name items
+                    // "the second strawberry matcha" / "the first one" -> ordinal within same-name items
                     const namedItems = cartItems.filter(
                         item => String(item.name || "").toLowerCase() === intent.targetName.toLowerCase()
                     );
@@ -4710,7 +4710,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
                         targetItem = cartItems[ordinalIndex];
                     }
                 } else if (ordinalIndex < cartItems.length) {
-                    // "the third drink" / "the third item" → ordinal across the full cart
+                    // "the third drink" / "the third item" -> ordinal across the full cart
                     targetItem = cartItems[ordinalIndex];
                 }
             }
@@ -4734,7 +4734,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
                         };
                     }
                 }
-                // matches.length === 0 → targetItem stays null → display fallback response below
+                // matches.length === 0 -> targetItem stays null -> display fallback response below
             }
         }
 

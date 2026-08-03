@@ -4,16 +4,16 @@
 //      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Svc: prompt.service.js (this file) -> Model: menuItem.model.js
 //
 // #29  High Sugar Warning via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Svc: prompt.service.js (this file) → Model: menuItem.model.js
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Svc: prompt.service.js (this file) -> Model: menuItem.model.js
 //
 // #31  Nutritional Grading via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Svc: prompt.service.js (this file) → Model: menuItem.model.js
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Svc: prompt.service.js (this file) -> Model: menuItem.model.js
 //
 // #32  Get Recommendations via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Svc: prompt.service.js (this file) → Model: menuItem.model.js
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Svc: prompt.service.js (this file) -> Model: menuItem.model.js
 // 
 // #305 Fallback to Human Agent via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: prompt.service.js (this file) → Model: chatbotSession.model.js
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: prompt.service.js (this file) -> Model: chatbotSession.model.js
 
 const MenuItem = require("../models/menuItem.model");
 
@@ -240,28 +240,28 @@ ${knownLangName
     ? `The customer's message has already been detected as ${knownLangName}. You MUST write your ENTIRE reply in ${knownLangName}, no matter what language the rest of your input (including any scaffolding text like "The customer asked...") is written in.`
     : `Detect the language from the user's LATEST message alone, never from previous turns. Rules:
 - Malay (BM): user wrote Latin script with ANY Malay word — including nak, satu, dua, tiga, empat, lima, mahu, boleh, saya, aku, kita, dengan, yang, dan, tak, ada, nak, tolong, minta, bagi, beli, letak, tambah, kurang, tanpa, besar, biasa, ais, gula, minuman, teh, susu — reply ENTIRELY in Malay (Bahasa Melayu), even if the message also contains English words like drink names ("matcha latte", "taro") or prices.
-- Chinese: user wrote using Chinese characters (汉字) → reply ENTIRELY in Mandarin Chinese. This applies to ALL parts of your response — ordering steps, size/ice/sugar/topping options, confirmation text, health warnings, and button labels. Use the Chinese reference translations below for all option labels.
-- Tamil: user wrote using Tamil script (தமிழ் எழுத்துகள்) → reply ENTIRELY in Tamil.
-- English: user wrote in English → reply in English.
+- Chinese: user wrote using Chinese characters (汉字) -> reply ENTIRELY in Mandarin Chinese. This applies to ALL parts of your response — ordering steps, size/ice/sugar/topping options, confirmation text, health warnings, and button labels. Use the Chinese reference translations below for all option labels.
+- Tamil: user wrote using Tamil script (தமிழ் எழுத்துகள்) -> reply ENTIRELY in Tamil.
+- English: user wrote in English -> reply in English.
 If the latest message is a short Malay phrase like "Tanpa topping" or "Kurang ais", that IS Malay — do NOT fall back to the previous conversation language.`}
 Never mix languages in the same reply.
 
 LANGUAGE APPLIES TO VISIBLE TEXT ONLY: When replying in a non-English language, translate ALL visible option labels — size names, ice levels, topping names, sugar-warning choices. Keep prices (S$1.20 etc.), percentages (0%, 25%, 50%, 100%), and all HTML tags exactly as-is.
 Malay reference translations (use these exactly in visible text):
-- Regular → Biasa | Large → Besar
-- Normal Ice → Ais Normal | Less Ice → Kurang Ais | No Ice → Tanpa Ais | Hot → Panas
-- Tapioca Pearls / Pearls → Mutiara | Brown Sugar → Gula Perang | Cheese Foam → Busa Keju | No toppings → Tanpa topping
-- Change to X% Sugar → Tukar kepada X% Gula | Remain at X% Sugar → Kekal pada X% Gula
+- Regular -> Biasa | Large -> Besar
+- Normal Ice -> Ais Normal | Less Ice -> Kurang Ais | No Ice -> Tanpa Ais | Hot -> Panas
+- Tapioca Pearls / Pearls -> Mutiara | Brown Sugar -> Gula Perang | Cheese Foam -> Busa Keju | No toppings -> Tanpa topping
+- Change to X% Sugar -> Tukar kepada X% Gula | Remain at X% Sugar -> Kekal pada X% Gula
 Chinese reference translations (use these exactly in visible text):
-- Regular → 中杯 | Large → 大杯
-- Normal Ice → 正常冰 | Less Ice → 少冰 | No Ice → 去冰 | Hot → 热饮
-- Tapioca Pearls / Pearls → 珍珠 | Brown Sugar → 黑糖 | Cheese Foam → 芝士泡沫 | No toppings → 不加配料
-- Change to X% Sugar → 改为X%甜度 | Remain at X% Sugar → 保持X%甜度
+- Regular -> 中杯 | Large -> 大杯
+- Normal Ice -> 正常冰 | Less Ice -> 少冰 | No Ice -> 去冰 | Hot -> 热饮
+- Tapioca Pearls / Pearls -> 珍珠 | Brown Sugar -> 黑糖 | Cheese Foam -> 芝士泡沫 | No toppings -> 不加配料
+- Change to X% Sugar -> 改为X%甜度 | Remain at X% Sugar -> 保持X%甜度
 Tamil reference translations (use these exactly in visible text):
-- Regular → சாதாரண | Large → பெரிய
-- Normal Ice → சாதாரண பனி | Less Ice → குறைவான பனி | No Ice → பனி இல்லாமல் | Hot → சூடான
-- Tapioca Pearls / Pearls → முத்துகள் | Brown Sugar → பழுப்பு சர்க்கரை | Cheese Foam → சீஸ் நுரை | No toppings → டாப்பிங் இல்லை
-- Change to X% Sugar → X% சர்க்கரைக்கு மாற்று | Remain at X% Sugar → X% சர்க்கரையில் வை
+- Regular -> சாதாரண | Large -> பெரிய
+- Normal Ice -> சாதாரண பனி | Less Ice -> குறைவான பனி | No Ice -> பனி இல்லாமல் | Hot -> சூடான
+- Tapioca Pearls / Pearls -> முத்துகள் | Brown Sugar -> பழுப்பு சர்க்கரை | Cheese Foam -> சீஸ் நுரை | No toppings -> டாப்பிங் இல்லை
+- Change to X% Sugar -> X% சர்க்கரைக்கு மாற்று | Remain at X% Sugar -> X% சர்க்கரையில் வை
 
 HIDDEN-CART-DATA IS ALWAYS ENGLISH — CRITICAL:
 The <div class='hidden-cart-data'> block is read by the backend database, NOT by the customer. It MUST always use English names and labels regardless of the conversation language.
@@ -406,12 +406,12 @@ When the customer asks about their order status, you will be given their recent 
 - CRITICAL — never fabricate order details. If this message has NO "[LIVE ORDER DATA]" block above, you have zero real order information for this turn — not even from the examples below, which are formatting templates only, never real data. Do NOT invent an order number, status, or total in that case. Instead say you don't have their order details for this message and ask them to rephrase (e.g. "what's my order status?") or check Purchase History.
 - Always address the order by its real number from the [LIVE ORDER DATA] block — never the placeholder number used in the examples below.
 - Translate each status into plain, human language:
-  • pending → "Your order has been placed and is awaiting confirmation."
-  • paid → "Payment has been received and your order is queued for preparation."
-  • preparing → "Our baristas are crafting your order right now."
-  • ready → "Great news — your order is ready for collection at the counter!"
-  • completed → "This order has been collected. Hope you enjoyed it!"
-  • cancelled → "This order was cancelled. Let me know if you'd like to place a new one."
+  • pending -> "Your order has been placed and is awaiting confirmation."
+  • paid -> "Payment has been received and your order is queued for preparation."
+  • preparing -> "Our baristas are crafting your order right now."
+  • ready -> "Great news — your order is ready for collection at the counter!"
+  • completed -> "This order has been collected. Hope you enjoyed it!"
+  • cancelled -> "This order was cancelled. Let me know if you'd like to place a new one."
 - If there are multiple orders, list each one clearly with its number, status, and total. Do not only mention the most recent one.
 - If the customer asks "are there any other orders?" or "what about my other orders?", walk through every order in the context one by one.
 - If the status has changed since the last message (e.g. was pending, now ready), proactively highlight the update: "I can see your order status has been updated!"
@@ -429,10 +429,10 @@ If the customer asks what an ingredient, flavour, or food item is:
 WELLNESS / SYMPTOM-BASED RECOMMENDATION RULES:
 A simple keyword matcher already intercepts common, direct phrasings (e.g. "I have a flu", "I'm constipated", "feeling stressed") and replies with curated drink cards before you ever see the message. You only need to handle it yourself when the customer describes feeling unwell in a more indirect, paraphrased, or conversational way that the matcher would miss — e.g. "my throat's killing me", "I've been so gassy lately", "ugh I can barely keep my eyes open today", "work has been draining me". Be flexible: use judgement on intent, not exact phrases.
 When this happens, recommend 2–3 real drinks from AVAILABLE DRINKS CONTEXT that fit the feeling, using this mapping as a guide (never invent drinks not in the context):
-- Cold / flu / sore throat / cough / feeling under the weather → citrusy or floral picks such as Ice Lemon Tea, Grapefruit Green Tea, Peach Green Tea, Osmanthus Milk Tea.
-- Bloating / constipation / indigestion / stomach trouble → Oolong Milk Tea, Da Hong Pao Milk Tea, Jasmine Green Tea, Lychee Green Tea.
-- Fatigue / low energy / sleepy / exhausted → caffeine-forward picks such as Matcha Latte, Da Hong Pao Milk Tea, Oolong Milk Tea, Classic Milk Tea.
-- Stressed / anxious / trouble sleeping / overwhelmed → lighter, calming picks such as Osmanthus Milk Tea, Jasmine Green Tea, Lychee Green Tea.
+- Cold / flu / sore throat / cough / feeling under the weather -> citrusy or floral picks such as Ice Lemon Tea, Grapefruit Green Tea, Peach Green Tea, Osmanthus Milk Tea.
+- Bloating / constipation / indigestion / stomach trouble -> Oolong Milk Tea, Da Hong Pao Milk Tea, Jasmine Green Tea, Lychee Green Tea.
+- Fatigue / low energy / sleepy / exhausted -> caffeine-forward picks such as Matcha Latte, Da Hong Pao Milk Tea, Oolong Milk Tea, Classic Milk Tea.
+- Stressed / anxious / trouble sleeping / overwhelmed -> lighter, calming picks such as Osmanthus Milk Tea, Jasmine Green Tea, Lychee Green Tea.
 Always speak warmly and briefly (1–2 sentences), never sound clinical, and end with a short, plain, non-alarming disclaimer such as "These are just comfort picks, not medical advice — do see a doctor if it persists!" Never diagnose, never claim a drink treats or cures an illness — frame everything as comfort, flavour, or mood-based suggestions.
 
 NUTRI-GRADE MATH:
@@ -457,7 +457,7 @@ CONVERSATION RULES:
 2. Keep answers short and direct. One clear thought per message. For yes/no or factual questions, answer in 1–2 sentences only.
 3. Only show menu items when asked for menu, recommendation, or when the customer wants to order.
 4. Only recommend drinks from AVAILABLE DRINKS CONTEXT. Never invent names, IDs, prices, or nutrition values.
-5. If the user wants to order, guide them step by step: drink → size → ice → sugar → toppings → confirm.
+5. If the user wants to order, guide them step by step: drink -> size -> ice -> sugar -> toppings -> confirm.
 6. If the user gives all details upfront, summarise the order directly without asking again.
 7. CRITICAL — SKIP ALREADY-SPECIFIED STEPS: If the customer mentions a customisation detail (size, ice, sugar level, or toppings) anywhere in their message — even alongside an order request like "add one more matcha latte but with 50% sugar" — treat that detail as already confirmed. Do NOT ask about it again. Acknowledge it briefly in your reply and move directly to the next unspecified step. Example: if sugar is already stated as 50%, skip Phase 4 entirely and go straight to Phase 5 (toppings).
 7. Use HTML buttons when helpful for navigation.
@@ -531,7 +531,7 @@ Ask naturally. CRITICAL FORMAT — you MUST output the options on their own sepa
 Pearls (+S$1.20) / Brown Sugar (+S$1.00) / Cheese Foam (+S$1.50) / No toppings
 
 Do NOT embed topping names in the question sentence. Options MUST be on their own line.
-PHASE 5 → PHASE 6 TRANSITION — CRITICAL:
+PHASE 5 -> PHASE 6 TRANSITION — CRITICAL:
 When the customer replies with a topping selection — in ANY language or format, including "Brown Sugar (+S$1.00)", "黑糖 (+S$1.00)", "Mutiara", "珍珠", "Tanpa topping", "不加配料", or any translated/short form — treat it as the final ordering step and IMMEDIATELY output the FULL Phase 6 order summary with the hidden-cart-data block. Do NOT say "added to your cart", do NOT skip Phase 6, do NOT output just one line. The drink is only added to the customer's cart when you output the hidden-cart-data block. If you skip it, nothing is saved.
 
 PHASE 6: ORDER SUMMARY

@@ -1,22 +1,22 @@
 // User Story Architecture Trace — cartItem.model.js
 //
 // #15  Add to Cart
-//      View: buy-driptea/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js (this file)
+//      View: buy-driptea/page.tsx -> Route: cart.routes.js -> Ctrl: cart.controller.js -> Model: cartItem.model.js (this file)
 //
 // #16  View Cart
-//      View: cart/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js (this file)
+//      View: cart/page.tsx -> Route: cart.routes.js -> Ctrl: cart.controller.js -> Model: cartItem.model.js (this file)
 //
 // #17  Edit Cart
-//      View: cart/edit/[cartItemId]/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js → Model: cartItem.model.js (this file)
+//      View: cart/edit/[cartItemId]/page.tsx -> Route: cart.routes.js -> Ctrl: cart.controller.js -> Model: cartItem.model.js (this file)
 //
 // #199 Add to Cart via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: cartItem.model.js (this file)
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: cartItem.model.js (this file)
 //
 // #200 View Cart via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: cartItem.model.js (this file)
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: cartItem.model.js (this file)
 //
 // #201 Edit Cart via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: cartItem.model.js (this file)
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: cartItem.model.js (this file)
 
 const mongoose = require("mongoose");
 const cartItemSchema = new mongoose.Schema(

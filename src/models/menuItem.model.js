@@ -1,34 +1,34 @@
 // User Story Architecture Trace — menuItem.model.js
 //
 // #13  View Menu
-//      View: buy-driptea/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//      View: buy-driptea/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js -> Model: menuItem.model.js (this file)
 //
 // #21  Search Beverages
-//      View: buy-driptea/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//      View: buy-driptea/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js -> Model: menuItem.model.js (this file)
 //
 // #27  Search Beverages via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: menuItem.model.js (this file)
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: menuItem.model.js (this file)
 //
 // #29  High Sugar Warning via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: menuItem.model.js (this file)
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: menuItem.model.js (this file)
 //
 // #31  Nutritional Grading via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: menuItem.model.js (this file)
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: menuItem.model.js (this file)
 //
 // #32  Get Recommendations via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: menuItem.model.js (this file)
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: menuItem.model.js (this file)
 //
 // #33  Create Menu Items (Store Staff)
-//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//      View: store-staff/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js -> Model: menuItem.model.js (this file)
 //
 // #34  View Menu Items (Store Staff)
-//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//      View: store-staff/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js -> Model: menuItem.model.js (this file)
 //
 // #35  Update Menu Items (Store Staff)
-//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//      View: store-staff/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js -> Model: menuItem.model.js (this file)
 //
 // #36  Search Menu Items (Store Staff)
-//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js (this file)
+//      View: store-staff/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js -> Model: menuItem.model.js (this file)
 
 const mongoose = require("mongoose");
 
@@ -96,7 +96,7 @@ menuItemSchema.statics.searchBeverage = async function searchBeverage(keyword) {
 };
 
 // #32 - As a customer, I want to get the recommendations from chatbot so that I can complete my order.
-// Extracts keywords from message → queries menu_items with regex across name, category, description, tags.
+// Extracts keywords from message -> queries menu_items with regex across name, category, description, tags.
 menuItemSchema.statics.recommendByMessage = async function recommendByMessage(message) {
   const text = String(message || "").toLowerCase();
 

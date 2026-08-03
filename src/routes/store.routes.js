@@ -2,7 +2,7 @@
 //
 // #24 - StoreLocator  View Store Locations
 //      View: global-stores/page.tsx, StoreMap.tsx, MeetTheCrew.tsx, DeliveryMap.jsx
-//      → Route: store.routes.js (this file) → Ctrl: store.controller.js → Model: store.model.js
+//      -> Route: store.routes.js (this file) -> Ctrl: store.controller.js -> Model: store.model.js
 
 const express = require("express");
 const storeController = require("../controllers/store.controller");

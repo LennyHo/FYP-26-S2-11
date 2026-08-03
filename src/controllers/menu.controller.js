@@ -1,25 +1,25 @@
 // User Story Architecture Trace — menu.controller.js
 //
 // #13  View Menu (Customer)
-//      View: buy-driptea/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js (this file) → Model: menuItem.model.js
+//      View: buy-driptea/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js (this file) -> Model: menuItem.model.js
 //
 // #21  Search Beverages (Customer)
-//      View: buy-driptea/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js (this file) → Model: menuItem.model.js
+//      View: buy-driptea/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js (this file) -> Model: menuItem.model.js
 //
 // #27  Search Beverages via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Ctrl: menu.controller.js (this file) → Model: menuItem.model.js
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Ctrl: menu.controller.js (this file) -> Model: menuItem.model.js
 //
 // #33  Create Menu Items (Store Staff)
-//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js (this file) → Model: menuItem.model.js
+//      View: store-staff/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js (this file) -> Model: menuItem.model.js
 //
 // #34  View Menu Items (Store Staff)
-//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js (this file) → Model: menuItem.model.js
+//      View: store-staff/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js (this file) -> Model: menuItem.model.js
 //
 // #35  Update Menu Items (Store Staff)
-//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js (this file) → Model: menuItem.model.js
+//      View: store-staff/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js (this file) -> Model: menuItem.model.js
 //
 // #36  Search Menu Items (Store Staff)
-//      View: store-staff/page.tsx → Route: menu.routes.js → Ctrl: menu.controller.js (this file) → Model: menuItem.model.js
+//      View: store-staff/page.tsx -> Route: menu.routes.js -> Ctrl: menu.controller.js (this file) -> Model: menuItem.model.js
 
 const MenuItem = require("../models/menuItem.model");
 const mongoose = require("mongoose");
@@ -28,7 +28,7 @@ function normalizeImagePath(image, itemId) {
   if (image) {
     // base64 data URLs and http(s) URLs are always valid — use as-is
     if (image.startsWith("data:") || image.startsWith("http")) return image;
-    // Fix folder name with space: "/img/bubble teas/..." → "/img/bubble_teas/..."
+    // Fix folder name with space: "/img/bubble teas/..." -> "/img/bubble_teas/..."
     const fixed = image.replace(/\/img\/bubble\s+teas?\//i, "/img/bubble_teas/");
     // If the path resolves to a known bXXX pattern it's good; otherwise fall back
     if (/\/img\/bubble_teas\/b\d+\.(jpg|png|webp)$/i.test(fixed)) return fixed;
@@ -78,7 +78,7 @@ function publicMenuItem(item) {
 
 // #13 - As a customer, I want to view the menu so that I know which beverages are available.
 // #34 - As a store staff, I want to view menu items so that I can review the available beverages.
-// Calls MenuItem.getMenu() → queries menu_items collection filtered by status → returns sorted list.
+// Calls MenuItem.getMenu() -> queries menu_items collection filtered by status -> returns sorted list.
 async function getMenu(req, res, next) {
   try {
     const menuItems = await MenuItem.getMenu(req.query.status);
@@ -100,7 +100,7 @@ async function getMenu(req, res, next) {
 // #21 - As a customer, I want to search for beverages by name so that I can locate specific drinks quickly.
 // #27 - As a customer, I want to search for beverages using the AI chatbot so that I can find what I want quickly.
 // #36 - As a store staff, I want to search menu items by name so that I can find the beverage.
-// Calls MenuItem.searchBeverage() → regex search across name, category, description, tags in menu_items.
+// Calls MenuItem.searchBeverage() -> regex search across name, category, description, tags in menu_items.
 async function searchBeverage(req, res) {
   try {
     const keyword = req.query.q || req.query.keyword || "";
@@ -122,7 +122,7 @@ async function searchBeverage(req, res) {
 }
 
 // #33 - As a store staff, I want to create menu items so that new beverages can be added.
-// Validates required fields → inserts new document into menu_items collection with auto-generated itemId.
+// Validates required fields -> inserts new document into menu_items collection with auto-generated itemId.
 async function createMenuItem(req, res) {
   try {
     const name = String(req.body.name || "").trim();
@@ -194,7 +194,7 @@ async function createMenuItem(req, res) {
 }
 
 // #35 - As store staff, I want to update menu items so that prices, descriptions, and availability remain accurate.
-// Finds menu item by id or itemId → updates the editable fields (name, category, price, description,
+// Finds menu item by id or itemId -> updates the editable fields (name, category, price, description,
 // ingredients, nutrition, tags, image) in the menu_items collection.
 async function updateMenuItem(req, res) {
   try {
@@ -283,7 +283,7 @@ async function updateMenuItem(req, res) {
 }
 
 // #35 - As store staff, I want to update menu items so that prices, descriptions, and availability remain accurate.
-// Finds menu item by id or itemId → updates status field to active or inactive in menu_items collection.
+// Finds menu item by id or itemId -> updates status field to active or inactive in menu_items collection.
 async function updateMenuItemStatus(req, res) {
   try {
     const status = String(req.body.status || "").trim().toLowerCase();

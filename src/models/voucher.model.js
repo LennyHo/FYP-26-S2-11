@@ -1,9 +1,9 @@
 // User Story Architecture Trace — voucher.model.js
 //
 // #18  Apply Vouchers
-//      View: checkout/page.tsx → Route: cart.routes.js → Ctrl: cart.controller.js → Model: voucher.model.js (this file)
+//      View: checkout/page.tsx -> Route: cart.routes.js -> Ctrl: cart.controller.js -> Model: voucher.model.js (this file)
 // #202 Check Vouchers via Chatbot
-//      View: ChatbotSidebar.tsx → Route: chatbot.routes.js (this file) → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Model: Voucher.Model
+//      View: ChatbotSidebar.tsx -> Route: chatbot.routes.js (this file) -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Model: Voucher.Model
 
 const mongoose = require("mongoose");
 

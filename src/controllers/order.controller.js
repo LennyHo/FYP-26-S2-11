@@ -1,22 +1,22 @@
 // User Story Architecture Trace — order.controller.js
 //
 // #18  Apply Vouchers
-//      View: checkout/page.tsx → Route: checkout.routes.js → Ctrl: order.controller.js (this file) → Model: order.model.js
+//      View: checkout/page.tsx -> Route: checkout.routes.js -> Ctrl: order.controller.js (this file) -> Model: order.model.js
 //
 // #23  Make Payment
-//      View: checkout/page.tsx → Route: checkout.routes.js → Ctrl: order.controller.js (this file) → Model: order.model.js, payment.model.js
+//      View: checkout/page.tsx -> Route: checkout.routes.js -> Ctrl: order.controller.js (this file) -> Model: order.model.js, payment.model.js
 //
 // #24 - StoreLocator  View Store Locations (Customer)
-//      → Route: store.routes.js → Ctrl: store.controller.js (this file) → Model: store.model.js
+//      -> Route: store.routes.js -> Ctrl: store.controller.js (this file) -> Model: store.model.js
 //
 // #28  Track Order Status
-//      View: order-status/[orderId]/page.tsx → Route: checkout.routes.js → Ctrl: order.controller.js (this file) → Model: order.model.js
+//      View: order-status/[orderId]/page.tsx -> Route: checkout.routes.js -> Ctrl: order.controller.js (this file) -> Model: order.model.js
 //
 // #203 Track Order Status via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Ctrl: order.controller.js (this file) → Model: order.model.js
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Ctrl: order.controller.js (this file) -> Model: order.model.js
 //
 // #304 Track Delivery Order Status via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Ctrl: order.controller.js (this file) → Model: order.model.js
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Ctrl: order.controller.js (this file) -> Model: order.model.js
 
 const crypto = require("crypto");
 const mongoose = require("mongoose");
@@ -140,7 +140,7 @@ function toPublicOrder(order, user, items, payment) {
 
 // #18 - As a customer, I want to apply vouchers during checkout so that I can enjoy discounts.
 // #23 - As a customer, I want to make payment on the checkout page so that I can complete my order.
-// Reads cart_items → creates order in orders → inserts order_items → creates payment → clears cart_items.
+// Reads cart_items -> creates order in orders -> inserts order_items -> creates payment -> clears cart_items.
 async function processPayment(req, res) {
     try {
     const { userId, paymentMethod, voucherCode, deliveryDetails } = req.body;
@@ -286,7 +286,7 @@ async function processPayment(req, res) {
 }
 
 // Store staff: view all customer orders from the staff dashboard, filtered by status.
-// Queries orders → joins users, order_items, payments collections → returns combined order list.
+// Queries orders -> joins users, order_items, payments collections -> returns combined order list.
 async function getOrders(req, res) {
     try {
         const status = String(req.query.status || "all").trim().toLowerCase();
@@ -664,7 +664,7 @@ async function createTestQueueOrders(req, res) {
 // #28  - As a customer, I want to track my order status so that I know when my drink will be ready.
 // #203 - As a customer, I want to track my order status through the chatbot so that I know when my drink will be ready.
 // #304 - As a customer, I want to view my delivery and order status via the chatbot so that I can get quick, automated updates.
-// Updates the status field (pending → preparing → ready → completed) in the orders collection.
+// Updates the status field (pending -> preparing -> ready -> completed) in the orders collection.
 async function updateOrderStatus(req, res) {
     try {
         const orderId = toObjectId(req.params.id);
