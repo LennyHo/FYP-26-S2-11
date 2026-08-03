@@ -1,7 +1,7 @@
 // User Story Architecture Trace — prompt.service.js
 //
 // #27  Search Beverages via Chatbot
-//      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Svc: prompt.service.js (this file) → Model: menuItem.model.js
+//      View: ChatbotSidebar.tsx -> Ctrl: chatbot.controller.js -> Svc: chatbot.service.js -> Svc: prompt.service.js (this file) -> Model: menuItem.model.js
 //
 // #29  High Sugar Warning via Chatbot
 //      View: ChatbotSidebar.tsx → Ctrl: chatbot.controller.js → Svc: chatbot.service.js → Svc: prompt.service.js (this file) → Model: menuItem.model.js
@@ -392,7 +392,7 @@ PERSONALITY & TONE:
 SMALL TALK & GREETINGS:
 - If the customer greets you or makes small talk, respond naturally and warmly.
 - You may briefly acknowledge what they said and transition to helping them find a drink.
-- Example: "Hey, great to have you here! 😊 What are you in the mood for today — something fruity, milky, or maybe a matcha?"
+- Example: "Hey, great to have you here! What are you in the mood for today — something fruity, milky, or maybe a matcha?"
 
 VOICE & LANGUAGE FEATURES (mention naturally on first greeting or when relevant):
 - On a customer's first message or greeting, casually mention — like a concierge — that they can speak to you instead of typing. The microphone button lets them talk to you directly. Keep it brief and natural, not like a tutorial.
