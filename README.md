@@ -52,14 +52,9 @@ The app is split across two hosts — the Next.js frontend on Vercel, the Expres
 
 The Render URL is the hard-coded fallback the frontend uses when `DRIPTEA_API_BASE` / `NEXT_PUBLIC_DRIPTEA_API_BASE` are unset (see `view/app/utils/api.base.ts`), so the deployed frontend reaches the deployed backend without extra config.
 
-### Render Account Login
+### Render Account Access
 
-| Field    | Value                  |
-|----------|------------------------|
-| Email    | avisfyp01@gmail.com    |
-| Password | FYP-2026-S2-11;)       |
-
-Log in at [render.com/login](https://render.com/login) to manage deployments, environment variables, and build logs.
+Deployment credentials are **not** stored in this repo. To manage deployments, environment variables, or build logs, ask a team member to invite you to the Render project, then log in at [render.com/login](https://render.com/login) with your own account.
 
 ---
 
@@ -135,7 +130,7 @@ GEMINI_API_KEY=your_gemini_key_1,your_gemini_key_2
 ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 
 # ── MongoDB ───────────────────────────────────────────────
-MONGODB_URI=mongodb+srv://avisfyp01_db_user:zefhyp1jucca8@driptea-vs1.tt7qbar.mongodb.net/?retryWrites=true&w=majority&appName=driptea-vs1
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/?retryWrites=true&w=majority&appName=<app-name>
 MONGODB_DB_NAME=driptea_vs1
 
 # ── Optional ──────────────────────────────────────────────
@@ -179,19 +174,12 @@ ONEMAP_PASSWORD=your_onemap_account_password
 
 ### 1. Project MongoDB cluster (shared)
 
-The project already has a shared MongoDB Atlas cluster. Use the credentials below — no need to create your own cluster.
+The project has a shared MongoDB Atlas cluster (database name `driptea_vs1`) — no need to create your own. **The connection string is not stored in this repo.** Ask a team member for it privately, or get your own from [cloud.mongodb.com](https://cloud.mongodb.com) → **Database** → **Connect** → **Drivers**.
 
-| Field         | Value                                      |
-|---------------|--------------------------------------------|
-| Host          | DripTea_V1                                 |
-| Database name | driptea_vs1                                |
-| Username      | avisfyp01_db_user                          |
-| Password      | zefhyp1jucca8                              |
-
-Copy these two lines into your root `.env` file exactly as shown:
+Put it in your root `.env` file:
 
 ```env
-MONGODB_URI=mongodb+srv://avisfyp01_db_user:zefhyp1jucca8@driptea-vs1.tt7qbar.mongodb.net/?retryWrites=true&w=majority&appName=driptea-vs1
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/?retryWrites=true&w=majority&appName=<app-name>
 MONGODB_DB_NAME=driptea_vs1
 ```
 
