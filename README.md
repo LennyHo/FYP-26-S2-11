@@ -1,4 +1,4 @@
-# FYP-26-S2-11 — DripTea AI Chatbot
+# FYP-26-S2-11: DripTea AI Chatbot
 
 An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can chat with **Avy**, get personalised drink recommendations, and place orders through a Next.js storefront backed by a Node.js/Express API and MongoDB.
 ---
@@ -30,10 +30,10 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 | Frontend     | React 19, Next.js 16, TypeScript                    |
 | Backend      | Node.js, Express.js 5                               |
 | Database     | MongoDB (via Mongoose)                              |
-| AI — Text    | Gemini 2.5 Flash (primary) → Groq Llama (fallback)  |
-| AI — Image   | Gemini 2.5 Flash                                    |
-| AI — STT     | ElevenLabs Scribe v1 (multilingual speech-to-text)  |
-| AI — TTS     | ElevenLabs eleven_multilingual_v2 (bot voice)       |
+| AI (text)    | Gemini 2.5 Flash, falling back to Groq Llama        |
+| AI (image)   | Gemini 2.5 Flash                                    |
+| AI (speech-to-text) | ElevenLabs Scribe v1 (multilingual)          |
+| AI (text-to-speech) | ElevenLabs eleven_multilingual_v2 (bot voice) |
 | Maps         | Leaflet + react-leaflet (store locator & order-tracking maps) |
 | Geocoding    | OneMap API (Singapore address search/autocomplete)  |
 | HTTP         | Axios                                               |
@@ -43,7 +43,7 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 
 ## Live Deployments
 
-The app is split across two hosts — the Next.js frontend on Vercel, the Express backend on Render:
+The app is split across two hosts. The Next.js frontend runs on Vercel, the Express backend on Render:
 
 | Layer    | Host   | URL                                                                  |
 |----------|--------|----------------------------------------------------------------------|
@@ -62,14 +62,14 @@ Deployment credentials are **not** stored in this repo. To manage deployments, e
 
 Make sure all of the following are installed and working on your machine **before** you start:
 
-- **Node.js** v18 or later — `node -v`
-- **npm** v9 or later — `npm -v`
-- **MongoDB Atlas account** (or a local MongoDB instance)
-- A **Groq API key** — [console.groq.com/keys](https://console.groq.com/keys) → sign in → click **+ Create API Key**
-- A **Gemini API key** — [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-- An **ElevenLabs API key** — [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) (used for both STT transcription and TTS bot voice)
-- An **ElevenLabs Voice ID** — [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library) → pick a voice → copy its ID
-- A **OneMap account** — [onemap.gov.sg/apidocs/register](https://www.onemap.gov.sg/apidocs/register) (used for address search/autocomplete on the checkout delivery step)
+- **Node.js** v18 or later (check with `node -v`)
+- **npm** v9 or later (check with `npm -v`)
+- **MongoDB Atlas account**, or a local MongoDB instance
+- A **Groq API key**. Sign in at [console.groq.com/keys](https://console.groq.com/keys), then click **+ Create API Key**
+- A **Gemini API key** from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+- An **ElevenLabs API key** from [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys), used for both STT transcription and the TTS bot voice
+- An **ElevenLabs Voice ID**. Open [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library), pick a voice, and copy its ID
+- A **OneMap account** from [onemap.gov.sg/apidocs/register](https://www.onemap.gov.sg/apidocs/register), used for address search/autocomplete on the checkout delivery step
 
 ---
 
@@ -77,35 +77,36 @@ Make sure all of the following are installed and working on your machine **befor
 
 This project follows the **MVC (Model-View-Controller)** architectural pattern:
 
-- **Model** — `src/models/` contains Mongoose schemas that define the data layer (users, menu items, orders, etc.)
-- **View** — `view/` is the Next.js frontend that renders the UI and interacts with the user
-- **Controller** — `src/controllers/` holds Express handler functions that contain business logic; `src/routes/` wires HTTP endpoints to those controllers; `src/services/` and `src/utils/` support them with chatbot/prompt logic and shared helpers
+- **Model:** `src/models/` contains Mongoose schemas that define the data layer (users, menu items, orders, etc.)
+- **View:** `view/` is the Next.js frontend that renders the UI and interacts with the user
+- **Controller:** `src/controllers/` holds Express handler functions that contain business logic. `src/routes/` wires HTTP endpoints to those controllers, and `src/services/` and `src/utils/` support them with chatbot/prompt logic and shared helpers
 
 ```
 FYP-26-S2-11/
-├── view/                  ← (V) Next.js app — View layer (port 3000)
-│   ├── app/               ← Next.js App Router pages & components
-│   │   ├── api/           ← Next.js API routes
-│   │   │   ├── chat/      ← Proxy route — forwards chat requests to Express backend + enriches sources
-│   │   │   ├── onemap/search/ ← Proxy route — authenticates & queries OneMap address search
-│   │   │   └── tts/       ← ElevenLabs text-to-speech route (bot voice)
-│   │   ├── components/    ← Shared UI components (chatbot/, layout/, menu/, pages/, ui/)
-│   │   ├── [route]/       ← One folder per page (home, login, cart, checkout, menu/[category], order-status/[orderId], etc. — see Frontend Pages & Features)
-│   │   └── utils/         ← Frontend utility functions (API clients, validation, chat helpers)
-│   ├── public/            ← Static assets (img/, marketing/)
-│   ├── .env.local         ← Frontend env file (create this yourself — see Environment Variables)
+├── view/                  # (V) Next.js app, the View layer (port 3000)
+│   ├── app/               # Next.js App Router pages & components
+│   │   ├── api/           # Next.js API routes
+│   │   │   ├── chat/      # proxy: forwards chat requests to Express, enriches sources
+│   │   │   ├── onemap/search/ # proxy: authenticates & queries OneMap address search
+│   │   │   └── tts/       # ElevenLabs text-to-speech route (bot voice)
+│   │   ├── components/    # Shared UI components (chatbot/, layout/, menu/, pages/, ui/)
+│   │   ├── [route]/       # One folder per page (home, login, cart, checkout,
+│   │   │                  #   menu/[category], order-status/[orderId], etc.)
+│   │   └── utils/         # Frontend utilities (API clients, validation, chat helpers)
+│   ├── public/            # Static assets (img/, marketing/)
+│   ├── .env.local         # Frontend env file (create this yourself)
 │   └── package.json
 ├── src/
-│   ├── ai/                ← AI client — Gemini key rotation + Groq fallback
-│   ├── config/            ← mongo.js (DB connection)
-│   ├── controllers/       ← (C) Business logic — Controller layer
-│   ├── middleware/        ← Express middleware (auth.middleware.js)
-│   ├── models/            ← (M) Mongoose models — Model layer
-│   ├── routes/            ← Express route files
-│   ├── services/          ← Chatbot/prompt business logic (chatbot.service.js, prompt.service.js)
-│   └── utils/             ← Backend utility functions (intent parsing, validation, order progress)
-├── .env                   ← Backend env file (create this yourself — see Environment Variables)
-├── server.js              ← Backend entry point (port 5000)
+│   ├── ai/                # AI client: Gemini key rotation + Groq fallback
+│   ├── config/            # mongo.js (DB connection)
+│   ├── controllers/       # (C) Business logic, the Controller layer
+│   ├── middleware/        # Express middleware (auth.middleware.js)
+│   ├── models/            # (M) Mongoose models, the Model layer
+│   ├── routes/            # Express route files
+│   ├── services/          # Chatbot/prompt logic (chatbot.service.js, prompt.service.js)
+│   └── utils/             # Backend utilities (intent parsing, validation, order progress)
+├── .env                   # Backend env file (create this yourself)
+├── server.js              # Backend entry point (port 5000)
 └── package.json
 ```
 
@@ -115,58 +116,58 @@ FYP-26-S2-11/
 
 ## Environment Variables
 
-### Backend — project root `.env`
+### Backend: project root `.env`
 
 Create a `.env` file in the **project root** (same folder as `server.js`) and fill in your real keys:
 
 ```env
-# ── AI Keys ──────────────────────────────────────────────
+# AI keys
 GROQ_API_KEY=your_groq_api_key_here
 
 # Supports multiple Gemini keys separated by commas (rotated on failure)
 GEMINI_API_KEY=your_gemini_key_1,your_gemini_key_2
 
-# ElevenLabs — used by POST /api/transcribe (speech-to-text via Scribe)
+# ElevenLabs, used by POST /api/transcribe (speech-to-text via Scribe)
 ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 
-# ── MongoDB ───────────────────────────────────────────────
+# MongoDB
 MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/?retryWrites=true&w=majority&appName=<app-name>
 MONGODB_DB_NAME=driptea_vs1
 
-# ── Optional ──────────────────────────────────────────────
+# Optional
 PORT=5000
 NODE_ENV=development
-CHAT_LANGUAGE_MODE=match     # default — reply in the customer's language; set to "english" to always reply in English
+CHAT_LANGUAGE_MODE=match     # default, replies in the customer's language. Use "english" to always reply in English
 ```
 
 > **Never commit real keys.** Add `.env` to your `.gitignore`.
 
-### Frontend — `view/.env.local`
+### Frontend: `view/.env.local`
 
 Create a `.env.local` file inside the `view/` folder:
 
 ```env
-# Server-side only — used by the Next.js /api/chat proxy route to reach the Express backend
+# Server-side only. Used by the Next.js /api/chat proxy route to reach the Express backend
 DRIPTEA_API_BASE=http://localhost:5000
 
-# Exposed to the browser (NEXT_PUBLIC_ prefix) — used by client components that call the
-# backend directly (e.g. chatbotApi.ts, useSpeech.ts). Leave unset for local dev; the
+# Exposed to the browser (NEXT_PUBLIC_ prefix), used by client components that call the
+# backend directly (e.g. chatbotApi.ts, useSpeech.ts). Leave unset for local dev. The
 # frontend falls back to http://localhost:5000 automatically when NODE_ENV=development.
 NEXT_PUBLIC_DRIPTEA_API_BASE=http://localhost:5000
 
-# ElevenLabs — used by the Next.js /api/tts route (text-to-speech bot voice)
-# These are server-side only (no NEXT_PUBLIC_ prefix) — never exposed to the browser
+# ElevenLabs, used by the Next.js /api/tts route (text-to-speech bot voice).
+# Server-side only (no NEXT_PUBLIC_ prefix), so they never reach the browser
 ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 ELEVENLABS_VOICE_ID=your_elevenlabs_voice_id_here
 
-# OneMap — used by the Next.js /api/onemap/search route (address search on the checkout delivery step)
+# OneMap, used by the Next.js /api/onemap/search route (address search at checkout)
 ONEMAP_EMAIL=your_onemap_account_email
 ONEMAP_PASSWORD=your_onemap_account_password
 ```
 
 > - `DRIPTEA_API_BASE` / `NEXT_PUBLIC_DRIPTEA_API_BASE` tell the frontend where the backend is running. Set both to your deployed backend URL in production.
 > - `ELEVENLABS_VOICE_ID` sets which voice Avy uses when speaking replies. Find voice IDs at [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library).
-> - `ONEMAP_EMAIL` / `ONEMAP_PASSWORD` authenticate against the OneMap API to fetch a search token — register a free account at [onemap.gov.sg/apidocs/register](https://www.onemap.gov.sg/apidocs/register). A saved delivery address caches its `lat`/`lng` on the user document the first time it's geocoded, so re-selecting an already-saved address never calls OneMap again — these credentials are only exercised when searching for a **new** address or geocoding a saved address that predates the coordinate cache.
+> - `ONEMAP_EMAIL` / `ONEMAP_PASSWORD` authenticate against the OneMap API to fetch a search token. Register a free account at [onemap.gov.sg/apidocs/register](https://www.onemap.gov.sg/apidocs/register). A saved delivery address caches its `lat`/`lng` on the user document the first time it's geocoded, so re-selecting an already-saved address never calls OneMap again. These credentials only come into play when searching for a **new** address, or geocoding a saved address that predates the coordinate cache.
 
 ---
 
@@ -174,7 +175,7 @@ ONEMAP_PASSWORD=your_onemap_account_password
 
 ### 1. Project MongoDB cluster (shared)
 
-The project has a shared MongoDB Atlas cluster (database name `driptea_vs1`) — no need to create your own. **The connection string is not stored in this repo.** Ask a team member for it privately, or get your own from [cloud.mongodb.com](https://cloud.mongodb.com) → **Database** → **Connect** → **Drivers**.
+The project has a shared MongoDB Atlas cluster, database name `driptea_vs1`, so there's no need to create your own. **The connection string is not stored in this repo.** Ask a team member for it privately, or copy your own from [cloud.mongodb.com](https://cloud.mongodb.com) under **Database**, then **Connect**, then **Drivers**.
 
 Put it in your root `.env` file:
 
@@ -183,7 +184,7 @@ MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/?retryWrites=true
 MONGODB_DB_NAME=driptea_vs1
 ```
 
-> **Network Access:** If you get a connection timeout, go to [cloud.mongodb.com](https://cloud.mongodb.com) → **Network Access** → add your current IP address (or `0.0.0.0/0` to allow all IPs for development).
+> **Network Access:** If you get a connection timeout, open [cloud.mongodb.com](https://cloud.mongodb.com), go to **Network Access**, and add your current IP address (or `0.0.0.0/0` to allow all IPs for development).
 
 ### 2. Verify the connection
 
@@ -193,11 +194,11 @@ MONGODB_DB_NAME=driptea_vs1
 Connected to MongoDB database "driptea_vs1"
 ```
 
-If it fails, the server logs the error and exits — check `MONGODB_URI` in your `.env` and that your IP is whitelisted in Atlas. There is no separate `/api/health/mongo` endpoint; `GET /api/health` only confirms the Express server itself is up.
+If it fails, the server logs the error and exits. Check `MONGODB_URI` in your `.env`, and that your IP is whitelisted in Atlas. There is no separate `/api/health/mongo` endpoint; `GET /api/health` only confirms the Express server itself is up.
 
 ### 3. Collections & data
 
-Collections (`users`, `menu_items`, `cart_items`, `orders`, `order_items`, `payments`, `chatbot_sessions`, `vouchers`, `feedback`, `inventory`, `stores`) are created automatically by Mongoose the first time each model writes to them — there is no seed/setup endpoint. The shared Atlas cluster (see above) already has menu items, stores, and vouchers populated; a fresh local database starts empty and you'll need to add menu items via the store-staff dashboard (`/store-staff`) and create your own accounts (see [Creating Accounts](#creating-accounts) below).
+Collections (`users`, `menu_items`, `cart_items`, `orders`, `order_items`, `payments`, `chatbot_sessions`, `vouchers`, `feedback`, `inventory`, `stores`) are created automatically by Mongoose the first time each model writes to them. There is no seed or setup endpoint. The shared Atlas cluster already has menu items, stores, and vouchers populated. A fresh local database starts empty, so you'll need to add menu items via the store-staff dashboard (`/store-staff`) and create your own accounts (see [Creating Accounts](#creating-accounts) below).
 
 ---
 
@@ -270,7 +271,7 @@ GET http://localhost:5000/api/health
 
 ### 2. MongoDB is connected
 
-Check the backend terminal output when it starts — MongoDB connects during startup, not via a health endpoint:
+Check the backend terminal output when it starts. MongoDB connects during startup, not via a health endpoint:
 
 ```
 Connected to MongoDB database "driptea_vs1"
@@ -298,25 +299,25 @@ Open [http://localhost:3000](http://localhost:3000), open the AI chatbot widget,
 
 ## Creating Accounts
 
-There is no auto-seeded admin/staff account — `POST /api/auth/register` (used by `/register`) always creates a **customer** account, ignoring any `role` field sent by the client.
+There is no auto-seeded admin/staff account. `POST /api/auth/register` (used by `/register`) always creates a **customer** account, ignoring any `role` field sent by the client.
 
-- **Customer** — self-register at [`/register`](http://localhost:3000/register), or use an existing customer account on the shared Atlas cluster.
-- **Store Staff / User Admin** — these roles can only be created by an existing User Admin, via `POST /api/users` (used by the `/user-admin-dashboard` user-management screen). To bootstrap the very first admin on a fresh database, insert a user document directly into the `users` collection (e.g. via MongoDB Atlas UI or `mongosh`) with `role: "user_admin"` — see `userSchema.statics.createUserAccount` in `src/models/user.model.js` for the exact fields (password defaults to `Password@123` if none is supplied, and is hashed on write).
-- All three roles log in from the same page — [`/login`](http://localhost:3000/login) — which redirects to `/home`, `/store-staff`, or `/user-admin-dashboard` based on the account's `role`.
+- **Customer:** self-register at [`/register`](http://localhost:3000/register), or use an existing customer account on the shared Atlas cluster.
+- **Store Staff / User Admin:** only an existing User Admin can create these roles, via `POST /api/users` (used by the `/user-admin-dashboard` user-management screen). To bootstrap the very first admin on a fresh database, insert a user document directly into the `users` collection (e.g. via the MongoDB Atlas UI or `mongosh`) with `role: "user_admin"`. See `userSchema.statics.createUserAccount` in `src/models/user.model.js` for the exact fields. The password defaults to `Password@123` if none is supplied, and is hashed on write.
+- All three roles log in from the same page, [`/login`](http://localhost:3000/login), which redirects to `/home`, `/store-staff`, or `/user-admin-dashboard` based on the account's `role`.
 
 ---
 
 ## Essential API Endpoints
 
-All backend routes (including the chatbot) are prefixed with `/api`. This is not the full list — see `test_cases/README.md` for all 47 endpoints across every route file.
+All backend routes (including the chatbot) are prefixed with `/api`. This is not the full list; see `test_cases/README.md` for all 47 endpoints across every route file.
 
 ### Where these are called from
 
-Every backend call from the frontend goes through `view/app/utils/api.base.ts`'s `requestJson()` — the single fetch helper every API client function below is built on. It reads `DRIPTEA_API_BASE` / `NEXT_PUBLIC_DRIPTEA_API_BASE` (falling back to the deployed Render URL if unset), and retries the next backend URL on 5xx/network failure but throws immediately on 4xx.
+Every backend call from the frontend goes through `requestJson()` in `view/app/utils/api.base.ts`, the single fetch helper behind every API client function below. It reads `DRIPTEA_API_BASE` / `NEXT_PUBLIC_DRIPTEA_API_BASE` (falling back to the deployed Render URL if unset), retries the next backend URL on a 5xx or network failure, and throws immediately on 4xx.
 
 | Client file | Used by | Calls (see tables below) |
 |-------------|---------|----------------------------|
-| `customerApi.ts` | Customer-facing pages — login/register, menu, cart, checkout, vouchers, profile, purchase history, feedback | Auth, Menu, Cart & Vouchers, Checkout & Orders, Purchase History/Feedback/Stores, `PATCH /api/users/:id` (self) |
+| `customerApi.ts` | Customer-facing pages: login/register, menu, cart, checkout, vouchers, profile, purchase history, feedback | Auth, Menu, Cart & Vouchers, Checkout & Orders, Purchase History/Feedback/Stores, `PATCH /api/users/:id` (self) |
 | `staffApi.ts` | `/store-staff`, `/store-staff-dashboard`, `/store-staff-voucher` | Orders (staff), Menu (write), Inventory, Vouchers (staff) |
 | `adminApi.ts` | `/user-admin-dashboard` | Users, Role descriptions |
 | `chatbotApi.ts` | Chatbot widget (`components/chatbot/`) | `POST /api/chat` (text/image) via the Next.js `/api/chat` proxy |
@@ -326,8 +327,8 @@ Three Next.js API routes (`view/app/api/`) sit in front of the Express backend o
 | Route (Next.js, port 3000) | Talks to | Purpose |
 |------|----------|---------|
 | `api/chat/route.ts` | Express `POST /api/chat` (port 5000) | Proxies the chat request, then enriches the reply with source links before returning it to the browser |
-| `api/tts/route.ts` | ElevenLabs directly | Bot voice (text-to-speech) — does **not** touch the Express backend |
-| `api/onemap/search/route.ts` | OneMap directly | Address search/autocomplete on checkout — does **not** touch the Express backend |
+| `api/tts/route.ts` | ElevenLabs directly | Bot voice (text-to-speech). Does **not** touch the Express backend |
+| `api/onemap/search/route.ts` | OneMap directly | Address search/autocomplete on checkout. Does **not** touch the Express backend |
 
 The last two exist purely to keep the ElevenLabs and OneMap API keys server-side, out of the browser bundle.
 
@@ -341,7 +342,7 @@ The last two exist purely to keep the ElevenLabs and OneMap API keys server-side
 
 | Method | Endpoint                     | Body fields                      | Notes |
 |--------|------------------------------|-----------------------------------|-------|
-| GET    | `/api/auth/test`             | —                                 | Route sanity check |
+| GET    | `/api/auth/test`             | (none)                            | Route sanity check |
 | POST   | `/api/auth/register`         | `fullName`, `email`, `password`   | Always creates a **customer** account |
 | POST   | `/api/auth/login`            | `email`, `password`               | Works for all roles |
 | POST   | `/api/auth/reset-password`   | `email`, new password fields      | |
@@ -398,7 +399,7 @@ The last two exist purely to keep the ElevenLabs and OneMap API keys server-side
 | GET    | `/api/stores`                        | List store outlets                    |
 | GET    | `/api/stores/crowd`                  | Store crowd-level stats               |
 
-### Inventory (Store Staff only — `requireAuth` + `store_staff` role)
+### Inventory (Store Staff only: `requireAuth` + `store_staff` role)
 
 | Method | Endpoint                | Description             |
 |--------|--------------------------|--------------------------|
@@ -423,7 +424,7 @@ The last two exist purely to keep the ElevenLabs and OneMap API keys server-side
 | Method | Endpoint | Body fields                              |
 |--------|----------|------------------------------------------|
 | POST   | `/api/chat`  | `message`, `conversationId`, `image` (optional base64) |
-| POST   | `/api/transcribe` | `audio` (multipart file) — returns `{ text, language }` |
+| POST   | `/api/transcribe` | `audio` (multipart file), returns `{ text, language }` |
 
 > `/api/transcribe` is handled by the Express backend (port 5000). The TTS endpoint (`/api/tts`) is a Next.js API route (port 3000) and does not appear here.
 
@@ -433,19 +434,19 @@ The last two exist purely to keep the ElevenLabs and OneMap API keys server-side
 
 | URL Path                          | Description                                           |
 |------------------------------------|-------------------------------------------------------|
-| `/`                                | Landing page — same login screen as `/login`          |
-| `/login`                           | Unified login for customer, store staff & user admin — redirects to `/home`, `/store-staff`, or `/user-admin-dashboard` based on the account's role |
+| `/`                                | Landing page, same login screen as `/login`           |
+| `/login`                           | Unified login for customer, store staff & user admin. Redirects to `/home`, `/store-staff`, or `/user-admin-dashboard` based on the account's role |
 | `/register`                        | Customer registration                                  |
 | `/forgot-password`                 | Password reset                                        |
 | `/change-password`                 | Change password (authenticated)                       |
-| `/home`                            | Storefront homepage — Hero, About, Avy highlight, MeetTheCrew |
+| `/home`                            | Storefront homepage: Hero, About, Avy highlight, MeetTheCrew |
 | `/buy-driptea`                     | Category browse + instant client-side search          |
 | `/menu/[category]`                 | Drink listing by category                             |
-| `/menu/[category]/[drinkId]`       | Drink detail — customise size, ice, sugar, toppings    |
+| `/menu/[category]/[drinkId]`       | Drink detail: customise size, ice, sugar, toppings    |
 | `/cart`                            | Shopping cart                                         |
 | `/cart/edit/[cartItemId]`          | Edit a cart item's customisation                       |
 | `/checkout`                        | Order & payment                                       |
-| `/order-status/[orderId]`          | Live order tracking — pickup/delivery status card & map |
+| `/order-status/[orderId]`          | Live order tracking: pickup/delivery status card & map |
 | `/profile`                         | Customer profile                                      |
 | `/purchase-history`                | Customer order history                                |
 | `/vouchers`                        | Customer's active/used vouchers                        |
@@ -454,11 +455,11 @@ The last two exist purely to keep the ElevenLabs and OneMap API keys server-side
 | `/our-story`                       | Brand story page                                      |
 | `/store-staff`                     | Menu & inventory management (store staff)               |
 | `/store-staff-dashboard`           | Order queue management & order feedback (store staff)   |
-| `/store-staff-voucher`             | Voucher management — view, search, delete (staff)      |
+| `/store-staff-voucher`             | Voucher management: view, search, delete (staff)      |
 | `/user-admin-dashboard`            | User & role management (admin)                          |
 | `/marketing`                       | Standalone marketing landing page (not linked from the main app nav) |
 
-> There is no `/user-admin` or `/delivery` route — admin login shares `/login` with the other roles, and delivery tracking lives at `/order-status/[orderId]` rather than a dedicated delivery-picker page.
+> There is no `/user-admin` or `/delivery` route. Admin login shares `/login` with the other roles, and delivery tracking lives at `/order-status/[orderId]` rather than a dedicated delivery-picker page.
 
 ---
 
@@ -623,15 +624,15 @@ Users may also ask:
 
 ## Maps & Geocoding (OneMap + Leaflet)
 
-Location features appear in three places — there is no standalone `/delivery` route; the delivery address picker is a step inside `/checkout`:
+Location features appear in three places. There is no standalone `/delivery` route; the delivery address picker is a step inside `/checkout`.
 
 - **Leaflet + react-leaflet** render the interactive maps themselves (tiles, markers, popups).
-  - `view/app/global-stores/StoreMap.tsx` — plots both DripTea outlets as pins on a static map.
-  - `view/app/components/pages/CheckoutAddressMap.tsx` — on the `/checkout` delivery step, plots the selected outlet and the customer's chosen delivery point.
-  - `view/app/components/pages/CheckoutDeliveryAddress.tsx` — the address search UI itself; also computes straight-line distance (`calculateDistanceKm`) to derive the delivery fee.
-  - `view/app/order-status/[orderId]/TrackingDeliveryMap.tsx` — shows the live delivery route on the order-tracking page.
+  - `view/app/global-stores/StoreMap.tsx` plots both DripTea outlets as pins on a static map.
+  - `view/app/components/pages/CheckoutAddressMap.tsx` plots the selected outlet and the customer's chosen delivery point on the `/checkout` delivery step.
+  - `view/app/components/pages/CheckoutDeliveryAddress.tsx` is the address search UI itself. It also computes straight-line distance (`calculateDistanceKm`) to derive the delivery fee.
+  - `view/app/order-status/[orderId]/TrackingDeliveryMap.tsx` shows the live delivery route on the order-tracking page.
 - **OneMap** (Singapore government's official mapping API) supplies the address search behind the checkout delivery step:
-  - **Search/autocomplete** — typing an address in `CheckoutDeliveryAddress.tsx` calls the Next.js proxy route `view/app/api/onemap/search/route.ts`, which authenticates with `ONEMAP_EMAIL`/`ONEMAP_PASSWORD` to get a token, then queries OneMap's `elastic/search` endpoint. The proxy exists so the OneMap credentials stay server-side.
+  - **Search/autocomplete:** typing an address in `CheckoutDeliveryAddress.tsx` calls the Next.js proxy route `view/app/api/onemap/search/route.ts`, which authenticates with `ONEMAP_EMAIL`/`ONEMAP_PASSWORD` to get a token, then queries OneMap's `elastic/search` endpoint. The proxy exists so the OneMap credentials stay server-side.
 
 See [Environment Variables](#environment-variables) for the required `ONEMAP_EMAIL` / `ONEMAP_PASSWORD` setup.
 
@@ -639,11 +640,10 @@ See [Environment Variables](#environment-variables) for the required `ONEMAP_EMA
 
 ## Running Automated Tests
 
-The backend has a Mocha/Chai/Supertest suite in `test_cases/` — see `test_cases/README.md` for full details of what each file covers. Run it from the project root:
+The backend has a Mocha/Chai/Supertest suite in `test_cases/`. See `test_cases/README.md` for full details of what each file covers. Run it from the project root:
 
 ```bash
 npm test
 ```
 
-This runs GUI-code-existence checks, backend validation-rule checks, chatbot behaviour checks, real HTTP requests against every route (failure paths, via Supertest), Mongoose model rule checks, order-status intent classification checks, and full success-path/role-boundary flows against a temporary in-memory MongoDB (`mongodb-memory-server`) — none of it touches the live Atlas database or calls the real AI service.
-
+This runs GUI-code-existence checks, backend validation-rule checks, chatbot behaviour checks, real HTTP requests against every route (failure paths, via Supertest), Mongoose model rule checks, order-status intent classification checks, and full success-path/role-boundary flows against a temporary in-memory MongoDB (`mongodb-memory-server`). None of it touches the live Atlas database or calls the real AI service.
