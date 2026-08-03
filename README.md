@@ -6,7 +6,7 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 ## Table of Contents
 
 1. [Tech Stack](#tech-stack)
-2. [Live Deployment (Vercel)](#live-deployment-vercel)
+2. [Live Deployments](#live-deployments)
 3. [Prerequisites](#prerequisites)
 4. [Project Structure](#project-structure)
 5. [Environment Variables](#environment-variables)
@@ -41,11 +41,16 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 
 ---
 
-## Live Deployments (Vercel)
+## Live Deployments
 
-The frontend is hosted on Vercel at:
+The app is split across two hosts — the Next.js frontend on Vercel, the Express backend on Render:
 
-**https://driptea-ruby.vercel.app/**
+| Layer    | Host   | URL                                                                  |
+|----------|--------|----------------------------------------------------------------------|
+| Frontend | Vercel | [https://driptea-ruby.vercel.app/](https://driptea-ruby.vercel.app/) |
+| Backend  | Render | `https://driptea-trrn.onrender.com`                                  |
+
+The Render URL is the hard-coded fallback the frontend uses when `DRIPTEA_API_BASE` / `NEXT_PUBLIC_DRIPTEA_API_BASE` are unset (see `view/app/utils/api.base.ts`), so the deployed frontend reaches the deployed backend without extra config.
 
 ### Render Account Login
 
@@ -136,7 +141,7 @@ MONGODB_DB_NAME=driptea_vs1
 # ── Optional ──────────────────────────────────────────────
 PORT=5000
 NODE_ENV=development
-CHAT_LANGUAGE_MODE=english   # or "match" to reply in the user's language
+CHAT_LANGUAGE_MODE=match     # default — reply in the customer's language; set to "english" to always reply in English
 ```
 
 > **Never commit real keys.** Add `.env` to your `.gitignore`.
