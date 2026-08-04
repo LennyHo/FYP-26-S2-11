@@ -248,6 +248,13 @@ export function useChatApi({
           speakText(baseText);
         }
       }
+
+      // Same cart signalling the typed path does. Speak mode lacked it, so a voice order saved
+      // server-side left the cart page and header badge showing stale (empty) state.
+      if (payload.showViewCart || botMsg.cartUpdate) {
+        window.dispatchEvent(new Event('cartUpdated'));
+      }
+      syncCartFromReply(botMsg.text);
     } catch {
       const errorText = "I'm so sorry for the inconvenience! Our server seems to be unavailable right now. Please try again in a moment.";
       setOverlayMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: errorText, isUser: false }]);

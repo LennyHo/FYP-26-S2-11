@@ -2763,7 +2763,13 @@
   margin-bottom: 10px;
 }
 
+/* Two columns (current vs recommended) with the arrow between. Was a plain block, so the flex:1
+   on its children did nothing and the values wrapped onto separate lines. */
 .healthCardSugars {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
   font-size: 22px;
   font-weight: 700;
   margin-bottom: 10px;
@@ -2809,6 +2815,10 @@
   font-weight: 700;
   flex: 1;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
 .healthCardArrow {
@@ -2816,6 +2826,8 @@
   align-items: center;
   flex-shrink: 0;
   opacity: 0.85;
+  /* Line up with the sugar figures, not the badges below them. */
+  margin-top: 6px;
 }
 
 .healthCardRecommendedSugar {
@@ -2824,11 +2836,17 @@
   font-weight: 700;
   flex: 1;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
 .healthCardBadge {
   display: block;
   margin: 0 auto;
+  height: auto;
+  max-width: 100%;
 }
 
 .healthCardDisclaimer {

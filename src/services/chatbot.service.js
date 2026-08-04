@@ -473,17 +473,61 @@ const ORDER_CUSTOMIZATION_WORDS = [
 // Uses \b word boundaries so "0%" never falsely matches inside "50%" or "100%".
 function parseSugarLevel(text) {
     const m = String(text || "").toLowerCase();
-    // Word forms first (spoken input like "fifty percent sugar")
-    if (/\b(a\s+)?hundred\s+percent\b|\bone\s+hundred\s+percent\b|\bfull\s*(sweet|sugar)\b/.test(m)) return "100% Sugar";
-    if (/\bfifty\s+percent\b|\bhalf\s+(sweet|sugar|percent)\b/.test(m)) return "50% Sugar";
-    if (/\btwenty[- ]?five\s+percent\b|\bless\s+sweet\b|\bless\s+sugar\b/.test(m)) return "25% Sugar";
-    if (/\bzero\s+percent\b|\bno\s+sugar\b|\bunsweetened\b/.test(m)) return "0% Sugar";
+    // Menu labels: Normal Sweet 100% | Less Sweet 50% | Slightly Sweet 25% | No Additional Sugar 0%.
+    // Ordered least-to-most so "no additional sugar" isn't caught by a looser sugar pattern.
+    if (/\bno\s+additional\s+sugar\b|\bzero\s+percent\b|\bno\s+sugar\b|\bunsweetened\b|\bsugar\s*[- ]?free\b|\bwithout\s+sugar\b/.test(m)) return "0% Sugar";
+    if (/\bslightly\s+sweet\b|\btwenty[- ]?five\s+percent\b|\bquarter\s+(sweet|sugar)\b/.test(m)) return "25% Sugar";
+    if (/\bless\s+(sweet|sugar|sweetness)\b|\bfifty\s+percent\b|\bhalf\s+(sweet|sugar|percent)\b/.test(m)) return "50% Sugar";
+    if (/\bnormal\s+sweet\b|\bregular\s+sweet\b|\b(?:a\s+|one\s+)?hundred\s+percent\b|\bfull\s*(sweet|sugar)\b/.test(m)) return "100% Sugar";
     if (/\b100\s*(?:%|percent\b)/.test(m)) return "100% Sugar";
     if (/\b70\s*%/.test(m)) return "70% Sugar";
     if (/\b50\s*(?:%|percent\b)/.test(m)) return "50% Sugar";
     if (/\b25\s*(?:%|percent\b)/.test(m)) return "25% Sugar";
     if (/\b0\s*(?:%|percent\b)/.test(m)) return "0% Sugar";
+
+    // Bare level, no "%" — "make it 50", "100". Guarded to a terse reply or an explicitly
+    // sugar-related one, so prices/totals and the bot's own option line can't match.
+    // A decision verb plus a level is unambiguous at any length; the guard below would reject it.
+    const verbLevel = m.match(/\b(?:change|switch|make|set|stick|remain|keep|reduce|lower|go)\b[^0-9%]*\b(0|25|50|100)\b/);
+    if (verbLevel) return `${verbLevel[1]}% Sugar`;
+
+    const wordCount = m.trim().split(/\s+/).filter(Boolean).length;
+    const isAboutSugar = /\b(sugar|sweet|sweetness)\b/.test(m);
+    if (wordCount <= 4 || isAboutSugar) {
+        if (/\bzero\b/.test(m)) return "0% Sugar";
+        const bare = m.match(/\b(0|25|50|100)\b/);
+        if (bare) return `${bare[1]}% Sugar`;
+    }
     return null;
+}
+
+// Ascending, so stepping one place down is a single index shift.
+const SUGAR_LEVELS = ["0% Sugar", "25% Sugar", "50% Sugar", "100% Sugar"];
+
+// "Normal Sweet" is the menu's label for the full-sugar level; cart items may store either wording.
+function normalizeSugarValue(value) {
+    const v = String(value || "").trim();
+    return /normal sweet/i.test(v) ? "100% Sugar" : v;
+}
+
+// A request to cut the sugar that names no level ("lower the sugar"). parseSugarLevel returns null,
+// so without this the scan keeps the old level and the request is dropped silently.
+function mentionsSugarReduction(message) {
+    const msg = String(message || "").toLowerCase();
+    const aboutSugar = /\b(sugar|sweet|sweetness|sugary|sweeter)\b/.test(msg);
+    const reduceVerb = /\b(reduce|lower|less|lighter|cut|decrease|drop|minimi[sz]e|weaker|milder)\b/.test(msg)
+        || /\bnot (?:so|too) (?:sweet|sugary)\b/.test(msg);
+    // "lower it" / "make it milder" carry no sugar word, so aboutSugar can't see them.
+    const bareReduce = /\b(?:reduce|lower|cut|decrease)\s+it\b/.test(msg)
+        || /\bmake it (?:milder|lighter|weaker|less sweet)\b/.test(msg);
+    return (aboutSugar && reduceVerb) || bareReduce;
+}
+
+// One step down the scale; already at 0% stays at 0%.
+function stepDownSugarLevel(current) {
+    const i = SUGAR_LEVELS.indexOf(current);
+    if (i <= 0) return SUGAR_LEVELS[0];
+    return SUGAR_LEVELS[i - 1];
 }
 
 const VALID_SUGAR_PERCENTS = new Set([0, 25, 50, 100]);
@@ -583,15 +627,48 @@ function looksUnintelligible(message) {
     return evaluableTokens.every(tokenLooksGibberish);
 }
 
-// Make sure they are in their ordering flow and continue it
+// True when Avy's last message was an ordering step, so the next message continues that order.
+// Matches the printed option lines too, since the AI phrases the questions freely. After a drink is
+// added the reply is just "<drink> added to your cart", which matches nothing — so cart edits still route.
 function hasActiveOrderFlow(recentHistory) {
     for (let i = recentHistory.length - 1; i >= 0; i--) {
         const h = recentHistory[i];
         if (h.role !== "assistant") continue;
         const c = String(h.content || "").toLowerCase();
-        return /what size|which size|ice level|sugar level|preferred ice|how would you like your ice|any toppings|would you like any toppings|regular \(s\$|large \(\+s\$/.test(c);
+        return (
+            // Question wordings
+            /what size|which size|ice level|sugar level|preferred ice|how would you like your ice/.test(c) ||
+            /toppings?\b/.test(c) ||
+            // Option lines the flow prints beneath each question
+            /regular \(s\$|large \(\+s\$/.test(c) ||
+            /0%\s*\/\s*25%|normal ice\s*\/\s*less ice|pearls?\s*\(\+s\$/.test(c)
+        );
     }
     return false;
+}
+
+// Single source of truth for topping vocabulary. Covers all four languages because a button click
+// arrives as literal localised text when translation is skipped or fails.
+const TOPPING_MATCHERS = [
+    ["Tapioca Pearls", /pearls?|boba|tapioca|mutiara|珍珠|முத்து/i],
+    ["Brown Sugar",    /brown sugar|gula perang|黑糖|பழுப்பு சர்க்கரை/i],
+    ["Cheese Foam",    /cheese|foam|busa keju|芝士|சீஸ்/i],
+];
+
+// An explicit "no toppings" — names the thing being declined, so it's unambiguous anywhere.
+const NO_TOPPING_EXPLICIT_RE = /\bno\s+toppings?\b|\bwithout\s+toppings?\b|\bskip\s+(?:the\s+)?toppings?\b|tanpa topping|不加配料|டாப்பிங் இல்லை/i;
+
+// Bare decliners ("none", "plain") mean "no toppings" only as a terse reply — matched loosely they
+// collide with ordinary speech ("nothing too sweet", "I want plain green tea").
+const NO_TOPPING_BARE_RE = /\b(none|nothing|no\s+thanks?|plain)\b/i;
+// Words showing the bare decliner is about something else, or is filler ("nothing much").
+const BARE_DECLINE_DISQUALIFIER_RE = /\b(sweet|sugar|ice|hot|large|regular|small|tea|latte|slush|much)\b/i;
+
+function declinesToppings(message) {
+    const msg = String(message || "").toLowerCase().trim();
+    if (NO_TOPPING_EXPLICIT_RE.test(msg)) return true;
+    const wordCount = msg.split(/\s+/).filter(Boolean).length;
+    return wordCount <= 3 && NO_TOPPING_BARE_RE.test(msg) && !BARE_DECLINE_DISQUALIFIER_RE.test(msg);
 }
 
 // Extracts size/ice/sugar/toppings from a message, defaulting anything unmentioned.
@@ -609,26 +686,25 @@ function parseCustomizationFromMessage(message) {
 
     const sugar = parseSugarLevel(msg) || "Normal Sweet";
 
-    const toppings = [];
-    if (!msg.includes("no topping")) {
-        if (msg.includes("brown sugar")) toppings.push("Brown Sugar");
-        if (msg.includes("pearl") || msg.includes("boba") || msg.includes("tapioca")) toppings.push("Tapioca Pearls");
-        if (msg.includes("cheese")) toppings.push("Cheese Foam");
-    }
+    const toppings = declinesToppings(msg)
+        ? []
+        : TOPPING_MATCHERS.filter(([, re]) => re.test(msg)).map(([name]) => name);
 
     return { size, ice, sugar, toppings };
 }
 
-// True if toppings were actually addressed (named, or explicitly "no toppings") — distinct from
+// True if toppings were actually addressed (named, or explicitly declined) — distinct from
 // not mentioning them, which parseCustomizationFromMessage can't tell apart on its own.
 function mentionsToppings(message) {
     const msg = String(message || "").toLowerCase();
-    return (
-        msg.includes("no topping") ||
-        msg.includes("brown sugar") ||
-        msg.includes("pearl") || msg.includes("boba") || msg.includes("tapioca") ||
-        msg.includes("cheese")
-    );
+    return declinesToppings(msg) || TOPPING_MATCHERS.some(([, re]) => re.test(msg));
+}
+
+// Only the unambiguous cases: a named topping, or a by-name decline. Excludes bare "no thanks" /
+// "none", which answer whatever was just asked — at the sugar nudge they mean "keep my sugar".
+function mentionsToppingsExplicitly(message) {
+    const msg = String(message || "").toLowerCase();
+    return NO_TOPPING_EXPLICIT_RE.test(msg) || TOPPING_MATCHERS.some(([, re]) => re.test(msg));
 }
 
 // Null when size isn't mentioned, unlike parseCustomizationFromMessage's "Regular" default.
@@ -1588,6 +1664,51 @@ function resolveLastSugarFromHistory(history) {
     return null;
 }
 
+// Which of size/ice/sugar/toppings are already answered, scanned from the FULL history — outside
+// the 6-message window the AI sees it re-asks answered steps or skips to the summary. User replies
+// only (option lines would false-match); stops at "added to your cart". currentMessage MUST be
+// passed — the turn's own message isn't in history until after the AI call.
+function resolveOrderProgressFromHistory(history, currentMessage = null) {
+    if (!Array.isArray(history)) return null;
+
+    let drinkName = null, size = null, ice = null, sugar = null, toppings = null;
+
+    const scan = currentMessage
+        ? [...history, { role: "user", content: String(currentMessage) }]
+        : history;
+
+    for (let i = scan.length - 1; i >= 0; i--) {
+        const msg = scan[i];
+        const content = String(msg.content || "");
+
+        if (msg.role === "assistant" && /added to your cart/i.test(content)) break;
+        if (msg.role !== "user") continue;
+
+        // null until answered; [] is a valid "no toppings" answer. A bare "no thanks" counts only
+        // if the toppings question was the one asked — at the sugar nudge it means "keep my sugar".
+        if (toppings === null && mentionsToppings(content)) {
+            const answersToppings = mentionsToppingsExplicitly(content) || askedAboutToppingsBefore(scan, i);
+            if (answersToppings) toppings = parseCustomizationFromMessage(content).toppings;
+        }
+        if (!sugar) sugar = parseSugarLevel(content);
+        if (!ice) ice = parseIceMention(content);
+        if (!size) size = parseSizeMention(content);
+        if (!drinkName) drinkName = resolveDrinkNameFromMessage(content);
+    }
+
+    if (!drinkName) return null;
+    return { drinkName, size, ice, sugar, toppings, toppingsConfirmed: toppings !== null };
+}
+
+// Was the preceding question the toppings one? Disambiguates a bare "none" / "no thanks".
+function askedAboutToppingsBefore(scan, i) {
+    for (let j = i - 1; j >= 0; j--) {
+        if (scan[j].role !== "assistant") continue;
+        return /toppings?\b/i.test(String(scan[j].content || ""));
+    }
+    return false;
+}
+
 // Parse the order details from Gemini's Phase 6 reply text when it outputs a
 // summary ("Berikut adalah ringkasan pesanan anda: …") but no hidden-cart-data.
 function extractPhase6OrderFromReply(reply) {
@@ -1661,10 +1782,8 @@ function resolveCustomizationFromHistory(history) {
 // Maps a raw topping string (any supported language) to its canonical topping name.
 function normalizeToppingName(raw) {
     const t = String(raw || '').toLowerCase().trim().replace(/\s*\(\+s\$[\d.]+\)/i, '');
-    if (/pearl|mutiara|珍珠|tapioca|boba/.test(t)) return 'Tapioca Pearls';
-    if (/brown sugar|gula perang|黑糖/.test(t))    return 'Brown Sugar';
-    if (/cheese|busa keju|芝士/.test(t))           return 'Cheese Foam';
-    return null; // no toppings
+    const match = TOPPING_MATCHERS.find(([, re]) => re.test(t));
+    return match ? match[0] : null; // null = no toppings
 }
 
 // Adds a topping to the last-ordered drink, reusing its size/ice/sugar from history.
@@ -2008,10 +2127,11 @@ function findTargetCartItem(cartItems, intent) {
     }
 
     if (intent.targetCustomization?.sugar) {
+        // "Normal Sweet" and "100% Sugar" are one level under two names, and cart items carry
+        // either — an exact compare would miss the item the customer means.
+        const sameSugar = (a, b) => normalizeSugarValue(a) === normalizeSugarValue(b);
         matches = matches.filter(
-            item =>
-                item.customization?.sugar ===
-                intent.targetCustomization.sugar
+            item => sameSugar(item.customization?.sugar, intent.targetCustomization.sugar)
         );
     }
 
@@ -2197,15 +2317,13 @@ function parseOrderDetails(message) {
 
     let sugar = parseSugarLevel(msg);
 
+    // Tri-state: null = not mentioned, [] = explicitly declined, [names] = chosen.
     let toppings = null;
-    if (/no topping|no toppings|none|without topping/.test(msg)) toppings = [];
+    if (declinesToppings(msg)) toppings = [];
     else {
-    const found = [];
-        if (/pearl|pearls|tapioca/.test(msg)) found.push("Tapioca Pearls");
-        if (/brown sugar/.test(msg)) found.push("Brown Sugar");
-        if (/cheese foam|foam/.test(msg)) found.push("Cheese Foam");
+        const found = TOPPING_MATCHERS.filter(([, re]) => re.test(msg)).map(([name]) => name);
         if (found.length > 0) toppings = found;
-        }
+    }
 
     return { size, ice, sugar, toppings };
 }
@@ -3034,17 +3152,28 @@ const ORDER_FIELD_QUESTIONS = {
     toppings: "What toppings would you like?<br>Tapioca Pearls (+S$1.20) / Brown Sugar (+S$1.00) / Cheese Foam (+S$1.50) / No Toppings",
 };
 
-// First missing field, in the same order the guided step-by-step flow asks; null once complete.
+const ORDER_FIELD_SEQUENCE = ["size", "ice", "sugar", "toppings"];
+
+// Next field to ask about. Walks forward from the furthest answered field, then comes back for
+// anything skipped — a plain "first unanswered" scan jumps backwards when the AI-led flow skips a
+// step (it sometimes opens with ice), asking for size right after sugar. == null since [] is valid.
+function nextOrderFieldName(state) {
+    const isAnswered = (field) => (field === "toppings" ? state.toppings != null : Boolean(state[field]));
+    const answeredIndexes = ORDER_FIELD_SEQUENCE.map((f, i) => (isAnswered(f) ? i : -1));
+    const furthestAnswered = Math.max(-1, ...answeredIndexes);
+
+    return ORDER_FIELD_SEQUENCE.find((f, i) => i > furthestAnswered && !isAnswered(f))
+        || ORDER_FIELD_SEQUENCE.find((f) => !isAnswered(f))
+        || null;
+}
+
+// First field still needed, as a question ready to send; null once the order is complete.
 function nextMissingOrderField(draft) {
     if (!draft.beverageId) {
         return { field: "drink", question: "Which drink would you like me to add? You can say something like 'add Classic Milk Tea to my cart'." };
     }
-    if (!draft.size) return { field: "size", question: ORDER_FIELD_QUESTIONS.size };
-    if (!draft.ice) return { field: "ice", question: ORDER_FIELD_QUESTIONS.ice };
-    if (!draft.sugar) return { field: "sugar", question: ORDER_FIELD_QUESTIONS.sugar };
-    // == null, not falsy — [] means "no toppings" was answered, not that it's missing.
-    if (draft.toppings == null) return { field: "toppings", question: ORDER_FIELD_QUESTIONS.toppings };
-    return null;
+    const field = nextOrderFieldName(draft);
+    return field ? { field, question: ORDER_FIELD_QUESTIONS[field] } : null;
 }
 
 async function askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage }) {
@@ -4500,8 +4629,15 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     }
     // End of multi-item #199
 
+    // A bare answer naming no drink ("can I have 50%") continues the current order. Without this,
+    // isAddToCartRequest reads the "can I have" phrasing as a fresh add and the slot-filling branch
+    // below answers from templates ("What size would you like?") instead of the sugar nudge.
+    const isAnsweringActiveOrderStep =
+        !resolveDrinkNameFromMessage(intentMessage) &&
+        (hasActiveOrderFlow(recentHistory) || Boolean(await ChatbotSession.getPendingOrderDraft(activeConversationId)));
+
     // User Story #199: Add to Cart Intent
-    if (isAddToCartRequest(intentMessage)) {
+    if (isAddToCartRequest(intentMessage) && !isAnsweringActiveOrderStep) {
         if (!userId) {
             return {
                 reply: t('loginForCart2'),
@@ -4542,12 +4678,19 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
             }
         }
 
+        // Seed from everything already answered, not just this message — building the draft from
+        // intentMessage alone lost prior size/ice and re-asked them. Current message still wins.
+        const priorProgress = resolveOrderProgressFromHistory(history, intentMessage);
+        const messageToppings = mentionsToppings(intentMessage)
+            ? parseCustomizationFromMessage(intentMessage).toppings
+            : null;
+
         const draft = {
             beverageId: beverageId || null,
-            size: parseSizeMention(intentMessage),
-            ice: parseIceMention(intentMessage),
-            sugar: parseSugarLevel(intentMessage),
-            toppings: mentionsToppings(intentMessage) ? parseCustomizationFromMessage(intentMessage).toppings : null,
+            size: parseSizeMention(intentMessage) || priorProgress?.size || null,
+            ice: parseIceMention(intentMessage) || priorProgress?.ice || null,
+            sugar: parseSugarLevel(intentMessage) || priorProgress?.sugar || null,
+            toppings: messageToppings ?? priorProgress?.toppings ?? null,
             quantity: parseQuantityFromMessage(intentMessage),
         };
 
@@ -4619,7 +4762,10 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     }
 
     // #201 - Edit cart item through chatbot.
-    if (isCartUpdateRequest(intentMessage) && !midOrderModifier) {
+    // isAnsweringActiveOrderStep keeps mid-order adjustments out: "can I reduce to 25% sugar" names
+    // no drink, so this branch used to edit an unrelated cart item instead of the drink being
+    // customised. midOrderModifier missed it (no "reduce"). Edits naming a drink still land here.
+    if (isCartUpdateRequest(intentMessage) && !midOrderModifier && !isAnsweringActiveOrderStep) {
         if (!userId) {
             return {
                 reply: t('loginForCartEdit'),
@@ -4985,19 +5131,39 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     let nutritionBlock = "";
     let healthCardData = null;
 
-    // Suppress health card when user has responded to the sugar warning (either kept or changed it).
-    // Use intentMessage so Chinese/Malay button clicks ("保持50%甜度", "Tukar kepada 25% Gula") are
-    // translated to English before the regex test.
-    const isRemainAtSugar = /^remain at \d+%\s*sugar$/i.test(intentMessage.trim());
-    const isChangingSugar = /^change to \d+%\s*sugar$/i.test(intentMessage.trim());
-    const suppressHealthCard = isRemainAtSugar || isChangingSugar;
+    // Don't re-fire the health card when the customer is replying to a nudge already on screen.
+    // Anchored on the preceding assistant turn (fixed "Remain at X% Sugar" format) rather than the
+    // customer's phrasing, which is unbounded ("I'll stick with 100%", "0% please", ...).
+    const lastAssistantMsg = [...recentHistory].reverse().find((m) => m.role === "assistant");
+    const lastAssistantText = String(lastAssistantMsg?.content || "");
+    const sugarNudgeWasShown = Boolean(lastAssistantMsg) && /remain at \d+%\s*sugar/i.test(lastAssistantText);
+
+    // "Lower the sugar" names no level: take the nudge's recommendation if offered, else step one
+    // level down. Otherwise the scan keeps the old level and the request is dropped silently.
+    const nudgeOffered25 = /reduce to 25%|change to 25%\s*sugar/i.test(lastAssistantText);
+    // A bare "yes" only resolves because the nudge on screen names a level; ambiguous otherwise.
+    const bareAffirmative = /^(?:yes|yeah|yep|sure|ok|okay|alright|fine|please|go ahead|do it|sounds good|why not)(?:[\s,.!]+(?:please|thanks|thank you|sure|then|ok|okay))*[\s.!,]*$/i.test(intentMessage.trim());
+
+    let impliedSugarLevel = null;
+    if (!orderDetails.sugar && (mentionsSugarReduction(intentMessage) || (nudgeOffered25 && bareAffirmative))) {
+        const currentSugar = resolveOrderProgressFromHistory(history)?.sugar;
+        impliedSugarLevel = nudgeOffered25 ? "25% Sugar" : (currentSugar ? stepDownSugarLevel(currentSugar) : null);
+        if (impliedSugarLevel) orderDetails.sugar = impliedSugarLevel;
+    }
+
+    const suppressHealthCard = sugarNudgeWasShown && Boolean(parseSugarLevel(intentMessage) || impliedSugarLevel);
 
     if (orderDetails.sugar) {
         // Current message takes priority — e.g. "add matcha latte with 50% sugar" should show Matcha Latte,
         // not the last drink from history (Taro Slush etc.)
         let drink = await findDrinkByName(intentMessage);
         if (!drink) {
-            const lastDrinkName = resolveLastDrinkFromHistory(history);
+            // resolveLastDrinkFromHistory reads assistant replies, so it's empty when Avy doesn't
+            // repeat the drink name — and with no drink the nudge never appears. Fall back to the
+            // order-progress scan, which reads the customer's own messages.
+            const lastDrinkName =
+                resolveLastDrinkFromHistory(history) ||
+                resolveOrderProgressFromHistory(history, intentMessage)?.drinkName;
             if (lastDrinkName) {
                 drink = await findDrinkByName(lastDrinkName);
             }
@@ -5074,6 +5240,18 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
                         recommendedSugarLevel: "25%",
                     };
                 }
+
+                // The toppings reply also triggers the PHASE 6 summary, which must print the grade.
+                // nutritionContext was only built on sugar turns, leaving the AI to guess it here.
+                nutritionContext = `
+    UPDATED HEALTH CONTEXT (authoritative — do NOT recalculate):
+    Drink: ${drink.name}
+    Selected Sugar Level: ${lastSugar}
+    Sugar: ${nutrition.sugar}g | Calories: ${nutrition.calories} kcal | Nutri-Grade: ${nutrition.grade}
+    Selected Toppings: ${orderDetails.toppings.join(", ")}
+
+    CRITICAL: The values above are computed by the backend. Do NOT estimate, recalculate, or guess your own Nutri-Grade, sugar, or calorie values in the order summary — use exactly what is shown above.
+    `;
             }
         }
     }
@@ -5091,13 +5269,50 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
         } catch (_) {}
     }
 
-    // Use intentMessage (English) here — buildSystemPrompt's own isMenuRequest()/filterMenu()
-    const systemPrompt = await buildSystemPrompt(intentMessage, nutritionContext + cartContext, detectedLang);
+    // Tell the AI which step is next, computed from the full history instead of left to inference.
+    // Also trust the customer's own message: naming a size/ice/sugar/topping value is signal enough,
+    // since hasActiveOrderFlow can miss question wordings the AI invents.
+    const looksLikeOrderReply =
+        mentionsToppings(intentMessage) ||
+        Boolean(parseSizeMention(intentMessage)) ||
+        Boolean(parseIceMention(intentMessage)) ||
+        Boolean(parseSugarLevel(intentMessage)) ||
+        Boolean(impliedSugarLevel);
+    // Engage on the FIRST turn too — neither check above fires there, so the AI picked its own
+    // order (usually ice first, skipping size), which resurfaced later as a backtrack after sugar.
+    const startsNewOrder =
+        Boolean(resolveDrinkNameFromMessage(intentMessage)) && hasExplicitOrderIntent(intentMessage);
+    const orderProgress = (hasActiveOrderFlow(recentHistory) || looksLikeOrderReply || startsNewOrder)
+        ? resolveOrderProgressFromHistory(history, intentMessage)
+        : null;
+    // The scan reads levels from the text, so a wordless "lower the sugar" keeps the old level.
+    if (orderProgress && impliedSugarLevel) orderProgress.sugar = impliedSugarLevel;
+    let orderProgressContext = "";
+    if (orderProgress) {
+        // Name only the field to ask for. Never phrase as "don't skip ahead to toppings" — that
+        // made the AI discard a topping given in the same message. Same rule as the slot-filling path.
+        const NEXT_STEP_LABEL = {
+            size: "Ask for SIZE only.",
+            ice: "Ask for ICE LEVEL only.",
+            sugar: "Ask for SUGAR LEVEL only.",
+            toppings: "Ask for TOPPINGS only.",
+        };
+        const nextField = nextOrderFieldName(orderProgress);
+        const nextStep = nextField
+            ? NEXT_STEP_LABEL[nextField]
+            : "Nothing is left to ask — output the PHASE 6 order summary with the hidden-cart-data block now.";
+        orderProgressContext = `\nORDER PROGRESS FOR ${orderProgress.drinkName} (authoritative — computed by the backend from the whole conversation INCLUDING the customer's latest message; do NOT re-derive it from the conversation text):\n` +
+            `Size: ${orderProgress.size || "NOT YET ANSWERED"}\n` +
+            `Ice: ${orderProgress.ice || "NOT YET ANSWERED"}\n` +
+            `Sugar: ${orderProgress.sugar || "NOT YET ANSWERED"}\n` +
+            `Toppings: ${orderProgress.toppingsConfirmed ? "answered" : "NOT YET ANSWERED"}\n` +
+            `NEXT REQUIRED STEP: ${nextStep}\n` +
+            `Any field not marked NOT YET ANSWERED is already settled — treat it as final, briefly acknowledge anything the customer just told you, and never ask about it again. ` +
+            `Do not produce the order summary while any field above is still NOT YET ANSWERED.\n`;
+    }
 
-    // When the user's message is a bare topping selection (e.g. "Brown Sugar (+S$1.00)", "珍珠",
-    // "Mutiara", "No toppings"), Gemini tends to shortcut to "added to your cart" without
-    // producing the required Phase 6 hidden-cart-data block.  Appending an explicit reminder
-    // to the message that Gemini sees (but not to the stored history) reliably fixes this.
+    // Use intentMessage (English) here — buildSystemPrompt's own isMenuRequest()/filterMenu()
+    const systemPrompt = await buildSystemPrompt(intentMessage, nutritionContext + cartContext + orderProgressContext, detectedLang, orderProgress?.drinkName || null);
     const TOPPING_SELECTION = /^(pearls?|tapioca pearls?|brown sugar|cheese foam|no toppings?|mutiara|busa keju|gula perang|珍珠|黑糖|芝士泡沫|不加配料|tanpa topping)(\s*\(\+S\$[\d.]+\))?$/i;
     const toppingMatch = TOPPING_SELECTION.exec(safeMessage.trim());
     const geminiInput = toppingMatch
@@ -5117,7 +5332,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
         const authorGradeMatch = nutritionBlock.match(/Updated Nutri-?Grade:\s*([A-D])/i);
         const authorGrade = authorGradeMatch ? authorGradeMatch[1].toUpperCase() : null;
 
-        // Strip any nutrition lines the AI still outputs — backend provides them via nutritionBlock
+        // Strip the "Updated Sugar / Calories / Nutri-Grade" lines — the widget already shows them.
         reply = reply
             .replace(/Updated\s+Sugar\s*:[^<\n]*/gi, '')
             .replace(/Updated\s+Calories\s*:[^<\n]*/gi, '')
@@ -5129,8 +5344,6 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
         if (authorGrade) {
             reply = reply.replace(/\bNutri-?Grade\s+[A-D]\b/gi, `Nutri-Grade ${authorGrade}`);
         }
-
-        reply = nutritionBlock + reply;
     }
 
     // Remove AI-generated grade badge images that duplicate the health card widget
@@ -5284,10 +5497,8 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     };
 }
 
-// ── Final language safety gate ─────────────────────────────────────────────
+// Final language safety gate (last resort)
 // Every reply path above already tries to answer in the customer's language (Gemini via the
-// buildSystemPrompt language instruction, or REPLY_STRINGS/HEALTH_RANKING_STRINGS lookups for the
-// hardcoded paths). This is the last-resort check: if a reply still comes out in English for a
 // non-English customer, translate it through Gemini before it goes out, instead of shipping the
 // wrong language.
 const CJK_RE = /[一-鿿]/;
@@ -5310,8 +5521,7 @@ function replyLooksWrongLanguage(text, targetLang) {
 }
 
 // Structural HTML replies (ordering flow, hidden-cart-data, buttons) already carry their own
-// explicit per-language instruction into Gemini and are too fragile to safely re-translate as a
-// block — the gate only touches plain-text replies and per-segment text of a multi-intent reply.
+// explicit per-language instruction into Gemini and are too fragile to safely re-translate.
 function isSafeToTranslate(text) {
     return Boolean(text) && !/hidden-cart-data|<button/i.test(text);
 }

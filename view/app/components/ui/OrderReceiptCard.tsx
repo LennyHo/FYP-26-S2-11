@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import Image from "next/image";
 import styles from "./OrderReceiptCard.module.css";
 
 interface NutritionData {
@@ -86,7 +85,7 @@ function tR(label: string, lang?: string): string {
 }
 
 export default function OrderReceiptCard({ orderReceipt }: Props) {
-  const { drink, customization, nutrition, recommendedNutrition, cartItems, total, lang } = orderReceipt;
+  const { drink, customization, nutrition, cartItems, total, lang } = orderReceipt;
 
   const toppingStr =
     customization.toppings.length > 0
@@ -94,8 +93,6 @@ export default function OrderReceiptCard({ orderReceipt }: Props) {
       : tR("No toppings", lang);
 
   const grade = nutrition?.grade?.toUpperCase() ?? null;
-  const recGrade = recommendedNutrition?.grade?.toUpperCase() ?? null;
-  const isUnhealthy = grade === "C" || grade === "D";
 
   return (
     <div className={styles.root}>
@@ -130,45 +127,8 @@ export default function OrderReceiptCard({ orderReceipt }: Props) {
 
       <p className={styles.thanks}>{tR("Thank you for your order!", lang)} 🧋</p>
 
-      {/* Health widget — Grade C or D only, shown after the thank-you line */}
-      {isUnhealthy && nutrition && recommendedNutrition && recGrade && (
-        <div className={styles.healthWidget}>
-          <div className={styles.healthTitle}>{tR("Want to reduce your sugar intake?", lang)}</div>
-          <div className={styles.healthSubtitle}>
-            {tR("Based on your current customization, here's how switching to 25% sugar would look.", lang)}
-          </div>
-          <div className={styles.healthLabelRow}>
-            <span className={styles.healthLabel}>{tR("Current", lang)}</span>
-            <span />
-            <span className={styles.healthLabel}>{tR("Reduce to 25%", lang)}</span>
-          </div>
-          <div className={styles.healthImagesRow}>
-            <Image
-              src={`/grade_nutri_${grade.toLowerCase()}.png`}
-              alt={`Grade ${grade}`}
-              width={72}
-              height={72}
-            />
-            <span className={styles.healthArrow}>
-              <svg width="36" height="16" viewBox="0 0 36 16" fill="none">
-                <line x1="0" y1="8" x2="28" y2="8" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <polyline points="22,2 30,8 22,14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              </svg>
-            </span>
-            <Image
-              src={`/grade_nutri_${recGrade.toLowerCase()}.png`}
-              alt={`Grade ${recGrade}`}
-              width={72}
-              height={72}
-            />
-          </div>
-          <div className={styles.healthSugarRow}>
-            <span className={styles.sugarCurrent}>{nutrition.sugar}{tR("g sugar", lang)}</span>
-            <span />
-            <span className={styles.sugarRecommended}>{recommendedNutrition.sugar}{tR("g sugar", lang)}</span>
-          </div>
-        </div>
-      )}
+      {/* No sugar nudge here — the drink is already in the cart, and the nudge was shown at the
+          sugar step where it could still change the order. */}
 
       <div className={styles.btnRow}>
         <button

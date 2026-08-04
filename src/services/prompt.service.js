@@ -211,7 +211,7 @@ const LANGUAGE_NAMES = {
   en: "English",
 };
 
-async function buildSystemPrompt(userMessage, extraContext = "", detectedLang = null) {
+async function buildSystemPrompt(userMessage, extraContext = "", detectedLang = null, anchorDrinkName = null) {
   // When the caller already knows the customer's language (detected from their raw message),
   // state it directly instead of asking Gemini to re-detect it. Re-detection is unreliable when
   // the actual text handed to the model is a mostly-English scaffolding prompt (e.g. "The customer
@@ -280,9 +280,21 @@ Only the visible summary text above the hidden-cart-data block is translated int
 
   let drinkContext = "";
 
-  if (await isMenuRequest(userMessage)) {
+  if (anchorDrinkName || await isMenuRequest(userMessage)) {
     const beverages = await getMenuBeverages();
-    const filtered = filterMenu(beverages, userMessage);
+    let filtered = filterMenu(beverages, userMessage);
+
+    // The drink being customised mid-order. filterMenu matches only words from the current reply
+    // ("one brown sugar"), so it can drop that drink from context and the AI then claims it's
+    // unavailable. Force it back in.
+    if (anchorDrinkName) {
+      const anchorLower = String(anchorDrinkName).toLowerCase();
+      const alreadyIncluded = filtered.some((d) => String(d.name || "").toLowerCase() === anchorLower);
+      if (!alreadyIncluded) {
+        const anchorDrink = beverages.find((d) => String(d.name || "").toLowerCase() === anchorLower);
+        if (anchorDrink) filtered = [anchorDrink, ...filtered];
+      }
+    }
 
     const parseNum = (val) => {
       const n = parseFloat(String(val || "").replace(/[^0-9.]/g, ""));

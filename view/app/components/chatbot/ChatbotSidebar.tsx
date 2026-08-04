@@ -1040,6 +1040,15 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                         <div className={styles.healthCardSugars}>
                           <span className={styles.healthCardCurrentSugar}>
                             {msg.healthCard.currentSugarLevel ? `${msg.healthCard.currentSugarLevel} · ` : ''}{msg.healthCard.currentSugar}g
+                            {msg.healthCard.currentGrade && (
+                              <Image
+                                src={`/grade_nutri_${msg.healthCard.currentGrade.toLowerCase()}.png`}
+                                alt={`Nutri-Grade ${msg.healthCard.currentGrade}`}
+                                width={72}
+                                height={72}
+                                className={styles.healthCardBadge}
+                              />
+                            )}
                           </span>
                           <span className={styles.healthCardArrow}>
                           <svg width="36" height="16" viewBox="0 0 36 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1049,15 +1058,15 @@ export default function ChatbotSidebar(props: ChatbotSidebarProps) {
                         </span>
                           <span className={styles.healthCardRecommendedSugar}>
                             {msg.healthCard.recommendedSugarLevel ? `${msg.healthCard.recommendedSugarLevel} · ` : ''}{msg.healthCard.recommendedSugar}g
+                            <Image
+                              src={`/grade_nutri_${msg.healthCard.recommendedGrade.toLowerCase()}.png`}
+                              alt={`Nutri-Grade ${msg.healthCard.recommendedGrade}`}
+                              width={72}
+                              height={72}
+                              className={styles.healthCardBadge}
+                            />
                           </span>
                         </div>
-                        <Image
-                          src={`/grade_nutri_${msg.healthCard.recommendedGrade.toLowerCase()}.png`}
-                          alt={`Nutri-Grade ${msg.healthCard.recommendedGrade}`}
-                          width={80}
-                          height={80}
-                          className={styles.healthCardBadge}
-                        />
                         <p className={styles.healthCardDisclaimer}>AI suggestion only — not medical advice. Drink at your own risk.</p>
                       </div>
                     )}
