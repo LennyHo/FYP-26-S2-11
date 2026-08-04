@@ -231,7 +231,7 @@ ${knownLangName
 If the latest message is a short Malay phrase like "Tanpa topping" or "Kurang ais", that IS Malay — do NOT fall back to the previous conversation language.`}
 Never mix languages in the same reply.
 
-LANGUAGE APPLIES TO VISIBLE TEXT ONLY: When replying in a non-English language, translate ALL visible option labels — size names, ice levels, topping names, sugar-warning choices. Keep prices (S$1.20 etc.), percentages (0%, 25%, 50%, 100%), and all HTML tags exactly as-is.
+LANGUAGE APPLIES TO VISIBLE TEXT ONLY: When replying in a non-English language, translate ALL visible option labels — size names, ice levels, topping names, sugar-warning choices. Keep menu drink names (e.g. "Classic Milk Tea", "Matcha Latte", "Da Hong Pao Milk Tea") in English exactly as listed on the menu — do NOT translate them into the customer's language, even though the rest of the sentence is translated. Keep prices (S$1.20 etc.), percentages (0%, 25%, 50%, 100%), and all HTML tags exactly as-is.
 Malay reference translations (use these exactly in visible text):
 - Regular -> Biasa | Large -> Besar
 - Normal Ice -> Ais Normal | Less Ice -> Kurang Ais | No Ice -> Tanpa Ais | Hot -> Panas

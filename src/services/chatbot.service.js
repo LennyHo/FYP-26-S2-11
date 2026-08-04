@@ -719,11 +719,6 @@ function isRecommendationRequest(message) {
         msg.includes("ada apa yang") || msg.includes("boleh rekomen")
     ) return true;
 
-    // Vague flavour/vibe descriptions are recommendations, not direct orders — even when phrased
-    // with "I want" ("I want something fruity", "anything refreshing", "a drink that's sweet and
-    // cold"). Anchored on "something/anything/a drink that" so it never catches a real named order
-    // like "I want a refreshing Ice Lemon Tea". Must run before the "I want X" order guard below,
-    // otherwise these fall through to the model, which then fabricates drink data.
     if (
         /\b(something|anything|a drink that('?s| is)?)\b/.test(msg) &&
         /\b(fruity|fruit|refreshing|sweet|citrus(y)?|floral|creamy|milky|chocolate(y)?|nutty|tangy|sour|light|icy|cold)\b/.test(msg)
@@ -790,7 +785,6 @@ function isRecommendationRequest(message) {
     );
 }
 
-// Detects when the user wants to learn more about specific drinks (not just order or browse).
 function isInfoRequest(message) {
     const msg = String(message || "").toLowerCase();
     return (
@@ -806,7 +800,12 @@ function isInfoRequest(message) {
         msg.includes("information about") ||
         msg.includes("more information") ||
         msg.includes("getting more") ||
-        msg.includes("tell me more")
+        msg.includes("tell me more") ||
+        msg.includes("introduce") ||
+        msg.includes("what do you have") ||
+        msg.includes("what's new") ||
+        msg.includes("whats new") ||
+        /\babout\b/.test(msg)
     );
 }
 
