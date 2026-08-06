@@ -44,6 +44,7 @@ async function getStores(req, res) {
   }
 }
 
+// #30 - As a customer, I want to check store crowd levels so that I can choose less crowded stores. 
 // #301 - Customer crowdsource view: show live order/cup load per store.
 async function getStoreCrowdStats(req, res) {
   try {

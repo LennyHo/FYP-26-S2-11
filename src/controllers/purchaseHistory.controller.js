@@ -1,5 +1,6 @@
 // User Story Architecture Trace — purchaseHistory.controller.js
 
+// #19 Get Purchase History
 const Payment = require("../models/payment.model");
 async function getPurchaseHistory(req, res) {
   try {
