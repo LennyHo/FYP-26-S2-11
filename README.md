@@ -120,6 +120,8 @@ FYP-26-S2-11/
 
 Create a `.env` file in the **project root** (same folder as `server.js`) and fill in your real keys:
 
+### ENVIRONMENT
+
 ```env
 # AI keys
 GROQ_API_KEY=your_groq_api_key_here
