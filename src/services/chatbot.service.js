@@ -1294,6 +1294,30 @@ function isVoucherRequest(message) {
     );
 }
 
+// Narrower than isVoucherRequest — catches "when does my voucher expire",
+// "which voucher expires soonest" style follow-ups so they get a date-specific
+// answer instead of the generic voucher list.
+function isVoucherExpiryRequest(message) {
+    const msg = String(message || "").toLowerCase();
+    return (
+        msg.includes("expire") ||
+        msg.includes("expiry") ||
+        msg.includes("expiring") ||
+        msg.includes("valid until") ||
+        msg.includes("still valid") ||
+        msg.includes("run out") ||
+        (msg.includes("how long") && isVoucherRequest(msg))
+    );
+}
+
+// Pulls out anything shaped like a voucher code (e.g. "SAVE5", "WELCOME15")
+// from a free-text message, so "when does SAVE5 expire" / "do I have a SAVE5
+// voucher" get answered about that exact code instead of the whole list.
+function extractVoucherCodeCandidates(message) {
+    const matches = String(message || "").match(/\b[A-Za-z]+\d[A-Za-z0-9]*\b/g) || [];
+    return [...new Set(matches.map((m) => m.toUpperCase()))];
+}
+
 // "speak to a real person" — the customer wants out of the bot, not another answer.
 function isHumanAgentRequest(message) {
     const msg = String(message || "").toLowerCase();
@@ -1379,21 +1403,11 @@ function isStoreInfoRequest(message) {
     return STORE_WORD_RE.test(msg) && STORE_INFO_WORD_RE.test(msg);
 }
 
-// Queries Voucher collection for vouchers the customer can still redeem
+// Vouchers this customer can still redeem — active, unexpired, and not already
+// used on one of their past orders. Each voucher is single-use per customer, so
+// this list (and therefore what the chatbot reports) differs per customer.
 async function getAvailableVouchers(userId) {
-    const now = new Date();
-
-    const activeVouchers = await Voucher.find({
-        isActive: true,
-        $or: [{ expiresAt: null }, { expiresAt: { $gte: now } }],
-    }).sort({ createdAt: 1 }).lean();
-
-    const usedOrders = await Order.find({ userId, voucherCode: { $ne: null } })
-        .select("voucherCode")
-        .lean();
-    const usedCodes = new Set(usedOrders.map((order) => order.voucherCode));
-
-    return activeVouchers.filter((voucher) => !usedCodes.has(voucher.code));
+    return Voucher.findAvailableForUser(userId);
 }
 // End of User Story #202
 
@@ -2918,6 +2932,30 @@ const REPLY_STRINGS = {
         ms: "Anda tiada baucar yang tersedia sekarang. Semak semula untuk tawaran baharu!",
         ta: "தற்போது உங்களிடம் வவுச்சர்கள் இல்லை. புதிய சலுகைகளுக்காக மீண்டும் பாருங்கள்!",
     },
+    voucherExpiryTitle: {
+        en: "Here's when your vouchers expire:",
+        zh: "以下是您的优惠券到期时间：",
+        ms: "Berikut adalah tarikh luput baucar anda:",
+        ta: "உங்கள் வவுச்சர்கள் காலாவதியாகும் தேதிகள் இதோ:",
+    },
+    expiresOnLabel: {
+        en: "expires",
+        zh: "到期日",
+        ms: "luput pada",
+        ta: "காலாவதியாகும் தேதி",
+    },
+    noExpiryLabel: {
+        en: "no expiry date",
+        zh: "无到期日",
+        ms: "tiada tarikh luput",
+        ta: "காலாவதி தேதி இல்லை",
+    },
+    expiringSoonLabel: {
+        en: "expiring soon!",
+        zh: "即将到期！",
+        ms: "akan tamat tempoh tidak lama lagi!",
+        ta: "விரைவில் காலாவதியாகும்!",
+    },
     noStoresAvailable: {
         en: "Sorry, I couldn't find any store information right now. Please try again shortly.",
         zh: "抱歉，暂时无法获取门店信息，请稍后再试。",
@@ -3701,6 +3739,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
                     discountValue: v.discountValue,
                     maxDiscount: v.maxDiscount,
                     minSpend: v.minSpend,
+                    expiresAt: v.expiresAt,
                 })),
             };
             replyParts.push(
@@ -4142,6 +4181,56 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
 
         const vouchers = await getAvailableVouchers(userId);
 
+        // A specific code was named (e.g. "when does SAVE5 expire", "do I have a
+        // SAVE5 voucher") — answer about that exact voucher rather than the whole
+        // list, and say plainly when the customer doesn't have it (already used,
+        // expired, or never existed) instead of just listing what they do have.
+        const codeCandidates = extractVoucherCodeCandidates(intentMessage);
+        if (codeCandidates.length > 0) {
+            const matchedVoucher = vouchers.find((v) => codeCandidates.includes(v.code));
+
+            if (!matchedVoucher) {
+                const targetCode = codeCandidates[0];
+                const existingVoucher = await Voucher.findOne({ code: targetCode }).lean();
+
+                let reasonNote = "";
+                if (existingVoucher && (await Voucher.hasUserUsedVoucher(userId, targetCode))) {
+                    reasonNote = " You've already used it.";
+                } else if (
+                    existingVoucher &&
+                    (!existingVoucher.isActive ||
+                        (existingVoucher.expiresAt && new Date(existingVoucher.expiresAt) < new Date()))
+                ) {
+                    reasonNote = " It's no longer active.";
+                }
+
+                const reply =
+                    `You don't have a ${targetCode} voucher right now.${reasonNote}<br><br>` +
+                    `<button class="chat-nav-btn-compact" onclick="handleVouchers()">${t('exploreRewardsBtn')}</button>`;
+
+                await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+                await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+                return { reply, system_action: { ui_navigation: "none" } };
+            }
+
+            const expiryText = matchedVoucher.expiresAt
+                ? `${t('expiresOnLabel')} ${new Date(matchedVoucher.expiresAt).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}`
+                : t('noExpiryLabel');
+            const discountText = matchedVoucher.discountType === "percentage"
+                ? `${matchedVoucher.discountValue}% off${matchedVoucher.maxDiscount != null ? ` (up to S$${Number(matchedVoucher.maxDiscount).toFixed(2)})` : ""}`
+                : `S$${Number(matchedVoucher.discountValue).toFixed(2)} off`;
+
+            const reply =
+                `Yes — you have <strong>${matchedVoucher.code}</strong> (${matchedVoucher.title}): ${discountText}, ${expiryText}.<br><br>` +
+                `<button class="chat-nav-btn-compact" onclick="handleVouchers()">${t('exploreRewardsBtn')}</button>`;
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+            return { reply, system_action: { ui_navigation: "none" } };
+        }
+
         // Deterministic, not Gemini-generated — same reasoning as the #203 order status card:
         // guarantees the voucher list (code, description, minimum spend) is always accurate and
         // always shown, and sidesteps the duplicate/paraphrased-CTA issue Gemini free-text had.
@@ -4165,8 +4254,48 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
                 discountValue: v.discountValue,
                 maxDiscount: v.maxDiscount,
                 minSpend: v.minSpend,
+                expiresAt: v.expiresAt,
             })),
         };
+
+        // "When does my voucher expire?" / "which voucher expires soonest?" get a
+        // date-specific answer instead of the generic list, built from the same
+        // per-customer voucher set so it stays consistent with what's redeemable.
+        if (isVoucherExpiryRequest(intentMessage)) {
+            const now = Date.now();
+            const sorted = [...vouchers].sort((a, b) => {
+                const aTime = a.expiresAt ? new Date(a.expiresAt).getTime() : Infinity;
+                const bTime = b.expiresAt ? new Date(b.expiresAt).getTime() : Infinity;
+                return aTime - bTime;
+            });
+
+            const lines = sorted.map((v) => {
+                if (!v.expiresAt) {
+                    return `• <strong>${v.code}</strong> (${v.title}) — ${t('noExpiryLabel')}`;
+                }
+                const daysLeft = Math.ceil((new Date(v.expiresAt).getTime() - now) / 86400000);
+                const dateStr = new Date(v.expiresAt).toLocaleDateString("en-SG", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                });
+                const soonNote = daysLeft <= 7 ? ` — ${t('expiringSoonLabel')}` : "";
+                return `• <strong>${v.code}</strong> (${v.title}) — ${t('expiresOnLabel')} ${dateStr}${soonNote}`;
+            });
+
+            const expiryReply =
+                `${t('voucherExpiryTitle')}<br><br>${lines.join("<br>")}<br><br>` +
+                `<button class="chat-nav-btn-compact" onclick="handleVouchers()">${t('exploreRewardsBtn')}</button>`;
+
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: expiryReply });
+
+            return {
+                reply: expiryReply,
+                voucherCard,
+                system_action: { ui_navigation: "none" },
+            };
+        }
 
         // Vouchers page link always appears, and always in the correct language via REPLY_STRINGS —
         // Display a button to view all vouchers

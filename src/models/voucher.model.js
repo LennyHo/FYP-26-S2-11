@@ -1,6 +1,7 @@
 // User Story Architecture Trace — voucher.model.js
 
 const mongoose = require("mongoose");
+const Order = require("./order.model");
 
 const voucherSchema = new mongoose.Schema(
   {
@@ -42,6 +43,39 @@ voucherSchema.statics.calculateDiscount = function calculateDiscount(voucher, su
   }
 
   return Math.round(Math.min(Math.max(discount, 0), amount) * 100) / 100;
+};
+
+// A voucher is single-use per customer: once it appears on one of the
+// customer's orders it counts as redeemed and is never offered to them again.
+voucherSchema.statics.hasUserUsedVoucher = async function hasUserUsedVoucher(userId, code) {
+  if (!userId || !code) return false;
+
+  const usedOrder = await Order.exists({
+    userId,
+    voucherCode: String(code).trim().toUpperCase(),
+  });
+
+  return Boolean(usedOrder);
+};
+
+// Active, unexpired vouchers minus the ones this customer has already redeemed —
+// this is the per-customer voucher list (each customer sees a different set).
+voucherSchema.statics.findAvailableForUser = async function findAvailableForUser(userId) {
+  const now = new Date();
+
+  const activeVouchers = await this.find({
+    isActive: true,
+    $or: [{ expiresAt: null }, { expiresAt: { $gte: now } }],
+  }).sort({ createdAt: 1 }).lean();
+
+  if (!userId) return activeVouchers;
+
+  const usedOrders = await Order.find({ userId, voucherCode: { $ne: null } })
+    .select("voucherCode")
+    .lean();
+  const usedCodes = new Set(usedOrders.map((order) => order.voucherCode));
+
+  return activeVouchers.filter((voucher) => !usedCodes.has(voucher.code));
 };
 
 module.exports = mongoose.model("Voucher", voucherSchema);

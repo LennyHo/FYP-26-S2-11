@@ -204,7 +204,8 @@ export default function Checkout() {
     useEffect(() => {
         async function loadVouchers() {
             try {
-                const response = await getVouchers();
+                const currentUser = getStoredUser();
+                const response = await getVouchers(currentUser?.id);
                 setVouchers(response.data || []);
             } catch (error) {
                 console.error("[DripTea vouchers]", error);

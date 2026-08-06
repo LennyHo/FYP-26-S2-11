@@ -194,9 +194,12 @@ export async function syncStoredCartFromBackend(userId: string): Promise<DripTea
 
 // ── Vouchers ──────────────────────────────────────────────────────────────────
 
-// Fetches all vouchers the customer can apply at checkout. GET /api/vouchers
-export function getVouchers() {
-  return requestJson<{ ok: boolean; data: DripTeaVoucher[] }>('/api/vouchers');
+// Fetches the vouchers this customer can still apply at checkout — vouchers
+// they've already redeemed are excluded, so the list differs per customer.
+// GET /api/vouchers
+export function getVouchers(userId?: string) {
+  const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+  return requestJson<{ ok: boolean; data: DripTeaVoucher[] }>(`/api/vouchers${query}`);
 }
 
 // Validates a voucher against the cart and previews the discount. POST /api/cart/apply-voucher

@@ -8,18 +8,12 @@ import { getStoredUser, PENDING_VOUCHER_KEY } from "../../utils/api.base";
 import type { DripTeaVoucher } from "../../utils/api.base";
 import "./Voucher.css";
 
-// Client-only display details (validity copy) for each voucher code.
-// Title, code, and terms all come from the vouchers collection — this map must
-// NOT duplicate those, it only adds what the database has no field for.
-const VOUCHER_DISPLAY: Record<string, { validity: string }> = {
-  BOGO2026: { validity: "Valid until 31 Dec 2026" },
-  HALF50: { validity: "Valid until 31 Dec 2026" },
-  FREE1CUP: { validity: "Valid until 31 Dec 2026" },
-  SAVE5: { validity: "Valid until 31 Dec 2026" },
-  WELCOME15: { validity: "Valid until 31 Dec 2026" },
-  TOPUP20: { validity: "Valid until 31 Dec 2026" },
-};
-const DEFAULT_DISPLAY = { validity: "Valid while stocks last" };
+function formatValidity(expiresAt?: string | null) {
+  if (!expiresAt) return "Valid while stocks last";
+  const date = new Date(expiresAt);
+  if (Number.isNaN(date.getTime())) return "Valid while stocks last";
+  return `Valid until ${date.toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}`;
+}
 
 type UsedVoucher = {
   orderId: string;
@@ -49,7 +43,8 @@ export default function Voucher() {
   useEffect(() => {
     async function loadVouchers() {
       try {
-        const response = await getVouchers();
+        const currentUser = getStoredUser();
+        const response = await getVouchers(currentUser?.id);
         setVouchers(response.data || []);
       } catch (error) {
         console.error("[DripTea vouchers]", error);
@@ -126,14 +121,12 @@ export default function Voucher() {
         {activeSubTab === "My Vouchers" ? (
           <div className="voucher-list">
             {vouchers.map((voucher) => {
-              const display = VOUCHER_DISPLAY[voucher.code] || DEFAULT_DISPLAY;
-
               return (
                 <article key={voucher.code} className="voucher-card">
                   <img src="/main_logo.svg" alt="DripTea" className="voucher-card-image" />
                   <div className="voucher-card-body">
                     <h2 className="voucher-card-title">{voucher.title}</h2>
-                    <p className="voucher-card-validity">{display.validity}</p>
+                    <p className="voucher-card-validity">{formatValidity(voucher.expiresAt)}</p>
                     <p className="voucher-card-code">
                       Referral code: <strong>{voucher.code}</strong>
                     </p>

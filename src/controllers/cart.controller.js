@@ -137,15 +137,10 @@ async function updateCartItem(req, res) {
 }
 
 // #18 - As a customer, I want to see which vouchers I can apply during checkout.
-// Returns all active, unexpired vouchers from the vouchers collection.
 async function getActiveVouchers(req, res) {
   try {
-    const vouchers = await Voucher.find({
-      isActive: true,
-      $or: [{ expiresAt: null }, { expiresAt: { $gte: new Date() } }],
-    })
-      .sort({ createdAt: 1 })
-      .lean();
+    const customerId = req.query.customerId || req.query.userId;
+    const vouchers = await Voucher.findAvailableForUser(customerId);
 
     return res.json({
       ok: true,
@@ -157,6 +152,7 @@ async function getActiveVouchers(req, res) {
         discountValue: voucher.discountValue,
         maxDiscount: voucher.maxDiscount,
         minSpend: voucher.minSpend,
+        expiresAt: voucher.expiresAt,
       })),
     });
   } catch (error) {
@@ -199,6 +195,13 @@ async function applyVoucher(req, res) {
       return res.status(404).json({
         ok: false,
         message: "Voucher is invalid or has expired.",
+      });
+    }
+
+    if (await Voucher.hasUserUsedVoucher(finalCustomerId, voucher.code)) {
+      return res.status(400).json({
+        ok: false,
+        message: "You've already used this voucher.",
       });
     }
 

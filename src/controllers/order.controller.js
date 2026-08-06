@@ -179,8 +179,9 @@ async function processPayment(req, res) {
 
     if (voucherCode) {
         const voucher = await Voucher.findValidByCode(voucherCode);
+        const alreadyUsed = voucher && (await Voucher.hasUserUsedVoucher(userId, voucher.code));
 
-        if (voucher && subtotal >= Number(voucher.minSpend || 0)) {
+        if (voucher && !alreadyUsed && subtotal >= Number(voucher.minSpend || 0)) {
             discountAmount = Voucher.calculateDiscount(voucher, subtotal);
             appliedVoucherCode = voucher.code;
         }

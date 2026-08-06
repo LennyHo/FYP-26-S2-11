@@ -9,6 +9,7 @@ interface VoucherItem {
     discountValue: number;
     maxDiscount?: number | null;
     minSpend?: number;
+    expiresAt?: string | null;
 }
 
 export interface VoucherCardData {
@@ -33,6 +34,13 @@ function formatMinSpend(voucher: VoucherItem) {
     return minSpend > 0 ? `Min. spend S$ ${minSpend.toFixed(2)}` : "No minimum spend";
 }
 
+function formatExpiry(voucher: VoucherItem) {
+    if (!voucher.expiresAt) return "No expiry date";
+    const date = new Date(voucher.expiresAt);
+    if (Number.isNaN(date.getTime())) return "No expiry date";
+    return `Expires ${date.toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}`;
+}
+
 export default function VoucherCard({ voucherCard }: Props) {
     const vouchers = Array.isArray(voucherCard?.vouchers) ? voucherCard.vouchers : [];
     if (!vouchers.length) return null;
@@ -53,6 +61,7 @@ export default function VoucherCard({ voucherCard }: Props) {
             <div className={styles.metaRow}>
                 <span className={styles.codePill}>{voucher.code}</span>
                 <span className={styles.minSpend}>{formatMinSpend(voucher)}</span>
+                <span className={styles.minSpend}>{formatExpiry(voucher)}</span>
             </div>
             </div>
         ))}
