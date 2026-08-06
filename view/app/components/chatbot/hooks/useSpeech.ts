@@ -109,7 +109,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
   const isSpeakDetectedRef = useRef(false);
   const hadVoiceInChunkRef = useRef(false); // did real voice occur in the current recording chunk
   const noiseFloorRef = useRef(8); // ambient noise baseline — calibrated during grace period
-  const setInputRef = useRef<((value: string) => void) | undefined>(undefined);
+  const setInputRef = useRef<React.Dispatch<React.SetStateAction<string>> | undefined>(undefined);
   // Keep for interface compat with useChatbotState (accumulatedText / send timer not used in EL mode)
   const accumulatedTextRef = useRef('');
   const sendDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -295,6 +295,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
       };
 
       recognition.onresult = (event: any) => {
+        if (activeMicRecognitionRef.current !== recognition) return;
         let interim = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const t = event.results[i][0].transcript;
@@ -307,7 +308,7 @@ export function useSpeech({ sendOverlayMessageRef }: UseSpeechProps) {
 
       recognition.onend = () => {
         if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
-        if (accumulated.trim()) setInputRef.current?.(accumulated.trim());
+        if (accumulated.trim()) setInputRef.current?.(prev => (prev.trim() ? accumulated.trim() : prev));
         if (activeMicRecognitionRef.current === recognition) activeMicRecognitionRef.current = null;
         setIsListening(false);
         isListeningRef.current = false;

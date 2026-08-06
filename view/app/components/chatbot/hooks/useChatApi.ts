@@ -152,13 +152,15 @@ export function useChatApi({
     if (!messageText.trim()) return;
     const convId = ensureConversationId();
 
-    if (shouldSpeak && recognitionRef.current && isListening) {
+    if (recognitionRef.current && (isListening || isListeningRef.current)) {
       recognitionRef.current.stop();
       setIsListening(false);
       isListeningRef.current = false;
-      setIsSpeakMode(false);
-      speakModeRef.current = false;
-      setHideQuickPrompts(true);
+      if (shouldSpeak) {
+        setIsSpeakMode(false);
+        speakModeRef.current = false;
+        setHideQuickPrompts(true);
+      }
     }
 
     setMessages(prev => [...prev, { id: Date.now().toString(), text: messageText, isUser: true }]);
