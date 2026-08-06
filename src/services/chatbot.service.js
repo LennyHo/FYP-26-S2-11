@@ -1264,11 +1264,6 @@ async function getOrderStatus(userId, orderId) {
         : await Order.find({ userId }, null, { sort: { createdAt: -1 }, limit: 3 }).lean();
 
     return Promise.all(orders.map(async (order) => {
-        // The tracking page advances status client-side on a timer, which only
-        // runs while that page is open. A customer who checks the chatbot
-        // instead would otherwise see a stuck "pending" order forever, even
-        // though the drink has actually finished preparing — so derive (and
-        // persist) the up-to-date status here too, from the same timers.
         const liveStatus = deriveCurrentStatus(order);
         if (liveStatus !== order.status) {
             await Order.updateOne({ _id: order._id }, { $set: { status: liveStatus } });
@@ -1326,11 +1321,6 @@ function isOrderCancellationRequest(message) {
 function isDeliveryOrPaymentQuestion(message) {
     const msg = String(message || "").toLowerCase();
 
-    // "where is my delivery", "check my delivery status" etc. are asking to track a
-    // specific order, not asking general delivery-service FAQ info (coverage areas,
-    // fees, how long delivery normally takes) — this check runs before
-    // isTrackOrderRequest, and without this guard "delivery" + "where"/"can you"
-    // alone was enough to win, so personal tracking questions never reached it.
     const isPersonalOrderTracking =
         /\bmy\s+(order|delivery|drink)\b[^.!?]*\b(status|ready|track)\b/i.test(msg) ||
         /\b(status|ready|track)\b[^.!?]*\bmy\s+(order|delivery|drink)\b/i.test(msg) ||
@@ -1348,6 +1338,9 @@ function isDeliveryOrPaymentQuestion(message) {
 // Detects a request to negotiate a custom discount
 function isDiscountNegotiation(message) {
     const msg = String(message || "").toLowerCase();
+    // "the cheaper one/option" etc. is the customer picking between items already shown,
+    // not asking us to lower a price — exclude that comparison phrasing.
+    if (/\bcheaper\s+(one|option|item|drink|choice|thing)\b/.test(msg)) return false;
     return /\b(discount|cheaper|% off|percent off|lower the price|reduce the price|make it cheaper|price down|give me a deal)\b/.test(msg);
 }
 
@@ -1367,9 +1360,7 @@ function filterStoresByMention(stores, message) {
     return matched.length > 0 ? matched : stores;
 }
 
-// Store location/hours — matches questions about outlets, addresses, or opening times.
-// isNavigationRequest (checked earlier) already claims "where is the store page" style phrasing,
-// so it's safe here to match on any store/outlet word paired with an info-seeking word.
+// Detects a request for store hours, address, or location.
 const STORE_WORD_RE = /\b(store|stores|outlet|outlets|orchard|jurong east)\b/;
 const STORE_INFO_WORD_RE = /\b(available|list|where|which|what|any|all|how many|nearest|hours|location|locations|address|open|close|opens|closes|opening|info|details)\b/;
 
@@ -1664,10 +1655,7 @@ function resolveLastSugarFromHistory(history) {
     return null;
 }
 
-// Which of size/ice/sugar/toppings are already answered, scanned from the FULL history — outside
-// the 6-message window the AI sees it re-asks answered steps or skips to the summary. User replies
-// only (option lines would false-match); stops at "added to your cart". currentMessage MUST be
-// passed — the turn's own message isn't in history until after the AI call.
+
 function resolveOrderProgressFromHistory(history, currentMessage = null) {
     if (!Array.isArray(history)) return null;
 
@@ -2940,11 +2928,6 @@ const REPLY_STRINGS = {
 
 const PHASE_BY_STATUS = { pending: 1, paid: 1, preparing: 2, ready: 3 };
 
-// Builds the chatbot's order-status card from a live order (already run through
-// deriveCurrentStatus by the caller). Pulled out of handleChatMessage so the
-// live-refresh endpoint (GET /orders/:id/status-card) can build the exact same
-// card shape the chat message originally showed, without duplicating the
-// phase/label/translation logic.
 function buildOrderStatusCard(activeOrder, detectedLang) {
     const t = (key) => REPLY_STRINGS[key]?.[detectedLang] ?? REPLY_STRINGS[key]?.en ?? key;
     const phase = PHASE_BY_STATUS[activeOrder.status];
@@ -2982,32 +2965,23 @@ const INTENT_SEGMENT_SPLIT_RE = new RegExp(
     "i"
 );
 
-// Splits off a trailing "...to my cart, then guide me to my cart" navigation clause from an
-// otherwise single-order add-to-cart message. Only fires right before an actual nav-trigger
-// phrase, so ordinary customization commas/"and"s ("no sugar and no ice") are left untouched.
+
 const TRAILING_NAV_SPLIT_RE = /,?\s*(?:and\s+then|then|and)\s+(?=\b(?:lead me to|guide me to|take me to|bring me to|navigate to|direct me to|redirect me to|switch to the|go to)\b)/i;
+
+const COMPARATIVE_DRINK_RE = /\bthe\s+(cheaper|cheapest|pricier|pricey|more expensive|most expensive|dearer)\s+(?:one|option|item|drink|choice)\b/i;
 
 // Splits a compound message into per-intent segments on ?/!/./and/also/etc.
 function splitIntentSegments(message) {
     const msg = String(message || "").trim();
     if (isMultiItemOrder(msg)) return [msg];
 
-    // A single one-shot order ("give me X, regular, normal ice, 50 percent sugar") uses commas to
-    // enumerate customization details, not to chain separate requests. Splitting it would strand
-    // "regular"/"50 percent sugar" in their own weakly-classified fragments, so the drink-name
-    // fragment reaches the ordering logic stripped of the customization the customer just gave.
+    
     if (isAddToCartRequest(msg)) {
-        // Still split off a trailing navigation request — "add X to my cart, then guide me to my
-        // cart" is an add-to-cart intent AND a navigation intent, not one order with extra commas.
         const navParts = msg.split(TRAILING_NAV_SPLIT_RE).map((p) => p.trim()).filter(Boolean);
         if (navParts.length === 2) return navParts;
         return [msg];
     }
 
-    // "which drink has the lowest sugar and without milk" — the "and without milk" clause narrows
-    // the ranking query itself (buildHealthRankingReply filters it out), it isn't a second request.
-    // Splitting on "and" here would strand "without milk" as its own unclassifiable fragment and
-    // rank the whole menu instead of just the non-milk drinks.
     if (isHealthRankingQuery(msg) && extractNegatedAttributes(msg).length > 0) return [msg];
 
     return msg
@@ -3032,19 +3006,10 @@ function classifyIntentSegment(segment) {
     if (isPurchaseHistory(segment)) return "history";
     if (isStoreInfoRequest(segment)) return "store";
     if (isNutritionFactQuestion(segment) || isNutriGradeQuestion(segment)) return "nutrition";
-    // "what drinks can I take as a diabetic" — no recommendation/ranking keyword, so it was
-    // falling through unclassified. Left unrecognised here, a compound message like "what time
-    // does X open? what drinks can I take as a diabetic?" only had one classified family
-    // ("store"), so multi-intent merging never triggered and the health-condition handler's
-    // early return (further down) silently swallowed the store-hours answer.
     if (isHealthConditionRequest(segment)) return "health";
-    // A receipt/order/bill request is about something the customer already bought.
-    // isRecommendationRequest is broad enough to claim those, which turned "show me my
-    // last receipt" into a page of drink suggestions.
     if (/\b(receipt|invoice|bill)\b/i.test(segment)) return "history";
     if (isRecommendationRequest(segment) || isHealthRankingQuery(segment)) return "recommend";
-    // Nothing specific recognised it, return to general topic.
-    // never triggered, and the off-topic half vanished with no acknowledgement at all.
+   
     return "general";
 }
 
@@ -3099,9 +3064,6 @@ function mergeIntentResults(results) {
         .map((r) => r?.system_action?.ui_navigation)
         .find((nav) => nav && nav !== "none");
 
-    // Each answer travels with its own cards so the UI can render them together.
-    // Flattening everything into one list put a "details just below" sentence above
-    // an unrelated stack of drink cards.
     const segments = results.map((result) => ({
         reply: textFor(result),
         voucherCard: result?.voucherCard ?? null,
@@ -3143,8 +3105,6 @@ function mergeIntentResults(results) {
     return merged;
 }
 
-// ── One-shot order slot-filling ────────────────────────────────────────────
-// A one-shot order needs drink, size, ice, sugar, and an explicit toppings answer before adding to the cart.
 const ORDER_FIELD_QUESTIONS = {
     size: "What size would you like?<br>Regular / Large",
     ice: "What ice level would you like?<br>No Ice / Less Ice / Normal Ice / Hot",
@@ -3154,9 +3114,6 @@ const ORDER_FIELD_QUESTIONS = {
 
 const ORDER_FIELD_SEQUENCE = ["size", "ice", "sugar", "toppings"];
 
-// Next field to ask about. Walks forward from the furthest answered field, then comes back for
-// anything skipped — a plain "first unanswered" scan jumps backwards when the AI-led flow skips a
-// step (it sometimes opens with ice), asking for size right after sugar. == null since [] is valid.
 function nextOrderFieldName(state) {
     const isAnswered = (field) => (field === "toppings" ? state.toppings != null : Boolean(state[field]));
     const answeredIndexes = ORDER_FIELD_SEQUENCE.map((f, i) => (isAnswered(f) ? i : -1));
@@ -3273,13 +3230,7 @@ async function continueOrderDraft(draft, replyMessage, { activeConversationId, u
     if (missing) return await askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage });
     return await finalizeOrderDraft(draft, { activeConversationId, userId, safeMessage });
 }
-// ── End one-shot order slot-filling ────────────────────────────────────────
 
-// Main chatbot entry point: detects intent (or multiple intents) in one message and
-// routes it to the matching handler above, falling back to the Gemini AI reply.
-// Renamed to *Core because the exported handleChatMessage (below, near module.exports) wraps this
-// with a final language safety gate — kept separate so the multi-intent recursion below (which
-// calls itself per-segment) isn't gated on every sub-segment, only once on the merged result.
 async function handleChatMessageCore({ message, conversationId, userId, isQuickPrompt = false, skipMultiIntent = false, historyOverride = null, langOverride = null }) {
     const safeMessage = String(message || "").trim();
 
@@ -3294,14 +3245,6 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     const history = historyOverride || await ChatbotSession.getConversationHistory(activeConversationId);
     const recentHistory = history.slice(-6);
 
-    // Detect language and translate to English for intent matching.
-    // All keyword-matching functions only understand English, so non-English messages are
-    // translated internally before intent detection. The original safeMessage is kept for
-    // Gemini (which replies in the user's language via the system prompt instruction).
-    // langOverride is set on the per-segment recursive calls below: the segment text is already
-    // the English translation of the parent message, so it must not be re-detected (it would
-    // read as "en") or re-translated — the parent's real detected language is carried through
-    // so each segment answers in the customer's actual language instead of English.
     const detectedLang = langOverride || detectMessageLanguage(safeMessage);
     const intentMessage = (!langOverride && detectedLang !== 'en')
         ? await aiClient.translateToEnglish(safeMessage).catch(() => safeMessage)
@@ -3310,18 +3253,12 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     // Shorthand for localised short replies on non-Gemini paths.
     const t = (key) => REPLY_STRINGS[key]?.[detectedLang] ?? REPLY_STRINGS[key]?.en ?? key;
 
-    // Moved up from just before the health-ranking branch so both it AND the compound
-    // "recommend + navigate" branch below (which runs earlier, before isNavigationRequest) can use it.
-    // True when the customer is mid-order and just adjusting their pending drink ("actually make it
-    // less sugar") — that's a customization for the order flow below, not a request to rank the menu.
     const midOrderModifier =
         hasActiveOrderFlow(recentHistory) &&
         /\b(make it|change it|actually|instead|switch to)\b/.test(intentMessage.toLowerCase()) &&
         /\b(less|more|no|extra|half|quarter|zero|normal|regular|large|small|sugar|sweet|ice)\b/.test(intentMessage.toLowerCase());
 
     // Quick prompt button clicks bypass all hardcoded routes and go directly to Gemini.
-    // The relevant drinks are still fetched from the DB and injected as context so Gemini
-    // can write a natural response, while the frontend still receives the cards to render.
     if (isQuickPrompt) {
         return await handleQuickPromptWithGemini({ safeMessage, activeConversationId, userId, history: recentHistory });
     }
@@ -3351,11 +3288,6 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
         gibberishStreak.delete(activeConversationId);
     }
 
-    // Two or three requests in one message: run each through this same chain and merge the
-    // results, so an action never gets dropped because an informational branch matched first.
-    // Segments are always split from intentMessage (the English translation for non-English
-    // input), but each segment is answered in the customer's real language via langOverride
-    // below — not the segment's own (English) text — so this isn't limited to English input.
     if (!skipMultiIntent) {
         const segments = splitIntentSegments(intentMessage);
         if (segments.length >= 2) {
@@ -3375,16 +3307,47 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
             const families = chosen.map((entry) => entry.family);
             if (families.length >= 2 && !hasConflictingIntents(families)) {
                 console.log("[ChatbotService] Multi-intent:", families.join(" + "));
+
                 const results = [];
+                let lastRecommendedDrinks = null;
                 for (const entry of chosen) {
-                    results.push(await handleChatMessageCore({
+                    // 1) "...jasmine drinks? I'll take the cheaper one." — the comparison can only
+                    // be resolved against the drinks the browse segment just returned.
+                    const cmpMatch = entry.segment.match(COMPARATIVE_DRINK_RE);
+                    if (cmpMatch && lastRecommendedDrinks?.length > 0) {
+                        const wantsCheaper = /cheap/i.test(cmpMatch[1]);
+                        const picked = [...lastRecommendedDrinks].sort((a, b) =>
+                            wantsCheaper ? (a.price - b.price) : (b.price - a.price)
+                        )[0];
+                        if (picked) entry.segment = entry.segment.replace(COMPARATIVE_DRINK_RE, picked.name);
+                    }
+
+                    if (entry.family === "nutrition" || entry.family === "health") {
+                        const ownDrink = await findDrinkByName(entry.segment);
+                        if (!ownDrink) {
+                            for (const other of chosen) {
+                                if (other === entry) continue;
+                                const siblingDrink = await findDrinkByName(other.segment);
+                                if (siblingDrink) {
+                                    entry.segment = `${siblingDrink.name} — ${entry.segment}`;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    const result = await handleChatMessageCore({
                         message: entry.segment,
                         conversationId: activeConversationId,
                         userId,
                         skipMultiIntent: true,
                         historyOverride: history,
                         langOverride: detectedLang,
-                    }));
+                    });
+                    results.push(result);
+                    if (Array.isArray(result.recommendedDrinks) && result.recommendedDrinks.length > 0) {
+                        lastRecommendedDrinks = result.recommendedDrinks;
+                    }
                 }
                 return mergeIntentResults(results);
             }
