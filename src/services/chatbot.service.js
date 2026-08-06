@@ -149,6 +149,43 @@ function isNutritionFactQuestion(message) {
     );
 }
 
+// What is the benefits of a certain beverage
+function isDrinkBenefitQuestion(message) {
+    const msg = String(message || "").toLowerCase();
+    return (
+        msg.includes("benefit") ||
+        msg.includes("why should i drink") ||
+        msg.includes("why drink") ||
+        msg.includes("what's good about") ||
+        msg.includes("what is good about") ||
+        msg.includes("what does it do for me") ||
+        msg.includes("what does this do for me")
+    );
+}
+
+const INGREDIENT_BENEFITS = {
+    "black tea": "a fully oxidised tea with antioxidants and a moderate caffeine lift",
+    "green tea": "rich in antioxidants (catechins), with a lighter caffeine kick than black tea",
+    "oolong tea": "a partially oxidised tea, offering antioxidants with a smooth, mellow taste",
+    "da hong pao oolong tea": "a roasted oolong tea known for its rich aroma and antioxidants",
+    "jasmine tea": "green tea scented with jasmine flowers for a calming floral aroma",
+    "jasmine flowers": "adds a calming floral aroma to the tea",
+    "osmanthus-infused tea": "infused with osmanthus blossom for a delicate floral sweetness",
+    "matcha powder": "stone-ground green tea, more concentrated in antioxidants and caffeine than brewed green tea",
+    "milk": "adds calcium and a creamy texture",
+    "lemon juice": "a natural source of vitamin C with a refreshing citrus tang",
+    "grapefruit syrup": "citrus flavour with a bright, tangy sweetness",
+    "lychee syrup": "fruity flavour and natural sweetness",
+    "peach syrup": "fruity flavour and natural sweetness",
+    "mango syrup": "fruity flavour and natural sweetness",
+    "watermelon syrup": "fruity, refreshing flavour",
+    "strawberry puree": "fruity flavour made from real strawberries",
+    "cranberry": "tart fruit flavour, naturally rich in antioxidants",
+    "taro": "a naturally sweet, creamy root vegetable that adds flavour and texture",
+    "dark chocolate": "rich cocoa flavour with antioxidant flavonoids",
+};
+
+
 // Detects queries browsing drinks by a specific Nutri-Grade letter, e.g. "I want a B grade drink", "show me grade C drinks"
 function isGradeFilterRequest(message) {
     const msg = String(message || "").toLowerCase();
@@ -164,9 +201,7 @@ function extractRequestedGrade(message) {
 
 // Detects queries asking which drinks have low/high sugar or low/high calories.
 function isHealthRankingQuery(message) {
-    // Normalise hyphens to spaces so "low-sugar"/"high-calorie" match the same phrase checks as
-    // "low sugar"/"high calorie" below — otherwise a hyphenated phrasing silently fails every
-    // check here and falls through to the generic recommendation search instead.
+    
     const msg = String(message || "").toLowerCase().replace(/-/g, " ");
 
     // "less sugar" / "less sweet" used as an order customization — not a health ranking query.
@@ -3701,6 +3736,43 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
             ta: `${drink.name} இல் ${sugarG}g சர்க்கரை மற்றும் ${calKcal} கலோரி உள்ளது, Nutri-Grade ${grade}.`,
         };
         const reply = NUTRITION_FACT_TEMPLATES[detectedLang] || NUTRITION_FACT_TEMPLATES.en;
+
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+        await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+
+        return { reply, system_action: { ui_navigation: "none" } };
+    }
+
+    // Benefits lookup for a specific drink — "what are the benefits of matcha latte",
+    // "why should I drink jasmine tea". Grounded in each drink's real ingredients/nutrition
+    // data rather than free-generated text, so it can't invent unfounded health claims.
+    if (isDrinkBenefitQuestion(intentMessage)) {
+        const drink = await findDrinkByName(intentMessage);
+
+        if (!drink) {
+            const reply = "Which drink would you like to know the benefits of?";
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
+            await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
+            return { reply, system_action: { ui_navigation: "none" } };
+        }
+
+        const ingredients = drink.drinkInfo?.ingredients || [];
+        const benefitLines = ingredients
+            .map((ing) => {
+                const note = INGREDIENT_BENEFITS[String(ing).toLowerCase()];
+                return note ? `• ${ing}: ${note}` : null;
+            })
+            .filter(Boolean);
+
+        const sugarG = drink.base_sugar_g ?? drink.nutritionInfo?.baseSugarG ?? 0;
+        const calKcal = drink.base_calories ?? drink.nutritionInfo?.baseCalories ?? 0;
+        const grade = String(drink.nutri_grade || drink.nutritionInfo?.nutriGrade || "").toUpperCase();
+        benefitLines.push(`• Nutri-Grade ${grade || "B"}, ${sugarG}g sugar and ${calKcal} kcal per serving.`);
+
+        const intro = drink.description ? `${drink.name} — ${drink.description}` : drink.name;
+        const reply =
+            `${intro}<br><br>Here's what stands out about it:<br>${benefitLines.join("<br>")}` +
+            `<br><br>${HEALTH_CONDITION_DISCLAIMER}`;
 
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
         await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
