@@ -15,11 +15,10 @@ An AI-powered ordering chatbot for DripTea, a bubble tea shop. Customers can cha
 8. [Frontend Setup](#frontend-setup)
 9. [Testing Connections](#testing-connections)
 10. [Creating Accounts](#creating-accounts)
-11. [Essential API Endpoints](#essential-api-endpoints)
-12. [Frontend Pages & Features](#frontend-pages--features)
-13. [Chatbot Test Prompts](#chatbot-test-prompts)
-14. [Maps & Geocoding (OneMap + Leaflet)](#maps--geocoding-onemap--leaflet)
-15. [Running Automated Tests](#running-automated-tests)
+11. [Frontend Pages & Features](#frontend-pages--features)
+12. [Chatbot Test Prompts](#chatbot-test-prompts)
+13. [Maps & Geocoding (OneMap + Leaflet)](#maps--geocoding-onemap--leaflet)
+14. [Running Automated Tests](#running-automated-tests)
 
 ---
 
@@ -309,137 +308,11 @@ There is no auto-seeded admin/staff account. `POST /api/auth/register` (used by 
 
 ---
 
-## Essential API Endpoints
-
-All backend routes (including the chatbot) are prefixed with `/api`. This is not the full list; see `test_cases/README.md` for all 47 endpoints across every route file.
-
-### Where these are called from
-
-Every backend call from the frontend goes through `requestJson()` in `view/app/utils/api.base.ts`, the single fetch helper behind every API client function below. It reads `DRIPTEA_API_BASE` / `NEXT_PUBLIC_DRIPTEA_API_BASE` (falling back to the deployed Render URL if unset), retries the next backend URL on a 5xx or network failure, and throws immediately on 4xx.
-
-| Client file | Used by | Calls (see tables below) |
-|-------------|---------|----------------------------|
-| `customerApi.ts` | Customer-facing pages: login/register, menu, cart, checkout, vouchers, profile, purchase history, feedback | Auth, Menu, Cart & Vouchers, Checkout & Orders, Purchase History/Feedback/Stores, `PATCH /api/users/:id` (self) |
-| `staffApi.ts` | `/store-staff`, `/store-staff-dashboard`, `/store-staff-voucher` | Orders (staff), Menu (write), Inventory, Vouchers (staff) |
-| `adminApi.ts` | `/user-admin-dashboard` | Users, User profiles |
-| `chatbotApi.ts` | Chatbot widget (`components/chatbot/`) | `POST /api/chat` (text/image) via the Next.js `/api/chat` proxy |
-
-Three Next.js API routes (`view/app/api/`) sit in front of the Express backend or third-party APIs:
-
-| Route (Next.js, port 3000) | Talks to | Purpose |
-|------|----------|---------|
-| `api/chat/route.ts` | Express `POST /api/chat` (port 5000) | Proxies the chat request, then enriches the reply with source links before returning it to the browser |
-| `api/tts/route.ts` | ElevenLabs directly | Bot voice (text-to-speech). Does **not** touch the Express backend |
-| `api/onemap/search/route.ts` | OneMap directly | Address search/autocomplete on checkout. Does **not** touch the Express backend |
-
-The last two exist purely to keep the ElevenLabs and OneMap API keys server-side, out of the browser bundle.
-
-### Health
-
-| Method | Endpoint              | Description                         |
-|--------|-----------------------|-------------------------------------|
-| GET    | `/api/health`         | Backend alive check                 |
-
-### Auth
-
-| Method | Endpoint                     | Body fields                      | Notes |
-|--------|------------------------------|-----------------------------------|-------|
-| GET    | `/api/auth/test`             | (none)                            | Route sanity check |
-| POST   | `/api/auth/register`         | `fullName`, `email`, `password`   | Always creates a **customer** account |
-| POST   | `/api/auth/login`            | `email`, `password`               | Works for all roles |
-| POST   | `/api/auth/reset-password`   | `email`, new password fields      | |
-| PATCH  | `/api/auth/change-password`  | current + new password fields     | Authenticated user |
-
-### Menu
-
-| Method | Endpoint                          | Description                                | Notes |
-|--------|------------------------------------|---------------------------------------------|-------|
-| GET    | `/api/menu-items`                  | List active menu items                      | |
-| GET    | `/api/menu-items?status=all`       | List all items including inactive           | |
-| GET    | `/api/menu/search`                 | Search menu items by name                   | |
-| POST   | `/api/menu-items`                  | Create a menu item                          | Store staff (`/store-staff`) |
-| PATCH  | `/api/menu-items/:id`              | Update a menu item                          | Store staff |
-| PATCH  | `/api/menu-items/:id/status`       | Toggle item active / inactive                | Store staff |
-| PATCH  | `/api/menu-items/:id/new-arrival`  | Toggle "new arrival" flag                    | Store staff |
-
-### Cart & Vouchers
-
-| Method | Endpoint                    | Description                        |
-|--------|------------------------------|-------------------------------------|
-| GET    | `/api/cart-items`            | Get cart (`?userId=<id>`)          |
-| GET    | `/api/cart-items/:id`        | Get a single cart item             |
-| POST   | `/api/cart-items`             | Add item to cart                   |
-| PATCH  | `/api/cart-items/:id`         | Update a cart item                 |
-| DELETE | `/api/cart-items/:id`         | Remove item from cart              |
-| GET    | `/api/vouchers`               | Active vouchers (customer)         |
-| GET    | `/api/vouchers/used`          | Used vouchers for a customer       |
-| POST   | `/api/cart/apply-voucher`     | Apply a voucher code to the cart   |
-| POST   | `/api/staff/vouchers`         | Create a voucher (store staff)     |
-| GET    | `/api/staff/vouchers`         | List all vouchers (store staff)    |
-| DELETE | `/api/staff/vouchers/:id`     | Delete a voucher (store staff)     |
-
-### Checkout & Orders
-
-| Method | Endpoint                        | Description                                   | Notes |
-|--------|-----------------------------------|-------------------------------------------------|-------|
-| POST   | `/api/checkout`                  | Place order & payment                          | |
-| GET    | `/api/orders`                    | List orders                                     | Requires auth + `store_staff` role |
-| GET    | `/api/orders/:id`                | Get one order                                   | |
-| GET    | `/api/orders/:id/queue`          | Order's position in the prep queue              | |
-| GET    | `/api/orders/:id/status-card`    | Live tracking-card data (polled by the chatbot) | |
-| PATCH  | `/api/orders/:id/status`         | Update order status                             | Store staff |
-| POST   | `/api/orders/test-queue`         | Seed test orders into the queue                 | Dev/testing helper |
-
-### Purchase History, Feedback & Stores
-
-| Method | Endpoint                            | Description                          |
-|--------|--------------------------------------|----------------------------------------|
-| GET    | `/api/purchase-history`              | Customer's past orders (`?userId=`)   |
-| POST   | `/api/feedback`                      | Submit feedback for an order          |
-| GET    | `/api/feedback/orders`               | Feedback for a set of orders          |
-| GET    | `/api/feedback/rating/:menuItemId`   | Average rating for a menu item        |
-| GET    | `/api/stores`                        | List store outlets                    |
-| GET    | `/api/stores/crowd`                  | Store crowd-level stats               |
-
-### Inventory (Store Staff only: `requireAuth` + `store_staff` role)
-
-| Method | Endpoint                | Description             |
-|--------|--------------------------|--------------------------|
-| GET    | `/api/inventory`         | List inventory items    |
-| GET    | `/api/inventory/:id`     | Get one inventory item  |
-| POST   | `/api/inventory`         | Create inventory item   |
-| PATCH  | `/api/inventory/:id`     | Update quantity         |
-| DELETE | `/api/inventory/:id`     | Delete inventory item   |
-
-### Users (User Admin)
-
-| Method | Endpoint                        | Description                       | Notes |
-|--------|-----------------------------------|--------------------------------------|-------|
-| GET    | `/api/users`                     | List users                          | |
-| POST   | `/api/users`                     | Create a user account (any role)    | Requires auth + `user_admin` role |
-| PATCH  | `/api/users/:id`                 | Update / suspend a user             | |
-| GET    | `/api/profiles`                  | List user profiles                  | Seeds the built-in profiles if missing |
-| POST   | `/api/profiles`                  | Create a user profile               | Requires auth + `user_admin` role |
-| PATCH  | `/api/profiles/:value`           | Update a profile's description or status | Requires auth + `user_admin` role |
-| DELETE | `/api/profiles/:value`           | Delete a profile                    | Requires auth + `user_admin` role; built-ins cannot be deleted |
-
-### Chatbot & Voice
-
-| Method | Endpoint | Body fields                              |
-|--------|----------|------------------------------------------|
-| POST   | `/api/chat`  | `message`, `conversationId`, `image` (optional base64) |
-| POST   | `/api/transcribe` | `audio` (multipart file), returns `{ text, language }` |
-
-> `/api/transcribe` is handled by the Express backend (port 5000). The TTS endpoint (`/api/tts`) is a Next.js API route (port 3000) and does not appear here.
-
----
-
 ## Frontend Pages & Features
 
 | URL Path                          | Description                                           |
 |------------------------------------|-------------------------------------------------------|
-| `/`                                | Landing page, same login screen as `/login`           |
-| `/login`                           | Unified login for customer, store staff & user admin. Redirects to `/home`, `/store-staff`, or `/user-admin-dashboard` based on the account's role |
+| `/`                                | Unified login for customer, store staff & user admin. Redirects to `/home`, `/store-staff`, or `/user-admin-dashboard` based on the account's role |
 | `/register`                        | Customer registration                                  |
 | `/forgot-password`                 | Password reset                                        |
 | `/change-password`                 | Change password (authenticated)                       |
