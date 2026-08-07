@@ -1,16 +1,3 @@
-// adminApi.ts — API calls for the user-admin actor.
-//
-// Covers user stories:
-//   User management  → getUsers          → GET /api/users
-//                    → createUserAccount → POST /api/users
-//                    → updateUser        → PATCH /api/users/:id
-//                    → suspendUser       → PATCH /api/users/:id (sets status: suspended)
-//
-// Menu management (toggleMenuItemNewArrival, updateMenuItemStatus, createMenuItem)
-// belongs to store staff and lives in staffApi.ts.
-//
-// All functions call requestJson from api.base.ts — no direct fetch calls here.
-
 import { requestJson } from './api.base';
 import type { DripTeaAddress, DripTeaUser } from './api.base';
 
@@ -56,21 +43,40 @@ export function suspendUser(userId: string) {
   });
 }
 
-// ── Role descriptions (User Profiles tab) ───────────────────────────────────────
+// ── User profiles (User Profiles tab) ─────────────────────────────────────────
 
-// Fetches the description text for each profile/role type. GET /api/role-descriptions
-export function getRoleDescriptions() {
-  return requestJson<{ ok: boolean; data: Record<string, string> }>('/api/role-descriptions');
+export type DripTeaProfile = {
+  id: string;
+  value: string;
+  label: string;
+  description: string;
+  status: 'active' | 'suspended';
+  isBuiltIn: boolean;
+  updatedAt?: string;
+};
+
+// GET /api/profiles
+export function getProfiles() {
+  return requestJson<{ ok: boolean; data: DripTeaProfile[] }>('/api/profiles');
 }
 
-// Updates the description text for a profile/role type. PATCH /api/role-descriptions/:role
-export function updateRoleDescription(role: string, description: string) {
-  return requestJson<{ ok: boolean; data: { role: string; description: string } }>(
-    `/api/role-descriptions/${encodeURIComponent(role)}`,
+// POST /api/profiles
+export function createProfile(payload: { label: string; description: string; status: string }) {
+  return requestJson<{ ok: boolean; data: DripTeaProfile }>('/api/profiles', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+// PATCH /api/profiles/:value
+export function updateProfile(value: string, payload: { description?: string; status?: string; label?: string }) {
+  return requestJson<{ ok: boolean; data: DripTeaProfile }>(
+    `/api/profiles/${encodeURIComponent(value)}`,
     {
       method: 'PATCH',
-      body: JSON.stringify({ description }),
+      body: JSON.stringify(payload),
     }
   );
 }
+
 

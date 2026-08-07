@@ -22,7 +22,7 @@
 .shell {
   position: relative;
   z-index: 1;
-  /* auto on all sides centres the card in whatever space the notice leaves over */
+  /* auto on all sides centres the card vertically */
   margin: auto;
   width: min(1040px, 100%);
   display: grid;
@@ -344,12 +344,9 @@
 }
 
 @media (max-width: 920px) {
-  /* Card sits at the top rather than centred once the layout stacks. */
+  /* Card sits at the top once the layout stacks. */
   .shell {
     margin: 0 auto auto;
-  }
-
-  .shell {
     grid-template-columns: 1fr;
   }
 

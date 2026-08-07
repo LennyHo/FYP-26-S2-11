@@ -1,22 +1,3 @@
-// customerApi.ts — API calls for the customer actor.
-//
-// Covers user stories:
-//   #191 Register account       → registerCustomer    → POST /api/auth/register
-//   #22  Login                  → loginCustomer       → POST /api/auth/login
-//   #14  Reset password         → resetPassword       → POST /api/auth/reset-password
-//   #246 Change password        → changePassword      → PATCH /api/auth/change-password
-//   #13  View menu              → getMenuItems        → GET /api/menu-items
-//   #21  Search beverages       → searchBeverage      → GET /api/menu/search
-//   #15  Add to cart            → addCartItem         → POST /api/cart-items
-//   #16  View cart              → getCartItems        → GET /api/cart-items
-//   #17  Edit cart              → updateCartItem      → PATCH /api/cart-items/:id
-//   #23  Checkout               → checkoutCart        → POST /api/checkout
-//   #19  Purchase history       → getPurchaseHistory  → GET /api/purchase-history
-//   #246 Update account         → updateUser          → PATCH /api/users/:id
-//   #307 Feedback                                         → POST /api/feedback
-//
-// All functions call requestJson from api.base.ts — no direct fetch calls here.
-
 import { requestJson, storeUser, cartItemsToLocalCartData } from './api.base';
 import type {
   DripTeaUser,
@@ -33,7 +14,7 @@ import type {
 } from './api.base';
 
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+// Auth
 
 // Registers a new customer account. POST /api/auth/register
 export async function registerCustomer(payload: {

@@ -37,7 +37,7 @@
   position: relative;
   z-index: 1;
   width: min(1060px, 100%);
-  /* auto on all sides centres the card in whatever space the bars leave over */
+  /* auto on all sides centres the card vertically */
   margin: auto;
 }
 

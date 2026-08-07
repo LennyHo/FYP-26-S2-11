@@ -76,7 +76,7 @@ These tests send real HTTP requests into the actual Express route files using Su
 | `menu.routes.js` | All 6 endpoints | Negative price, missing name, and invalid status all rejected; listing/search return via stubbed queries |
 | `feedback.routes.js` | `POST /feedback`, `GET /feedback/orders`, `GET /feedback/rating/:menuItemId` | Missing order/menu item rejected; empty `ids` list returns `{}` without a DB call; malformed id rejected |
 | `store.routes.js` | `GET /stores`, `GET /stores/crowd` | Both return via a stubbed store list |
-| `user.routes.js` | `GET/POST /users`, `PATCH /users/:id`, `GET /role-descriptions`, `PATCH /role-descriptions/:role` | Admin-only writes reject an unauthenticated request; malformed user id rejected; listings return via stubbed queries |
+| `user.routes.js` | `GET/POST /users`, `PATCH /users/:id`, `GET/POST /profiles`, `PATCH /profiles/:value` | Admin-only writes reject an unauthenticated request; malformed user id rejected; listings return via stubbed queries |
 | `voucher.routes.js` | `POST/GET /staff/vouchers`, `DELETE /staff/vouchers/:id` | Missing code/title and invalid id rejected; listing returns via a stubbed query |
 | `purchaseHistory.routes.js` | `GET /purchase-history` | Missing userId rejected |
 | `transcribe.routes.js` | `POST /transcribe` | Missing audio file rejected |

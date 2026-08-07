@@ -5,7 +5,7 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 const User = require("../models/user.model");
 const Store = require("../models/store.model");
-const RoleDescription = require("../models/roleDescription.model");
+const Profile = require("../models/profile.model");
 const { requireAuth, requireRole } = require("../middleware/auth.middleware");
 const {
   ADMIN_EMAIL_DOMAINS,
@@ -254,37 +254,100 @@ router.patch("/users/:id", async (req, res) => {
   }
 });
 
-// For user admin to read role descriptions
-router.get("/role-descriptions", async (req, res) => {
+// --- User profiles ---
+
+function publicProfile(profile) {
+  return {
+    id: profile._id.toString(),
+    value: profile.value,
+    label: profile.label,
+    description: profile.description || "",
+    status: profile.status,
+    isBuiltIn: Boolean(profile.isBuiltIn),
+    updatedAt: profile.updatedAt,
+  };
+}
+
+router.get("/profiles", async (req, res) => {
   try {
-    const rows = await RoleDescription.find().lean();
-    const data = {};
-    rows.forEach((row) => { data[row.role] = row.description; });
-    res.json({ ok: true, data });
+    await Profile.seedBuiltInProfiles();
+    const profiles = await Profile.find().sort({ createdAt: 1 });
+    res.json({ ok: true, data: profiles.map(publicProfile) });
   } catch (error) {
-    console.error("[RoleDescriptions] Failed to load:", error);
-    res.status(500).json({ ok: false, message: "Unable to load role descriptions." });
+    console.error("[Profiles] Failed to load:", error);
+    res.status(500).json({ ok: false, message: "Unable to load profiles." });
   }
 });
 
-router.patch("/role-descriptions/:role", requireAuth, requireRole("user_admin"), async (req, res) => {
+router.post("/profiles", requireAuth, requireRole("user_admin"), async (req, res) => {
   try {
-    const allowedRoles = ["customer", "store_staff", "user_admin"];
-    if (!allowedRoles.includes(req.params.role)) {
-      return res.status(400).json({ ok: false, message: "Role is invalid." });
+    const label = String(req.body.label || "").trim();
+    const description = String(req.body.description || "").trim();
+    const status = req.body.status === "suspended" ? "suspended" : "active";
+
+    if (!label) {
+      return res.status(400).json({ ok: false, message: "Profile name is required." });
     }
 
-    const description = String(req.body.description || "").trim();
-    const updated = await RoleDescription.findOneAndUpdate(
-      { role: req.params.role },
-      { description },
-      { new: true, upsert: true }
-    );
+    // Slug doubles as the role value.
+    const value = label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    if (!value) {
+      return res.status(400).json({ ok: false, message: "Profile name must contain letters or numbers." });
+    }
 
-    res.json({ ok: true, data: { role: updated.role, description: updated.description } });
+    const existing = await Profile.findOne({ value });
+    if (existing) {
+      return res.status(409).json({ ok: false, message: "A profile with that name already exists." });
+    }
+
+    const created = await Profile.create({ value, label, description, status });
+    res.status(201).json({ ok: true, data: publicProfile(created) });
   } catch (error) {
-    console.error("[RoleDescriptions] Failed to update:", error);
-    res.status(500).json({ ok: false, message: "Unable to update role description." });
+    console.error("[Profiles] Failed to create:", error);
+    res.status(500).json({ ok: false, message: "Unable to create profile." });
+  }
+});
+
+router.patch("/profiles/:value", requireAuth, requireRole("user_admin"), async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ value: req.params.value });
+    if (!profile) {
+      return res.status(404).json({ ok: false, message: "Profile not found." });
+    }
+
+    if (typeof req.body.description === "string") {
+      profile.description = req.body.description.trim();
+    }
+    if (req.body.status === "active" || req.body.status === "suspended") {
+      profile.status = req.body.status;
+    }
+    if (typeof req.body.label === "string" && req.body.label.trim() && !profile.isBuiltIn) {
+      profile.label = req.body.label.trim();
+    }
+
+    await profile.save();
+    res.json({ ok: true, data: publicProfile(profile) });
+  } catch (error) {
+    console.error("[Profiles] Failed to update:", error);
+    res.status(500).json({ ok: false, message: "Unable to update profile." });
+  }
+});
+
+router.delete("/profiles/:value", requireAuth, requireRole("user_admin"), async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ value: req.params.value });
+    if (!profile) {
+      return res.status(404).json({ ok: false, message: "Profile not found." });
+    }
+    if (profile.isBuiltIn) {
+      return res.status(400).json({ ok: false, message: "Built-in profiles cannot be deleted." });
+    }
+
+    await profile.deleteOne();
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("[Profiles] Failed to delete:", error);
+    res.status(500).json({ ok: false, message: "Unable to delete profile." });
   }
 });
 

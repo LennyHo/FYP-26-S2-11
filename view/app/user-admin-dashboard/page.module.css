@@ -293,7 +293,9 @@
   border-radius: 99px;
   font-size: 0.75rem;
   font-weight: 700;
-  white-space: nowrap;
+  /* Long profile names wrap instead of spilling into the next column. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* Status */
@@ -387,11 +389,10 @@
   font-weight: 700;
 }
 
-/* font-variant is reset here because the label sets small-caps */
+/* casing and tracking are reset here because the label sets uppercase */
 .fieldError {
   color: #b91c1c;
   text-transform: none;
-  font-variant: normal;
   letter-spacing: normal;
   font-size: 0.72rem;
   font-weight: 600;
@@ -402,7 +403,6 @@
 .fieldHint {
   color: #64748b;
   text-transform: none;
-  font-variant: normal;
   letter-spacing: normal;
   font-size: 0.72rem;
   font-weight: 500;
@@ -480,6 +480,17 @@
   overflow-y: auto;
   padding-right: 4px;
   margin-right: -4px;
+}
+
+/* Short forms that don't scroll, so an open Select isn't clipped. */
+.modalStatic {
+  flex: 1;
+  min-height: 0;
+}
+
+.modalAllowOverflow,
+.modalAllowOverflow .modalBody {
+  overflow: visible;
 }
 
 .modalAvatar {
@@ -623,10 +634,10 @@
   flex-direction: column;
   gap: 5px;
   color: #3b82f6;
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  font-variant: small-caps;
-  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .formGrid input,

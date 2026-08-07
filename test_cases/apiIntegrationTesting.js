@@ -28,7 +28,7 @@ const MenuItem = require("../src/models/menuItem.model");
 const Voucher = require("../src/models/voucher.model");
 const Store = require("../src/models/store.model");
 const User = require("../src/models/user.model");
-const RoleDescription = require("../src/models/roleDescription.model");
+const Profile = require("../src/models/profile.model");
 const CartItem = require("../src/models/cartItem.model");
 
 // This helper builds a small test app without starting the real server.
@@ -469,16 +469,24 @@ describe("API integration testing", function () {
     expect(response.body.message).to.equal("A valid user id is required.");
   });
 
-  it("PATCH /api/role-descriptions/:role rejects an unauthenticated request", async function () {
+  it("PATCH /api/profiles/:value rejects an unauthenticated request", async function () {
     const response = await request(createTestApp())
-      .patch("/api/role-descriptions/customer")
+      .patch("/api/profiles/customer")
       .send({ description: "Buys drinks." });
+    expect(response.status).to.equal(401);
+  });
+
+  it("POST /api/profiles rejects an unauthenticated request", async function () {
+    const response = await request(createTestApp())
+      .post("/api/profiles")
+      .send({ label: "Marketing Manager" });
     expect(response.status).to.equal(401);
   });
 
   describe("user listing endpoints (stubbed)", function () {
     stubMethod(User, "find", () => chainableResolve([]));
-    stubMethod(RoleDescription, "find", () => chainableResolve([]));
+    stubMethod(Profile, "find", () => chainableResolve([]));
+    stubMethod(Profile, "seedBuiltInProfiles", () => Promise.resolve());
 
     it("GET /api/users returns the user list", async function () {
       const response = await request(createTestApp()).get("/api/users");
@@ -487,11 +495,11 @@ describe("API integration testing", function () {
       expect(response.body).to.deep.equal({ ok: true, data: [] });
     });
 
-    it("GET /api/role-descriptions returns role descriptions", async function () {
-      const response = await request(createTestApp()).get("/api/role-descriptions");
+    it("GET /api/profiles returns the profile list", async function () {
+      const response = await request(createTestApp()).get("/api/profiles");
 
       expect(response.status).to.equal(200);
-      expect(response.body).to.deep.equal({ ok: true, data: {} });
+      expect(response.body).to.deep.equal({ ok: true, data: [] });
     });
   });
 

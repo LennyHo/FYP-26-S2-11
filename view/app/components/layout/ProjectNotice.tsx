@@ -1,12 +1,6 @@
 import styles from './ProjectNotice.module.css';
 
-/**
- * Single source of truth for the "this is an academic prototype" statement.
- *
- * Rendered inside the global Footer on pages that have one, and standalone via
- * GlobalLayout on the pages where the footer is suppressed, so the site identifies
- * itself on every route.
- */
+// Rendered inside Footer where there is one, standalone via GlobalLayout elsewhere.
 export default function ProjectNotice({ standalone = false }: { standalone?: boolean }) {
   return (
     <p className={`${styles.notice} ${standalone ? styles.standalone : ''}`}>

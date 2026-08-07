@@ -83,8 +83,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/change-password') ||
     pathname.startsWith('/marketing');
 
-  // The auth screens size themselves to the viewport, so they place the project notice
-  // inside their own layout rather than having one appended below and causing a scroll.
+  // Auth screens are viewport-sized, so they render the notice in their own layout.
   const rendersOwnNotice =
     pathname === '/' ||
     pathname === '/login' ||

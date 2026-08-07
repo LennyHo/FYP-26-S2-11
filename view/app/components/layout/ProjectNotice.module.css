@@ -8,8 +8,7 @@
   border-top: 1px solid rgba(2, 87, 173, 0.08);
 }
 
-/* Used where there is no global footer to sit inside — the notice is the last thing
-   on the page, so it carries its own spacing and drops the divider. */
+/* No global footer to sit inside, so it carries its own spacing. */
 .standalone {
   margin: 0;
   padding: 14px 16px 18px;

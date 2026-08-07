@@ -1,20 +1,3 @@
-// staffApi.ts — API calls for the store staff actor.
-//
-// Covers user stories:
-//   Staff dashboard  → getOrders               → GET /api/orders?status=
-//   Order detail     → getOrder                → GET /api/orders/:id
-//   Update status    → updateOrderStatus        → PATCH /api/orders/:id/status
-//     (pending → preparing → ready → completed)
-//   Menu management  → toggleMenuItemNewArrival → PATCH /api/menu-items/:id/new-arrival
-//                    → updateMenuItemStatus      → PATCH /api/menu-items/:id/status
-//                    → createMenuItem            → POST /api/menu-items
-//                    → updateMenuItem            → PATCH /api/menu-items/:id
-//   Vouchers         → getStaffVouchers          → GET /api/staff/vouchers
-//                    → createVoucher             → POST /api/staff/vouchers
-//                    → deleteVoucher             → DELETE /api/staff/vouchers/:id
-//
-// All functions call requestJson from api.base.ts — no direct fetch calls here.
-
 import { requestJson } from './api.base';
 import type { DripTeaOrder, DripTeaMenuItem, DripTeaInventoryItem, DripTeaFeedback, DripTeaVoucher } from './api.base';
 

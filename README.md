@@ -321,7 +321,7 @@ Every backend call from the frontend goes through `requestJson()` in `view/app/u
 |-------------|---------|----------------------------|
 | `customerApi.ts` | Customer-facing pages: login/register, menu, cart, checkout, vouchers, profile, purchase history, feedback | Auth, Menu, Cart & Vouchers, Checkout & Orders, Purchase History/Feedback/Stores, `PATCH /api/users/:id` (self) |
 | `staffApi.ts` | `/store-staff`, `/store-staff-dashboard`, `/store-staff-voucher` | Orders (staff), Menu (write), Inventory, Vouchers (staff) |
-| `adminApi.ts` | `/user-admin-dashboard` | Users, Role descriptions |
+| `adminApi.ts` | `/user-admin-dashboard` | Users, User profiles |
 | `chatbotApi.ts` | Chatbot widget (`components/chatbot/`) | `POST /api/chat` (text/image) via the Next.js `/api/chat` proxy |
 
 Three Next.js API routes (`view/app/api/`) sit in front of the Express backend or third-party APIs:
@@ -418,8 +418,10 @@ The last two exist purely to keep the ElevenLabs and OneMap API keys server-side
 | GET    | `/api/users`                     | List users                          | |
 | POST   | `/api/users`                     | Create a user account (any role)    | Requires auth + `user_admin` role |
 | PATCH  | `/api/users/:id`                 | Update / suspend a user             | |
-| GET    | `/api/role-descriptions`         | Get role description text           | |
-| PATCH  | `/api/role-descriptions/:role`   | Update a role's description         | Requires auth + `user_admin` role |
+| GET    | `/api/profiles`                  | List user profiles                  | Seeds the built-in profiles if missing |
+| POST   | `/api/profiles`                  | Create a user profile               | Requires auth + `user_admin` role |
+| PATCH  | `/api/profiles/:value`           | Update a profile's description or status | Requires auth + `user_admin` role |
+| DELETE | `/api/profiles/:value`           | Delete a profile                    | Requires auth + `user_admin` role; built-ins cannot be deleted |
 
 ### Chatbot & Voice
 

@@ -1,16 +1,3 @@
-// api.base.ts — Shared foundation for all API actor files.
-//
-// Architecture:
-//   customerApi.ts  ──┐
-//   staffApi.ts     ──┤─ all import requestJson, types, and session helpers from here
-//   adminApi.ts     ──┤
-//   chatbotApi.ts   ──┘
-//
-// This file does NOT make any backend calls itself.
-// It provides the building blocks that every actor file uses.
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export type DripTeaAddress = {
   _id?: string;
   label?: string;

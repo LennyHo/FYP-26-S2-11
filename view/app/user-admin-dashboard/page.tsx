@@ -39,9 +39,9 @@
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaBan, FaCheck, FaChevronDown, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUserPlus, FaUsers } from 'react-icons/fa';
+import { FaBan, FaCheck, FaChevronDown, FaEye, FaPen, FaPlus, FaSearch, FaTimes, FaUser, FaUsers } from 'react-icons/fa';
 import AdminHeader from '../components/layout/AdminHeader';
-import { createUserAccount, getRoleDescriptions, getUsers, suspendUser, updateRoleDescription, updateUser } from '../utils/adminApi';
+import { createProfile, createUserAccount, getProfiles, getUsers, suspendUser, updateProfile, updateUser, type DripTeaProfile } from '../utils/adminApi';
 import { clearStoredUser, getStoredUser, isSessionExpiredError, type DripTeaAddress, type DripTeaUser } from '../utils/api.base';
 import { useOutlets } from '../utils/outlets';
 import { ADMIN_EMAIL_DOMAINS, PASSWORD_HINT, validateEmail, validatePassword } from '../utils/validation';
@@ -229,13 +229,16 @@ export default function UserAdminDashboardPage() {
   const [passwordError, setPasswordError] = useState('');
   const [viewingUser, setViewingUser] = useState<DripTeaUser | null>(null);
   const [formMode, setFormMode] = useState<FormMode | null>(null);
-  const [roleFieldLocked, setRoleFieldLocked] = useState(false);
   const [editingUser, setEditingUser] = useState<DripTeaUser | null>(null);
   const [formData, setFormData] = useState<UserFormState>(emptyForm());
-  const [roleDescriptions, setRoleDescriptions] = useState<Record<string, string>>({});
-  const [editingDescriptionRole, setEditingDescriptionRole] = useState<typeof roleOptions[number] | null>(null);
+  const [profiles, setProfiles] = useState<DripTeaProfile[]>([]);
+  const [editingDescriptionRole, setEditingDescriptionRole] = useState<DripTeaProfile | null>(null);
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [isSavingDescription, setIsSavingDescription] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({ label: '', description: '', status: 'active' });
+  const [profileFormError, setProfileFormError] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const { outlets } = useOutlets();
 
   async function refreshUsers() {
@@ -253,18 +256,18 @@ export default function UserAdminDashboardPage() {
     }
   }
 
-  async function refreshRoleDescriptions() {
+  async function refreshProfiles() {
     try {
-      const response = await getRoleDescriptions();
-      setRoleDescriptions(response.data || {});
+      const response = await getProfiles();
+      setProfiles(response.data || []);
     } catch (error) {
-      console.error('[DripTea role descriptions]', error);
+      console.error('[DripTea profiles]', error);
     }
   }
 
   useEffect(() => {
     void refreshUsers();
-    void refreshRoleDescriptions();
+    void refreshProfiles();
   }, []);
 
   useEffect(() => {
@@ -301,7 +304,6 @@ export default function UserAdminDashboardPage() {
     setPasswordError('');
     setEditingUser(null);
     setFormData(emptyForm());
-    setRoleFieldLocked(false);
     setFormMode('create');
   }
 
@@ -476,10 +478,42 @@ export default function UserAdminDashboardPage() {
     }
   }
 
-  function openDescriptionModal(profile: typeof roleOptions[number]) {
+  function openDescriptionModal(profile: DripTeaProfile) {
     setMessage('');
     setEditingDescriptionRole(profile);
-    setDescriptionDraft(roleDescriptions[profile.value] || '');
+    setDescriptionDraft(profile.description || '');
+  }
+
+  function openProfileModal() {
+    setProfileFormError('');
+    setProfileForm({ label: '', description: '', status: 'active' });
+    setIsProfileModalOpen(true);
+  }
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const label = profileForm.label.trim();
+    if (!label) {
+      setProfileFormError('Profile name is required.');
+      return;
+    }
+
+    setIsSavingProfile(true);
+    setProfileFormError('');
+
+    try {
+      await createProfile({ label, description: profileForm.description.trim(), status: profileForm.status });
+      await refreshProfiles();
+      setIsProfileModalOpen(false);
+      setMessage(`Profile "${label}" created.`);
+    } catch (error) {
+      if (isSessionExpiredError(error)) return handleLogout();
+      console.error('[DripTea create profile]', error);
+      setProfileFormError(error instanceof Error ? error.message : 'Unable to create profile.');
+    } finally {
+      setIsSavingProfile(false);
+    }
   }
 
   async function saveDescription(event: FormEvent<HTMLFormElement>) {
@@ -489,12 +523,12 @@ export default function UserAdminDashboardPage() {
     setIsSavingDescription(true);
 
     try {
-      const response = await updateRoleDescription(editingDescriptionRole.value, descriptionDraft.trim());
-      setRoleDescriptions(current => ({ ...current, [response.data.role]: response.data.description }));
+      await updateProfile(editingDescriptionRole.value, { description: descriptionDraft.trim() });
+      await refreshProfiles();
       setEditingDescriptionRole(null);
     } catch (error) {
       if (isSessionExpiredError(error)) return handleLogout();
-      console.error('[DripTea save role description]', error);
+      console.error('[DripTea save profile description]', error);
       setMessage(error instanceof Error ? error.message : 'Unable to update description.');
     } finally {
       setIsSavingDescription(false);
@@ -599,6 +633,10 @@ export default function UserAdminDashboardPage() {
                   User Accounts
                 </button>
               </div>
+              {/* #1 Create User Profile */}
+              <button type="button" className={styles.actionButton} onClick={openProfileModal}>
+                <FaPlus /> Create New Profile
+              </button>
               <button type="button" className={styles.actionButton} onClick={openCreateModal}>
                 <FaPlus /> New User
               </button>
@@ -608,7 +646,7 @@ export default function UserAdminDashboardPage() {
                 <FaSearch className={styles.searchIcon} />
                 <input
                   type="text"
-                  placeholder={activeTab === 'profiles' ? 'Search profiles by name or email...' : 'Search accounts by username or email...'}
+                  placeholder={activeTab === 'profiles' ? 'Search profiles by name...' : 'Search accounts by username or email...'}
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   className={styles.searchInput}
@@ -654,7 +692,7 @@ export default function UserAdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {roleOptions
+                  {profiles
                     .filter(profile => profile.label.toLowerCase().includes(searchQuery.trim().toLowerCase()))
                     .map(profile => {
                     const roleUsers = users.filter(u => u.role === profile.value);
@@ -662,8 +700,8 @@ export default function UserAdminDashboardPage() {
                       const d = u.updatedAt || u.createdAt;
                       if (!d) return latest;
                       return !latest || d > latest ? d : latest;
-                    }, undefined);
-                    const description = roleDescriptions[profile.value] || '';
+                    }, undefined) || profile.updatedAt;
+                    const description = profile.description || '';
                     const isRoleSuspended = roleUsers.length > 0 && roleUsers.every(u => u.status === 'suspended');
                     return (
                     <tr key={profile.value}>
@@ -697,19 +735,6 @@ export default function UserAdminDashboardPage() {
                           onClick={() => openDescriptionModal(profile)}
                         >
                           <FaPen />
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.actionIconBtn}
-                          title={`Add ${profile.label} user`}
-                          aria-label={`Add ${profile.label} user`}
-                          onClick={() => {
-                            openCreateModal();
-                            setFormData({ ...emptyForm(), role: profile.value });
-                            setRoleFieldLocked(true);
-                          }}
-                        >
-                          <FaUserPlus />
                         </button>
                         <button
                           type="button"
@@ -881,6 +906,63 @@ export default function UserAdminDashboardPage() {
         </div>
       )}
 
+      {isProfileModalOpen && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="create-profile-title">
+          <form className={`${styles.modal} ${styles.modalAllowOverflow}`} onSubmit={saveProfile}>
+            <div className={styles.modalBody}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalHeaderText}>
+                  <h2 id="create-profile-title">Create Profile</h2>
+                  <p>Fill in the details of the user profile that you would like to add below</p>
+                </div>
+                <button type="button" className={styles.iconButton} onClick={() => setIsProfileModalOpen(false)} aria-label="Close">
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className={styles.modalStatic}>
+                {profileFormError && <p className={styles.formErrorMessage}>{profileFormError}</p>}
+
+                <div className={styles.formGrid}>
+                  <label className={styles.formGridFull}>
+                    Profile
+                    <input
+                      value={profileForm.label}
+                      onChange={(event) => setProfileForm(current => ({ ...current, label: event.target.value }))}
+                      placeholder="Profile name"
+                      required
+                    />
+                  </label>
+                  <label className={styles.formGridFull}>
+                    Description
+                    <textarea
+                      value={profileForm.description}
+                      onChange={(event) => setProfileForm(current => ({ ...current, description: event.target.value }))}
+                      placeholder="Describe what this profile is for..."
+                      rows={4}
+                    />
+                  </label>
+                  <div className={styles.fieldGroup}>
+                    Status
+                    <Select
+                      value={profileForm.status}
+                      onChange={(value) => setProfileForm(current => ({ ...current, status: value }))}
+                      options={statusOptions}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button type="submit" className={styles.primaryButton} disabled={isSavingProfile}>
+                  {isSavingProfile ? 'Creating...' : 'Create Profile'}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
       {editingDescriptionRole && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="edit-description-title">
           <form className={styles.modal} onSubmit={saveDescription}>
@@ -982,15 +1064,11 @@ export default function UserAdminDashboardPage() {
                   )}
                   <div className={styles.fieldGroup}>
                     User Type
-                    {formMode === 'create' && roleFieldLocked ? (
-                      <input value={roleLabel(formData.role)} disabled />
-                    ) : (
-                      <Select
-                        value={formData.role}
-                        onChange={(value) => updateFormField('role', value)}
-                        options={roleOptions}
-                      />
-                    )}
+                    <Select
+                      value={formData.role}
+                      onChange={(value) => updateFormField('role', value)}
+                      options={roleOptions}
+                    />
                   </div>
                   {formData.role === 'store_staff' && (
                     <div className={styles.fieldGroup}>
