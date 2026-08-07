@@ -102,14 +102,20 @@ router.post("/users", requireAuth, requireRole("user_admin"), async (req, res) =
     const password = String(req.body.password || "");
     const role = String(req.body.role || "customer");
     const status = String(req.body.status || "active");
-    const allowedRoles = ["customer", "store_staff", "user_admin"];
     const allowedStatuses = ["active", "suspended", "inactive"];
 
-    if (!fullName || !allowedRoles.includes(role) || !allowedStatuses.includes(status)) {
+    if (!fullName || !allowedStatuses.includes(status)) {
       return res.status(400).json({
         ok: false,
         message: "Name, email, password, role and status are required.",
       });
+    }
+
+    // Role must be an active profile, so admin-created profiles are assignable.
+    await Profile.seedBuiltInProfiles();
+    const roleProfile = await Profile.findOne({ value: role, status: "active" }).lean();
+    if (!roleProfile) {
+      return res.status(400).json({ ok: false, message: "Role is invalid." });
     }
 
     // Allows @driptea.com as well, so the admin can create staff accounts.
@@ -179,7 +185,6 @@ router.patch("/users/:id", async (req, res) => {
     }
 
     const update = {};
-    const allowedRoles = ["customer", "store_staff", "user_admin"];
     const allowedStatuses = ["active", "suspended", "inactive"];
 
     if (req.body.fullName !== undefined) {
@@ -200,7 +205,8 @@ router.patch("/users/:id", async (req, res) => {
 
     if (req.body.role !== undefined) {
       update.role = String(req.body.role);
-      if (!allowedRoles.includes(update.role)) return res.status(400).json({ ok: false, message: "Role is invalid." });
+      const roleProfile = await Profile.findOne({ value: update.role, status: "active" }).lean();
+      if (!roleProfile) return res.status(400).json({ ok: false, message: "Role is invalid." });
     }
 
     if (req.body.status !== undefined) {

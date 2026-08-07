@@ -60,20 +60,10 @@ type UserFormState = {
   storeCode: string;
 };
 
-const roleOptions = [
-  { value: 'customer', label: 'Customer' },
-  { value: 'store_staff', label: 'Store Staff' },
-  { value: 'user_admin', label: 'Admin' },
-];
-
 const statusOptions = [
   { value: 'active', label: 'Active' },
   { value: 'suspended', label: 'Suspended' },
 ];
-
-function roleLabel(role: string) {
-  return roleOptions.find(option => option.value === role)?.label || role;
-}
 
 function statusLabel(status: string) {
   return statusOptions.find(option => option.value === status)?.label || status;
@@ -280,6 +270,17 @@ export default function UserAdminDashboardPage() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [formMode, viewingUser]);
 
+  const roleLabel = useMemo(() => {
+    const byValue = new Map(profiles.map(p => [p.value, p.label]));
+    return (role: string) => byValue.get(role) || role;
+  }, [profiles]);
+
+  // Suspended profiles stay visible in the table but can't be given to a new user.
+  const assignableRoleOptions = useMemo(
+    () => profiles.filter(p => p.status === 'active').map(p => ({ value: p.value, label: p.label })),
+    [profiles]
+  );
+
   const filteredUsers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return users;
@@ -290,9 +291,9 @@ export default function UserAdminDashboardPage() {
       roleLabel(user.role).toLowerCase().includes(query) ||
       statusLabel(user.status).toLowerCase().includes(query)
     );
-  }, [searchQuery, users]);
+  }, [searchQuery, users, roleLabel]);
 
-  const [viewingRole, setViewingRole] = useState<typeof roleOptions[number] | null>(null);
+  const [viewingRole, setViewingRole] = useState<DripTeaProfile | null>(null);
 
   const activeUsers = users.filter(user => user.status === 'active').length;
   const userTypeCount = new Set(users.map(user => user.role)).size;
@@ -454,7 +455,7 @@ export default function UserAdminDashboardPage() {
   // Bulk-suspends (or reactivates) every user under a profile/role. The signed-in
   // admin's own account is skipped when suspending the Admin row, so they can't
   // lock themselves out of the dashboard in one click.
-  async function toggleRoleStatus(profile: typeof roleOptions[number]) {
+  async function toggleRoleStatus(profile: DripTeaProfile) {
     const roleUsers = users.filter(u => u.role === profile.value);
     if (roleUsers.length === 0) return;
 
@@ -1067,7 +1068,7 @@ export default function UserAdminDashboardPage() {
                     <Select
                       value={formData.role}
                       onChange={(value) => updateFormField('role', value)}
-                      options={roleOptions}
+                      options={assignableRoleOptions}
                     />
                   </div>
                   {formData.role === 'store_staff' && (
