@@ -18,8 +18,8 @@ export const PASSWORD_SYMBOLS = '$%#@&';
 
 export const PASSWORD_HINT = `At least ${PASSWORD_MIN_LETTERS} letters, 1 number, and 1 symbol (${PASSWORD_SYMBOLS})`;
 
-// No full stop allowed before the @.
-const EMAIL_SHAPE = /^[A-Za-z0-9_+-]+@[^\s@]+\.[^\s@]+$/;
+// Full stops allowed before the @, but not at the start, end, or doubled up.
+const EMAIL_SHAPE = /^[A-Za-z0-9_+-]+(\.[A-Za-z0-9_+-]+)*@[^\s@]+\.[^\s@]+$/;
 
 function formatDomainList(domains: string[]) {
   const listed = domains.map(domain => `@${domain}`);

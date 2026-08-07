@@ -15,8 +15,8 @@ const ADMIN_EMAIL_DOMAINS = LOGIN_EMAIL_DOMAINS;
 const PASSWORD_MIN_LETTERS = 4;
 const PASSWORD_SYMBOLS = "$%#@&";
 
-// No full stop allowed before the @.
-const EMAIL_SHAPE = /^[A-Za-z0-9_+-]+@[^\s@]+\.[^\s@]+$/;
+// Full stops allowed before the @, but not at the start, end, or doubled up.
+const EMAIL_SHAPE = /^[A-Za-z0-9_+-]+(\.[A-Za-z0-9_+-]+)*@[^\s@]+\.[^\s@]+$/;
 
 function formatDomainList(domains) {
   const listed = domains.map((domain) => `@${domain}`);
