@@ -1,18 +1,29 @@
 .page {
-  position: fixed;
-  inset: 0;
+  position: relative;
+  min-height: 100dvh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 20px 16px;
+  flex-direction: column;
+  padding: 20px 16px 12px;
   box-sizing: border-box;
   background: linear-gradient(135deg, #eff6ff 0%, #fff7ed 100%);
+}
+
+.siteFoot {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  padding: 8px 4px 0;
+  box-sizing: border-box;
+  text-align: center;
 }
 
 .shell {
   position: relative;
   z-index: 1;
+  /* auto on all sides centres the card in whatever space the notice leaves over */
+  margin: auto;
   width: min(1040px, 100%);
   display: grid;
   grid-template-columns: minmax(260px, 0.95fr) minmax(300px, 1.05fr);
@@ -333,13 +344,9 @@
 }
 
 @media (max-width: 920px) {
-  /* Scrolls with the document — fixed + overflow:hidden cut off the top here. */
-  .page {
-    position: relative;
-    inset: auto;
-    overflow: visible;
-    min-height: 100dvh;
-    align-items: flex-start;
+  /* Card sits at the top rather than centred once the layout stacks. */
+  .shell {
+    margin: 0 auto auto;
   }
 
   .shell {

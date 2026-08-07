@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import styles from './Footer.module.css';
+import ProjectNotice from './ProjectNotice';
 
 export default function Footer() {
   return (
@@ -37,6 +38,7 @@ export default function Footer() {
             </ul>
           </div>
         </div>
+        <ProjectNotice />
         <p className={styles.disclaimer}>
           <strong>Health &amp; Nutritional Disclaimer:</strong> The AI chatbot recommendations and nutritional information on this website are for general informational purposes only and do not constitute medical or dietary advice. Nutritional values are estimates and may vary. Individuals with medical conditions (including diabetes) should consult a qualified healthcare professional before making dietary decisions. Consume at your own risk. DripTea is not liable for any health consequences arising from reliance on this information.
         </p>

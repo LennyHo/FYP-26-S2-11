@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import ChatbotSidebar from '../chatbot/ChatbotSidebar';
 import Footer from './Footer';
+import ProjectNotice from './ProjectNotice';
 import styles from '../../layout.module.css';
 
 // --- 1. TINY HELPER COMPONENT ---
@@ -82,6 +83,13 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
     pathname.startsWith('/change-password') ||
     pathname.startsWith('/marketing');
 
+  // The auth screens size themselves to the viewport, so they place the project notice
+  // inside their own layout rather than having one appended below and causing a scroll.
+  const rendersOwnNotice =
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/register';
+
   const rootClass = `${styles.globalShell} ${(pathname === '/login' || pathname === '/' || hideChatbot) ? 'loginPage' : ''}`;
   
   return (
@@ -98,7 +106,9 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
         className={`${styles.mainPane} no-scrollbar ${!hideChatbot && isChatOpen ? styles.mainPaneWithChat : ''} ${hideChatbot ? 'fullWidth' : ''}`}
       >
         {children}
-        {!hideFooter && <Footer />}
+        {hideFooter
+          ? !rendersOwnNotice && <ProjectNotice standalone />
+          : <Footer />}
       </div>
 
       {/* RIGHT SIDE: CHATBOT */}

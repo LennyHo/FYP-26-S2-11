@@ -1,11 +1,9 @@
 .page {
-  position: fixed;
-  inset: 0;
+  position: relative;
+  min-height: 100dvh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 20px 16px;
+  flex-direction: column;
+  padding: 16px 16px 12px;
   box-sizing: border-box;
   background: linear-gradient(135deg, #eff6ff 0%, #fff7ed 100%);
 }
@@ -39,7 +37,19 @@
   position: relative;
   z-index: 1;
   width: min(1060px, 100%);
+  /* auto on all sides centres the card in whatever space the bars leave over */
+  margin: auto;
+}
+
+.siteFoot {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: min(1060px, 100%);
   margin: 0 auto;
+  padding: 8px 4px 0;
+  box-sizing: border-box;
+  text-align: center;
 }
 
 .card {

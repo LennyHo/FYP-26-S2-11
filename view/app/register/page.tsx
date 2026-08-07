@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import styles from './register.module.css';
 import { registerCustomer } from '../utils/customerApi';
+import ProjectNotice from '../components/layout/ProjectNotice';
 import {
   CUSTOMER_EMAIL_DOMAINS,
   PASSWORD_HINT,
@@ -283,6 +284,10 @@ export default function RegisterPage() {
           </ul>
         </aside>
       </div>
+
+      <footer className={styles.siteFoot}>
+        <ProjectNotice standalone />
+      </footer>
     </div>
   );
 }

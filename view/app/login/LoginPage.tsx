@@ -17,6 +17,7 @@ import styles from './login.module.css';
 import { useRouter } from 'next/navigation';
 import { syncStoredCartFromBackend, loginCustomer } from '../utils/customerApi';
 import { LOGIN_EMAIL_DOMAINS, validateEmail } from '../utils/validation';
+import ProjectNotice from '../components/layout/ProjectNotice';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,20 +27,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-
-  const testCredentials = {
-    admin: { email: 'yiyuanzhuan@driptea.com', password: 'Admin@123' },
-    staff: { email: 'williamsbilly@driptea.com', password: 'Staff@123' },
-    customer: { email: 'customer@gmail.com', password: 'Customer@123' },
-  };
-
-  const fillTestCredentials = (role: 'admin' | 'staff' | 'customer') => {
-    const creds = testCredentials[role];
-    if (emailRef.current && passwordRef.current) {
-      emailRef.current.value = creds.email;
-      passwordRef.current.value = creds.password;
-    }
-  };
 
   const validateForm = () => {
     const email = emailRef.current?.value.trim() || '';
@@ -205,6 +192,10 @@ export default function LoginPage() {
           </div>
         </section>
       </div>
+
+      <footer className={styles.siteFoot}>
+        <ProjectNotice standalone />
+      </footer>
     </div>
   );
 }

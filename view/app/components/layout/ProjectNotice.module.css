@@ -1,0 +1,18 @@
+.notice {
+  font-size: 0.82rem;
+  color: var(--muted, #5b6b80);
+  margin: 16px 0 0;
+  line-height: 1.5;
+  text-align: center;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(2, 87, 173, 0.08);
+}
+
+/* Used where there is no global footer to sit inside — the notice is the last thing
+   on the page, so it carries its own spacing and drops the divider. */
+.standalone {
+  margin: 0;
+  padding: 14px 16px 18px;
+  border-top: none;
+  opacity: 0.8;
+}
