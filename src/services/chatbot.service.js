@@ -674,8 +674,11 @@ function hasActiveOrderFlow(recentHistory) {
             // Question wordings
             /what size|which size|ice level|sugar level|preferred ice|how would you like your ice/.test(c) ||
             /toppings?\b/.test(c) ||
-            // Option lines the flow prints beneath each question
+            // Option lines the flow prints beneath each question. These stay English in every
+            // language, so they're what keeps a localised question (e.g. Malay "Saiz apa...")
+            // recognisable as an active order step.
             /regular \(s\$|large \(\+s\$/.test(c) ||
+            /regular\s*\/\s*large|no ice\s*\/\s*less ice/.test(c) ||
             /0%\s*\/\s*25%|normal ice\s*\/\s*less ice|pearls?\s*\(\+s\$/.test(c)
         );
     }
@@ -2997,7 +3000,57 @@ const REPLY_STRINGS = {
         ms: "Maaf, maklumat kedai tidak tersedia sekarang. Sila cuba sebentar lagi.",
         ta: "மன்னிக்கவும், தற்போது கடை தகவல் கிடைக்கவில்லை. பின்னர் மீண்டும் முயற்சிக்கவும்.",
     },
+    // Order slot-filling questions. Only the question sentence is localised — the option
+    // list stays in English because the answer parsers (parseSizeMention, parseIceMention...)
+    // and hasActiveOrderFlow both match on those exact option words.
+    askDrink: {
+        en: "Which drink would you like me to add? You can say something like 'add Classic Milk Tea to my cart'.",
+        zh: "您想加入哪一款饮品？例如：「add Classic Milk Tea to my cart」。",
+        ms: "Minuman mana yang anda mahu saya tambah? Contohnya: 'add Classic Milk Tea to my cart'.",
+        ta: "எந்தப் பானத்தைச் சேர்க்க வேண்டும்? உதாரணமாக: 'add Classic Milk Tea to my cart'.",
+    },
+    askSize: {
+        en: "What size would you like?",
+        zh: "您想要什么杯型？",
+        ms: "Saiz apa yang anda mahu?",
+        ta: "எந்த அளவு வேண்டும்?",
+    },
+    askIce: {
+        en: "What ice level would you like?",
+        zh: "您想要什么冰量？",
+        ms: "Tahap ais apa yang anda mahu?",
+        ta: "எந்த ஐஸ் அளவு வேண்டும்?",
+    },
+    askSugar: {
+        en: "What sugar level would you like?",
+        zh: "您想要什么糖度？",
+        ms: "Tahap gula apa yang anda mahu?",
+        ta: "எந்த சர்க்கரை அளவு வேண்டும்?",
+    },
+    askToppings: {
+        en: "What toppings would you like?",
+        zh: "您想要什么配料？",
+        ms: "Topping apa yang anda mahu?",
+        ta: "என்ன டாப்பிங்ஸ் வேண்டும்?",
+    },
+    invalidSugarPercent: {
+        en: "Sorry, {percent}% sugar isn't one of our sugar level options. We offer 0%, 25%, 50%, or 100% sugar — which would you like?",
+        zh: "抱歉，{percent}% 糖度不是我们的选项。我们提供 0%、25%、50% 或 100% 糖度，您想要哪一个？",
+        ms: "Maaf, gula {percent}% bukan pilihan kami. Kami menawarkan gula 0%, 25%, 50% atau 100% — yang mana satu anda mahu?",
+        ta: "மன்னிக்கவும், {percent}% சர்க்கரை எங்கள் விருப்பங்களில் இல்லை. நாங்கள் 0%, 25%, 50% அல்லது 100% சர்க்கரை வழங்குகிறோம் — எது வேண்டும்?",
+    },
+    nextUpDrink: {
+        en: "Next up: your <strong>{drink}</strong>.",
+        zh: "接下来是您的 <strong>{drink}</strong>。",
+        ms: "Seterusnya: <strong>{drink}</strong> anda.",
+        ta: "அடுத்தது: உங்கள் <strong>{drink}</strong>.",
+    },
 };
+
+// Localised string lookup, falling back to English then to the key itself.
+function tr(key, lang) {
+    return REPLY_STRINGS[key]?.[lang] ?? REPLY_STRINGS[key]?.en ?? key;
+}
 
 const PHASE_BY_STATUS = { pending: 1, paid: 1, preparing: 2, ready: 3 };
 
@@ -3178,12 +3231,18 @@ function mergeIntentResults(results) {
     return merged;
 }
 
-const ORDER_FIELD_QUESTIONS = {
-    size: "What size would you like?<br>Regular / Large",
-    ice: "What ice level would you like?<br>No Ice / Less Ice / Normal Ice / Hot",
-    sugar: "What sugar level would you like?<br>0% / 25% / 50% / 100%",
-    toppings: "What toppings would you like?<br>Tapioca Pearls (+S$1.20) / Brown Sugar (+S$1.00) / Cheese Foam (+S$1.50) / No Toppings",
+const ORDER_FIELD_OPTIONS = {
+    size: "Regular / Large",
+    ice: "No Ice / Less Ice / Normal Ice / Hot",
+    sugar: "0% / 25% / 50% / 100%",
+    toppings: "Tapioca Pearls (+S$1.20) / Brown Sugar (+S$1.00) / Cheese Foam (+S$1.50) / No Toppings",
 };
+
+const ORDER_FIELD_QUESTION_KEYS = { size: 'askSize', ice: 'askIce', sugar: 'askSugar', toppings: 'askToppings' };
+
+function orderFieldQuestion(field, lang) {
+    return `${tr(ORDER_FIELD_QUESTION_KEYS[field], lang)}<br>${ORDER_FIELD_OPTIONS[field]}`;
+}
 
 const ORDER_FIELD_SEQUENCE = ["size", "ice", "sugar", "toppings"];
 
@@ -3198,16 +3257,18 @@ function nextOrderFieldName(state) {
 }
 
 // First field still needed, as a question ready to send; null once the order is complete.
-function nextMissingOrderField(draft) {
+function nextMissingOrderField(draft, lang = 'en') {
     if (!draft.beverageId) {
-        return { field: "drink", question: "Which drink would you like me to add? You can say something like 'add Classic Milk Tea to my cart'." };
+        return { field: "drink", question: tr('askDrink', lang) };
     }
     const field = nextOrderFieldName(draft);
-    return field ? { field, question: ORDER_FIELD_QUESTIONS[field] } : null;
+    return field ? { field, question: orderFieldQuestion(field, lang) } : null;
 }
 
-async function askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage }) {
-    await ChatbotSession.setPendingOrderDraft(activeConversationId, userId, { ...draft, awaitingField: missing.field });
+async function askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage, lang = 'en' }) {
+    // Pin the language on the draft: the follow-up answers ("Regular", "25%") are option words
+    // that always look English, so re-detecting per message would flip the flow back to English.
+    await ChatbotSession.setPendingOrderDraft(activeConversationId, userId, { ...draft, lang, awaitingField: missing.field });
     await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
     await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: missing.question });
     return { reply: missing.question, system_action: { ui_navigation: "none" } };
@@ -3261,8 +3322,9 @@ async function finalizeOrderDraft(draft, { activeConversationId, userId, safeMes
 }
 
 // Reads a reply as the answer to draft.awaitingField; null if it doesn't look like one.
-async function continueOrderDraft(draft, replyMessage, { activeConversationId, userId, safeMessage, history }) {
+async function continueOrderDraft(draft, replyMessage, { activeConversationId, userId, safeMessage, history, lang = 'en' }) {
     const field = draft.awaitingField;
+    const draftLang = draft.lang || lang;
 
     if (field === "drink") {
         let beverageId = await resolveBeverageId(replyMessage);
@@ -3284,7 +3346,7 @@ async function continueOrderDraft(draft, replyMessage, { activeConversationId, u
     } else if (field === "sugar") {
         const invalidSugar = findInvalidSugarPercent(replyMessage);
         if (invalidSugar !== null) {
-            const reply = `Sorry, ${invalidSugar}% sugar isn't one of our sugar level options. We offer 0%, 25%, 50%, or 100% sugar — which would you like?`;
+            const reply = tr('invalidSugarPercent', draftLang).replace('{percent}', invalidSugar);
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
             return { reply, system_action: { ui_navigation: "none" } };
@@ -3299,8 +3361,8 @@ async function continueOrderDraft(draft, replyMessage, { activeConversationId, u
         return null;
     }
 
-    const missing = nextMissingOrderField(draft);
-    if (missing) return await askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage });
+    const missing = nextMissingOrderField(draft, draftLang);
+    if (missing) return await askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage, lang: draftLang });
     return await finalizeOrderDraft(draft, { activeConversationId, userId, safeMessage });
 }
 
@@ -3340,7 +3402,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     if (userId) {
         const pendingOrderDraft = await ChatbotSession.getPendingOrderDraft(activeConversationId);
         if (pendingOrderDraft) {
-            const resumed = await continueOrderDraft(pendingOrderDraft, intentMessage, { activeConversationId, userId, safeMessage, history: recentHistory });
+            const resumed = await continueOrderDraft(pendingOrderDraft, intentMessage, { activeConversationId, userId, safeMessage, history: recentHistory, lang: detectedLang });
             if (resumed) return resumed;
             await ChatbotSession.clearPendingOrderDraft(activeConversationId); // not an answer — drop the stale draft
         }
@@ -4817,7 +4879,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
         // Reject, don't default — 0/25/50/100 are the only real sugar levels.
         const invalidSugar = findInvalidSugarPercent(intentMessage);
         if (invalidSugar !== null) {
-            const reply = `Sorry, ${invalidSugar}% sugar isn't one of our sugar level options. We offer 0%, 25%, 50%, or 100% sugar — which would you like?`;
+            const reply = tr('invalidSugarPercent', detectedLang).replace('{percent}', invalidSugar);
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
             return { reply, system_action: { ui_navigation: "none" } };
@@ -4858,9 +4920,9 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
             quantity: parseQuantityFromMessage(intentMessage),
         };
 
-        const missing = nextMissingOrderField(draft);
+        const missing = nextMissingOrderField(draft, detectedLang);
         if (missing) {
-            return await askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage });
+            return await askForMissingOrderField(draft, missing, { activeConversationId, userId, safeMessage, lang: detectedLang });
         }
 
         return await finalizeOrderDraft(draft, { activeConversationId, userId, safeMessage });
@@ -4944,7 +5006,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
         // generic "what would you like to do?" reply as if nothing was said).
         const invalidSugar = findInvalidSugarPercent(intentMessage);
         if (invalidSugar !== null) {
-            const reply = `Sorry, ${invalidSugar}% sugar isn't one of our sugar level options. We offer 0%, 25%, 50%, or 100% sugar — which would you like?`;
+            const reply = tr('invalidSugarPercent', detectedLang).replace('{percent}', invalidSugar);
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "user", content: safeMessage });
             await ChatbotSession.appendToConversation(activeConversationId, userId, { role: "assistant", content: reply });
             return { reply, system_action: { ui_navigation: "none" } };
@@ -5576,8 +5638,8 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
             if (nextDrink) {
                 const regularPrice = Number(nextDrink.price || 0).toFixed(2);
                 reply +=
-                    `<br><br>Next up: your <strong>${nextDrink.name}</strong>.` +
-                    `<br><br>What size would you like?` +
+                    `<br><br>${tr('nextUpDrink', detectedLang).replace('{drink}', nextDrink.name)}` +
+                    `<br><br>${tr('askSize', detectedLang)}` +
                     `<br><br>Regular (S$${regularPrice}) / Large (+S$1.50)`;
             } else {
                 nextQueuedDrink = null;
