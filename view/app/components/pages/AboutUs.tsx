@@ -5,7 +5,7 @@ import styles from './AboutUs.module.css';
 
 const stats = [
   {
-    target: 12,
+    target: 18,
     label: 'signature drinks',
     text: 'Crafted options across milk tea, matcha, blended, and local favorites.',
   },
