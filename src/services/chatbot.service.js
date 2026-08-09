@@ -507,7 +507,9 @@ const ORDER_CUSTOMIZATION_WORDS = [
 // Parses sugar level from natural language — handles both numeric (50%) and spoken (fifty percent) forms.
 // Uses \b word boundaries so "0%" never falsely matches inside "50%" or "100%".
 function parseSugarLevel(text) {
-    const m = String(text || "").toLowerCase();
+    // Quick-reply labels carry a price ("Regular (S$ 7.50)"). Left in, the bare-level fallback
+    // below reads the "50" out of "7.50" and sets the sugar level from a size choice.
+    const m = String(text || "").toLowerCase().replace(/s?\$\s*\d+(?:\.\d+)?/g, " ");
     // Menu labels: Normal Sweet 100% | Less Sweet 50% | Slightly Sweet 25% | No Additional Sugar 0%.
     // Ordered least-to-most so "no additional sugar" isn't caught by a looser sugar pattern.
     if (/\bno\s+additional\s+sugar\b|\bzero\s+percent\b|\bno\s+sugar\b|\bunsweetened\b|\bsugar\s*[- ]?free\b|\bwithout\s+sugar\b/.test(m)) return "0% Sugar";
@@ -530,7 +532,8 @@ function parseSugarLevel(text) {
     const isAboutSugar = /\b(sugar|sweet|sweetness)\b/.test(m);
     if (wordCount <= 4 || isAboutSugar) {
         if (/\bzero\b/.test(m)) return "0% Sugar";
-        const bare = m.match(/\b(0|25|50|100)\b/);
+        // Not part of a decimal — "7.50" and "100.00" are amounts, not levels.
+        const bare = m.match(/(?<![.\d])(0|25|50|100)\b(?![.,]?\d)/);
         if (bare) return `${bare[1]}% Sugar`;
     }
     return null;
