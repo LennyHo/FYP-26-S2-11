@@ -2585,10 +2585,6 @@ function isNavigationRequest(message) {
     if (NAV_STRONG_TRIGGER_RE.test(msg)) return true;
     if (NAV_WEAK_TRIGGER_RE.test(msg) && NAV_PAGE_WORD_RE.test(msg)) return true;
 
-    // "show me the menu" / "give me the store locator" / "pull up my profile" — a soft trigger verb
-    // plus an actual page-directory alias. Without this, these fell through to
-    // isRecommendationRequest's own "show me"/"give me" catch-all, found no drink by that name, and
-    // dead-ended on "couldn't find a drink matching that."
     if (NAV_SOFT_SHOW_TRIGGER_RE.test(msg)) {
         const matched = matchPageFromMessage(msg);
         if (matched && !NAV_SOFT_SHOW_EXCLUDED_KEYS.has(matched.key)) return true;
@@ -2597,8 +2593,6 @@ function isNavigationRequest(message) {
     return false;
 }
 
-// Finds the destination whose alias is the longest match found in the message —
-// longer aliases are more specific ("order history" beats a bare "order").
 function matchPageFromMessage(message) {
     const msg = String(message || "").toLowerCase();
     let best = null;
@@ -2614,10 +2608,6 @@ function matchPageFromMessage(message) {
     return best;
 }
 
-// Sequence: ChatbotGUI -> POST /chat -> ChatbotService.generateNavigationResponse(prompt) -> Gemini API -> systemAction.
-// Keyword matching handles the vast majority of requests instantly and for free; Gemini is only
-// consulted when the customer clearly wants to navigate (isNavigationRequest passed) but phrased
-// the destination in a way no alias covers (e.g. "bring me back to where I can see what I bought").
 async function generateNavigationResponse(intentMessage) {
     const matched = matchPageFromMessage(intentMessage);
     if (matched) return matched;
@@ -4469,6 +4459,7 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
         return { reply, system_action: { ui_navigation: "none" } };
     }
 
+    // #30: As a customer, I want to check store locations through the chatbot so that I can find the nearest outlet conveniently.
     // Store location/hours
     if (isStoreInfoRequest(intentMessage)) {
         const stores = await Store.getActiveStores();

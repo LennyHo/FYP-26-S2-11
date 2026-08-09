@@ -368,10 +368,6 @@ async function getOrder(req, res) {
     }
 }
 
-// #304 - Lets the chatbot's order-status card poll for live updates in place,
-// instead of staying frozen at whatever phase it was in when first asked.
-// Scoped to the requesting customer's own userId so an order id alone (visible
-// in the chat's own network requests) can't be used to poll a stranger's order.
 async function getOrderStatusCard(req, res) {
     try {
         const orderId = toObjectId(req.params.id);

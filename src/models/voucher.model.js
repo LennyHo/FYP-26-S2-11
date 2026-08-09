@@ -18,6 +18,11 @@ const voucherSchema = new mongoose.Schema(
   { timestamps: true, collection: "vouchers" }
 );
 
+// Auto-deletes a voucher once expiresAt is in the past. MongoDB's TTL monitor sweeps every
+// ~60s, so removal isn't instant, but no app-level cron job is needed. Vouchers with
+// expiresAt: null are never touched — they have no expiry.
+voucherSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
 voucherSchema.statics.findValidByCode = async function findValidByCode(code) {
   if (!code) return null;
 

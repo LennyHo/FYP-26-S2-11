@@ -271,6 +271,8 @@
 .inactive { background: rgba(157, 148, 141, 0.15); color: #5f574f; }
 .expired  { background: rgba(192, 50,  29,  0.12); color: #c0321d; }
 
+.expiryTextExpired { color: #c0321d; font-weight: 600; }
+
 /* Delete action */
 .btnDelete {
   padding: 5px 12px;

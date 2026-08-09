@@ -17,7 +17,6 @@ function getLanguageInstruction() {
 }
 
   // #27 - As a customer, I want to search for beverages using the AI chatbot so that I can find what I want quickly.
-  // #13 - As a customer, I want to view the menu so that I know which beverages are available.
   // Detects whether the user's message is menu/drink-related before loading menu data into the AI prompt.
 async function isMenuRequest(message) {
   const msg = String(message || "").toLowerCase();
@@ -50,9 +49,6 @@ async function isMenuRequest(message) {
     msg.includes("what are") ||
     msg.includes("tell me about") ||
 
-    // Symptom / how-are-you-feeling phrasing — loads menu context so Gemini can still
-    // recommend real drinks when the customer describes feeling unwell in a way the
-    // rigid keyword matcher (isSymptomRequest in chatbot.service.js) doesn't catch.
     msg.includes("not feeling") ||
     msg.includes("feeling unwell") ||
     msg.includes("feel unwell") ||
@@ -202,7 +198,7 @@ function filterMenu(beverages, message) {
 
   return matched.length ? matched : beverages.slice(0, 8);
 }
-// End of #27 / #13 menu intent detection
+// End of #27
 
 const LANGUAGE_NAMES = {
   zh: "Mandarin Chinese",
@@ -212,11 +208,6 @@ const LANGUAGE_NAMES = {
 };
 
 async function buildSystemPrompt(userMessage, extraContext = "", detectedLang = null, anchorDrinkName = null) {
-  // When the caller already knows the customer's language (detected from their raw message),
-  // state it directly instead of asking Gemini to re-detect it. Re-detection is unreliable when
-  // the actual text handed to the model is a mostly-English scaffolding prompt (e.g. "The customer
-  // asked: '<original message>' ... Recommend 2-3 of these drinks...") — the English scaffolding
-  // outweighs the quoted customer message and the model defaults to English.
   const knownLangName = detectedLang && LANGUAGE_NAMES[detectedLang];
 
   const langInstruction = USE_MATCHED_LANGUAGE

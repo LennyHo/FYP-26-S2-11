@@ -151,6 +151,13 @@ function formatDate(iso?: string | null) {
   });
 }
 
+function formatExpiry(voucher: DripTeaVoucher) {
+  if (!voucher.expiresAt) return 'No expiry';
+  return new Date(voucher.expiresAt).toLocaleDateString('en-SG', {
+    dateStyle: 'medium',
+  });
+}
+
 function matchesVoucherSearch(voucher: DripTeaVoucher, query: string) {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return true;
@@ -363,6 +370,7 @@ export default function StoreStaffVoucherPage() {
                   <th>Title</th>
                   <th>Discount</th>
                   <th>Min Spend</th>
+                  <th>Expires</th>
                   <th>Status</th>
                   <th>Delete</th>
                 </tr>
@@ -385,6 +393,7 @@ export default function StoreStaffVoucherPage() {
                       </td>
                       <td className={styles.discountCell}>{formatDiscount(voucher)}</td>
                       <td className={styles.minSpendCell}>{formatMinSpend(voucher)}</td>
+                      <td className={status === 'expired' ? styles.expiryTextExpired : undefined}>{formatExpiry(voucher)}</td>
                       <td>
                         <span className={`${styles.statusBadge} ${styles[status]}`}>
                           {formatStatus(status)}
@@ -403,7 +412,7 @@ export default function StoreStaffVoucherPage() {
                     </tr>
                   );
                 }) : (
-                  <tr><td colSpan={6} className={styles.empty}>No vouchers found</td></tr>
+                  <tr><td colSpan={7} className={styles.empty}>No vouchers found</td></tr>
                 )}
               </tbody>
             </table>
