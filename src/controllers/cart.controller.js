@@ -3,6 +3,8 @@
 const CartItem = require("../models/cartItem.model");
 const Voucher = require("../models/voucher.model");
 const Order = require("../models/order.model");
+
+// #15: As a customer, I want to add a selected beverage to my cart so that I can review and purchase it later.
 async function addToCart(req, res) {
   try {
     const { customerId, userId, beverageId, menuItemId, quantity, customization } = req.body;

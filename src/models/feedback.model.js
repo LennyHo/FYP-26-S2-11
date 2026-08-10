@@ -43,6 +43,8 @@ feedbackSchema.index(
   { unique: true }
 );
 
+// #307 - As a customer, I want to provide feedback manually so that I can share my experience with the service.
+// #308 - As a customer, I want to provide feedback via the chatbot so that I can share my experience conveniently.
 feedbackSchema.statics.createFeedback = async function createFeedback(data) {
   const Feedback = this;
   const MenuItem = require("./menuItem.model");

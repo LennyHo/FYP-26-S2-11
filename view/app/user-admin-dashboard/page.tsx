@@ -69,10 +69,6 @@ function statusLabel(status: string) {
   return statusOptions.find(option => option.value === status)?.label || status;
 }
 
-function usernameFromEmail(email: string) {
-  return email.split('@')[0] || email;
-}
-
 function formatDate(value?: string) {
   if (!value) return 'Not recorded';
   const date = new Date(value);
@@ -791,7 +787,7 @@ export default function UserAdminDashboardPage() {
                   ) : filteredUsers.length > 0 ? (
                     filteredUsers.map(user => (
                       <tr key={user.id}>
-                        <td>{usernameFromEmail(user.email)}</td>
+                        <td>{user.fullName}</td>
                         <td>{user.email}</td>
                         <td><span className={styles.badge}>{roleLabel(user.role)}</span></td>
                         <td>

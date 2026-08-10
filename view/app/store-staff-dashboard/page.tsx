@@ -1,18 +1,4 @@
 // User Story Architecture Trace — store-staff-dashboard/page.tsx
-//
-// #28  Track Order Status (Store Staff updates status; Customer tracks via order-status/page.tsx)
-//      View: store-staff-dashboard/page.tsx (this file) → Route: checkout.routes.js → Ctrl: order.controller.js → Model: order.model.js
-//
-// #37  Login (Store Staff)
-//      View: login/page.tsx → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
-//
-// #38  Logout (Store Staff)
-//      View: store-staff-dashboard/page.tsx (this file) — client-side: JWT cleared from localStorage
-//
-// #310-313 Manage Inventory (Store Staff) — moved to store-staff/page.tsx (Menu Management)
-//
-// #314  View Order Feedback (Store Staff)
-//     View: store-staff-dashboard/page.tsx (this file) → Route: feedback.routes.js → Ctrl: feedback.controller.js → Model: feedback.model.js
 
 'use client';
 

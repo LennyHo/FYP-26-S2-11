@@ -24,6 +24,7 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true, collection: "orders" }
 );
 
+// #23: As a customer, I want to make payment on the checkout page so that I can complete my order.
 // Static method to validate order before payment, in sequence diagram
 orderSchema.statics.validateOrder = async function validateOrder(orderId) {
   const order = await this.findById(orderId).lean();

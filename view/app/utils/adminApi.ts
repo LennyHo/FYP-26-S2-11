@@ -35,11 +35,10 @@ export function updateUser(userId: string, payload: Partial<Pick<DripTeaUser, 'f
   });
 }
 
-// Suspends a user account, preventing login. PATCH /api/users/:id
+// Suspends a user account, preventing login. PATCH /api/users/:id/suspend
 export function suspendUser(userId: string) {
-  return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}`, {
+  return requestJson<{ ok: boolean; data: DripTeaUser }>(`/api/users/${encodeURIComponent(userId)}/suspend`, {
     method: 'PATCH',
-    body: JSON.stringify({ status: 'suspended' }),
   });
 }
 

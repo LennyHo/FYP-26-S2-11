@@ -13,6 +13,7 @@ async function getInventory(req, res) {
   }
 }
 
+// #311 - As a store staff, I want to view the inventory so that I can monitor stock levels.
 async function getInventoryItem(req, res) {
   try {
     const { id } = req.params;
@@ -30,6 +31,7 @@ async function getInventoryItem(req, res) {
   }
 }
 
+// #310 - As a store staff, I want to create inventory items so that I can add new products.
 async function createInventory(req, res) {
   try {
     const name = String(req.body.name || "").trim();
@@ -64,6 +66,7 @@ async function createInventory(req, res) {
   }
 }
 
+// #312 - As a store staff, I want to update inventory so that I can keep stock information accurate.
 async function updateInventoryQuantity(req, res) {
   try {
     const { id } = req.params;
@@ -93,6 +96,7 @@ async function updateInventoryQuantity(req, res) {
   }
 }
 
+// #313 - As a store staff, I want to delete inventory so that I can remove items.
 async function deleteInventory(req, res) {
   try {
     const { id } = req.params;

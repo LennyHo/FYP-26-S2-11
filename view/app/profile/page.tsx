@@ -1,7 +1,5 @@
 // User Story Architecture Trace — profile/page.tsx
-//
-// #246 Update Account (Customer)
-//      View: profile/page.tsx (this file) → Route: user.routes.js → Model: user.model.js
+
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';

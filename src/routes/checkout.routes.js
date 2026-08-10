@@ -17,8 +17,10 @@ router.get("/orders/:id/queue", orderController.getOrderQueueStatus);
 router.get("/orders/:id/status-card", orderController.getOrderStatusCard);
 router.get("/orders/:id", orderController.getOrder);
 
-// #28 As a customer, I want to track my order status so that I know when my drink will be ready. 
-// #304 As a customer, I want to view my delivery and order status via the chatbot so that I can get quick, automated updates.
+// #28  - As a customer, I want to track my order status so that I know when my drink will be ready.
+// #203 - As a customer, I want to track my order status through the chatbot so that I know when my drink will be ready.
+// #303 - As a customer, I want to check my delivery and order status manually so that I can stay informed about my purchase.
+// #304 - As a customer, I want to view my delivery and order status via the chatbot so that I can get quick, automated updates.
 router.patch("/orders/:id/status", orderController.updateOrderStatus);
 
 module.exports = router;

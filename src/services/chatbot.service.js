@@ -24,6 +24,7 @@ const STORE_OUTLET_IMAGES = {
     "DripTea Orchard": "/img/313somerset.webp",
 };
 
+// #29: As a customer, I want the chatbot to inform me when my chosen drink has a high sugar level so that I can reconsider my selection.
 // Common functions for most features
 // Resolves a menu item from free text: exact name match, substring match, then alias lookup.
 async function findDrinkByName(message) {
@@ -1974,6 +1975,7 @@ function isClearCartRequest(message) {
     );
 }
 
+// #201 - Edit cart item through chatbot.
 // True if the message edits an existing cart line (remove/change/ordinal reference), not a new order.
 function isCartUpdateRequest(message) {
     const msg = normalizeSugarPercents(String(message || "").toLowerCase());
@@ -3648,12 +3650,6 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
     }
 
     // User Story #32 (extension): Symptom-based recommendations — "I have a flu", "feeling bloated", etc.
-    // Runs before the generic recommendation/health-ranking checks since phrases like
-    // "what should I drink for a cough" would otherwise be caught by isRecommendationRequest.
-    // Guarded against explicit ordering language / an active order flow so a clear order embedded
-    // in an otherwise rambling or emotional message ("I'm so tired... just get me a Classic Milk
-    // Tea with less sugar") is placed as an order instead of being hijacked into a fatigue
-    // recommendation by the incidental symptom keyword (T25 fix — see hasExplicitOrderIntent).
     if (isSymptomRequest(intentMessage) && !hasExplicitOrderIntent(intentMessage) && !hasActiveOrderFlow(recentHistory)) {
         const category = detectSymptomCategory(intentMessage);
         const drinks = await getDrinksByItemIds(category.itemIds);
@@ -3894,12 +3890,6 @@ async function handleChatMessageCore({ message, conversationId, userId, isQuickP
 
     // User Story #32: Recommend beverages based on user message
     if (isRecommendationRequest(intentMessage)) {
-        // "Hot" is an ice-level choice available on any drink at ordering time, not a searchable
-        // drink attribute — checked BEFORE the keyword search below, not after, because a plain
-        // substring search for "hot" can accidentally match an unrelated drink whose description
-        // just happens to contain the word (e.g. "...perfect for a hot day"), which would otherwise
-        // recommend a cold ice-blended drink for a "hot drink" request. Only short-circuits when no
-        // other real flavour/drink word is present, so "recommend a hot matcha latte" still recommends matcha normally.
         const mentionsHot = /\bhot\b/i.test(intentMessage);
         const mentionsOtherFlavour = DRINK_ASSOCIATION_WORDS.some((w) => intentMessage.toLowerCase().includes(w));
         if (mentionsHot && !mentionsOtherFlavour) {
@@ -5772,6 +5762,7 @@ async function handleChatMessage(params) {
     return ensureReplyLanguage(result, detectedLang);
 }
 
+// #306 - As a customer, I want to use image recognition via the chatbot so that I can easily identify products.
 // Handles an image upload: sends the image + menu summary to Gemini for a vision-based reply.
 async function handleImageMessage({ images, message, conversationId }) {
     try {

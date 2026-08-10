@@ -19,11 +19,7 @@ function toObjectId(id) {
     return mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
 }
 
-// The order-status tracking page advances status client-side on a timer, which
-// only runs while that page is open — so a customer checking via the chatbot,
-// or reopening this page later, could otherwise see a stale status. This
-// derives (and persists) the up-to-date status from the same timers on every
-// read, so the tracking page, staff dashboard, and chatbot never disagree.
+// Live order status to inform customer
 async function withLiveStatus(order) {
     const liveStatus = deriveCurrentStatus(order);
     if (liveStatus === order.status) return order;
@@ -642,6 +638,7 @@ async function createTestQueueOrders(req, res) {
 
 // #28  - As a customer, I want to track my order status so that I know when my drink will be ready.
 // #203 - As a customer, I want to track my order status through the chatbot so that I know when my drink will be ready.
+// #303 - As a customer, I want to check my delivery and order status manually so that I can stay informed about my purchase.
 // #304 - As a customer, I want to view my delivery and order status via the chatbot so that I can get quick, automated updates.
 // Updates the status field (pending -> preparing -> ready -> completed) in the orders collection.
 async function updateOrderStatus(req, res) {

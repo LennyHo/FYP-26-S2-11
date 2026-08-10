@@ -1,7 +1,8 @@
 // User Story Architecture Trace — purchaseHistory.controller.js
 
-// #19 Get Purchase History
 const Payment = require("../models/payment.model");
+
+// #19: As a customer, I want to be able to view the purchase history during checkout so that I can review my past orders.
 async function getPurchaseHistory(req, res) {
   try {
     const userId = req.query.userId || req.params.userId;

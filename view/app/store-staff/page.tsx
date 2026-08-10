@@ -1,34 +1,5 @@
 // User Story Architecture Trace — store-staff/page.tsx
-//
-// #33  Create Menu Items
-//      View: store-staff/page.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
-//
-// #34  View Menu Items
-//      View: store-staff/page.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
-//
-// #35  Update Menu Items
-//      View: store-staff/page.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
-//
-// #36  Search Menu Items
-//      View: store-staff/page.tsx (this file) → Route: menu.routes.js → Ctrl: menu.controller.js → Model: menuItem.model.js
-//
-// #37  Login (Store Staff)
-//      View: login/page.tsx → Route: auth.routes.js → Ctrl: auth.controller.js → Model: user.model.js
-//
-// #38  Logout (Store Staff)
-//      View: store-staff/page.tsx (this file) — client-side: JWT cleared from localStorage
-//
-// #310 Create Inventory Item (Store Staff)
-//      View: store-staff/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
-//
-// #311  View Inventory (Store Staff)
-//      View: store-staff/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
-//
-// #312  Update Inventory (Store Staff)
-//      View: store-staff/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
-//
-// #313  Delete Inventory Item (Store Staff)
-//     View: store-staff/page.tsx (this file) → Route: inventory.routes.js → Ctrl: inventory.controller.js → Model: inventory.model.js
+
 'use client';
 
 import StaffHeader from '../components/layout/StaffHeader';
@@ -147,6 +118,7 @@ export default function StoreStaffPage() {
     setShowAddModal(true);
   }
 
+  // #306 - As a customer, I want to use image recognition via the chatbot so that I can easily identify products.
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;

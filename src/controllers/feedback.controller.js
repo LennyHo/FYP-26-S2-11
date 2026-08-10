@@ -3,6 +3,7 @@
 const Feedback = require("../models/feedback.model");
 const MenuItem = require("../models/menuItem.model");
 
+// #307 - As a customer, I want to provide feedback manually so that I can share my experience with the service.
 async function createFeedback(req, res) {
     try {
     const {
@@ -73,6 +74,7 @@ async function getAverageRating(req, res) {
     }
 }
 
+// #318 - As a store staff, I want to view customer feedback so that I can improve the customer experience.
 async function getOrderFeedbacks(req, res) {
     try {
     const ids = String(req.query.ids || "")
