@@ -22,7 +22,7 @@ function getMessagesKey(): string {
 export const STORAGE_KEY = STORAGE_KEY_BASE;
 
 const WELCOME_GREETINGS = [
-  'Hello, how are you?',
+  'How are you?',
   "What's the vibe for today?",
   'What are you in the mood for today?',
   'What sounds good today?',
