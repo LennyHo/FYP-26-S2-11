@@ -552,7 +552,7 @@ node load-tests/seed-loadtest-db.js
 The script writes **only** to `LOADTEST_DB_NAME` (default `driptea_loadtest`), never to your real database. It:
 
 - Copies `menu_items`, `stores`, and `vouchers` out of `MONGODB_DB_NAME` **read-only**, so the load test has real menu data to work with.
-- Creates `LOADTEST_USERS` (default 100) synthetic customers — `loadtest+1@example.com` … `loadtest+100@example.com`, all with password `Password@123`. Re-running the script deletes and recreates them, so it's safe to run repeatedly.
+- Creates `LOADTEST_USERS` (default 100) synthetic customers — `loadtest+1@example.com` … `loadtest+100@example.com`, all with password `Password@123`. Accounts are inserted-or-ignored on email, so re-running the script leaves existing test accounts (and their password hashes) alone and only fills in missing ones. Extra accounts added by a previous `--add` run are removed so a reseed always lands on exactly `LOADTEST_USERS`.
 - Writes their ids to `load-tests/loadtest-users.json`, which `chatbot-real.js` reads so each virtual user acts as a distinct real customer.
 
 > **Safety guard:** the script throws and exits if `LOADTEST_DB_NAME` is the same as `MONGODB_DB_NAME`, so it can't overwrite the shared Atlas data.

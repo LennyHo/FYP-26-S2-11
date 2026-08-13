@@ -53,37 +53,56 @@ async function writeLoadtestUsersFile(users) {
   return inserted.length;
 }
 
-// Same idea as the slide's `INSERT OR IGNORE INTO user_profile ... executemany`:
-// generate N sequentially-named records, then write each one keyed on a unique
-// field (email here) so an existing record is left untouched and a new one is
-// inserted — never a duplicate-key error, never an overwrite.
+// Same shape as `INSERT OR IGNORE INTO user_profile ... executemany`: build the
+// record list in a loop, then write the whole batch in one call, each row keyed
+// on a unique field (email here) so an existing account is left untouched and a
+// missing one is inserted — never a duplicate-key error, never an overwrite.
 async function upsertSyntheticCustomers(users, { start, count }) {
+  const emails = [];
+  for (let i = 0; i < count; i++) {
+    emails.push(`loadtest+${start + i}@example.com`);
+  }
+
+  // Which of these already exist. Password hashing is pbkdf2 at 310k iterations
+  // (~130ms each), and $setOnInsert would throw the hash away for accounts that
+  // are already there — so skip them instead of paying ~13s on every rerun.
+  const found = await users
+    .find({ email: { $in: emails } }, { projection: { email: 1 } })
+    .toArray();
+  const existing = new Set(found.map((u) => u.email));
+
   const now = new Date();
-  const newUsers = Array.from({ length: count }, (_, i) => {
+  const ops = [];
+  for (let i = 0; i < count; i++) {
     const n = start + i;
-    return {
-      fullName: `Load Test Customer ${n}`,
-      email: `loadtest+${n}@example.com`,
-      role: "customer",
-      status: "active",
-      profilePic: "",
-      addresses: [],
-      storeId: null,
-      storeCode: null,
-      ...createPasswordRecord("Password@123"),
-      createdAt: now,
-      updatedAt: now,
-    };
-  });
+    const email = emails[i];
+    if (existing.has(email)) continue;
 
-  const ops = newUsers.map((u) => ({
-    updateOne: {
-      filter: { email: u.email },
-      update: { $setOnInsert: u },
-      upsert: true,
-    },
-  }));
+    ops.push({
+      updateOne: {
+        filter: { email },
+        update: {
+          $setOnInsert: {
+            fullName: `Load Test Customer ${n}`,
+            email,
+            role: "customer",
+            status: "active",
+            profilePic: "",
+            addresses: [],
+            storeId: null,
+            storeCode: null,
+            ...createPasswordRecord("Password@123"),
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        upsert: true,
+      },
+    });
+  }
 
+  // bulkWrite rejects an empty batch, and "nothing to insert" is a normal result.
+  if (!ops.length) return { upsertedCount: 0 };
   return users.bulkWrite(ops);
 }
 
@@ -153,8 +172,23 @@ async function main() {
   // are inserted.
   const users = target.collection("users");
   const result = await upsertSyntheticCustomers(users, { start: 1, count: TEST_USER_COUNT });
+
+  // A reseed has to land on exactly TEST_USER_COUNT, so drop any higher-numbered
+  // accounts a previous --add run appended. Without this the DB keeps growing and
+  // loadtest-users.json quietly ends up with more ids than the count reported here.
+  const all = await users
+    .find({ email: /^loadtest\+/ }, { projection: { email: 1 } })
+    .toArray();
+  const extras = all
+    .map((u) => u.email)
+    .filter((e) => Number(String(e).match(/^loadtest\+(\d+)@/)?.[1] || 0) > TEST_USER_COUNT);
+  if (extras.length) await users.deleteMany({ email: { $in: extras } });
+
   console.log(
-    `  created users        ${result.upsertedCount} new, ${TEST_USER_COUNT - result.upsertedCount} already existed (loadtest+1..${TEST_USER_COUNT}@example.com)`
+    `  created users        ${result.upsertedCount} new, ` +
+      `${TEST_USER_COUNT - result.upsertedCount} already existed` +
+      (extras.length ? `, ${extras.length} extra removed` : "") +
+      ` (loadtest+1..${TEST_USER_COUNT}@example.com)`
   );
 
   // Write the user ids out so the k6 script can send real userId values.
