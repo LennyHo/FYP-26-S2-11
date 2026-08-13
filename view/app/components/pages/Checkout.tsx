@@ -195,11 +195,14 @@ export default function Checkout() {
     }
 
     const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-    const displayedDelivery = deliveryPreview || delivery;
+    const isDelivery = orderType === "delivery";
+    // Gate on order type, not just on whether delivery data exists — a customer who
+    // enters an address and then switches to pickup still has that data in state,
+    // and without this check the pickup order would show and charge a delivery fee.
+    const displayedDelivery = isDelivery ? deliveryPreview || delivery : null;
     const deliveryFee = displayedDelivery?.deliveryFee ?? 0;
     const total = Math.max(subtotal - discountAmount, 0) + deliveryFee;
-    const needsDeliveryAddress = orderType === "delivery" && !delivery;
-    const isDelivery = orderType === "delivery";
+    const needsDeliveryAddress = isDelivery && !delivery;
 
     useEffect(() => {
         async function loadVouchers() {
@@ -436,7 +439,7 @@ export default function Checkout() {
                 result.order.id,
                 orderNo,
                 items,
-                delivery,
+                isDelivery ? delivery : null,
                 subtotal,
                 deliveryFee,
                 discountAmount,
