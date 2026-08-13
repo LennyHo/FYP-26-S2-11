@@ -7,6 +7,9 @@
 // Run:  node load-tests/seed-loadtest-db.js
 //
 // Cleanup afterwards:  node load-tests/seed-loadtest-db.js --drop
+//
+// Add more synthetic customers without touching existing ones:
+//   node load-tests/seed-loadtest-db.js --add=50
 
 const dns = require("dns");
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
@@ -25,8 +28,11 @@ const TEST_USER_COUNT = Number(process.env.LOADTEST_USERS || 100);
 const REFERENCE_COLLECTIONS = ["menu_items", "stores", "vouchers"];
 
 // == Safety guard ==
+// Only matters for the full reseed, which reads REFERENCE_COLLECTIONS out of
+// SOURCE_DB. --add and --drop never touch SOURCE_DB, so they're exempt.
 if (!URI) throw new Error("MONGODB_URI is missing in .env");
-if (TARGET_DB === SOURCE_DB) {
+const isFullReseed = !process.argv.includes("--drop") && !process.argv.some((a) => a.startsWith("--add="));
+if (isFullReseed && TARGET_DB === SOURCE_DB) {
   throw new Error(
     `Refusing to run: target DB "${TARGET_DB}" is the same as source DB "${SOURCE_DB}".`
   );
@@ -131,6 +137,8 @@ async function addSyntheticCustomers(target, count) {
 
 async function main() {
   const drop = process.argv.includes("--drop");
+  const addArg = process.argv.find((a) => a.startsWith("--add="));
+  const addCount = addArg ? Number(addArg.split("=")[1]) : null;
 
   const client = new MongoClient(URI, { serverSelectionTimeoutMS: 20000 });
   await client.connect();
@@ -138,13 +146,19 @@ async function main() {
   const source = client.db(SOURCE_DB);
   const target = client.db(TARGET_DB);
 
-  if (target.databaseName === source.databaseName) {
+  if (!drop && !addCount && target.databaseName === source.databaseName) {
     throw new Error("Guard tripped: refusing to write to the source database.");
   }
 
   if (drop) {
     await target.dropDatabase();
     console.log(`Dropped load-test database "${TARGET_DB}".`);
+    await client.close();
+    return;
+  }
+
+  if (addCount) {
+    await addSyntheticCustomers(target, addCount);
     await client.close();
     return;
   }
@@ -192,15 +206,7 @@ async function main() {
   );
 
   // Write the user ids out so the k6 script can send real userId values.
-  const inserted = await users
-    .find({ email: /^loadtest\+/ }, { projection: { _id: 1 } })
-    .toArray();
-
-  require("fs").writeFileSync(
-    require("path").join(__dirname, "loadtest-users.json"),
-    JSON.stringify(inserted.map((u) => String(u._id)), null, 2)
-  );
-  console.log(`\nWrote load-tests/loadtest-users.json (${inserted.length} ids)`);
+  await writeLoadtestUsersFile(users);
   console.log(`\nStart the test server with:`);
   console.log(`  MONGODB_DB_NAME=${TARGET_DB} node server.js`);
 
