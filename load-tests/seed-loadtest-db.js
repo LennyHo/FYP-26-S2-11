@@ -40,6 +40,76 @@ function createPasswordRecord(password) {
   return { passwordHash, passwordSalt };
 }
 
+async function writeLoadtestUsersFile(users) {
+  const inserted = await users
+    .find({ email: /^loadtest\+/ }, { projection: { _id: 1 } })
+    .toArray();
+
+  require("fs").writeFileSync(
+    require("path").join(__dirname, "loadtest-users.json"),
+    JSON.stringify(inserted.map((u) => String(u._id)), null, 2)
+  );
+  console.log(`\nWrote load-tests/loadtest-users.json (${inserted.length} ids)`);
+  return inserted.length;
+}
+
+// Same idea as the slide's `INSERT OR IGNORE INTO user_profile ... executemany`:
+// generate N sequentially-named records, then write each one keyed on a unique
+// field (email here) so an existing record is left untouched and a new one is
+// inserted — never a duplicate-key error, never an overwrite.
+async function upsertSyntheticCustomers(users, { start, count }) {
+  const now = new Date();
+  const newUsers = Array.from({ length: count }, (_, i) => {
+    const n = start + i;
+    return {
+      fullName: `Load Test Customer ${n}`,
+      email: `loadtest+${n}@example.com`,
+      role: "customer",
+      status: "active",
+      profilePic: "",
+      addresses: [],
+      storeId: null,
+      storeCode: null,
+      ...createPasswordRecord("Password@123"),
+      createdAt: now,
+      updatedAt: now,
+    };
+  });
+
+  const ops = newUsers.map((u) => ({
+    updateOne: {
+      filter: { email: u.email },
+      update: { $setOnInsert: u },
+      upsert: true,
+    },
+  }));
+
+  return users.bulkWrite(ops);
+}
+
+// Adds N more synthetic customers on top of whatever loadtest+N accounts
+// already exist, numbering from the current highest N onward (so repeated
+// --add=10 calls keep appending: 101-110, then 111-120, ...).
+async function addSyntheticCustomers(target, count) {
+  const users = target.collection("users");
+
+  const existing = await users
+    .find({ email: /^loadtest\+/ }, { projection: { email: 1 } })
+    .toArray();
+
+  const highest = existing.reduce((max, u) => {
+    const n = Number(String(u.email).match(/^loadtest\+(\d+)@/)?.[1] || 0);
+    return Math.max(max, n);
+  }, 0);
+
+  const result = await upsertSyntheticCustomers(users, { start: highest + 1, count });
+  console.log(
+    `  added users          ${result.upsertedCount} new (loadtest+${highest + 1}..${highest + count}@example.com)`
+  );
+
+  await writeLoadtestUsersFile(users);
+}
+
 async function main() {
   const drop = process.argv.includes("--drop");
 
@@ -78,26 +148,14 @@ async function main() {
   }
 
   // == Create synthetic test customers (target DB only) ==
+  // insert-or-ignore keyed on email: existing loadtest+N accounts (and their
+  // password hashes) are left alone, only missing ones up to TEST_USER_COUNT
+  // are inserted.
   const users = target.collection("users");
-  await users.deleteMany({ email: /^loadtest\+/ });
-
-  const now = new Date();
-  const testUsers = Array.from({ length: TEST_USER_COUNT }, (_, i) => ({
-    fullName: `Load Test Customer ${i + 1}`,
-    email: `loadtest+${i + 1}@example.com`,
-    role: "customer",
-    status: "active",
-    profilePic: "",
-    addresses: [],
-    storeId: null,
-    storeCode: null,
-    ...createPasswordRecord("Password@123"),
-    createdAt: now,
-    updatedAt: now,
-  }));
-
-  await users.insertMany(testUsers);
-  console.log(`  created users        ${testUsers.length} test customers`);
+  const result = await upsertSyntheticCustomers(users, { start: 1, count: TEST_USER_COUNT });
+  console.log(
+    `  created users        ${result.upsertedCount} new, ${TEST_USER_COUNT - result.upsertedCount} already existed (loadtest+1..${TEST_USER_COUNT}@example.com)`
+  );
 
   // Write the user ids out so the k6 script can send real userId values.
   const inserted = await users
