@@ -65,7 +65,7 @@ Make sure all of the following are installed and working on your machine **befor
 - **Node.js** v18 or later (check with `node -v`)
 - **npm** v9 or later (check with `npm -v`)
 - **MongoDB Atlas account**, or a local MongoDB instance
-- A **Groq API key**. Sign in at [console.groq.com/keys](https://console.groq.com/keys), then click **+ Create API Key**
+- A **Groq API key / openai/gpt-oss-20b**. Sign in at [console.groq.com/keys](https://console.groq.com/keys), then click **+ Create API Key**
 - A **Gemini API key** from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 - An **ElevenLabs API key** from [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys), used for both STT transcription and the TTS bot voice
 - An **ElevenLabs Voice ID**. Open [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library), pick a voice, and copy its ID
