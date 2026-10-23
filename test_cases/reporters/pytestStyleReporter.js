@@ -5,7 +5,7 @@
 const path = require("path");
 const os = require("os");
 const { execSync } = require("child_process");
-const Base = require("mocha/lib/reporters/base");
+const { Base } = require("mocha").reporters;
 
 const COLOR = {
   reset: "\x1b[0m",
